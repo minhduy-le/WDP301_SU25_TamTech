@@ -12,6 +12,7 @@ import { APP_COLOR } from "utils/constant";
 import Feather from "@expo/vector-icons/Feather";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 const styles = StyleSheet.create({
   btnContainer: {
     borderRadius: 10,
@@ -24,7 +25,7 @@ const styles = StyleSheet.create({
   },
 });
 interface IProps {
-  title: string;
+  title?: string;
   onPress: () => void;
   textStyle?: StyleProp<TextStyle>;
   pressStyle?: StyleProp<TextStyle>;
@@ -91,7 +92,15 @@ const ShareButton = (props: IProps) => {
                 </>
               );
             default:
-              return null;
+              return (
+                <>
+                  <FontAwesome5
+                    name="fingerprint"
+                    size={24}
+                    color={APP_COLOR.WHITE}
+                  />
+                </>
+              );
           }
         })()}
         {loading && <ActivityIndicator color={"black"} />}

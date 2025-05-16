@@ -4,15 +4,16 @@ export const APP_COLOR = {
   GREY: "#808080",
   BLACK: "#000000",
   WHITE: "#FFFFFF",
-  WHEAT: "EFE6DB",
+  WHEAT: "#EFE6DB",
+  BROWN: "#632713",
 };
 
 export const APP_FONT = {
-  PLAYFAIR: {
-    REGULAR: "Playfair-Regular",
-    MEDIUM: "Playfair-Medium",
-    SEMIBOLD: "Playfair-SemiBold",
-    BOLD: "Playfair-Bold",
+  MONTSERRAT: {
+    REGULAR: "Montserrat-Regular",
+    MEDIUM: "Montserrat-Medium",
+    SEMIBOLD: "Montserrat-SemiBold",
+    BOLD: "Montserrat-Bold",
   },
 };
 export const BASE_URL = "https://tamtac-6548a8185ba9.herokuapp.com";

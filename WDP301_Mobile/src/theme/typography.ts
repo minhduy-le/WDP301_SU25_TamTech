@@ -1,14 +1,13 @@
 import { StyleSheet } from "react-native";
 
 export const FONTS = {
-  regular: "Playfair-Regular",
-  medium: "Playfair-Medium",
-  semiBold: "Playfair-SemiBold",
-  bold: "Playfair-Bold",
+  regular: "Montserrat-Regular",
+  medium: "Montserrat-Medium",
+  semiBold: "Montserrat-SemiBold",
+  bold: "Montserrat-Bold",
 };
 
 export const typography = StyleSheet.create({
-  // Headings
   h1: {
     fontFamily: FONTS.bold,
     fontSize: 32,
@@ -24,8 +23,6 @@ export const typography = StyleSheet.create({
     fontSize: 20,
     lineHeight: 28,
   },
-
-  // Body text
   bodyLarge: {
     fontFamily: FONTS.regular,
     fontSize: 18,
@@ -34,7 +31,7 @@ export const typography = StyleSheet.create({
   bodyMedium: {
     fontFamily: FONTS.regular,
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 35,
   },
   bodySmall: {
     fontFamily: FONTS.regular,
@@ -42,7 +39,6 @@ export const typography = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Labels & Buttons
   labelLarge: {
     fontFamily: FONTS.medium,
     fontSize: 16,

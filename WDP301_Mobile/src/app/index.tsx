@@ -11,9 +11,6 @@ SplashScreen.preventAutoHideAsync();
 const RootPage = () => {
   const { setAppState } = useCurrentApp();
   const [state, setState] = useState<any>();
-  const [loaded, error] = useFonts({
-    [APP_FONT as any]: require("@/assets/font/Playfair-Italic-VariableFont_opsz,wdth,wght.ttf"),
-  });
   useEffect(() => {
     async function prepare() {
       try {

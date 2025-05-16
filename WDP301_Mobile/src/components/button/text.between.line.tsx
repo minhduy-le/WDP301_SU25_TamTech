@@ -3,12 +3,12 @@ import { FONTS, typography } from "@/theme/typography";
 
 interface IProps {
   title: string;
-  textColor?: "white" | "black";
+  textColor?: "#632713" | "black";
   textStyle?: TextStyle;
 }
 
 const TextBetweenLine = (props: IProps) => {
-  const { title, textColor = "white", textStyle } = props;
+  const { title, textColor = "#632713", textStyle } = props;
   return (
     <View style={styles.container}>
       <View style={styles.line}></View>
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   line: {
-    borderBottomColor: "#ccc",
+    borderBottomColor: "#632713",
     borderBottomWidth: 1,
     paddingHorizontal: 35,
   },
@@ -35,7 +35,6 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     position: "relative",
     top: 10,
-    fontFamily: FONTS.regular,
   },
 });
 

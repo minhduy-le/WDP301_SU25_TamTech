@@ -2,15 +2,12 @@ import {
   Text,
   View,
   StyleSheet,
-  ImageBackground,
   Image,
-  Pressable,
   Alert,
+  ImageBackground,
 } from "react-native";
 import ShareButton from "components/button/share.button";
 import { APP_COLOR, BASE_URL } from "utils/constant";
-import bg from "@/assets/auth/welcome-background.jpg";
-import { LinearGradient } from "expo-linear-gradient";
 import TextBetweenLine from "@/components/button/text.between.line";
 import { Link, router } from "expo-router";
 import logo from "@/assets/logo.png";
@@ -23,79 +20,69 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useCurrentApp } from "@/context/app.context";
+import footerFrame from "@/assets/frame_footer.png";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 10,
+    marginTop: 30,
   },
   welcomeText: {
-    flex: 0.6,
-    alignItems: "flex-start",
+    flex: 0.4,
+    alignItems: "center",
     justifyContent: "center",
-    paddingLeft: 20,
-    position: "relative",
   },
-  textBackground: {
-    position: "absolute",
-    top: 60,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 50,
-    zIndex: -1,
-    height: 130,
-  },
-  heading: {
-    fontSize: 60,
-    fontFamily: FONTS.bold,
-    color: APP_COLOR.YELLOW,
-    marginTop: 150,
-  },
-  body: {
-    fontSize: 35,
+  headerText: {
+    top: 5,
+    fontSize: 20,
+    color: "#632713",
     fontFamily: FONTS.regular,
-    color: APP_COLOR.ORANGE,
-    marginLeft: 170,
   },
   imgLogo: {
-    position: "absolute",
-    top: 0,
-    left: 90,
-    height: 200,
-    width: 200,
-    marginBottom: 30,
-    marginTop: 50,
+    height: 230,
+    width: 400,
+    marginTop: 70,
   },
   welcomeBtn: {
-    flex: 0.4,
+    paddingHorizontal: 30,
+    flex: 0.3,
     gap: 30,
   },
   signUpText: {
-    color: "white",
     textDecorationLine: "underline",
-    fontFamily: FONTS.regular,
+    color: "#632713",
+    fontFamily: FONTS.bold,
   },
-  loginBtnFast: {
-    width: 250,
+  welcomeLoginBtn: {
+    flexDirection: "row",
+    marginHorizontal: "auto",
+  },
+  loginBtn: {
+    width: 200,
     justifyContent: "center",
     borderRadius: 30,
     paddingVertical: 10,
-    backgroundColor: "#2c2c2c",
-    borderColor: "#505050",
-    borderWidth: 1,
+    backgroundColor: "#EC6426",
     marginHorizontal: "auto",
+  },
+  loginBtnFast: {
+    width: 50,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginLeft: 20,
+    backgroundColor: "#EC6426",
   },
   normalText: {
     ...typography.bodyMedium,
-    color: "white",
+    color: "#632713",
   },
   hrefLink: { marginTop: 4 },
   loginBtnText: {
     ...typography.labelLarge,
-    color: "#fff",
+    color: APP_COLOR.WHITE,
     paddingVertical: 5,
+    fontFamily: FONTS.medium,
   },
   quickLoginButton: {
     backgroundColor: APP_COLOR.ORANGE,
@@ -115,7 +102,6 @@ const styles = StyleSheet.create({
 
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
-  const [state, setState] = useState<any>();
   useEffect(() => {
     async function prepare() {
       try {
@@ -162,60 +148,60 @@ const WelcomePage = () => {
   };
 
   return (
-    <ImageBackground style={{ flex: 1 }} source={bg}>
-      <LinearGradient
-        style={{ flex: 1 }}
-        colors={["transparent", "#191B2F"]}
-        locations={[0.2, 0.8]}
-      >
-        <View style={styles.container}>
-          <View style={styles.welcomeText}>
-            <Image style={styles.imgLogo} source={logo} />
-            <View style={styles.textBackground}></View>
-            <Text style={styles.heading}>Tấm Tắc</Text>
-            <Text style={styles.body}>Xin chào.</Text>
-          </View>
-
-          <View style={styles.welcomeBtn}>
-            <TextBetweenLine
-              title="Đăng nhập với"
-              textStyle={typography.bodyMedium}
-            />
-
+    <View style={{ flex: 1, backgroundColor: "#FDE3CF" }}>
+      <View style={styles.container}>
+        <View style={styles.welcomeText}>
+          <Image style={styles.imgLogo} source={logo} />
+          <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+        </View>
+        <View style={styles.welcomeBtn}>
+          <TextBetweenLine
+            title="Đăng nhập với"
+            textStyle={typography.bodyMedium}
+          />
+          <View style={styles.welcomeLoginBtn}>
             <ShareButton
               title="Số điện thoại"
               onPress={() => {
                 router.navigate("/(auth)/customer.login");
               }}
               textStyle={styles.loginBtnText}
-              btnStyle={styles.loginBtnFast}
+              btnStyle={styles.loginBtn}
               pressStyle={{ alignSelf: "stretch" }}
             />
-
             <ShareButton
-              title="Đăng nhập nhanh"
               onPress={handleQuickLogin}
               textStyle={styles.loginBtnText}
               btnStyle={styles.loginBtnFast}
               pressStyle={{ alignSelf: "stretch" }}
             />
-
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                justifyContent: "center",
-              }}
-            >
-              <Text style={styles.normalText}>Chưa có tài khoản?</Text>
-              <Link href={"/(auth)/role.signup"} style={styles.hrefLink}>
-                <Text style={styles.signUpText}>Đăng ký.</Text>
-              </Link>
-            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 10,
+              justifyContent: "center",
+            }}
+          >
+            <Text style={styles.normalText}>Chưa có tài khoản?</Text>
+            <Link href={"/(auth)/role.signup"} style={styles.hrefLink}>
+              <Text style={styles.signUpText}>Đăng ký.</Text>
+            </Link>
           </View>
         </View>
-      </LinearGradient>
-    </ImageBackground>
+      </View>
+      <Image
+        source={footerFrame}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 0,
+          width: 250,
+          height: 250,
+          resizeMode: "contain",
+        }}
+      />
+    </View>
   );
 };
 

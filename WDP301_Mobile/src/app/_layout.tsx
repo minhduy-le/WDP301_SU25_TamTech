@@ -41,10 +41,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 const RootLayout = () => {
   const [fontsLoaded] = useFonts({
-    "Playfair-Regular": require("@/assets/font/Playfair_144pt-Regular.ttf"),
-    "Playfair-Medium": require("@/assets/font/Playfair_144pt-Medium.ttf"),
-    "Playfair-Bold": require("@/assets/font/Playfair_144pt-Bold.ttf"),
-    "Playfair-SemiBold": require("@/assets/font/Playfair_144pt-SemiBold.ttf"),
+    "Montserrat-Regular": require("@/assets/font/Montserrat-Regular.ttf"),
+    "Montserrat-Medium": require("@/assets/font/Montserrat-Medium.ttf"),
+    "Montserrat-Bold": require("@/assets/font/Montserrat-Bold.ttf"),
+    "Montserrat-SemiBold": require("@/assets/font/Montserrat-SemiBold.ttf"),
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -75,7 +75,7 @@ const RootLayout = () => {
                 headerTintColor: APP_COLOR.ORANGE,
                 headerTitleStyle: {
                   color: "black",
-                  fontFamily: "Playfair-SemiBold",
+                  fontFamily: "Montserrat-SemiBold",
                 },
               }}
             >
