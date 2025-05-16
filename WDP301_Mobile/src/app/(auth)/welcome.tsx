@@ -1,11 +1,4 @@
-import {
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  Alert,
-  ImageBackground,
-} from "react-native";
+import { Text, View, StyleSheet, Image, Alert } from "react-native";
 import ShareButton from "components/button/share.button";
 import { APP_COLOR, BASE_URL } from "utils/constant";
 import TextBetweenLine from "@/components/button/text.between.line";
@@ -204,7 +197,7 @@ const WelcomePage = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FDE3CF" }}>
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
       <View style={styles.container}>
         <View style={styles.welcomeText}>
           <Image style={styles.imgLogo} source={logo} />
@@ -250,7 +243,7 @@ const WelcomePage = () => {
             <ShareButton
               title="Đăng nhập"
               onPress={() => {
-                router.navigate("/(auth)/customer.login");
+                router.navigate("/(auth)/verify");
               }}
               textStyle={styles.loginBtnText}
               btnStyle={styles.loginBtn}

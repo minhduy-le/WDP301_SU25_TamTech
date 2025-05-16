@@ -1,22 +1,47 @@
 import LoadingOverlay from "@/components/loading/overlay";
-import { resendCodeAPI, verifyCodeAPI } from "@/utils/api";
+import { resendCodeAPI } from "@/utils/api";
 import { APP_COLOR } from "@/utils/constant";
 import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, Keyboard } from "react-native";
+import { View, Text, StyleSheet, Keyboard, Image } from "react-native";
 import OTPTextView from "react-native-otp-textinput";
 import Toast from "react-native-root-toast";
 import { BASE_URL } from "@/utils/constant";
+import { FONTS } from "@/theme/typography";
+import logo from "@/assets/logo.png";
+import footerFrame from "@/assets/frame_footer.png";
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingVertical: 30,
-    paddingHorizontal: 20,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+  },
+  welcomeText: {
+    flex: 0.4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 130,
   },
   heading: {
     fontSize: 25,
     fontWeight: "600",
     marginVertical: 20,
+  },
+  headerText: {
+    top: 5,
+    fontSize: 20,
+    color: "#632713",
+    fontFamily: FONTS.regular,
+  },
+  imgLogo: {
+    height: 230,
+    width: 400,
+    marginTop: 70,
+  },
+  resendText: {
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.medium,
   },
 });
 
@@ -86,39 +111,63 @@ const VerifyPage = () => {
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.heading}>Xác thực tài khoản</Text>
-        <Text style={{ marginVertical: 10 }}>
-          Vui lòng nhập mã xác nhận đã được gửi tới số điện thoại {phoneNumber}
-        </Text>
-        <View style={{ marginVertical: 20 }}>
-          <OTPTextView
-            ref={otpRef}
-            handleTextChange={setCode}
-            autoFocus
-            inputCount={6}
-            inputCellLength={1}
-            tintColor={APP_COLOR.ORANGE}
-            textInputStyle={{
-              height: 40,
-              width: 40,
-              borderWidth: 1,
-              borderColor: APP_COLOR.GREY,
-              borderBottomWidth: 1,
-              borderRadius: 5,
-              // @ts-ignore:next-line
-              color: APP_COLOR.ORANGE,
-            }}
-          />
-        </View>
-        <View style={{ flexDirection: "row", marginVertical: 10 }}>
-          <Text>Không nhận được mã xác nhận, </Text>
+        <View style={styles.welcomeText}>
+          <Image style={styles.imgLogo} source={logo} />
+          <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
           <Text
-            onPress={handleResendCode}
-            style={{ textDecorationLine: "underline" }}
+            style={{
+              marginVertical: 10,
+              fontFamily: FONTS.regular,
+              color: APP_COLOR.BROWN,
+              marginHorizontal: 10,
+              textAlign: "center",
+            }}
           >
-            Gửi lại
+            Một mã OTP đã được gửi về số điện thoại của bạn, OTP có hiệu lực
+            trong 3 phút {phoneNumber}
           </Text>
+          <View style={{ marginVertical: 20 }}>
+            <OTPTextView
+              ref={otpRef}
+              handleTextChange={setCode}
+              autoFocus
+              inputCount={6}
+              inputCellLength={1}
+              tintColor={APP_COLOR.ORANGE}
+              offTintColor={APP_COLOR.BROWN}
+              textInputStyle={{
+                height: 40,
+                width: 40,
+                borderWidth: 1,
+                borderColor: APP_COLOR.BROWN,
+                borderBottomWidth: 1,
+                borderRadius: 5,
+                // @ts-ignore:next-line
+                color: APP_COLOR.ORANGE,
+              }}
+            />
+          </View>
+          <View style={{ flexDirection: "row", marginVertical: 10 }}>
+            <Text style={styles.resendText}>Không nhận được mã xác nhận, </Text>
+            <Text
+              onPress={handleResendCode}
+              style={[styles.resendText, { textDecorationLine: "underline" }]}
+            >
+              Gửi lại
+            </Text>
+          </View>
         </View>
+        <Image
+          source={footerFrame}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 250,
+            height: 250,
+            resizeMode: "contain",
+          }}
+        />
       </View>
       {isSubmit && <LoadingOverlay />}
     </>

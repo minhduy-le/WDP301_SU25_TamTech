@@ -9,13 +9,11 @@ import {
 } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { FONTS } from "@/theme/typography";
-
 const styles = StyleSheet.create({
   inputGroup: {
     padding: 5,
     gap: 10,
   },
-
   text: {
     fontSize: 25,
     fontFamily: FONTS.regular,
@@ -32,7 +30,6 @@ const styles = StyleSheet.create({
     top: 18,
   },
 });
-
 interface IProps {
   title?: string;
   keyboardType?: KeyboardTypeOptions;

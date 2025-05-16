@@ -6,6 +6,7 @@ export const APP_COLOR = {
   WHITE: "#FFFFFF",
   WHEAT: "#EFE6DB",
   BROWN: "#632713",
+  BACKGROUND_ORANGE: "#FDE3CF",
 };
 
 export const APP_FONT = {
