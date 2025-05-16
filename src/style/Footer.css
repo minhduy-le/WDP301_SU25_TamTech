@@ -1,0 +1,26 @@
+.ant-layout-footer {
+  box-sizing: border-box;
+  font-family: "Playfair Display", serif;
+}
+
+.ant-layout-footer h3 {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.ant-layout-footer p {
+  margin: 5px 0;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.ant-layout-footer a {
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.ant-layout-footer a:hover {
+  text-decoration: underline;
+}
