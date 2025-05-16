@@ -59,7 +59,7 @@ const ShareButton = (props: IProps) => {
       <View style={[styles.btnContainer, btnStyle]}>
         {(() => {
           switch (title) {
-            case "Số điện thoại":
+            case "Đăng nhập":
               return (
                 <>
                   <Feather name="phone" size={24} color={APP_COLOR.WHITE} />
@@ -105,7 +105,7 @@ const ShareButton = (props: IProps) => {
         })()}
         {loading && <ActivityIndicator color={"black"} />}
         {icons}
-        <Text style={textStyle}>{title}</Text>
+        {title && <Text style={textStyle}>{title}</Text>}
       </View>
     </Pressable>
   );

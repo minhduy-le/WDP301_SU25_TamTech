@@ -46,14 +46,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
-    borderColor: APP_COLOR.GREY,
+    borderColor: APP_COLOR.BROWN,
   },
   checkboxChecked: {
     backgroundColor: APP_COLOR.ORANGE,
   },
   dropdown: {
     borderWidth: 1,
-    borderColor: APP_COLOR.GREY,
+    borderColor: APP_COLOR.BROWN,
     borderRadius: 10,
     padding: 10,
     marginTop: 5,

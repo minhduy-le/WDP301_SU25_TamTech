@@ -21,7 +21,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useCurrentApp } from "@/context/app.context";
 import footerFrame from "@/assets/frame_footer.png";
-
+import { Formik } from "formik";
+import ShareInput from "@/components/input/share.input";
+import { CustomerSignInSchema } from "@/utils/validate.schema";
+import Toast from "react-native-root-toast";
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -68,6 +71,7 @@ const styles = StyleSheet.create({
   },
   loginBtnFast: {
     width: 50,
+    height: 50,
     borderRadius: 50,
     paddingVertical: 10,
     marginLeft: 20,
@@ -102,6 +106,58 @@ const styles = StyleSheet.create({
 
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
+  const [loading, setLoading] = useState<boolean>(false);
+  const handleLogin = async (
+    phoneNumber: string,
+    password: string,
+    resetForm: any
+  ) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${BASE_URL}/customer/sign-in`, {
+        phoneNumber: phoneNumber,
+        password: password,
+      });
+      setLoading(false);
+      if (res.data.data) {
+        await AsyncStorage.setItem("access_token", res.data.data.access_token);
+        await AsyncStorage.setItem(
+          "refresh_token",
+          res.data.data.refresh_token
+        );
+        setAppState(res.data.data);
+        router.replace({
+          pathname: "/(tabs)",
+          params: { access_token: res.data.data.access_token, isLogin: 1 },
+        });
+      } else {
+        Toast.show("Đăng nhập không thành công", {
+          duration: Toast.durations.LONG,
+          textColor: "white",
+          backgroundColor: APP_COLOR.ORANGE,
+          opacity: 1,
+        });
+
+        if (res.statusCode === 400) {
+          router.replace({
+            pathname: "/(tabs)",
+            params: { token: res.data, isLogin: 1 },
+          });
+        }
+      }
+    } catch (error) {
+      console.log(">>> check error login: ", error);
+      Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.ORANGE,
+        opacity: 1,
+      });
+      resetForm();
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function prepare() {
       try {
@@ -159,9 +215,40 @@ const WelcomePage = () => {
             title="Đăng nhập với"
             textStyle={typography.bodyMedium}
           />
+          <View>
+            <Formik
+              validationSchema={CustomerSignInSchema}
+              initialValues={{ phoneNumber: "", password: "" }}
+              onSubmit={(values, { resetForm }) =>
+                handleLogin(values.phoneNumber, values.password, resetForm)
+              }
+            >
+              {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                resetForm,
+                values,
+                errors,
+                touched,
+              }) => (
+                <View>
+                  <ShareInput
+                    placeholder="Đăng nhập bằng số điện thoại"
+                    keyboardType="number-pad"
+                    onChangeText={handleChange("phoneNumber")}
+                    onBlur={handleBlur("phoneNumber")}
+                    value={values.phoneNumber}
+                    error={errors.phoneNumber}
+                    touched={touched.phoneNumber}
+                  />
+                </View>
+              )}
+            </Formik>
+          </View>
           <View style={styles.welcomeLoginBtn}>
             <ShareButton
-              title="Số điện thoại"
+              title="Đăng nhập"
               onPress={() => {
                 router.navigate("/(auth)/customer.login");
               }}
