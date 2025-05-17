@@ -26,6 +26,7 @@ const transporter = nodemailer.createTransport({
 
 // Email template
 const emailTemplate = fs.readFileSync(path.join(__dirname, "../templates/otpEmail.html"), "utf-8");
+const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../templates/forgotPasswordEmail.html"), "utf-8");
 
 const userService = {
   async registerUser({ fullName, email, phone_number, password }) {
@@ -222,6 +223,42 @@ const userService = {
       from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
       to: email,
       subject: "Xác thực tài khoản Tấm Tech",
+      html: emailHtml,
+      attachments: [
+        {
+          filename: "logo.png",
+          path: path.join(__dirname, "../images/logo.png"),
+          cid: "logo@tamtech",
+        },
+      ],
+    });
+  },
+
+  async forgotPassword(email) {
+    // Validation
+    if (!email || !validator.isEmail(email)) {
+      throw new Error("Invalid input");
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Generate reset token
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "10m" });
+    await redisClient.setEx(`reset:${email}`, 600, resetToken); // 10 minutes expiry
+
+    // Prepare email
+    const resetUrl = `http://localhost:3000/verify?token=${encodeURIComponent(resetToken)}`;
+    let emailHtml = forgotPasswordTemplate.replace("{fullName}", user.fullName).replace("{resetUrl}", resetUrl);
+
+    // Send email
+    await transporter.sendMail({
+      from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
+      to: email,
+      subject: "Đặt lại mật khẩu Tấm Tech",
       html: emailHtml,
       attachments: [
         {

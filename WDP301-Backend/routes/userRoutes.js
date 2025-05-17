@@ -223,4 +223,49 @@ router.post("/resend-otp", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 maxLength: 100
+ *     responses:
+ *       200:
+ *         description: Password reset email sent
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    await userService.forgotPassword(email);
+    res.status(200).json({ message: "Password reset email sent, please check your email" });
+  } catch (error) {
+    if (error.message === "Invalid input") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
