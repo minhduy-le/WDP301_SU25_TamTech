@@ -49,12 +49,12 @@ const WhyChooseUs: React.FC = () => {
             marginTop: '10px',
           }}
         >
-          TẠI SAO CHỌN CƠM <span style={{ color: '#f97316' }}>TẤM TẮC</span>?
+          TẠI SAO CHỌN CƠM <span style={{ color: '#f26d21' }}>TẤM TẮC</span>?
         </h2>
         
-        <Row gutter={[16, 16]} justify="center">
+        <Row gutter={[24, 24]} justify="center" style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {features.map((feature) => (
-            <Col key={feature.id} xs={24} sm={12} md={7}>
+            <Col key={feature.id} xs={24} sm={12} md={8}>
               <Card
                 cover={
                   <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
@@ -78,7 +78,7 @@ const WhyChooseUs: React.FC = () => {
                 {feature.subtitle && (
                   <p style={{ marginRight: '8px', color: '#f97316', fontSize: '16px', fontWeight: 'bold' }}>{feature.subtitle}</p>
                 )}
-              </Card> 
+              </Card>
             </Col>
           ))}
         </Row>
