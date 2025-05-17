@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Button } from 'antd';
+import { Row, Col, Card, Button, InputNumber } from 'antd';
 
 interface Drink {
   id: number;
@@ -7,6 +7,7 @@ interface Drink {
   image: string;
   description?: string;
   price: number;
+  quantity?: number;
 }
 
 const drinks: Drink[] = [
@@ -16,6 +17,7 @@ const drinks: Drink[] = [
     image: "https://gachaybo.com/wp-content/uploads/2021/06/tra-dao-cam-sa.jpg",
     description: "Vị ngọt thanh, thơm mát",
     price: 35000,
+    quantity: 5,
   },
   {
     id: 2,
@@ -23,6 +25,7 @@ const drinks: Drink[] = [
     image: "https://file.huengaynay.vn/data2/image/news/2022/20220817/origin/1811660739183.jpg",
     description: "Béo ngậy, topping ngập tràn",
     price: 40000,
+    quantity: 3,
   },
   {
     id: 3,
@@ -30,6 +33,7 @@ const drinks: Drink[] = [
     image: "https://file.hstatic.net/200000528965/file/ruot-cai-thien-cac-van-de-ve-tieu-hoa_519e7933a481436a9a460b5cdfbfae27_grande.jpg",
     description: "Chua nhẹ, thơm vị trái cây",
     price: 32000,
+    quantity: 1,
   },
   {
     id: 4,
@@ -37,6 +41,7 @@ const drinks: Drink[] = [
     image: "https://static.gia-hanoi.com/uploads/2024/05/nau-nuoc-sam-bi-dao.jpg",
     description: "Thanh mát, ngọt dịu",
     price: 15000,
+    quantity: 2,
   },
 ];
 
@@ -109,7 +114,7 @@ const DrinksCollection: React.FC = () => {
                     {drink.description}
                   </p>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <span
                     style={{
                       fontSize: '16px',
@@ -119,27 +124,41 @@ const DrinksCollection: React.FC = () => {
                   >
                     {drink.price.toLocaleString()}đ
                   </span>
-                  <Button
-                    style={{
-                      backgroundColor: '#f97316',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      width: '90px',
-                      height: '36px',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#f97316';
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                    }}
-                  >
-                    Thêm
-                  </Button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {drink.quantity && drink.quantity > 1 ? (
+                      <InputNumber
+                        min={1}
+                        max={99}
+                        defaultValue={drink.quantity}
+                        style={{
+                          width: '55px',
+                          height: '36px',
+                          borderColor: '#f97316',
+                        }}
+                      />
+                    ) : null}
+                    <Button
+                      style={{
+                        backgroundColor: '#f97316',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        width: '80px',
+                        height: '36px',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = '#f97316';
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                      }}
+                    >
+                      Thêm
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </Col>

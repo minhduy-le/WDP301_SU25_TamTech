@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Button } from 'antd';
+import { Row, Col, Card, Button, InputNumber } from 'antd';
 
 interface SideDish {
   id: number;
@@ -7,6 +7,7 @@ interface SideDish {
   image: string;
   description?: string;
   price: number;
+  quantity?: number;
 }
 
 const sideDishes: SideDish[] = [
@@ -16,6 +17,7 @@ const sideDishes: SideDish[] = [
     image: "https://storage.googleapis.com/onelife-public/blog.onelife.vn/2021/11/cach-lam-canh-rong-bien-nau-tom-mon-chinh-954333940591.jpg",
     description: "Giải nhiệt, bổ dưỡng",
     price: 15000,
+    quantity: 4,
   },
   {
     id: 2,
@@ -23,13 +25,15 @@ const sideDishes: SideDish[] = [
     image: "https://cdn.tgdd.vn/Files/2018/01/29/1062867/cach-lam-cha-trung-hap-don-gian-tai-nha-202203041434088984.jpg",
     description: "Béo thơm, mềm mịn",
     price: 12000,
+    quantity: 1,
   },
   {
-    id: 3,
+    id: 2,
     name: "Rau Luộc Chấm Kho Quẹt",
     image: "https://file.hstatic.net/200000385717/article/ia-chi-ban-com-chay-kho-quet-can-tho-duoc-yeu-thich-nhat-07-1649155337_2f52b84169dd496c8c30794a1d1d556d.jpg",
     description: "Đậm đà hương vị quê",
     price: 18000,
+    quantity: 3,
   },
   {
     id: 4,
@@ -37,6 +41,7 @@ const sideDishes: SideDish[] = [
     image: "https://www.seriouseats.com/thmb/v0epZZi6W-RBZlA0rxi81OB-HBI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/20230712-SEA-DoChua-MaureenCelestine-hero-fc08b05e43f0470aa611993727f8e2e9.jpg",
     description: "Chua ngọt, tươi mát",
     price: 10000,
+    quantity: 2,
   },
 ];
 
@@ -109,7 +114,7 @@ const SideDishes: React.FC = () => {
                     {dish.description}
                   </p>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <span
                     style={{
                       fontSize: '16px',
@@ -119,27 +124,41 @@ const SideDishes: React.FC = () => {
                   >
                     {dish.price.toLocaleString()}đ
                   </span>
-                  <Button
-                    style={{
-                      backgroundColor: '#f97316',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      width: '90px',
-                      height: '36px',
-                      transition: 'all 0.3s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#f97316';
-                      (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-                    }}
-                  >
-                    Thêm
-                  </Button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {dish.quantity && dish.quantity > 1 ? (
+                      <InputNumber
+                        min={1}
+                        max={99}
+                        defaultValue={dish.quantity}
+                        style={{
+                          width: '55px',
+                          height: '36px',
+                          borderColor: '#f97316',
+                        }}
+                      />
+                    ) : null}
+                    <Button
+                      style={{
+                        backgroundColor: '#f97316',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        width: '80px',
+                        height: '36px',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = '#f97316';
+                        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                      }}
+                    >
+                      Thêm
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </Col>
