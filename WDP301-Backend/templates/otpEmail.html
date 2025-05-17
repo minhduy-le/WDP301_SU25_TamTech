@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xác thực tài khoản Tấm Tech</title>
+  </head>
+  <body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4">
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <tr>
+        <td style="background-color: #fde3cf; padding: 20px; text-align: center">
+          <img
+            src="{logoBase64}"
+            alt="Tấm Tech Logo"
+            style="max-width: 150px; height: auto; display: block; margin: 0 auto"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 30px; text-align: center">
+          <h1 style="color: #333333; font-size: 24px; margin: 0 0 20px">Xin chào {fullName},</h1>
+          <p style="color: #555555; font-size: 16px; line-height: 1.5; margin: 0 0 20px">
+            Cảm ơn bạn đã đăng ký tại <strong>Tấm Tech</strong>!
+          </p>
+          <p style="color: #555555; font-size: 16px; line-height: 1.5; margin: 0 0 20px">Mã OTP của bạn là:</p>
+          <div
+            style="
+              background-color: #fde3cf;
+              display: inline-block;
+              padding: 10px 20px;
+              border-radius: 6px;
+              margin: 10px 0;
+            "
+          >
+            <strong style="color: #333333; font-size: 24px; letter-spacing: 2px">{otp}</strong>
+          </div>
+          <p style="color: #555555; font-size: 16px; line-height: 1.5; margin: 20px 0">
+            Vui lòng sử dụng mã này để xác thực tài khoản của bạn trong vòng 10 phút.
+          </p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.5; margin: 20px 0">
+            Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.
+          </p>
+          <a
+            href="http://localhost:3000/verify?email={email}&otp={otp}"
+            style="
+              display: inline-block;
+              background-color: #fde3cf;
+              color: #333333;
+              font-size: 16px;
+              font-weight: bold;
+              text-decoration: none;
+              padding: 12px 30px;
+              border-radius: 6px;
+              margin: 20px 0;
+            "
+            >Xác thực ngay</a
+          >
+        </td>
+      </tr>
+      <tr>
+        <td style="background-color: #f8f8f8; padding: 20px; text-align: center; font-size: 12px; color: #777777">
+          <p style="margin: 0">Trân trọng,<br /><strong>Tấm Tech</strong></p>
+          <p style="margin: 10px 0 0">© 2025 Tấm Tech. All rights reserved.</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
