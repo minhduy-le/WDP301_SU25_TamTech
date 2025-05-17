@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const redis = require("redis");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 
@@ -144,6 +145,45 @@ const userService = {
 
     // Clean up OTP
     await redisClient.del(`otp:${email}`);
+  },
+
+  async loginUser(email, password) {
+    // Validation
+    if (!email || !password || !validator.isEmail(email) || password.length < 6 || password.length > 250) {
+      throw new Error("Invalid input");
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if account is activated and not banned
+    if (!user.isActive) {
+      throw new Error("Account not activated");
+    }
+    if (user.isBan) {
+      throw new Error("Account is banned");
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Invalid credentials");
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, role: user.role || "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    // Return user details and token
+    return {
+      fullName: user.fullName,
+      email: user.email,
+      phone_number: user.phone_number,
+      role: user.role || "user",
+      token,
+    };
   },
 };
 
