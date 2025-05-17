@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 // import Navbar from "./components/Navbar";
 // import Footer from "./components/Footer";
-import Home from "./pages/Home";
+import HomePage from "./pages/HomePage";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -23,7 +23,7 @@ function App() {
     <Router>
       <Routes>
         <Route element={<LayoutWithNavFooter />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
         </Route>
       </Routes>
     </Router>
