@@ -1,67 +1,65 @@
-.navbar {
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
+header {
+  background: #fff7e6 !important;
+  padding: 8px 50px !important;
   display: flex;
   align-items: center;
-  background-color: #fff5e6 !important;
-  padding: 0 20px;
-  height: 64px;
-  line-height: 64px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: -webkit-fill-available;
+  /* position: fixed;
+  top: 0;
+  left: 0; */
+  height: 71px !important;
+  justify-content: space-between;
 }
 
-.navbar-logo {
-  display: flex;
-  align-items: center;
-  margin-right: 40px;
-}
-
-.logo-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: bold;
-  color: #d2691e;
-}
-
-.logo-subtext {
-  font-size: 10px;
-  color: #d2691e;
-}
-
-.navbar-menu {
-  flex: 1;
-  background: transparent !important;
-  border-bottom: none !important;
-}
-
-.navbar-menu .ant-menu-item {
+.menu-item a {
+  color: #d97706 !important;
   font-size: 16px;
-  color: #d2691e !important;
 }
 
-.navbar-menu .ant-menu-item:hover,
-.navbar-menu .ant-menu-item-active,
-.navbar-menu .ant-menu-item-selected {
-  color: #d2691e !important;
-  border-bottom: 2px solid #d2691e !important;
+.ant-btn-text:hover,
+.ant-btn-text:focus {
+  color: #b45309 !important;
+  background: transparent !important;
 }
 
-.navbar-actions {
-  margin-left: auto;
+.header-logo {
   display: flex;
   align-items: center;
-  gap: 15px;
 }
 
-.search-placeholder,
-.notification-placeholder,
-.account-placeholder,
-.cart-placeholder {
-  width: 24px;
-  height: 24px;
-  background: #ccc;
-  border-radius: 50%;
+.header-logo img {
+  margin-right: 10px;
+  height: 61px;
+}
+
+.header-menu {
+  width: -webkit-fill-available;
+  background: transparent;
+  justify-content: center;
+  border-bottom: none;
+}
+
+.header-menu .ant-menu-title-content a {
+  color: #da7339 !important;
+  font-family: "Playfair Display", serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.header-icon {
+  display: flex;
+  gap: 10px;
+}
+
+.anticon-shopping-cart svg {
+  width: 36px;
+  height: 36px;
+}
+
+.header-icon button:hover,
+.header-icon button:focus,
+.header-icon button svg {
+  border: none;
+  outline: none;
 }
