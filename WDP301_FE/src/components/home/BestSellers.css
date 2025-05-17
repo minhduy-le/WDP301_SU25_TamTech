@@ -1,0 +1,116 @@
+.best-sellers-section {
+    background-color: #f2d884;
+    padding: 2rem 3rem;
+    text-align: center;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+  }
+  
+  .product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: space-between;
+    margin-left: 100px;
+    margin-right: 100px;
+  }
+  
+  .product-card {
+    background: #fef8f4;
+    border-radius: 12px;
+    width: 280px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    position: relative;
+  }
+  
+  .image-container {
+    position: relative;
+  }
+  
+  .image-container img {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    object-fit: cover;
+  }
+  
+  .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: #7ed957;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  
+  .card-content {
+    padding: 1rem;
+    text-align: left;
+  }
+  
+  .product-title {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  
+  .product-desc {
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .price {
+    background: #ff915e;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+  
+  .original-price {
+    text-decoration: line-through;
+    font-size: 0.85rem;
+    color: #999;
+  }
+  
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border: 1px solid #999;
+    border-radius: 8px;
+    padding: 4px 8px;
+    width: 80px;
+  }
+  
+  .quantity-control button {
+    background: none;
+    border: none;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .add-button {
+    border: 1px solid #555;
+    background: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
