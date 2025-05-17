@@ -227,7 +227,7 @@ const WelcomePage = () => {
               }) => (
                 <View>
                   <ShareInput
-                    placeholder="Đăng nhập bằng số điện thoại"
+                    placeholder="Đăng nhập bằng email"
                     keyboardType="number-pad"
                     onChangeText={handleChange("phoneNumber")}
                     onBlur={handleBlur("phoneNumber")}
@@ -264,7 +264,7 @@ const WelcomePage = () => {
             }}
           >
             <Text style={styles.normalText}>Chưa có tài khoản?</Text>
-            <Link href={"/(auth)/role.signup"} style={styles.hrefLink}>
+            <Link href={"/(auth)/customer.signup"} style={styles.hrefLink}>
               <Text style={styles.signUpText}>Đăng ký.</Text>
             </Link>
           </View>
