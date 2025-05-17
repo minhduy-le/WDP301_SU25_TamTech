@@ -109,4 +109,73 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Log in a user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 fullName:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 phone_number:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Invalid credentials or account not activated
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const result = await userService.loginUser(email, password);
+    res.status(200).json(result);
+  } catch (error) {
+    if (error.message === "Invalid input") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message === "Invalid credentials" || error.message === "Account not activated") {
+      return res.status(401).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
