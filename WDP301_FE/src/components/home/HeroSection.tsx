@@ -1,4 +1,4 @@
-import { Select } from "antd";
+import { Select, Input, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import "./HeroSection.css";
 
@@ -18,30 +18,55 @@ const HeroSection = () => {
         <p className="hero-desc">
           Thương hiệu cơm tấm hàng đầu dành cho sinh viên
         </p>
-        <div className="hero-form">
+        <div className="hero-form" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <Select
             defaultValue="Chọn cửa hàng"
             suffixIcon={<DownOutlined style={{ color: "#F9A14D" }} />}
             style={{
-              minWidth: 170,
+              width: 150,
+              height: 40,
               background: "#fff",
               borderColor: "#F9A14D",
+              borderRadius: 10,
               color: "#a05a13",
             }}
             popupClassName="custom-ant-select-dropdown"
             className="custom-ant-select"
           >
-            <Option disabled>Chọn cửa hàng</Option>
+            <Option disabled value="Chọn cửa hàng">Chọn cửa hàng</Option>
             <Option value="Cửa hàng 1">Cửa hàng 1</Option>
             <Option value="Cửa hàng 2">Cửa hàng 2</Option>
           </Select>
-          <div className="address-input-group">
-            <input type="text" placeholder="Địa chỉ giao hàng" />
-            <button type="button" className="location-btn">
-              Vị trí hiện tại
-            </button>
-          </div>
-          <button className="confirm-btn">Xác nhận</button>
+          <Input
+            placeholder="Địa chỉ giao hàng"
+            style={{
+              width: 200,
+              height: 40,
+              borderColor: "#F9A14D",
+              background: "#fff",
+              color: "#a05a13",
+            }}
+          />
+          <Button
+            style={{
+              height: 40,
+              background: "#fff",
+              borderColor: "#F9A14D",
+              color: "#a05a13",
+            }}
+          >
+            Vị trí hiện tại
+          </Button>
+          <Button
+            style={{
+              height: 40,
+              background: "#F9A14D",
+              border: "none",
+              color: "#fff",
+            }}
+          >
+            Xác nhận
+          </Button>
         </div>
       </div>
     </section>

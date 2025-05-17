@@ -49,7 +49,7 @@ const WhyChooseUs: React.FC = () => {
             marginTop: '10px',
           }}
         >
-          TẠI SAO CHỌN CƠM <span style={{ color: '#f26d21' }}>TẤM TẮC</span>?
+          TẠI SAO CHỌN CƠM <span style={{ color: '#f26d21' }}>TẤM</span> <span style={{ color: '#78a243' }}>TẮC</span>?
         </h2>
         
         <Row gutter={[24, 24]} justify="center" style={{ maxWidth: '1200px', margin: '0 auto' }}>

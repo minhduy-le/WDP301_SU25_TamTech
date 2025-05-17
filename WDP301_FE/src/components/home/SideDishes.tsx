@@ -45,7 +45,7 @@ const SideDishes: React.FC = () => {
     <section
       style={{
         padding: '40px 0',
-        background: 'linear-gradient(to bottom, #fef9f4)',
+        background: 'linear-gradient(to bottom, #f2d884)',
       }}
     >
       <div className="container mx-auto px-4">
