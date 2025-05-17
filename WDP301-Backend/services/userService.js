@@ -269,6 +269,34 @@ const userService = {
       ],
     });
   },
+
+  async resetPassword(password, userId) {
+    // Validation
+    if (!password || password.length < 6 || password.length > 250) {
+      throw new Error("Invalid input");
+    }
+
+    // Find user by userId
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Verify reset token (using email derived from user)
+    const storedToken = await redisClient.get(`reset:${user.email}`);
+    if (!storedToken) {
+      throw new Error("Token mismatch");
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update password
+    await user.update({ password: hashedPassword });
+
+    // Clean up token
+    await redisClient.del(`reset:${user.email}`);
+  },
 };
 
 module.exports = userService;

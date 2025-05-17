@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userService = require("../services/userService");
+const verifyToken = require("../middlewares/verifyToken");
 
 /**
  * @swagger
@@ -259,6 +260,53 @@ router.post("/forgot-password", async (req, res) => {
     res.status(200).json({ message: "Password reset email sent, please check your email" });
   } catch (error) {
     if (error.message === "Invalid input") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset user password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid input or token mismatch
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/reset-password", verifyToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    await userService.resetPassword(password, req.userId);
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    if (error.message === "Invalid input" || error.message === "Token mismatch") {
       return res.status(400).json({ message: error.message });
     }
     if (error.message === "User not found") {

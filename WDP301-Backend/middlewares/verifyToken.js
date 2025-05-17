@@ -31,10 +31,11 @@ const verifyToken = (req, res, next) => {
       }
       // Extract id and role from the decoded token
       req.userId = decoded.id;
-      req.userRole = decoded.role;
-      if (!req.userId || !req.userRole) {
+      req.userRole = decoded.role || null; // Allow role to be optional
+      if (!req.userId) {
+        // Only require userId
         return res.status(401).json({
-          message: "Invalid token payload: missing id or role",
+          message: "Invalid token payload: missing id",
           status: 401,
         });
       }
