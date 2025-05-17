@@ -3,7 +3,7 @@ import "../style/Login.css";
 import APP_LOGIN from "../assets/login.png";
 import { Link } from "react-router-dom";
 
-const LoginOTP = () => {
+const VerifyOTP = () => {
   return (
     <div className="login-container">
       <div className="image-section">
@@ -40,4 +40,4 @@ const LoginOTP = () => {
   );
 };
 
-export default LoginOTP;
+export default VerifyOTP;
