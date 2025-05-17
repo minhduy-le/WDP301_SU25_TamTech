@@ -12,15 +12,16 @@ const Login = () => {
       <div className="form-section">
         <div className="form-content">
           <h1 className="title">
-            Tấm <span className="login-brown">ngon</span>,{" "}
+            Tấm <span className="login-brown">ngon, </span>{" "}
             <span className="login-green">Tắc </span>
             <span className="login-brown">nhớ!</span>
           </h1>
           <p className="subtitle">
-            s Thưởng thức cơm tấm hàng đầu dành cho sinh viên.
+            Thương hiệu cơm tấm hàng đầu dành cho sinh viên.
           </p>
-          <Input placeholder="Số điện thoại" className="input-field" />
-          <Button className="login-button">Gửi</Button>
+          <Input placeholder="Tài khoản" className="input-field" />
+          <Input placeholder="Mật khẩu" className="input-field" />
+          <Button className="login-button">Đăng nhập</Button>
           <div className="divider">
             <span className="divider-text">
               <Link to="/register">Bạn là người mới của Tấm Tắc?</Link>
