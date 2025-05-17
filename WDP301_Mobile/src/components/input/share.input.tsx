@@ -43,6 +43,7 @@ interface IProps {
   editable?: boolean;
   resetForm?: boolean;
   placeholder?: string;
+  placeholderTextColor?: string;
 }
 const ShareInput = (props: IProps) => {
   const [isFocus, setIsFocus] = useState<boolean>(false);
@@ -60,6 +61,7 @@ const ShareInput = (props: IProps) => {
     editable = true,
     resetForm = false,
     placeholder,
+    placeholderTextColor,
   } = props;
   useEffect(() => {
     if (resetForm && setValue) {
@@ -86,6 +88,7 @@ const ShareInput = (props: IProps) => {
           ]}
           secureTextEntry={secureTextEntry && !isShowPassword}
           placeholder={placeholder}
+          placeholderTextColor={APP_COLOR.BROWN}
         />
         {error && touched && (
           <Text style={{ color: "red", marginTop: 5 }}>{error}</Text>
