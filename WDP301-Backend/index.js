@@ -7,6 +7,7 @@ require("dotenv").config();
 const userRoutes = require("./routes/userRoutes");
 const productTypeRoutes = require("./routes/productTypeRoutes");
 const productRoutes = require("./routes/productRoutes");
+const branchRoutes = require("./routes/branchRoutes");
 
 const app = express();
 const port = 3000;
@@ -20,6 +21,7 @@ setupSwagger(app);
 app.use("/api/auth", userRoutes);
 app.use("/api/product-types", productTypeRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/branches", branchRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");

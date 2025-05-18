@@ -15,14 +15,21 @@ const createProduct = async (productData, imageFile) => {
     if (imageFile) {
       const fileName = `${Date.now()}_${imageFile.originalname}`;
       imageUrl = await uploadImageToFirebase(imageFile.buffer, fileName);
+      if (!imageUrl) {
+        throw httpErrors.InternalServerError("Failed to upload image to Firebase");
+      }
     }
 
-    // Create product in database
-    const product = await Product.create({
+    // Set default branchId to 1 if not provided
+    const finalProductData = {
       ...productData,
       image: imageUrl,
+      branchId: productData.branchId || 1,
       createAt: new Date(),
-    });
+    };
+
+    // Create product in database
+    const product = await Product.create(finalProductData);
 
     return product;
   } catch (error) {
@@ -30,7 +37,7 @@ const createProduct = async (productData, imageFile) => {
       throw httpErrors.BadRequest(error.message);
     }
     if (error.name === "SequelizeForeignKeyConstraintError") {
-      throw httpErrors.BadRequest("Invalid productTypeId");
+      throw httpErrors.BadRequest("Invalid productTypeId or branchId");
     }
     throw error;
   }
@@ -39,6 +46,7 @@ const createProduct = async (productData, imageFile) => {
 const getAllProducts = async () => {
   try {
     const products = await Product.findAll({
+      where: { isActive: true }, // Chỉ lấy sản phẩm có isActive là true
       attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
       include: [
         {
@@ -56,7 +64,8 @@ const getAllProducts = async () => {
 
 const getProductById = async (productId) => {
   try {
-    const product = await Product.findByPk(productId, {
+    const product = await Product.findOne({
+      where: { productId, isActive: true }, // Chỉ lấy sản phẩm có isActive là true
       include: [
         {
           model: ProductType,
@@ -66,11 +75,10 @@ const getProductById = async (productId) => {
       ],
     });
     if (!product) {
-      throw httpErrors.NotFound("Product not found");
+      throw httpErrors.NotFound("Product not found or inactive");
     }
     return product;
   } catch (error) {
-    console.error("Error in getProductById:", error); // Log lỗi chi tiết
     if (error.name === "SequelizeDatabaseError") {
       throw httpErrors.InternalServerError("Database error occurred");
     }
@@ -84,7 +92,7 @@ const getProductById = async (productId) => {
 const getProductsByTypeId = async (productTypeId) => {
   try {
     const products = await Product.findAll({
-      where: { productTypeId },
+      where: { productTypeId, isActive: true }, // Chỉ lấy sản phẩm có isActive là true
       attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
       include: [
         {
@@ -95,7 +103,7 @@ const getProductsByTypeId = async (productTypeId) => {
       ],
     });
     if (products.length === 0) {
-      throw httpErrors.NotFound("No products found for this product type");
+      throw httpErrors.NotFound("No active products found for this product type");
     }
     return products;
   } catch (error) {

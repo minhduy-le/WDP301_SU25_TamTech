@@ -92,7 +92,7 @@ router.post("/", verifyToken, upload.single("image"), async (req, res, next) => 
       description: req.body.description,
       price: req.body.price,
       productTypeId: req.body.productTypeId,
-      createBy: req.userId, // Use userId from token
+      createBy: req.userId,
     };
 
     const imageFile = req.file;
@@ -114,13 +114,13 @@ router.post("/", verifyToken, upload.single("image"), async (req, res, next) => 
  * @swagger
  * /api/products:
  *   get:
- *     summary: Get all products with their product types
+ *     summary: Get all active products with their product types
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of products with product types
+ *         description: "List of active products (isActive: true) with product types"
  *         content:
  *           application/json:
  *             schema:
@@ -182,7 +182,7 @@ router.get("/", async (req, res, next) => {
  * @swagger
  * /api/products/{id}:
  *   get:
- *     summary: Get product details by ID
+ *     summary: Get active product details by ID
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -195,7 +195,7 @@ router.get("/", async (req, res, next) => {
  *         description: Product ID
  *     responses:
  *       200:
- *         description: Product details retrieved successfully
+ *         description: "Active product (isActive: true) details retrieved successfully"
  *         content:
  *           application/json:
  *             schema:
@@ -235,7 +235,7 @@ router.get("/", async (req, res, next) => {
  *       401:
  *         description: Unauthorized
  *       404:
- *         description: Product not found
+ *         description: "Product not found or inactive"
  *       500:
  *         description: Server error
  */
@@ -266,7 +266,7 @@ router.get("/:id", async (req, res, next) => {
  * @swagger
  * /api/products/type/{typeId}:
  *   get:
- *     summary: Get products by product type ID
+ *     summary: Get active products by product type ID
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -279,7 +279,7 @@ router.get("/:id", async (req, res, next) => {
  *         description: Product type ID
  *     responses:
  *       200:
- *         description: List of products for the specified product type
+ *         description: "List of active products (isActive: true) for the specified product type"
  *         content:
  *           application/json:
  *             schema:
@@ -321,7 +321,7 @@ router.get("/:id", async (req, res, next) => {
  *       401:
  *         description: Unauthorized
  *       404:
- *         description: No products found for this product type
+ *         description: "No active products found for this product type"
  *       500:
  *         description: Server error
  */
