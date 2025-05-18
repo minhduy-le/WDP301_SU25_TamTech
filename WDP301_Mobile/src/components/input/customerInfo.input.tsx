@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingTop: 3,
     borderRadius: 10,
     height: 40,
     width: "100%",
@@ -188,7 +188,11 @@ const CustomerInforInput = (props: IProps) => {
             keyboardType={keyboardType}
             style={[
               styles.input,
-              { borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN },
+              {
+                borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
+                color: APP_COLOR.BROWN,
+                fontFamily: FONTS.regular,
+              },
             ]}
             secureTextEntry={secureTextEntry && !isShowPassword}
           />
