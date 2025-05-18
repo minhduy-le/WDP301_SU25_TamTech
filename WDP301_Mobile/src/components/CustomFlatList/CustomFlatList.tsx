@@ -5,7 +5,6 @@ import { Animated, FlatListProps, View } from "react-native";
 type CustomFlatListProps<T> = Omit<FlatListProps<T>, "ListHeaderComponent"> & {
   HeaderComponent: JSX.Element;
   StickyElementComponent: JSX.Element;
-
   TopListElementComponent: JSX.Element;
 };
 function CustomFlatList<T>({

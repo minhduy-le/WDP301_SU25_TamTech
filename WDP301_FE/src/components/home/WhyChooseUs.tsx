@@ -1,13 +1,11 @@
 import React from 'react';
-import { Row, Col, Card } from 'antd';
-import { ThumbsUp } from 'lucide-react';
+import { Row, Col } from 'antd';
 
 interface Feature {
   id: number;
   image: string;
   title: string;
   subtitle?: string;
-  description: string;
 }
 
 const features: Feature[] = [
@@ -15,70 +13,111 @@ const features: Feature[] = [
     id: 1,
     image: "https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/474725lIf/nuoc-mam-com-tam-1.jpg",
     title: "NGUYÊN LIỆU TƯƠI NGON",
-    subtitle: "AN TOÀN",
-    description: "Chúng tôi cam kết sử dụng nguyên liệu tươi mới mỗi ngày"
+    subtitle: "- AN TOÀN",
   },
   {
     id: 2,
     image: "https://static.vinwonders.com/production/Com-tam-Nha-Trang-23-1.jpeg",
     title: "CÔNG THỨC ƯỚP ĐỘC QUYỀN",
-    subtitle: "NGON CHUẨN VỊ",
-    description: "Công thức gia truyền được phát triển bởi các đầu bếp hàng đầu"
+    subtitle: "- NGON CHUẨN VỊ",
   },
   {
     id: 3,
     image: "https://expleo.co.nz/cdn/shop/products/100600147.jpg?v=1584848322",
-    title: "GIÁ CẢ PHẢI CHĂNG",
-    subtitle: "HỢP LÝ",
-    description: "Giá cả hợp lý cho sinh viên và mọi đối tượng khách hàng"
+    title: "",
+    subtitle: "GIÁ CẢ PHẢI CHĂNG",
   },
 ];
 
 const WhyChooseUs: React.FC = () => {
   return (
-    <section className="py-16 bg-com-tam-cream" id="about" style={{ background: 'linear-gradient(to bottom, #fff7ed, #ffffff)' }}>
-      <div style={{ background: '#efe6db', padding: '2rem 3rem' }} className="container">
-         <h2
+    <section
+      style={{
+        background: 'linear-gradient(to bottom, #efe6db, #efe6db)',
+        fontFamily: 'Playfair Display, serif',
+        display: 'flex',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+            width: '100%',
+            maxWidth: '1200px', 
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '2rem',
+            flexWrap: 'wrap', 
+            
+        }}
+      >
+        <h2
           style={{
-            fontSize: '40px',
+            fontSize: '35px',
             fontWeight: 'bold',
             textAlign: 'center',
-            marginBottom: '30px',
             color: '#000',
             letterSpacing: '1px',
-            marginTop: '10px',
+            marginTop: '30px',
+            
           }}
         >
-          TẠI SAO CHỌN CƠM <span style={{ color: '#f97316' }}>TẤM TẮC</span>?
+          TẠI SAO CHỌN CƠM{' '}
+          <span style={{ color: '#f26d21' }}>TẤM</span>{' '}
+          <span style={{ color: '#78a243' }}>TẮC</span>?
         </h2>
-        
-        <Row gutter={[16, 16]} justify="center">
+
+        <Row gutter={[24, 24]} justify="center">
           {features.map((feature) => (
-            <Col key={feature.id} xs={24} sm={12} md={7}>
-              <Card
-                cover={
-                  <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
-                    <img
-                      alt={feature.title}
-                      src={feature.image}
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                }
-                bodyStyle={{ textAlign: 'center', padding: '16px' }}
+            <Col key={feature.id} xs={24} sm={12} md={8}>
+              <div
+                style={{
+                  textAlign: 'center',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  margin: '0 40px 0 40px',
+                }}
               >
-                <div style={{ marginBottom: '8px' }}>
-                  <ThumbsUp style={{ marginRight: '8px', color: '#f97316' }} />
+                <img
+                  alt={feature.title}
+                  src={feature.image}
+                  style={{
+                    width: '300px',
+                    height: '250px',
+                    objectFit: 'cover',
+                    borderRadius: '10px',
+                    display: 'block',
+                  }}
+                />
+                <div style={{ padding: '16px', fontFamily: 'Playfair Display' }}>
+                  <h3
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      marginBottom: feature.id === 3 ? '16px' : '4px',
+                      color: '#000',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {feature.title}
+                  </h3>
+                  {feature.subtitle && (
+                    <h3
+                      style={{
+                        color: '#000',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        marginTop: feature.id === 3 ? '0' : '8px',
+                        textTransform: 'none',
+                        letterSpacing: 0,
+                        textAlign: 'center',
+                        lineHeight: '1.5',
+                      }}
+                    >
+                      {feature.subtitle}
+                    </h3>
+                  )}
                 </div>
-                <h3 className="text-lg font-bold mb-1">{feature.title}</h3>
-                {feature.subtitle && (
-                  <p style={{ marginRight: '8px', color: '#f97316', fontSize: '16px', fontWeight: 'bold' }}>{feature.subtitle}</p>
-                )}
-              </Card> 
+              </div>
             </Col>
           ))}
         </Row>

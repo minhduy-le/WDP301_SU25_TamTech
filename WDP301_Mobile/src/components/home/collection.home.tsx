@@ -36,7 +36,7 @@ interface IPropsProduct {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    backgroundColor: APP_COLOR.WHITE,
+    backgroundColor: APP_COLOR.YELLOW,
   },
   sale: {
     marginTop: 10,
@@ -157,7 +157,9 @@ const CollectionHome = (props: IProps) => {
 
   return (
     <>
-      <View style={{ height: 10, backgroundColor: APP_COLOR.YELLOW }}></View>
+      <View
+        style={{ height: 10, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+      ></View>
       {loading === false ? (
         <View style={styles.container}>
           <View
@@ -191,7 +193,7 @@ const CollectionHome = (props: IProps) => {
             >
               <Text
                 style={{
-                  color: "#5a5a5a",
+                  color: APP_COLOR.BROWN,
                   fontFamily: FONTS.medium,
                   fontSize: 17,
                 }}
@@ -199,33 +201,47 @@ const CollectionHome = (props: IProps) => {
                 Xem tất cả
               </Text>
               <MaterialIcons
-                style={{ marginTop: 3 }}
                 name="navigate-next"
                 size={20}
-                color="grey"
+                color={APP_COLOR.BROWN}
               />
             </Pressable>
           </View>
-
           <FlatList
             data={restaurants}
             horizontal
-            contentContainerStyle={{ gap: 7 }}
+            contentContainerStyle={{
+              gap: 7,
+              paddingRight: 10,
+              marginBottom: 10,
+            }}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
-            renderItem={({ item }: { item: IPropsProduct }) => {
+            renderItem={({
+              item,
+              index,
+            }: {
+              item: IPropsProduct;
+              index: number;
+            }) => {
               const quantity = getItemQuantity(item.productId);
+              const isLastItem = index === restaurants.length - 1;
               return (
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
                     style={{
-                      backgroundColor: "#efefef",
+                      backgroundColor: APP_COLOR.YELLOW,
                       borderRadius: 10,
                       marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: APP_COLOR.BROWN,
+                      gap: 5,
+                      marginHorizontal: 5,
+                      marginRight: isLastItem ? 10 : 5,
                     }}
                   >
                     <Image
-                      style={{ height: 130, width: 130, borderRadius: 10 }}
+                      style={{ height: 130, width: 140, borderRadius: 10 }}
                       source={{ uri: item.productImage }}
                     />
                     <View style={{ padding: 5 }}>
@@ -237,15 +253,18 @@ const CollectionHome = (props: IProps) => {
                           maxWidth: 130,
                           fontFamily: FONTS.medium,
                           fontSize: 17,
+                          color: APP_COLOR.BROWN,
                         }}
                       >
                         {item.productName}
                       </Text>
                       <Text
                         style={{
-                          color: "#5a5a5a",
-                          fontFamily: FONTS.medium,
+                          color: APP_COLOR.BROWN,
+                          fontFamily: FONTS.bold,
                           fontSize: 17,
+                          position: "relative",
+                          left: 50,
                         }}
                       >
                         {currencyFormatter(item.productPrice)}
@@ -267,15 +286,22 @@ const CollectionHome = (props: IProps) => {
                         disabled={quantity === 0}
                       >
                         <AntDesign
-                          name="minussquareo"
+                          name="minuscircle"
                           size={24}
                           color={
-                            quantity > 0 ? APP_COLOR.ORANGE : APP_COLOR.GREY
+                            quantity > 0 ? APP_COLOR.ORANGE : APP_COLOR.BROWN
                           }
                         />
                       </Pressable>
 
-                      <Text style={{ minWidth: 25, textAlign: "center" }}>
+                      <Text
+                        style={{
+                          minWidth: 25,
+                          textAlign: "center",
+                          fontFamily: FONTS.medium,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
                         {quantity}
                       </Text>
 
@@ -286,14 +312,13 @@ const CollectionHome = (props: IProps) => {
                         })}
                       >
                         <AntDesign
-                          name="plussquare"
+                          name="pluscircle"
                           size={24}
                           color={APP_COLOR.ORANGE}
                         />
                       </Pressable>
                     </View>
                   </View>
-                  <View style={{ marginBottom: 20 }}></View>
                 </Pressable>
               );
             }}

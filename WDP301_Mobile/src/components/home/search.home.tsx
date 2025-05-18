@@ -1,33 +1,50 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { router } from "expo-router";
+import { APP_COLOR } from "@/utils/constant";
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#eee",
-    gap: 5,
+    backgroundColor: APP_COLOR.WHITE,
+    gap: 10,
     flexDirection: "row",
-    margin: 5,
-    paddingHorizontal: 3,
-    paddingVertical: 7,
-    borderRadius: 3,
+    margin: 10,
+    borderRadius: 30,
+    width: "95%",
+    height: 45,
+    borderWidth: 1,
+    borderColor: APP_COLOR.BROWN,
+    marginHorizontal: "auto",
+    marginTop: 20,
+  },
+  safeArea: {
+    flex: 1,
+    paddingTop: 10,
   },
 });
 const SearchHome = () => {
   return (
-    <Pressable
-      onPress={() => router.navigate("/(auth)/search")}
-      style={styles.container}
-    >
-      <EvilIcons name="search" size={20} color="black" />
-      <Text
-        style={{
-          color: "#707070",
-        }}
+    <SafeAreaView style={styles.safeArea}>
+      <Pressable
+        onPress={() => router.navigate("/(auth)/search")}
+        style={styles.container}
       >
-        Chọn địa chỉ bạn muốn giao đến
-      </Text>
-    </Pressable>
+        <EvilIcons
+          style={{ marginVertical: "auto", marginLeft: 10 }}
+          name="search"
+          size={20}
+          color={APP_COLOR.BROWN}
+        />
+        <Text
+          style={{
+            color: APP_COLOR.BROWN,
+            marginVertical: "auto",
+          }}
+        >
+          Chọn địa chỉ bạn muốn giao đến
+        </Text>
+      </Pressable>
+    </SafeAreaView>
   );
 };
 

@@ -1,20 +1,29 @@
 import { Tabs } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import Octicons from "@expo/vector-icons/Octicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { APP_COLOR, APP_FONT } from "@/utils/constant";
-import { View } from "react-native";
+import { APP_COLOR } from "@/utils/constant";
+import { StyleSheet, View } from "react-native";
 import { FONTS } from "@/theme/typography";
 import Entypo from "@expo/vector-icons/Entypo";
 const TabLayout = () => {
   const getIcons = (routeName: string, focused: boolean, size: number) => {
+    const styles = StyleSheet.create({
+      qrIcon: {
+        width: size + 40,
+        height: size + 35,
+        borderRadius: 30,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+    });
     if (routeName === "index") {
       return (
         <MaterialCommunityIcons
           name="food-fork-drink"
           size={size}
-          color={focused ? APP_COLOR.ORANGE : APP_COLOR.GREY}
+          color={focused ? APP_COLOR.ORANGE : APP_COLOR.BROWN}
         />
       );
     }
@@ -23,39 +32,27 @@ const TabLayout = () => {
         <MaterialIcons
           name="list-alt"
           size={size}
-          color={focused ? APP_COLOR.ORANGE : APP_COLOR.GREY}
+          color={focused ? APP_COLOR.ORANGE : APP_COLOR.BROWN}
         />
       );
     }
 
     if (routeName === "qr") {
       return focused ? (
-        <View
-          style={{
-            width: size + 25,
-            height: size + 25,
-            borderRadius: (size + 25) / 2,
-            backgroundColor: "#fff",
-            justifyContent: "center",
-            alignItems: "center",
-            elevation: 5,
-          }}
-        >
-          <AntDesign name="qrcode" size={size + 5} color={APP_COLOR.ORANGE} />
+        <View style={styles.qrIcon}>
+          <MaterialCommunityIcons
+            name="qrcode-scan"
+            size={35}
+            color={APP_COLOR.ORANGE}
+          />
         </View>
       ) : (
-        <View
-          style={{
-            width: size + 25,
-            height: size + 25,
-            borderRadius: (size + 25) / 2,
-            backgroundColor: "#fff",
-            justifyContent: "center",
-            alignItems: "center",
-            elevation: 5,
-          }}
-        >
-          <AntDesign name="qrcode" size={size + 5} color={APP_COLOR.GREY} />
+        <View style={styles.qrIcon}>
+          <MaterialCommunityIcons
+            name="qrcode-scan"
+            size={35}
+            color={APP_COLOR.BROWN}
+          />
         </View>
       );
     }
@@ -64,7 +61,7 @@ const TabLayout = () => {
       return focused ? (
         <Entypo name="chat" size={24} color={APP_COLOR.ORANGE} />
       ) : (
-        <Entypo name="chat" size={24} color={APP_COLOR.GREY} />
+        <Entypo name="chat" size={24} color={APP_COLOR.BROWN} />
       );
     }
 
@@ -79,18 +76,17 @@ const TabLayout = () => {
         <MaterialCommunityIcons
           name="account-outline"
           size={size}
-          color={APP_COLOR.GREY}
+          color={APP_COLOR.BROWN}
         />
       );
     }
-
     return <></>;
   };
 
   return (
     <Tabs
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, size }) => {
           return getIcons(route.name, focused, size);
         },
         headerShown: false,
@@ -100,11 +96,12 @@ const TabLayout = () => {
           fontSize: 12,
         },
         tabBarActiveTintColor: APP_COLOR.ORANGE,
+        tabBarInactiveTintColor: APP_COLOR.BROWN,
         tabBarStyle: {
           borderTopWidth: 0,
-          height: 50,
+          height: 60,
           paddingBottom: 5,
-          backgroundColor: "#fff",
+          backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
         },
         tabBarLabel:
           route.name === "qr"
