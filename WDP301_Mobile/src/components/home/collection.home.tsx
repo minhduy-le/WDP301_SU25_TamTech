@@ -150,11 +150,6 @@ const CollectionHome = (props: IProps) => {
     return cart[restaurant._id]?.items[itemId]?.quantity || 0;
   };
 
-  const backend =
-    Platform.OS === "android"
-      ? process.env.EXPO_PUBLIC_ANDROID_API_URL
-      : process.env.EXPO_PUBLIC_IOS_API_URL;
-
   return (
     <>
       <View

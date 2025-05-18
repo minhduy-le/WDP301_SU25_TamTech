@@ -98,6 +98,16 @@ const ShareButton = (props: IProps) => {
                   <Zocial name="guest" size={24} color={APP_COLOR.WHITE} />
                 </>
               );
+            case "Tạo đơn hàng":
+              return (
+                <>
+                  <AntDesign
+                    name="shoppingcart"
+                    size={24}
+                    color={APP_COLOR.WHITE}
+                  />
+                </>
+              );
             default:
               return (
                 <>

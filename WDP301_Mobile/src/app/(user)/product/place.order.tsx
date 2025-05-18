@@ -1,7 +1,7 @@
 import { useCurrentApp } from "@/context/app.context";
 import { FONTS } from "@/theme/typography";
 import { jwtDecode } from "jwt-decode";
-import { currencyFormatter, placeOrderAPI } from "@/utils/api";
+import { currencyFormatter } from "@/utils/api";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -231,9 +231,17 @@ const PlaceOrderPage = () => {
       gap: 3,
       height: 50,
     },
-    location: {
+    locationText: { color: APP_COLOR.BROWN, fontFamily: FONTS.medium },
+    customersInfo: {
       flexDirection: "row",
-      alignItems: "flex-end",
+      marginLeft: 10,
+    },
+    cusInfo: {
+      fontFamily: FONTS.medium,
+      fontSize: 17,
+      color: APP_COLOR.BROWN,
+      position: "relative",
+      bottom: 2,
     },
     modalContainer: {
       flex: 1,
@@ -279,7 +287,7 @@ const PlaceOrderPage = () => {
       fontFamily: FONTS.regular,
       fontSize: 17,
       marginBottom: 8,
-      color: APP_COLOR.GREY,
+      color: APP_COLOR.BROWN,
     },
     dropdown: {
       flexDirection: "row",
@@ -290,16 +298,16 @@ const PlaceOrderPage = () => {
       padding: 10,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: APP_COLOR.ORANGE,
+      borderColor: APP_COLOR.BROWN,
       alignItems: "center",
     },
     selectedDropdownItem: {
-      backgroundColor: APP_COLOR.ORANGE,
+      backgroundColor: APP_COLOR.BROWN,
     },
     dropdownText: {
       fontFamily: FONTS.regular,
       fontSize: 16,
-      color: APP_COLOR.ORANGE,
+      color: APP_COLOR.BROWN,
     },
     selectedDropdownText: {
       color: "white",
@@ -413,54 +421,36 @@ const PlaceOrderPage = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Pressable onPress={() => setModalVisible(true)}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        paddingTop: 30,
+      }}
+    >
+      <Pressable style={{ height: 100 }} onPress={() => setModalVisible(true)}>
         <View
           style={{
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            padding: 10,
             flexDirection: "row",
           }}
         >
           <View style={styles.headerContainer}>
-            <View style={styles.location}>
-              <Entypo
-                name="location-pin"
-                size={20}
-                color={APP_COLOR.ORANGE}
-                style={{
-                  marginRight: 10,
-                }}
-              />
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text
-                  style={{
-                    fontFamily: FONTS.medium,
-                    fontSize: 17,
-                  }}
-                >
-                  {selectedAddress ? selectedAddress.fullName : "Minh Duy"}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: FONTS.medium,
-                    fontSize: 17,
-                    color: APP_COLOR.GREY,
-                    marginLeft: 30,
-                  }}
-                >
-                  {selectedAddress ? selectedAddress.phone : "0889679561"}
-                </Text>
-              </View>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Tên khách hàng: </Text>
+              <Text style={styles.cusInfo}>
+                {selectedAddress ? selectedAddress.fullName : "FPT University"}
+              </Text>
             </View>
-            <View style={{ marginTop: 10, marginLeft: 10 }}>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Số điện thoại: </Text>
+              <Text style={styles.cusInfo}>
+                {selectedAddress ? selectedAddress.phone : "0889679561"}
+              </Text>
+            </View>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
               <Text
-                style={{
-                  fontFamily: FONTS.regular,
-                  fontSize: 17,
-                  marginLeft: 20,
-                }}
+                style={styles.cusInfo}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -472,20 +462,17 @@ const PlaceOrderPage = () => {
           </View>
         </View>
       </Pressable>
-
-      <View style={{ padding: 10 }}>
+      <ScrollView style={{ flex: 1, padding: 10 }}>
         <Text
           style={{
-            fontWeight: "600",
-            fontFamily: FONTS.regular,
+            fontFamily: FONTS.bold,
             fontSize: 20,
+            color: APP_COLOR.BROWN,
+            marginBottom: 5,
           }}
         >
-          {restaurant?.name}
+          Chi tiết đơn hàng
         </Text>
-      </View>
-
-      <ScrollView style={{ flex: 1, padding: 10 }}>
         {orderItems?.map((item, index) => {
           return (
             <View
@@ -493,40 +480,48 @@ const PlaceOrderPage = () => {
               style={{
                 gap: 10,
                 flexDirection: "row",
-                borderBottomColor: "#eee",
-                borderBottomWidth: 1,
+                paddingBottom: 5,
               }}
             >
               <Image
-                style={{ height: 50, width: 50 }}
+                style={{ height: 70, width: 70, borderRadius: 10 }}
                 source={{
                   uri: item.image,
                 }}
               />
-              <View>
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    fontFamily: FONTS.regular,
-                    fontSize: 20,
-                    paddingVertical: 10,
-                  }}
-                >
-                  {item.quantity} x
-                </Text>
-              </View>
-              <View style={{ gap: 10 }}>
+              <View style={{ flexDirection: "row" }}>
                 <Text
                   style={{
                     fontFamily: FONTS.regular,
                     fontSize: 20,
-                    paddingVertical: 10,
+                    color: APP_COLOR.BROWN,
                   }}
                 >
-                  {item.title}
+                  {item.title} x{" "}
                 </Text>
-                <Text style={{ fontSize: 12, color: APP_COLOR.GREY }}>
-                  {item.option}
+                <View>
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      fontFamily: FONTS.regular,
+                      fontSize: 20,
+                      color: APP_COLOR.BROWN,
+                    }}
+                  >
+                    {item.quantity}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontFamily: FONTS.bold,
+                    fontSize: 20,
+                    color: APP_COLOR.BROWN,
+                    position: "relative",
+                    top: 35,
+                    left: 10,
+                  }}
+                >
+                  {currencyFormatter(item.price)}
                 </Text>
               </View>
             </View>
@@ -538,13 +533,16 @@ const PlaceOrderPage = () => {
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
+                borderTopWidth: 1,
+                borderTopColor: APP_COLOR.BROWN,
               }}
             >
               <Text
                 style={{
-                  color: APP_COLOR.GREY,
-                  fontFamily: FONTS.regular,
+                  color: APP_COLOR.BROWN,
+                  fontFamily: FONTS.bold,
                   fontSize: 20,
+                  marginVertical: "auto",
                 }}
               >
                 Tổng cộng (
@@ -553,7 +551,14 @@ const PlaceOrderPage = () => {
                   cart?.[restaurant._id].quantity}{" "}
                 món)
               </Text>
-              <Text style={{ fontFamily: FONTS.regular, fontSize: 20 }}>
+              <Text
+                style={{
+                  fontFamily: FONTS.bold,
+                  fontSize: 25,
+                  color: APP_COLOR.BROWN,
+                  textDecorationLine: "underline",
+                }}
+              >
                 {currencyFormatter(
                   restaurant &&
                     cart?.[restaurant._id] &&
@@ -744,7 +749,7 @@ const PlaceOrderPage = () => {
                     justifyContent: "center",
                     borderRadius: 10,
                     paddingVertical: 10,
-                    backgroundColor: APP_COLOR.ORANGE,
+                    backgroundColor: APP_COLOR.BROWN,
                     width: "100%",
                   }}
                   pressStyle={{ alignSelf: "stretch" }}
