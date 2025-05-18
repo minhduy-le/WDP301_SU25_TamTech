@@ -1,6 +1,7 @@
 const Product = require("../models/product");
 const { uploadImageToFirebase } = require("../config/firebase");
 const httpErrors = require("http-errors");
+const ProductType = require("../models/productType");
 
 const createProduct = async (productData, imageFile) => {
   try {
@@ -35,4 +36,21 @@ const createProduct = async (productData, imageFile) => {
   }
 };
 
-module.exports = { createProduct };
+const getAllProducts = async () => {
+  try {
+    const products = await Product.findAll({
+      include: [
+        {
+          model: ProductType,
+          as: "ProductType",
+          attributes: ["productTypeId", "name"],
+        },
+      ],
+    });
+    return products;
+  } catch (error) {
+    throw httpErrors.InternalServerError("Failed to retrieve products");
+  }
+};
+
+module.exports = { createProduct, getAllProducts };
