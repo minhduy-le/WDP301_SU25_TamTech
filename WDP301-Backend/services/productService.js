@@ -39,6 +39,7 @@ const createProduct = async (productData, imageFile) => {
 const getAllProducts = async () => {
   try {
     const products = await Product.findAll({
+      attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
       include: [
         {
           model: ProductType,
@@ -53,4 +54,27 @@ const getAllProducts = async () => {
   }
 };
 
-module.exports = { createProduct, getAllProducts };
+const getProductById = async (productId) => {
+  try {
+    const product = await Product.findByPk(productId, {
+      include: [
+        {
+          model: ProductType,
+          as: "ProductType",
+          attributes: ["productTypeId", "name"],
+        },
+      ],
+    });
+    if (!product) {
+      throw httpErrors.NotFound("Product not found");
+    }
+    return product;
+  } catch (error) {
+    if (error.name === "NotFound") {
+      throw error;
+    }
+    throw httpErrors.InternalServerError("Failed to retrieve product");
+  }
+};
+
+module.exports = { createProduct, getAllProducts, getProductById };
