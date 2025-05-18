@@ -316,4 +316,73 @@ router.post("/reset-password", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/google-login:
+ *   post:
+ *     summary: Log in or register a user using Google OAuth
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idToken
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: Google ID token
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 fullName:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 phone_number:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid Google token or email
+ *       401:
+ *         description: Account is banned
+ *       500:
+ *         description: Server error
+ */
+router.post("/google-login", async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ message: "idToken is required" });
+    }
+
+    const result = await userService.googleLogin(idToken);
+    res.status(200).json(result);
+  } catch (error) {
+    if (error.message === "Invalid Google token" || error.message === "Invalid email from Google token") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "Account is banned") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message.includes("Network error") || error.message.includes("Firebase API key")) {
+      return res.status(503).json({ message: error.message });
+    }
+    console.error("Error in /google-login route:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to process Google login: " + error.message });
+  }
+});
+
 module.exports = router;

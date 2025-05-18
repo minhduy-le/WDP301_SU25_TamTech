@@ -1,27 +1,43 @@
-const { initializeApp } = require("firebase/app");
-const { getStorage, ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+require("dotenv").config(); // Load environment variables from .env file
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getStorage } = require("firebase-admin/storage");
+const { getAuth } = require("firebase-admin/auth");
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBEgp6wElu9GGzt8VSqrD4Z5JjdaHbAS0U",
-  authDomain: "course-ac11b.firebaseapp.com",
-  databaseURL: "https://course-ac11b-default-rtdb.firebaseio.com",
-  projectId: "course-ac11b",
-  storageBucket: "course-ac11b.appspot.com",
-  messagingSenderId: "504173119960",
-  appId: "1:504173119960:web:0fd66571b4fe6c260c0aad",
-  measurementId: "G-XCT1QBJVVF",
+// Construct the service account credentials from environment variables
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY,
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${process.env.FIREBASE_CLIENT_EMAIL}`,
+  universe_domain: "googleapis.com",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase Admin with service account credentials
+const app = initializeApp({
+  credential: cert(serviceAccount),
+  storageBucket: "course-ac11b.appspot.com",
+});
+
 const storage = getStorage(app);
+const auth = getAuth(app);
 
 const uploadImageToFirebase = async (imageBuffer, fileName) => {
-  const storageRef = ref(storage, `images/${fileName}`);
-  const snapshot = await uploadBytes(storageRef, imageBuffer);
-  const downloadURL = await getDownloadURL(snapshot.ref);
-  return downloadURL;
+  const bucket = storage.bucket();
+  const file = bucket.file(`images/${fileName}`);
+  await file.save(imageBuffer, {
+    metadata: { contentType: "image/jpeg" },
+  });
+  const [url] = await file.getSignedUrl({
+    action: "read",
+    expires: "03-09-2491",
+  });
+  return url;
 };
 
-module.exports = { uploadImageToFirebase };
+module.exports = { uploadImageToFirebase, auth };
