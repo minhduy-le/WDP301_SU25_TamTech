@@ -26,10 +26,12 @@ interface IPropsBranches {
 }
 const styles = StyleSheet.create({
   container: {
+    marginTop: 30,
     paddingTop: 5,
     gap: 3,
     height: 50,
-    marginBottom: 5,
+
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
   },
   location: {
     flexDirection: "row",
@@ -90,15 +92,8 @@ const styles = StyleSheet.create({
 const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
   const [location, setLocation] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [branchesInfo, setBranchInfo] = useState([]);
   const { locationReal } = useCurrentApp();
-  const branches = [
-    { id: 1, name: "Chi nhánh 1 - Hà Nội" },
-    { id: 2, name: "Chi nhánh 2 - TP HCM" },
-    { id: 3, name: "Chi nhánh 3 - Đà Nẵng" },
-    { id: 4, name: "Chi nhánh 4 - Cần Thơ" },
-  ];
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -114,8 +109,6 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
     fetchData();
   }, []);
   const handleBranchSelect = (branch: any) => {
-    console.log(branch);
-    setSelectedBranch(branch.branch.address);
     onBranchSelect(branch.branch.id);
     setIsModalVisible(false);
   };
@@ -154,31 +147,12 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={() => setIsModalVisible(true)}>
-        <Text
-          style={{
-            position: "absolute",
-            fontFamily: FONTS.regular,
-            fontSize: 17,
-            color: APP_COLOR.ORANGE,
-            left: 15,
-            width: "75%",
-          }}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {selectedBranch || "Chọn chi nhánh"}
-        </Text>
-      </Pressable>
       <View style={styles.location}>
         <Text
           style={{
-            paddingLeft: 5,
-            position: "absolute",
-            top: 25,
-            left: 10,
             fontFamily: FONTS.medium,
-            fontSize: 17,
+            fontSize: 15,
+            marginLeft: 5,
           }}
         >
           Giao đến:
@@ -189,18 +163,13 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           color={APP_COLOR.ORANGE}
           style={{
             marginLeft: 10,
-            position: "absolute",
-            top: 25,
-            left: 70,
+            marginBottom: 5,
           }}
         />
         <Text
           style={{
-            position: "absolute",
-            top: 25,
-            left: 100,
             fontFamily: FONTS.medium,
-            fontSize: 17,
+            fontSize: 15,
             width: "50%",
           }}
           numberOfLines={1}
@@ -213,15 +182,14 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
             : "Đang lấy vị trí..."}{" "}
           hoặc
         </Text>
-
         <Image
           source={logo}
           style={{
             height: 70,
-            width: 70,
+            width: 100,
             position: "absolute",
+            top: 5,
             right: 10,
-            top: 10,
             transform: [{ translateY: -25 }],
           }}
         />

@@ -169,7 +169,6 @@ const CustomerSignUpPage = () => {
               </Text>
             </Link>
           </View>
-          <SocialButton title="Đăng ký với" />
           <ShareButton
             title="Đăng Ký với Khách"
             onPress={handleSubmit}

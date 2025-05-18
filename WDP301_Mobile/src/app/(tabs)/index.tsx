@@ -99,7 +99,13 @@ const HomeTab = () => {
     id: number;
   }
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        marginBottom: 20,
+      }}
+    >
       <CustomFlatList
         data={collectionData}
         style={styles.list}
@@ -219,7 +225,7 @@ const HomeTab = () => {
           </Animated.View>
         </Animated.View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

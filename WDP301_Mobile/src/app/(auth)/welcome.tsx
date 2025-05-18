@@ -243,7 +243,8 @@ const WelcomePage = () => {
             <ShareButton
               title="Đăng nhập"
               onPress={() => {
-                router.navigate("/(auth)/verify");
+                // router.navigate("/(auth)/verify");
+                router.navigate("/(tabs)");
               }}
               textStyle={styles.loginBtnText}
               btnStyle={styles.loginBtn}

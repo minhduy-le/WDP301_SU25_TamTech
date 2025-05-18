@@ -6,7 +6,7 @@ import Carousel, {
   Pagination,
 } from "react-native-reanimated-carousel";
 
-import bn1 from "@/assets/banner/bn1.jpg";
+import bn1 from "@/assets/banner/bn1.png";
 import bn2 from "@/assets/banner/bn2.jpg";
 import bn3 from "@/assets/banner/bn3.jpg";
 
@@ -43,9 +43,10 @@ function BannerHome() {
   return (
     <View>
       <Carousel
+        style={{ marginTop: 15 }}
         ref={ref}
         width={width}
-        height={width / 4}
+        height={width / 3.5}
         data={sliders}
         onProgressChange={progress}
         renderItem={({ item, index }) => (
