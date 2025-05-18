@@ -26,16 +26,11 @@ interface IPropsBranches {
 }
 const styles = StyleSheet.create({
   container: {
-    marginTop: 30,
-    paddingTop: 5,
+    marginTop: 20,
+    paddingTop: 20,
     gap: 3,
     height: 50,
-
     backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-  },
-  location: {
-    flexDirection: "row",
-    alignItems: "flex-end",
   },
   branchModalContent: {
     backgroundColor: "white",
@@ -147,16 +142,16 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.location}>
-        <Text
-          style={{
-            fontFamily: FONTS.medium,
-            fontSize: 15,
-            marginLeft: 5,
-          }}
-        >
-          Giao đến:
-        </Text>
+      <Text
+        style={{
+          fontFamily: FONTS.bold,
+          fontSize: 15,
+          marginLeft: 5,
+        }}
+      >
+        Giao đến:
+      </Text>
+      <View style={{ flexDirection: "row" }}>
         <Entypo
           name="location-pin"
           size={20}
@@ -170,7 +165,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           style={{
             fontFamily: FONTS.medium,
             fontSize: 15,
-            width: "50%",
+            width: "70%",
           }}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -182,18 +177,18 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
             : "Đang lấy vị trí..."}{" "}
           hoặc
         </Text>
-        <Image
-          source={logo}
-          style={{
-            height: 70,
-            width: 100,
-            position: "absolute",
-            top: 5,
-            right: 10,
-            transform: [{ translateY: -25 }],
-          }}
-        />
       </View>
+      <Image
+        source={logo}
+        style={{
+          height: 80,
+          width: 120,
+          position: "absolute",
+          top: 30,
+          right: 10,
+          transform: [{ translateY: -25 }],
+        }}
+      />
 
       <Modal
         visible={isModalVisible}

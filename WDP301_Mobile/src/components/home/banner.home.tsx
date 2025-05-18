@@ -7,7 +7,7 @@ import Carousel, {
 } from "react-native-reanimated-carousel";
 
 import bn1 from "@/assets/banner/bn1.png";
-import bn2 from "@/assets/banner/bn2.jpg";
+import bn2 from "@/assets/banner/bn2.png";
 import bn3 from "@/assets/banner/bn3.jpg";
 
 function BannerHome() {

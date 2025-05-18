@@ -8,7 +8,6 @@ import { useCurrentApp } from "@/context/app.context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Pressable, Text, View, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { currencyFormatter } from "@/utils/api";
 import Animated, {
@@ -103,7 +102,6 @@ const HomeTab = () => {
       style={{
         flex: 1,
         backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-        marginBottom: 20,
       }}
     >
       <CustomFlatList
@@ -116,6 +114,7 @@ const HomeTab = () => {
         StickyElementComponent={<SearchHome />}
         TopListElementComponent={<TopListHome />}
       />
+
       {restaurant &&
         restaurant.menu.length > 0 &&
         restaurant.menu[0].menuItem.length > 0 && (
@@ -230,12 +229,6 @@ const HomeTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#ecf0f1",
-    flex: 1,
-    justifyContent: "center",
-    overflow: "hidden",
-  },
   header: {
     borderColor: "red",
     borderWidth: 5,
@@ -263,7 +256,7 @@ const styles = StyleSheet.create({
   },
   cartButton: {
     position: "absolute",
-    bottom: 20,
+    bottom: 25,
     left: 20,
     right: 20,
     backgroundColor: APP_COLOR.ORANGE,
