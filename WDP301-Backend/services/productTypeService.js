@@ -17,6 +17,18 @@ const productTypeService = {
       throw new Error("Failed to create product type");
     }
   },
+
+  async getProductTypes() {
+    try {
+      const productTypes = await ProductType.findAll({
+        attributes: ["productTypeId", "name"],
+      });
+      return productTypes;
+    } catch (error) {
+      console.error("Error fetching ProductTypes:", error.message);
+      throw new Error("Failed to fetch product types");
+    }
+  },
 };
 
 module.exports = { productTypeService };
