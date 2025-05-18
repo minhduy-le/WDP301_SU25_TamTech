@@ -17,7 +17,6 @@ const drinks: Drink[] = [
     image: "https://gachaybo.com/wp-content/uploads/2021/06/tra-dao-cam-sa.jpg",
     description: "Vị ngọt thanh, thơm mát",
     price: 35000,
-    quantity: 5,
   },
   {
     id: 2,
@@ -25,7 +24,6 @@ const drinks: Drink[] = [
     image: "https://file.huengaynay.vn/data2/image/news/2022/20220817/origin/1811660739183.jpg",
     description: "Béo ngậy, topping ngập tràn",
     price: 40000,
-    quantity: 3,
   },
   {
     id: 3,
@@ -33,7 +31,6 @@ const drinks: Drink[] = [
     image: "https://file.hstatic.net/200000528965/file/ruot-cai-thien-cac-van-de-ve-tieu-hoa_519e7933a481436a9a460b5cdfbfae27_grande.jpg",
     description: "Chua nhẹ, thơm vị trái cây",
     price: 32000,
-    quantity: 1,
   },
   {
     id: 4,
@@ -41,7 +38,6 @@ const drinks: Drink[] = [
     image: "https://static.gia-hanoi.com/uploads/2024/05/nau-nuoc-sam-bi-dao.jpg",
     description: "Thanh mát, ngọt dịu",
     price: 15000,
-    quantity: 2,
   },
 ];
 
@@ -51,6 +47,7 @@ const DrinksCollection: React.FC = () => {
       style={{
         padding: '40px 0',
         background: 'linear-gradient(to bottom, #efe6db)',
+        fontFamily: 'Playfair Display, serif',
       }}
     >
       <div className="container mx-auto px-4">
@@ -62,7 +59,7 @@ const DrinksCollection: React.FC = () => {
             marginBottom: '30px',
             color: '#000',
             letterSpacing: '1px',
-            marginTop: '10px',
+            marginTop: '0px',
           }}
         >
           ĐỒ UỐNG MÁT LẠNH
@@ -73,9 +70,12 @@ const DrinksCollection: React.FC = () => {
               <Card
                 hoverable
                 style={{
-                  borderRadius: '5px',
+                  borderRadius: '10px',
                   overflow: 'hidden',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  background: "#efe6db",
+                  fontFamily: 'Playfair Display, serif',
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 }}
                 bodyStyle={{ padding: '16px' }}
                 cover={
@@ -117,9 +117,8 @@ const DrinksCollection: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <span
                     style={{
-                      fontSize: '16px',
+                      fontSize: '17px',
                       fontWeight: 'bold',
-                      color: '#f97316',
                     }}
                   >
                     {drink.price.toLocaleString()}đ
@@ -134,6 +133,7 @@ const DrinksCollection: React.FC = () => {
                           width: '55px',
                           height: '36px',
                           borderColor: '#f97316',
+                          backgroundColor: '#efe6db',
                         }}
                       />
                     ) : null}
@@ -146,6 +146,8 @@ const DrinksCollection: React.FC = () => {
                         width: '80px',
                         height: '36px',
                         transition: 'all 0.3s ease',
+                        fontFamily: 'Playfair Display, serif',
+                        fontWeight: 'bold',
                       }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';

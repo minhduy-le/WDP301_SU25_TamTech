@@ -62,7 +62,8 @@ const SideDishes: React.FC = () => {
             marginBottom: '30px',
             color: '#000',
             letterSpacing: '1px',
-            marginTop: '10px',
+            marginTop: '0',
+            fontFamily: 'Playfair Display, serif',
           }}
         >
           MÓN ĂN KÈM
@@ -73,9 +74,13 @@ const SideDishes: React.FC = () => {
               <Card
                 hoverable
                 style={{
-                  borderRadius: '5px',
+                  borderRadius: '10px',
                   overflow: 'hidden',
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  background: "#efe6db",
+                  fontFamily: 'Playfair Display, serif',
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 }}
                 bodyStyle={{ padding: '16px' }}
                 cover={
@@ -117,9 +122,8 @@ const SideDishes: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                   <span
                     style={{
-                      fontSize: '16px',
+                      fontSize: '17px',
                       fontWeight: 'bold',
-                      color: '#f97316',
                     }}
                   >
                     {dish.price.toLocaleString()}đ
@@ -134,6 +138,7 @@ const SideDishes: React.FC = () => {
                           width: '55px',
                           height: '36px',
                           borderColor: '#f97316',
+                          backgroundColor: '#efe6db',
                         }}
                       />
                     ) : null}
@@ -146,6 +151,8 @@ const SideDishes: React.FC = () => {
                         width: '80px',
                         height: '36px',
                         transition: 'all 0.3s ease',
+                        fontFamily: 'Playfair Display, serif',
+                        fontWeight: 'bold',
                       }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLElement).style.backgroundColor = '#fb923c';
