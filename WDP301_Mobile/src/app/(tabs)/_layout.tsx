@@ -42,7 +42,7 @@ const TabLayout = () => {
         <View style={styles.qrIcon}>
           <MaterialCommunityIcons
             name="qrcode-scan"
-            size={3535}
+            size={35}
             color={APP_COLOR.ORANGE}
           />
         </View>

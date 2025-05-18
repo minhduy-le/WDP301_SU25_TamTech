@@ -1,4 +1,13 @@
-import { Text, View, StyleSheet, Image, Alert } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
 import ShareButton from "components/button/share.button";
 import { APP_COLOR, BASE_URL } from "utils/constant";
 import TextBetweenLine from "@/components/button/text.between.line";
@@ -23,6 +32,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     marginTop: 30,
+    zIndex: 9999,
   },
   welcomeText: {
     flex: 0.4,
@@ -30,7 +40,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerText: {
-    top: 5,
+    bottom: 40,
     fontSize: 20,
     color: "#632713",
     fontFamily: FONTS.regular,
@@ -43,11 +53,11 @@ const styles = StyleSheet.create({
   welcomeBtn: {
     paddingHorizontal: 30,
     flex: 0.3,
-    gap: 30,
+    gap: 20,
   },
   signUpText: {
     textDecorationLine: "underline",
-    color: "#632713",
+    color: APP_COLOR.BROWN,
     fontFamily: FONTS.bold,
   },
   welcomeLoginBtn: {
@@ -74,7 +84,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: "#632713",
   },
-  hrefLink: { marginTop: 4 },
+  hrefLink: { marginTop: 5 },
   loginBtnText: {
     ...typography.labelLarge,
     color: APP_COLOR.WHITE,
@@ -197,92 +207,92 @@ const WelcomePage = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
-      <View style={styles.container}>
-        <View style={styles.welcomeText}>
-          <Image style={styles.imgLogo} source={logo} />
-          <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.container}>
+          <View style={styles.welcomeText}>
+            <Image style={styles.imgLogo} source={logo} />
+            <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+
+            <View style={styles.welcomeBtn}>
+              <TextBetweenLine
+                title="Đăng nhập với"
+                textStyle={typography.bodyMedium}
+              />
+              <View>
+                <Formik
+                  validationSchema={CustomerSignInSchema}
+                  initialValues={{ phoneNumber: "", password: "" }}
+                  onSubmit={(values, { resetForm }) =>
+                    handleLogin(values.phoneNumber, values.password, resetForm)
+                  }
+                >
+                  {({
+                    handleChange,
+                    handleBlur,
+                    handleSubmit,
+                    resetForm,
+                    values,
+                    errors,
+                    touched,
+                  }) => (
+                    <View>
+                      <ShareInput
+                        placeholder="Đăng nhập bằng email"
+                        keyboardType="ascii-capable"
+                        onChangeText={handleChange("phoneNumber")}
+                        onBlur={handleBlur("phoneNumber")}
+                        value={values.phoneNumber}
+                        error={errors.phoneNumber}
+                        touched={touched.phoneNumber}
+                      />
+                    </View>
+                  )}
+                </Formik>
+              </View>
+              <View style={{ flexDirection: "row" }}>
+                <ShareButton
+                  title="Đăng nhập"
+                  onPress={() => {
+                    // router.navigate("/(auth)/verify");
+                    router.navigate("/(tabs)");
+                  }}
+                  textStyle={styles.loginBtnText}
+                  btnStyle={styles.loginBtn}
+                  pressStyle={{ alignSelf: "stretch" }}
+                />
+                <ShareButton
+                  onPress={handleQuickLogin}
+                  textStyle={styles.loginBtnText}
+                  btnStyle={styles.loginBtnFast}
+                  pressStyle={{ alignSelf: "stretch" }}
+                />
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Text style={styles.normalText}>Chưa có tài khoản?</Text>
+              <Link href={"/(auth)/customer.signup"} style={styles.hrefLink}>
+                <Text style={styles.signUpText}>Đăng ký.</Text>
+              </Link>
+            </View>
+          </View>
         </View>
-        <View style={styles.welcomeBtn}>
-          <TextBetweenLine
-            title="Đăng nhập với"
-            textStyle={typography.bodyMedium}
-          />
-          <View>
-            <Formik
-              validationSchema={CustomerSignInSchema}
-              initialValues={{ phoneNumber: "", password: "" }}
-              onSubmit={(values, { resetForm }) =>
-                handleLogin(values.phoneNumber, values.password, resetForm)
-              }
-            >
-              {({
-                handleChange,
-                handleBlur,
-                handleSubmit,
-                resetForm,
-                values,
-                errors,
-                touched,
-              }) => (
-                <View>
-                  <ShareInput
-                    placeholder="Đăng nhập bằng email"
-                    keyboardType="number-pad"
-                    onChangeText={handleChange("phoneNumber")}
-                    onBlur={handleBlur("phoneNumber")}
-                    value={values.phoneNumber}
-                    error={errors.phoneNumber}
-                    touched={touched.phoneNumber}
-                  />
-                </View>
-              )}
-            </Formik>
-          </View>
-          <View style={styles.welcomeLoginBtn}>
-            <ShareButton
-              title="Đăng nhập"
-              onPress={() => {
-                // router.navigate("/(auth)/verify");
-                router.navigate("/(tabs)");
-              }}
-              textStyle={styles.loginBtnText}
-              btnStyle={styles.loginBtn}
-              pressStyle={{ alignSelf: "stretch" }}
-            />
-            <ShareButton
-              onPress={handleQuickLogin}
-              textStyle={styles.loginBtnText}
-              btnStyle={styles.loginBtnFast}
-              pressStyle={{ alignSelf: "stretch" }}
-            />
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              justifyContent: "center",
-            }}
-          >
-            <Text style={styles.normalText}>Chưa có tài khoản?</Text>
-            <Link href={"/(auth)/customer.signup"} style={styles.hrefLink}>
-              <Text style={styles.signUpText}>Đăng ký.</Text>
-            </Link>
-          </View>
-        </View>
-      </View>
-      <Image
-        source={footerFrame}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          right: 0,
-          width: 250,
-          height: 250,
-          resizeMode: "contain",
-        }}
-      />
-    </View>
+        <Image
+          source={footerFrame}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 200,
+            height: 200,
+            resizeMode: "contain",
+          }}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -36,7 +36,7 @@ const PopupSalePage = () => {
               justifyContent: "center",
               alignItems: "center",
               position: "relative",
-              right: -150,
+              right: -120,
               top: 35,
               zIndex: 9999,
             }}
@@ -52,8 +52,8 @@ const PopupSalePage = () => {
           <Image
             source={bannerImg}
             style={{
-              height: 800,
-              width: 350,
+              height: 700,
+              width: 300,
               borderRadius: 30,
             }}
           />

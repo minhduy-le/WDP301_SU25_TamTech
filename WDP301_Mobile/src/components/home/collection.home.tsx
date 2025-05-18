@@ -36,7 +36,7 @@ interface IPropsProduct {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    backgroundColor: APP_COLOR.WHITE,
+    backgroundColor: APP_COLOR.YELLOW,
   },
   sale: {
     marginTop: 10,
@@ -210,11 +210,22 @@ const CollectionHome = (props: IProps) => {
           <FlatList
             data={restaurants}
             horizontal
-            contentContainerStyle={{ gap: 7 }}
+            contentContainerStyle={{
+              gap: 7,
+              paddingRight: 10,
+              marginBottom: 10,
+            }}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
-            renderItem={({ item }: { item: IPropsProduct }) => {
+            renderItem={({
+              item,
+              index,
+            }: {
+              item: IPropsProduct;
+              index: number;
+            }) => {
               const quantity = getItemQuantity(item.productId);
+              const isLastItem = index === restaurants.length - 1;
               return (
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
@@ -222,6 +233,11 @@ const CollectionHome = (props: IProps) => {
                       backgroundColor: APP_COLOR.YELLOW,
                       borderRadius: 10,
                       marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: APP_COLOR.BROWN,
+                      gap: 5,
+                      marginHorizontal: 5,
+                      marginRight: isLastItem ? 10 : 5,
                     }}
                   >
                     <Image
@@ -245,8 +261,10 @@ const CollectionHome = (props: IProps) => {
                       <Text
                         style={{
                           color: APP_COLOR.BROWN,
-                          fontFamily: FONTS.medium,
+                          fontFamily: FONTS.bold,
                           fontSize: 17,
+                          position: "relative",
+                          left: 50,
                         }}
                       >
                         {currencyFormatter(item.productPrice)}
@@ -276,7 +294,14 @@ const CollectionHome = (props: IProps) => {
                         />
                       </Pressable>
 
-                      <Text style={{ minWidth: 25, textAlign: "center" }}>
+                      <Text
+                        style={{
+                          minWidth: 25,
+                          textAlign: "center",
+                          fontFamily: FONTS.medium,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
                         {quantity}
                       </Text>
 
