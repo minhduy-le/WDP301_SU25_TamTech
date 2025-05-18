@@ -262,4 +262,90 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/products/type/{typeId}:
+ *   get:
+ *     summary: Get products by product type ID
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: typeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Product type ID
+ *     responses:
+ *       200:
+ *         description: List of products for the specified product type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       productTypeId:
+ *                         type: integer
+ *                       createBy:
+ *                         type: string
+ *                       createAt:
+ *                         type: string
+ *                         format: date-time
+ *                       productType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *       400:
+ *         description: Invalid product type ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: No products found for this product type
+ *       500:
+ *         description: Server error
+ */
+router.get("/type/:typeId", async (req, res, next) => {
+  try {
+    const typeId = parseInt(req.params.typeId);
+    if (isNaN(typeId)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Invalid product type ID",
+      });
+    }
+    const products = await productService.getProductsByTypeId(typeId);
+    res.status(200).json({
+      status: 200,
+      message: "Products retrieved successfully",
+      data: products,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
 module.exports = router;

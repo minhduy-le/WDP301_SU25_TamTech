@@ -70,6 +70,10 @@ const getProductById = async (productId) => {
     }
     return product;
   } catch (error) {
+    console.error("Error in getProductById:", error); // Log lỗi chi tiết
+    if (error.name === "SequelizeDatabaseError") {
+      throw httpErrors.InternalServerError("Database error occurred");
+    }
     if (error.name === "NotFound") {
       throw error;
     }
@@ -77,4 +81,29 @@ const getProductById = async (productId) => {
   }
 };
 
-module.exports = { createProduct, getAllProducts, getProductById };
+const getProductsByTypeId = async (productTypeId) => {
+  try {
+    const products = await Product.findAll({
+      where: { productTypeId },
+      attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
+      include: [
+        {
+          model: ProductType,
+          as: "ProductType",
+          attributes: ["productTypeId", "name"],
+        },
+      ],
+    });
+    if (products.length === 0) {
+      throw httpErrors.NotFound("No products found for this product type");
+    }
+    return products;
+  } catch (error) {
+    if (error.name === "NotFound") {
+      throw error;
+    }
+    throw httpErrors.InternalServerError("Failed to retrieve products by type");
+  }
+};
+
+module.exports = { createProduct, getAllProducts, getProductById, getProductsByTypeId };
