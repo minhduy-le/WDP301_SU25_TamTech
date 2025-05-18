@@ -62,4 +62,41 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/product-types:
+ *   get:
+ *     summary: Retrieve all product types
+ *     tags: [ProductTypes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of product types
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   productTypeId:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/", verifyToken, async (req, res) => {
+  try {
+    const productTypes = await productTypeService.getProductTypes();
+    res.status(200).json(productTypes);
+  } catch (error) {
+    console.error("Error in GET /api/product-types:", error.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
