@@ -40,7 +40,11 @@ const EarningsChart = ({ branch }: { branch: BranchType }) => (
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="month" />
       <YAxis />
-      <Tooltip formatter={(value: any) => new Intl.NumberFormat().format(Number(value)) + " ₫"} />
+      <Tooltip
+        formatter={(value: any) =>
+          new Intl.NumberFormat().format(Number(value)) + " ₫"
+        }
+      />
       <Bar dataKey="revenue" fill="#a47706" radius={[4, 4, 0, 0]} />
     </BarChart>
   </ResponsiveContainer>
@@ -55,31 +59,30 @@ const salesData = [
 const COLORS = ["#78a243", "#da7339", "#2d1e1a"];
 
 const SalesAnalytics = () => (
-    <>
-      <div style={{ fontWeight: "bold", marginBottom: 8 }}>Sales Analytics</div>
-      <ResponsiveContainer width="100%" height={250}>
-        <PieChart>
-          <Pie
-            data={salesData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            fill="#8884d8"
-            label={false} 
-          >
-            {salesData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Legend verticalAlign="bottom" height={20}/>
-          <Tooltip formatter={(value: any) => `${value.toLocaleString()} ₫`} />
-        </PieChart>
-      </ResponsiveContainer>
-    </>
-  );
-  
+  <>
+    <div style={{ fontWeight: "bold", marginBottom: 8 }}>Sales Analytics</div>
+    <ResponsiveContainer width="100%" height={250}>
+      <PieChart>
+        <Pie
+          data={salesData}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={100}
+          fill="#8884d8"
+          label={false}
+        >
+          {salesData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Legend verticalAlign="bottom" height={20} />
+        <Tooltip formatter={(value: any) => `${value.toLocaleString()} ₫`} />
+      </PieChart>
+    </ResponsiveContainer>
+  </>
+);
 
 const MonthlyEarnings = () => {
   const [branch, setBranch] = useState<BranchType>("all");
@@ -101,8 +104,12 @@ const MonthlyEarnings = () => {
           minHeight: 200,
         }}
       >
-        <div style={{ flex: 2, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ fontWeight: "bold", marginBottom: 8 }}>Monthly Earnings</div>
+        <div
+          style={{ flex: 2, display: "flex", flexDirection: "column", gap: 16 }}
+        >
+          <div style={{ fontWeight: "bold", marginBottom: 8 }}>
+            Monthly Earnings
+          </div>
           <div style={{ display: "flex", gap: 16, flex: 1 }}>
             <div
               style={{
@@ -114,7 +121,7 @@ const MonthlyEarnings = () => {
                 paddingLeft: 10,
                 display: "flex",
                 flexDirection: "column",
-                fontSize: 16,
+                fontSize: 13,
               }}
             >
               <div style={{ marginBottom: 12 }}>
