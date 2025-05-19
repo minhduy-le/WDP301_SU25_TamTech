@@ -17,8 +17,8 @@ const Menu = () => {
       </div>
       <div style={{ display: "flex" }}>
         <div className="menu-categories">
-          <div className="category-item active">Thực đơn</div>
-          <div className="category-item">. Cơm Tấm</div>
+          <div className="category-item father">Thực đơn</div>
+          <div className="category-item active">. Cơm Tấm</div>
           <div className="category-item">. Món Gọi Thêm</div>
           <div className="category-item">. Nước Giải Khát</div>
         </div>
@@ -26,11 +26,17 @@ const Menu = () => {
           <Row gutter={[20, 20]}>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
@@ -50,11 +56,17 @@ const Menu = () => {
             </Col>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
@@ -74,11 +86,17 @@ const Menu = () => {
             </Col>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
@@ -98,11 +116,17 @@ const Menu = () => {
             </Col>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
@@ -122,11 +146,17 @@ const Menu = () => {
             </Col>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
@@ -146,11 +176,17 @@ const Menu = () => {
             </Col>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
-                <img
-                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  alt="Combo"
-                  className="card-image"
-                />
+                <div className="card-image-container">
+                  <img
+                    src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                    alt="Combo"
+                    className="card-image"
+                  />
+                  <div className="card-rating">
+                    <span className="card-rating-star">★</span>
+                    <span>1000+</span>
+                  </div>
+                </div>
                 <div className="card-content">
                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
                   <p className="card-description">
