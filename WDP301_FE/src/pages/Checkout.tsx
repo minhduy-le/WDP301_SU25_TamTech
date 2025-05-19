@@ -80,12 +80,10 @@ const Checkout = () => {
 
         {/* Right Section */}
         <Col span={12}>
-          <Card
-            title="TẤT CẢ LẦN ĐẦU HỌC"
-            className="section-card order-details"
-          >
+          <Card className="confirm-card section-card order-details">
+            <Title className="title-card">TẤM TẮC LÀNG ĐẠI HỌC</Title>
             <Text>
-              Nhập vận số sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
+              Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
             </Text>
             <div className="order-item">
               <Text>COMBO - SÀ BÌ CHƯỞNG</Text>

@@ -9,9 +9,10 @@
 }
 
 .checkout-title {
-  color: #2d1e1a;
-  font-weight: 700;
-  font-size: 40px;
+  color: #2d1e1a !important;
+  font-weight: 700 !important;
+  font-size: 40px !important;
+  font-family: "Playfair Display", serif;
 }
 
 .section-card {
@@ -19,6 +20,16 @@
   background-color: #fff;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-card {
+  background-color: #ebd187;
+}
+
+.title-card {
+  color: #2d1e1a !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
 }
 
 .section-card .ant-card-head {
