@@ -1,4 +1,4 @@
-import { Card, Button } from "antd";
+import { Card, Button, Row, Col } from "antd";
 import "../style/Menu.css";
 
 const Menu = () => {
@@ -6,154 +6,181 @@ const Menu = () => {
     <div className="menu-container">
       <div className="menu-header">
         <h1 className="menu-title">Thức đơn Tâm Tấc</h1>
-        <p className="menu-subtitle">
-          Tâm Tấc lựa chọn những món ăn ngon nhất để phục vụ bạn, tận tâm với
-          từng món ăn, từng bữa ăn của bạn.
-        </p>
-      </div>
-      <div className="menu-categories">
-        <div className="category-item active">Thức đơn</div>
-        <div className="category-item">. Cơm Tấm</div>
-        <div className="category-item">. Món Gói Thêm</div>
-        <div className="category-item">. Nước Giải Khát</div>
-        <div className="category-item">Đánh số thứ tự hàng ▼</div>
-      </div>
-      <div className="menu-items">
-        <div className="item-column">
-          <div className="item-info">
-            <p className="item-name">Thịnh Tầnh phở</p>
-            <p className="item-name">Thịnh vụn ▼</p>
-          </div>
-          <div className="item-cards">
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">99.000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">99.000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
+        <div className="menu-subtitle">
+          <div className="title-orange">Tấm Tắc </div>{" "}
+          <div>
+            là chuỗi hệ thống cửa hàng cơm tấm với mong muốn mang đến cho sinh
+            viên những bữa cơm tấm chất lượng với giá cả hợp lý, đảm bảo vệ sinh
+            an toàn thực phẩm
           </div>
         </div>
-        <div className="item-column">
-          <div className="item-info">
-            <p className="item-name">Tâm Tấc Lăng Đại hộc</p>
-            <p className="item-name">
-              Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
-            </p>
-          </div>
-          <div className="item-cards">
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">1000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">1000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
-          </div>
+      </div>
+      <div style={{ display: "flex" }}>
+        <div className="menu-categories">
+          <div className="category-item active">Thực đơn</div>
+          <div className="category-item">. Cơm Tấm</div>
+          <div className="category-item">. Món Gọi Thêm</div>
+          <div className="category-item">. Nước Giải Khát</div>
         </div>
-        <div className="item-column">
-          <div className="item-info">
-            <p className="item-name">Tâm Tấc Lăng Đại hộc</p>
-            <p className="item-name">
-              Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
-            </p>
-          </div>
-          <div className="item-cards">
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">99.000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
-            <Card className="menu-card">
-              <img
-                src="https://via.placeholder.com/150x100"
-                alt="Combo"
-                className="card-image"
-              />
-              <div className="card-content">
-                <h3 className="card-title">COMBO - SÁ BÍCHỦNG</h3>
-                <p className="card-description">
-                  - Cơm: sườn nướng, bí, chả trứng
-                  <br />
-                  - Cầnh thức ăn
-                  <br />- Nước ngột tự chọn
-                </p>
-                <div className="card-price">1000đ</div>
-                <Button className="add-button">Thêm</Button>
-              </div>
-            </Card>
-          </div>
+        <div className="menu-items">
+          <Row gutter={[20, 20]}>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">99.000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">99.000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">1000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">1000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">99.000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col span={11} className="menu-column">
+              <Card className="menu-card">
+                <img
+                  src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                  alt="Combo"
+                  className="card-image"
+                />
+                <div className="card-content">
+                  <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
+                  <p className="card-description">
+                    - Cơm: sườn nướng, bì, chả trứng
+                    <br />
+                    - Canh rau củ
+                    <br />- Nước ngọt tự chọn
+                  </p>
+                  <div
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div className="card-price">1000đ</div>
+                    <Button className="add-button">Thêm</Button>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                width: "-webkit-fill-available",
+              }}
+            >
+              {" "}
+              <Button className="custom-button">
+                Hiển Thị Thêm XX Sản Phẩm
+              </Button>
+            </Col>
+          </Row>
         </div>
       </div>
     </div>
