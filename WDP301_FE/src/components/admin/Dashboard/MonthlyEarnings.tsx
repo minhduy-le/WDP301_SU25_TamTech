@@ -60,7 +60,7 @@ const SalesAnalytics = () => (
           fill="#8884d8"
           label={false}
         >
-          {salesData.map((entry, index) => (
+          {salesData.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

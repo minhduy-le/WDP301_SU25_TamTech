@@ -1,5 +1,5 @@
 import React from "react";
-import { Row, Col, Card, Button, InputNumber } from "antd";
+import { Row, Col, Button, InputNumber } from "antd";
 
 interface Product {
   id: number;
@@ -95,7 +95,7 @@ const BestSellers: React.FC = () => {
       </h2>
       <div>
         <Row gutter={[16, 16]} justify="center">
-          {bestSellers.map((product, idx) => (
+          {bestSellers.map((product) => (
             <Col key={product.id} xs={24} sm={12} md={7}>
               <div
                 style={{
