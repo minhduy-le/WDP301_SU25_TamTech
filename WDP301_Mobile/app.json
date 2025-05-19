@@ -26,13 +26,20 @@
       },
       "scheme": "hoidanit-app",
       "package": "com.hoidanit.app",
-      "permissions": ["USE_BIOMETRICS"]
+      "permissions": [
+        "USE_BIOMETRICS"
+      ]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },
     "scheme": "hoidanit-app",
-    "plugins": ["expo-router", "expo-font", "expo-local-authentication"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-local-authentication",
+      "expo-barcode-scanner"
+    ],
     "experiments": {
       "typedRoutes": true
     }

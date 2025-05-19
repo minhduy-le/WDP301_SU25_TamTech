@@ -20,6 +20,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
+import { SafeAreaView } from "react-native-safe-area-context";
 const HomeTab = () => {
   const [mounted, setMounted] = useState(false);
   const [showCart, setShowCart] = useState(false);
