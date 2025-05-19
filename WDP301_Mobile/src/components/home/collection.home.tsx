@@ -156,9 +156,14 @@ const CollectionHome = (props: IProps) => {
       ></View>
       {loading === false ? (
         <View style={styles.container}>
-          <View
+          <Pressable
+            onPress={() =>
+              router.navigate({
+                pathname: "/(auth)/restaurants",
+                params: { id },
+              })
+            }
             style={{
-              justifyContent: "space-between",
               flexDirection: "row",
               alignItems: "center",
             }}
@@ -173,17 +178,8 @@ const CollectionHome = (props: IProps) => {
             >
               {name}
             </Text>
-            <Pressable
-              onPress={() =>
-                router.navigate({
-                  pathname: "/(auth)/restaurants",
-                  params: { id },
-                })
-              }
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
+            <View
+              style={{ position: "absolute", flexDirection: "row", right: 3 }}
             >
               <Text
                 style={{
@@ -198,9 +194,11 @@ const CollectionHome = (props: IProps) => {
                 name="navigate-next"
                 size={20}
                 color={APP_COLOR.BROWN}
+                style={{ marginTop: 2 }}
               />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
+
           <FlatList
             data={restaurants}
             horizontal
@@ -224,7 +222,7 @@ const CollectionHome = (props: IProps) => {
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
                     style={{
-                      backgroundColor: "rgba(249, 239, 57, 0.26)",
+                      backgroundColor: APP_COLOR.DARK_YELLOW,
                       borderRadius: 10,
                       marginTop: 10,
                       gap: 5,
