@@ -1,10 +1,10 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const Branch = sequelize.define(
-  "Branch",
+const Material = sequelize.define(
+  "Material",
   {
-    branchId: {
+    materialId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -13,23 +13,23 @@ const Branch = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    address: {
-      type: DataTypes.STRING(255),
+    quantity: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
-    provinnce: {
-      type: DataTypes.STRING(100),
+    storeId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    district: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
+      references: {
+        model: "stores",
+        key: "storeId",
+      },
     },
   },
   {
-    tableName: "branches",
+    tableName: "materials",
     timestamps: false,
   }
 );
 
-module.exports = Branch;
+module.exports = Material;

@@ -1,7 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const ProductType = require("./productType");
-const Branch = require("./branch");
 
 const Product = sequelize.define(
   "Product",
@@ -36,21 +34,21 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: ProductType,
+        model: "product_types",
         key: "productTypeId",
-      },
-    },
-    branchId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "branches",
-        key: "branchId",
       },
     },
     createBy: {
       type: DataTypes.STRING(50),
       allowNull: true,
+    },
+    storeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "stores",
+        key: "storeId",
+      },
     },
     isActive: {
       type: DataTypes.BOOLEAN,
@@ -63,9 +61,5 @@ const Product = sequelize.define(
     timestamps: false,
   }
 );
-
-// Thiết lập mối quan hệ
-Product.belongsTo(ProductType, { foreignKey: "productTypeId" });
-Product.belongsTo(Branch, { foreignKey: "branchId" });
 
 module.exports = Product;
