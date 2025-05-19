@@ -13,6 +13,7 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import HomePage from "./pages/HomePage";
+import Menu from "./pages/Menu";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -38,6 +39,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/menu" element={<Menu />} />
         </Route>
         <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
