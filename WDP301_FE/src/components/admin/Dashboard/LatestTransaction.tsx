@@ -1,6 +1,28 @@
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+const transactionData = {
+    transaction: [
+    { month: "Jan", revenue: 6000000 },
+    { month: "Feb", revenue: 8000000 },
+    { month: "Mar", revenue: 5000000 },
+    { month: "Apr", revenue: 9000000 },
+    { month: "May", revenue: 7000000 },
+  ],
+};
+
+
 const LatestTransaction = () => {
-    return (
-        <div
+  return (
+    <div
       style={{
         display: "flex",
         gap: 24,
@@ -15,7 +37,7 @@ const LatestTransaction = () => {
     >
       <div style={{ flex: 2, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ fontWeight: "bold", marginBottom: 8 }}>
-            Latest Transaction
+          Latest Transaction
         </div>
         <div style={{ display: "flex", gap: 16, flex: 1 }}>
           <div
@@ -30,20 +52,33 @@ const LatestTransaction = () => {
               fontSize: 16,
             }}
           >
-            <div style={{ fontWeight: "bold", marginBottom: 8 }}>Chart + Filter</div>
-            <div>
-              <p>
-                Là doanh thu chỗ này, filter tổng/từng chi nhánh, hiện chart rồi hiện so sánh tháng này, tháng trước đúng ko
-              </p>
-              <p>
-                t định hiện barchart lun á để track dc dài hạn chi nhánh đó nè
-              </p>
-            </div>
+
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={transactionData.transaction} margin={{ top: 5, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value: any) =>
+                    `${Number(value).toLocaleString()} ₫`
+                  }
+                />
+                <Legend />
+                <Line
+                  type="monotone" 
+                  dataKey="revenue"
+                  stroke="#a47706"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
     </div>
-    )
-}
+  );
+};
 
 export default LatestTransaction;
