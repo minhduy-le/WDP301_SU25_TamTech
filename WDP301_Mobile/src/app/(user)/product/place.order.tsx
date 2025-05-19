@@ -516,9 +516,9 @@ const PlaceOrderPage = () => {
                     fontFamily: FONTS.bold,
                     fontSize: 20,
                     color: APP_COLOR.BROWN,
-                    position: "relative",
+                    position: "absolute",
                     top: 35,
-                    left: 10,
+                    left: 190,
                   }}
                 >
                   {currencyFormatter(item.price)}

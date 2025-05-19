@@ -1,20 +1,20 @@
 /**
  * @swagger
  * tags:
- *   name: Branches
- *   description: Branch management endpoints
+ *   name: Stores
+ *   description: Store management endpoints
  */
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middlewares/verifyToken");
-const branchService = require("../services/branchService");
+const storeService = require("../services/storeService");
 
 /**
  * @swagger
- * /api/branches:
+ * /api/stores:
  *   post:
- *     summary: Create a new branch
- *     tags: [Branches]
+ *     summary: Create a new store
+ *     tags: [Stores]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -26,24 +26,16 @@ const branchService = require("../services/branchService");
  *             required:
  *               - name
  *               - address
- *               - provinnce
- *               - district
  *             properties:
  *               name:
  *                 type: string
- *                 description: Branch name
+ *                 description: Store name
  *               address:
  *                 type: string
- *                 description: Branch address
- *               provinnce:
- *                 type: string
- *                 description: Province of the branch
- *               district:
- *                 type: string
- *                 description: District of the branch
+ *                 description: Store address
  *     responses:
  *       201:
- *         description: Branch created successfully
+ *         description: Store created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -56,15 +48,11 @@ const branchService = require("../services/branchService");
  *                 data:
  *                   type: object
  *                   properties:
- *                     branchId:
+ *                     storeId:
  *                       type: integer
  *                     name:
  *                       type: string
  *                     address:
- *                       type: string
- *                     provinnce:
- *                       type: string
- *                     district:
  *                       type: string
  *       400:
  *         description: Invalid input
@@ -75,18 +63,16 @@ const branchService = require("../services/branchService");
  */
 router.post("/", verifyToken, async (req, res, next) => {
   try {
-    const branchData = {
+    const storeData = {
       name: req.body.name,
       address: req.body.address,
-      provinnce: req.body.provinnce,
-      district: req.body.district,
     };
 
-    const newBranch = await branchService.createBranch(branchData);
+    const newStore = await storeService.createStore(storeData);
     res.status(201).json({
       status: 201,
-      message: "Branch created successfully",
-      data: newBranch,
+      message: "Store created successfully",
+      data: newStore,
     });
   } catch (error) {
     res.status(error.status || 500).json({

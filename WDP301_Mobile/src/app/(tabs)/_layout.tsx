@@ -1,21 +1,29 @@
 import { Tabs } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { APP_COLOR } from "@/utils/constant";
 import { StyleSheet, View } from "react-native";
 import { FONTS } from "@/theme/typography";
 import Entypo from "@expo/vector-icons/Entypo";
+
 const TabLayout = () => {
   const getIcons = (routeName: string, focused: boolean, size: number) => {
     const styles = StyleSheet.create({
       qrIcon: {
-        width: size + 40,
-        height: size + 35,
+        width: 60,
+        height: 60,
         borderRadius: 30,
         backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
         justifyContent: "center",
         alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        marginBottom: 30,
       },
     });
     if (routeName === "index") {
@@ -37,21 +45,13 @@ const TabLayout = () => {
       );
     }
 
-    if (routeName === "qr") {
-      return focused ? (
+    if (routeName === "ai") {
+      return (
         <View style={styles.qrIcon}>
           <MaterialCommunityIcons
             name="qrcode-scan"
             size={35}
-            color={APP_COLOR.ORANGE}
-          />
-        </View>
-      ) : (
-        <View style={styles.qrIcon}>
-          <MaterialCommunityIcons
-            name="qrcode-scan"
-            size={35}
-            color={APP_COLOR.BROWN}
+            color={focused ? APP_COLOR.ORANGE : APP_COLOR.BROWN}
           />
         </View>
       );
@@ -80,7 +80,6 @@ const TabLayout = () => {
         />
       );
     }
-    return <></>;
   };
 
   return (
@@ -91,7 +90,7 @@ const TabLayout = () => {
         },
         headerShown: false,
         tabBarLabelStyle: {
-          paddingBottom: 3,
+          paddingBottom: 5,
           fontFamily: FONTS.bold,
           fontSize: 12,
         },
@@ -99,13 +98,14 @@ const TabLayout = () => {
         tabBarInactiveTintColor: APP_COLOR.BROWN,
         tabBarStyle: {
           borderTopWidth: 0,
-          height: 60,
+          // marginBottom: 20,
+          height: 80,
           paddingBottom: 5,
           backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
         },
         tabBarLabel:
-          route.name === "qr"
-            ? "Quét mã QR"
+          route.name === "ai"
+            ? "AI Chat"
             : route.name === "order"
             ? "Đơn hàng"
             : route.name === "index"
@@ -128,19 +128,9 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="qr"
+        name="ai"
         options={{
-          title: "Quét mã QR",
-          tabBarItemStyle: {
-            transform: [{ translateY: -20 }],
-            elevation: 10,
-          },
-          tabBarLabelStyle: {
-            position: "absolute",
-            bottom: -17,
-            fontFamily: FONTS.bold,
-            fontSize: 12,
-          },
+          title: "AI Chat",
         }}
       />
       <Tabs.Screen

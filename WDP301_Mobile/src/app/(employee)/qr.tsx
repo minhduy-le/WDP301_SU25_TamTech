@@ -7,16 +7,20 @@ import {
   Dimensions,
   Image,
   Animated,
+  SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { BarCodeScanner, BarCodeScannerResult } from "expo-barcode-scanner";
 import tamtac from "@/assets/logo.png";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { FONTS, typography } from "@/theme/typography";
 import { router } from "expo-router";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import Toast from "react-native-root-toast";
+import { Stack } from "expo-router";
+
 const { width } = Dimensions.get("window");
 
 export default function QRScanner() {
@@ -25,6 +29,7 @@ export default function QRScanner() {
   const [scanAnimation] = useState(new Animated.Value(0));
   const [scanResult, setScanResult] = useState("");
   const [decodeToken, setDecodeToken] = useState<any>("");
+
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -50,6 +55,7 @@ export default function QRScanner() {
 
     startScanAnimation();
   }, [scanAnimation]);
+
   const handleBarCodeScanned = async (scanningResult: BarCodeScannerResult) => {
     setScanned(true);
     setScanResult(scanningResult.data);
@@ -83,16 +89,19 @@ export default function QRScanner() {
 
   if (hasPermission === null) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
         <Text style={typography.bodyMedium}>
           Đang yêu cầu quyền truy cập camera...
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
+
   if (hasPermission === false) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
         <Text style={typography.bodyMedium}>
           Không có quyền truy cập camera
         </Text>
@@ -100,12 +109,23 @@ export default function QRScanner() {
           title="Yêu cầu quyền"
           onPress={() => BarCodeScanner.requestPermissionsAsync()}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: "Quét mã QR",
+          headerStyle: {
+            backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+          },
+          headerTintColor: APP_COLOR.ORANGE,
+        }}
+      />
       <View style={styles.headerContent}>
         <Image source={tamtac} style={styles.image} />
         <Text style={[typography.h2, styles.title]}>Xác nhận đơn hàng</Text>
@@ -151,7 +171,7 @@ export default function QRScanner() {
           />
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -159,22 +179,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    height: 100,
-    position: "absolute",
-    top: 40,
+    justifyContent: "center",
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   image: {
-    width: 150,
-    height: 150,
+    width: 100,
+    height: 100,
+    resizeMode: "contain",
   },
   title: {
-    marginBottom: 25,
+    marginLeft: 10,
     color: APP_COLOR.ORANGE,
     fontFamily: FONTS.regular,
   },
@@ -183,7 +202,9 @@ const styles = StyleSheet.create({
     height: width - 40,
     position: "relative",
     overflow: "hidden",
-    borderRadius: 50,
+    borderRadius: 20,
+    alignSelf: "center",
+    marginTop: 20,
   },
   scanner: {
     ...StyleSheet.absoluteFillObject,
@@ -193,79 +214,65 @@ const styles = StyleSheet.create({
   },
   unfocusedContainer: {
     flex: 1,
-    backgroundColor: "#EBD187",
-    zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.7)",
   },
   middleContainer: {
     flexDirection: "row",
-    flex: 2,
+    flex: 1.5,
   },
   focusedContainer: {
-    flex: 2,
-    position: "relative",
+    flex: 6,
   },
   cornerTopLeft: {
     position: "absolute",
-    zIndex: 999,
-    top: -10,
-    left: -10,
-    width: 40,
-    height: 40,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
+    top: 0,
+    left: 0,
+    width: 20,
+    height: 20,
+    borderLeftWidth: 3,
+    borderTopWidth: 3,
     borderColor: APP_COLOR.ORANGE,
   },
   cornerTopRight: {
     position: "absolute",
-    top: -10,
-    right: -10,
-    width: 40,
-    height: 40,
-    zIndex: 999,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
+    top: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRightWidth: 3,
+    borderTopWidth: 3,
     borderColor: APP_COLOR.ORANGE,
   },
   cornerBottomLeft: {
     position: "absolute",
-    bottom: -10,
-    left: -10,
-    zIndex: 999,
-    width: 40,
-    height: 40,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
+    bottom: 0,
+    left: 0,
+    width: 20,
+    height: 20,
+    borderLeftWidth: 3,
+    borderBottomWidth: 3,
     borderColor: APP_COLOR.ORANGE,
   },
   cornerBottomRight: {
     position: "absolute",
-    bottom: -10,
-    right: -10,
-    zIndex: 999,
-    width: 40,
-    height: 40,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
+    bottom: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
     borderColor: APP_COLOR.ORANGE,
   },
   scanningLine: {
     position: "absolute",
-    right: 70,
-    width: 207,
+    width: "100%",
     height: 2,
-    backgroundColor: "rgba(219, 122, 12, 0.54)",
-    top: 70,
-    zIndex: 1,
-  },
-  bottomText: {
-    position: "absolute",
-    bottom: 90,
+    backgroundColor: APP_COLOR.ORANGE,
   },
   reScanButtonContainer: {
     position: "absolute",
     bottom: 30,
     width: "90%",
-    paddingHorizontal: 20,
-    zIndex: 100,
+    alignSelf: "center",
   },
 });
