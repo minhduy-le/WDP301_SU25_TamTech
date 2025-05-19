@@ -1,16 +1,17 @@
 import HeroSection from "../components/home/HeroSection";
 import WhyChooseUs from "../components/home/WhyChooseUs";
 import BestSellers from "../components/home/BestSellers";
-import DrinksCollection from "../components/home/DrinksCollection";
-import SideDishes from "../components/home/SideDishes";
+import AboutUs from "../components/home/AboutUs";
+import OurMenu from "../components/home/OurMenu";
 const HomePage = () => (
   <>
     <HeroSection />
     <WhyChooseUs />
     <BestSellers />
-    <DrinksCollection />
-    <SideDishes />
+    <OurMenu/>
+    <AboutUs/>
   </>
+
 );
 
 export default HomePage;
