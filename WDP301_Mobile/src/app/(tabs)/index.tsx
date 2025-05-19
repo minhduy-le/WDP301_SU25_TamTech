@@ -19,6 +19,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
+import { FONTS } from "@/theme/typography";
 const HomeTab = () => {
   const [mounted, setMounted] = useState(false);
   const [showCart, setShowCart] = useState(false);
@@ -166,7 +167,7 @@ const HomeTab = () => {
               <AntDesign
                 name="close"
                 size={24}
-                color="grey"
+                color={APP_COLOR.BROWN}
                 onPress={() => setShowCart(false)}
               />
             </View>
@@ -216,9 +217,7 @@ const HomeTab = () => {
                   });
                 }}
               >
-                <Text style={styles.orderButtonText}>
-                  Đặt đơn - {currencyFormatter(totalPrice)}
-                </Text>
+                <Text style={styles.orderButtonText}>Đặt đơn</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -276,8 +275,8 @@ const styles = StyleSheet.create({
   cartBadge: {
     position: "absolute",
     top: -8,
-    right: 20,
-    backgroundColor: "red",
+    right: 5,
+    backgroundColor: APP_COLOR.BROWN,
     borderRadius: 12,
     minWidth: 24,
     height: 24,
@@ -342,7 +341,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
   },
   cartScroll: {
     maxHeight: 400,
@@ -359,17 +359,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cartItemTitle: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 17,
+    fontFamily: FONTS.semiBold,
+    color: APP_COLOR.BROWN,
   },
   cartItemQuantity: {
-    fontSize: 12,
-    color: APP_COLOR.GREY,
-    marginTop: 4,
+    fontSize: 15,
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.regular,
   },
   cartItemPrice: {
-    color: APP_COLOR.ORANGE,
-    fontWeight: "600",
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.regular,
+    fontSize: 17,
   },
   modalFooter: {
     marginTop: 20,
@@ -380,18 +382,21 @@ const styles = StyleSheet.create({
   orderInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
   },
   orderText: {
-    color: APP_COLOR.GREY,
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.bold,
   },
   orderPrice: {
-    fontWeight: "600",
+    fontSize: 25,
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
   },
   orderButton: {
-    backgroundColor: APP_COLOR.ORANGE,
+    backgroundColor: APP_COLOR.BROWN,
     padding: 15,
     borderRadius: 8,
+    marginBottom: 10,
   },
   orderButtonPressed: {
     opacity: 0.5,

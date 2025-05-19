@@ -19,11 +19,12 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 15,
     fontFamily: FONTS.regular,
+    color: APP_COLOR.BROWN,
   },
   input: {
     borderWidth: 1,
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingTop: 3,
     borderRadius: 10,
     height: 40,
     width: "100%",
@@ -36,7 +37,7 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    gap: 10,
   },
   checkbox: {
     width: 20,
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
     borderColor: APP_COLOR.BROWN,
   },
   checkboxChecked: {
-    backgroundColor: APP_COLOR.ORANGE,
+    backgroundColor: APP_COLOR.BROWN,
   },
   dropdown: {
     borderWidth: 1,
@@ -116,17 +117,27 @@ const CustomerInforInput = (props: IProps) => {
   if (isBoolean) {
     return (
       <View style={styles.inputGroup}>
-        {title && <Text style={styles.text}>{title}</Text>}
         <View style={styles.checkboxContainer}>
-          <TouchableOpacity
-            onPress={() => setValue && setValue(!value)}
-            style={[styles.checkbox, value && styles.checkboxChecked]}
-          >
-            {value && <FontAwesome5 name="check" size={12} color="white" />}
-          </TouchableOpacity>
-          <Text style={{ fontFamily: FONTS.medium, fontSize: 20 }}>
-            {value ? "Có" : "Không"}
-          </Text>
+          {title && <Text style={styles.text}>{title}</Text>}
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity
+              onPress={() => setValue && setValue(!value)}
+              style={[styles.checkbox, value && styles.checkboxChecked]}
+            >
+              {value && <FontAwesome5 name="check" size={12} color="white" />}
+            </TouchableOpacity>
+            <Text
+              style={{
+                fontFamily: FONTS.medium,
+                fontSize: 17,
+                color: APP_COLOR.BROWN,
+                position: "relative",
+                bottom: 2,
+              }}
+            >
+              {value ? "Có" : "Không"}
+            </Text>
+          </View>
         </View>
         {error && touched && (
           <Text style={{ color: "red", marginTop: 5 }}>{error}</Text>
@@ -177,7 +188,11 @@ const CustomerInforInput = (props: IProps) => {
             keyboardType={keyboardType}
             style={[
               styles.input,
-              { borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.GREY },
+              {
+                borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
+                color: APP_COLOR.BROWN,
+                fontFamily: FONTS.regular,
+              },
             ]}
             secureTextEntry={secureTextEntry && !isShowPassword}
           />

@@ -24,7 +24,7 @@ const User = sequelize.define(
     },
     phone_number: {
       type: DataTypes.STRING(12),
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
     isActive: {

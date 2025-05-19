@@ -216,7 +216,6 @@ const WelcomePage = () => {
           <View style={styles.welcomeText}>
             <Image style={styles.imgLogo} source={logo} />
             <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
-
             <View style={styles.welcomeBtn}>
               <TextBetweenLine
                 title="Đăng nhập với"
