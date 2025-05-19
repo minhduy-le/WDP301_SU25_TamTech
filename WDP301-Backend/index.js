@@ -10,6 +10,7 @@ const productTypeRoutes = require("./routes/productTypeRoutes");
 const storeRoutes = require("./routes/storeRoutes");
 const materialRoutes = require("./routes/materialRoutes");
 const productRoutes = require("./routes/productRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
@@ -29,6 +30,7 @@ app.use("/api/product-types", productTypeRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/materials", materialRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
