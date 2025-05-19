@@ -1,10 +1,12 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
+const Product = require("./product");
+const Material = require("./material");
 
-const Branch = sequelize.define(
-  "Branch",
+const Store = sequelize.define(
+  "Store",
   {
-    branchId: {
+    storeId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -17,19 +19,15 @@ const Branch = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    provinnce: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    district: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
   },
   {
-    tableName: "branches",
+    tableName: "stores",
     timestamps: false,
   }
 );
 
-module.exports = Branch;
+// Set up relationships
+Store.hasMany(Product, { foreignKey: "storeId", as: "Products" });
+Store.hasMany(Material, { foreignKey: "storeId", as: "Materials" });
+
+module.exports = Store;
