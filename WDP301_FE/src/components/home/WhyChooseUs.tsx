@@ -1,126 +1,89 @@
-import React from 'react';
-import { Row, Col } from 'antd';
+import React, { useEffect } from 'react';
+import { Row, Col, Typography } from 'antd';
+import './WhyChooseUs.css';
+
+const { Title, Text } = Typography;
 
 interface Feature {
   id: number;
   image: string;
   title: string;
-  subtitle?: string;
+  subtitle: string;
 }
 
 const features: Feature[] = [
   {
     id: 1,
-    image: "https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/474725lIf/nuoc-mam-com-tam-1.jpg",
-    title: "NGUYÊN LIỆU TƯƠI NGON",
-    subtitle: "- AN TOÀN",
+    image: "https://i-giadinh.vnecdn.net/2024/03/07/7Honthinthnhphm1-1709800144-8583-1709800424.jpg",
+    title: "NGUYÊN LIỆU TƯƠI NGON ĐẬM VỊ",
+    subtitle: "Cơm tấm Tắc sử dụng nguyên liệu tươi mỗi ngày, đảm bảo an toàn và chất lượng cao.",
   },
   {
     id: 2,
     image: "https://static.vinwonders.com/production/Com-tam-Nha-Trang-23-1.jpeg",
     title: "CÔNG THỨC ƯỚP ĐỘC QUYỀN",
-    subtitle: "- NGON CHUẨN VỊ",
+    subtitle: "Khám phá bí quyết ướp gia vị độc quyền mang đến hương vị chuẩn cơm tấm.",
   },
   {
     id: 3,
     image: "https://expleo.co.nz/cdn/shop/products/100600147.jpg?v=1584848322",
-    title: "",
-    subtitle: "GIÁ CẢ PHẢI CHĂNG",
+    title: "GIÁ CẢ PHẢI CHĂNG",
+    subtitle: "Chất lượng đỉnh cao với mức giá hợp lý, phù hợp cho mọi bữa ăn gia đình.",
   },
 ];
 
 const WhyChooseUs: React.FC = () => {
-  return (
-    <section
-      style={{
-        background: 'linear-gradient(to bottom, #efe6db, #efe6db)',
-        fontFamily: 'Playfair Display, serif',
-        display: 'flex',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-            width: '100%',
-            maxWidth: '1200px', 
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '2rem',
-            flexWrap: 'wrap', 
-            
-        }}
-      >
-        <h2
-          style={{
-            fontSize: '35px',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            color: '#000',
-            letterSpacing: '1px',
-            marginTop: '30px',
-            
-          }}
-        >
-          TẠI SAO CHỌN CƠM{' '}
-          <span style={{ color: '#f26d21' }}>TẤM</span>{' '}
-          <span style={{ color: '#78a243' }}>TẮC</span>?
-        </h2>
+  useEffect(() => {
+    const blocks = document.querySelectorAll('.feature-block');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-slide-in');
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
 
-        <Row gutter={[24, 24]} justify="center">
-          {features.map((feature) => (
-            <Col key={feature.id} xs={24} sm={12} md={8}>
-              <div
-                style={{
-                  textAlign: 'center',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  margin: '0 40px 0 40px',
-                }}
-              >
+    blocks.forEach((block) => observer.observe(block));
+    return () => blocks.forEach((block) => observer.unobserve(block));
+  }, []);
+
+  return (
+    <section className="why-choose-us-section">
+      <div className="why-choose-us-container">
+        <Title level={2} style={{ textAlign: 'center', fontWeight: '700', fontSize: '2.5rem', paddingBottom: '2rem' }}>
+          TẠI SAO CHỌN CƠM <span style={{ color: '#da7339' }}>TẤM</span> <span style={{ color: '#78a243' }}>TẮC</span>?
+        </Title>
+        {features.map((feature, index) => (
+          <Row
+            key={feature.id}
+            className={`feature-block ${index % 2 !== 0 ? 'reverse' : ''}`}
+            gutter={[24, 24]}
+            justify="center"
+            align="middle"
+            style={{ flexDirection: index % 2 !== 0 ? 'row-reverse' : 'row' }}
+          >
+            <Col xs={24} md={10}>
+              <div className="image-wrapper">
                 <img
                   alt={feature.title}
                   src={feature.image}
-                  style={{
-                    width: '300px',
-                    height: '250px',
-                    objectFit: 'cover',
-                    borderRadius: '10px',
-                    display: 'block',
-                  }}
+                  className="feature-image"
                 />
-                <div style={{ padding: '16px', fontFamily: 'Playfair Display' }}>
-                  <h3
-                    style={{
-                      fontSize: '18px',
-                      fontWeight: 'bold',
-                      marginBottom: feature.id === 3 ? '16px' : '4px',
-                      color: '#000',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {feature.title}
-                  </h3>
-                  {feature.subtitle && (
-                    <h3
-                      style={{
-                        color: '#000',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        marginTop: feature.id === 3 ? '0' : '8px',
-                        textTransform: 'none',
-                        letterSpacing: 0,
-                        textAlign: 'center',
-                        lineHeight: '1.5',
-                      }}
-                    >
-                      {feature.subtitle}
-                    </h3>
-                  )}
-                </div>
               </div>
             </Col>
-          ))}
-        </Row>
+            <Col xs={24} md={14}>
+              <div className="content-wrapper">
+                <Title level={3} className="feature-title">
+                  {feature.title}
+                </Title>
+                <Text className="feature-subtitle">{feature.subtitle}</Text>
+              </div>
+            </Col>
+          </Row>
+        ))}
       </div>
     </section>
   );
