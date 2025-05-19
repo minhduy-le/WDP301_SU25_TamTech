@@ -1,8 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const ProductType = require("./productType");
-const Store = require("./store");
-const ProductRecipe = require("./ProductRecipe");
 
 const Product = sequelize.define(
   "Product",
@@ -37,7 +34,7 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: ProductType,
+        model: "product_types",
         key: "productTypeId",
       },
     },
@@ -49,7 +46,7 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Store,
+        model: "stores",
         key: "storeId",
       },
     },
@@ -64,10 +61,5 @@ const Product = sequelize.define(
     timestamps: false,
   }
 );
-
-// Set up relationships
-Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
-Product.belongsTo(Store, { foreignKey: "storeId", as: "Store" });
-Product.hasMany(ProductRecipe, { foreignKey: "productId", as: "ProductRecipes" });
 
 module.exports = Product;

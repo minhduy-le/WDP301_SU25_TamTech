@@ -4,10 +4,14 @@ const setupSwagger = require("./config/swagger");
 const cors = require("cors");
 require("dotenv").config();
 
+// Import routes
 const userRoutes = require("./routes/userRoutes");
 const productTypeRoutes = require("./routes/productTypeRoutes");
-const productRoutes = require("./routes/productRoutes");
-const branchRoutes = require("./routes/branchRoutes");
+const storeRoutes = require("./routes/storeRoutes");
+const materialRoutes = require("./routes/materialRoutes");
+
+// Import associations to ensure relationships are set up
+require("./models/associations");
 
 const app = express();
 const port = 3000;
@@ -18,16 +22,17 @@ app.use(cors());
 
 setupSwagger(app);
 
+// Define routes
 app.use("/api/auth", userRoutes);
 app.use("/api/product-types", productTypeRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/branches", branchRoutes);
+app.use("/api/stores", storeRoutes);
+app.use("/api/materials", materialRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
 });
 
-// Test kết nối và đồng bộ database
+// Test database connection and synchronization
 sequelize
   .authenticate()
   .then(() => {
