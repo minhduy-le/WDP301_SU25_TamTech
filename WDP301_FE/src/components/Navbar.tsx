@@ -38,18 +38,14 @@ const Navbar = () => {
         <Button
           type="text"
           icon={<BellIcon />}
-          style={{ color: "#d97706", marginRight: "10px" }}
+          className="header-button-icon"
         />
         <Button
           type="text"
           icon={<AccountIcon />}
-          style={{ color: "#d97706", marginRight: "10px" }}
+          className="header-button-icon"
         />
-        <Button
-          type="text"
-          icon={<ShoppingCartOutlined />}
-          style={{ color: "#d97706" }}
-        />
+        <Button type="text" icon={<ShoppingCartOutlined />} />
       </div>
     </Header>
   );

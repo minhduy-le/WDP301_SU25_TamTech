@@ -36,7 +36,7 @@ const Sidebar = () => {
   const items2 = [
     {
       key: "Dashboard",
-      icon: <img src={APP_LOGO_SIDEBAR} style={{ width: "46px" }} />,
+      icon: <img src={APP_LOGO_SIDEBAR} />,
     },
     {
       key: "Dashboard",
@@ -71,65 +71,26 @@ const Sidebar = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
-        style={{
-          backgroundColor: "rgb(242 245 248 / 1)",
-          // marginTop: "64px",
-          paddingBottom: 0,
-        }}
         className="aside-sidebar"
       >
-        {/* <img
-          src={APP_LOGO_SIDEBAR}
-          style={{ background: "#da7339", display: "flex" }}
-        /> */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
-          style={{
-            height: "100%",
-            borderRight: 0,
-            backgroundColor: "transparent",
-          }}
           items={items2}
           className="bg-light-109 header-menu-sidebar"
         />
       </Sider>
 
       <Layout>
-        <Header
-          style={{
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            width: "100%",
-            borderBottom: "1px solid #EBEFF5",
-            height: "max-content",
-          }}
-          className="header-sidebar"
-        >
+        <Header className="header-sidebar">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
-              border: "none",
-              outline: "none",
-            }}
+            className="header-hamburger"
           />
 
-          <div
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              marginRight: "20px",
-              gap: 20,
-              height: 46,
-            }}
-          >
+          <div className="header-function">
             <Input
               placeholder="Tìm kiếm tác vụ..."
               suffix={<SearchOutlined />}
@@ -162,27 +123,9 @@ const Sidebar = () => {
           </div>
         </Header>
 
-        <Layout
-          style={{
-            padding: "0 24px 24px",
-            backgroundColor: "#FFF",
-          }}
-          className={"home-background"}
-        >
-          <Breadcrumb
-            style={{
-              margin: "6px 0",
-            }}
-          ></Breadcrumb>
-          <Content
-            style={{
-              padding: "0 24",
-              margin: 0,
-              minHeight: 280,
-              borderRadius: "8px",
-              background: "transparent",
-            }}
-          >
+        <Layout className={"home-background"}>
+          <Breadcrumb></Breadcrumb>
+          <Content>
             <Outlet />
           </Content>
         </Layout>

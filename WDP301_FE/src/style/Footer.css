@@ -1,12 +1,60 @@
 .ant-layout-footer {
   box-sizing: border-box;
   font-family: "Playfair Display", serif;
+  background: #da7339;
+  padding: 70px 50px;
+  color: #fff;
+  width: 100%;
+  position: absolute;
 }
 
-.ant-layout-footer h3 {
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 20px;
+}
+
+.footer-image {
+  align-content: center;
+}
+
+.footer-information {
+  text-align: left;
+  padding-left: 20px;
+  width: 210px;
+}
+
+.footer-information h3,
+.footer-contact h3 {
   color: #fff;
-  font-size: 18px;
-  margin-bottom: 10px;
+  font-size: 20px;
+  margin: 0;
+}
+
+.footer-divider {
+  border: 1px solid white;
+  margin-top: 7px;
+  margin-bottom: 16px;
+}
+
+.footer-contact {
+  text-align: left;
+  padding-left: 20px;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: center;
+}
+
+.footer-contact-item span {
+  margin-right: 8px;
+  height: 19px;
+}
+
+.footer-information a {
+  color: #fff;
 }
 
 .ant-layout-footer p {

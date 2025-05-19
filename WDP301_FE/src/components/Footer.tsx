@@ -10,101 +10,48 @@ const { Footer } = Layout;
 
 const AppFooter = () => {
   return (
-    <Footer
-      style={{
-        background: "#DA7339",
-        padding: "70px 50px",
-        color: "#fff",
-        width: "100%",
-        position: "absolute",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          padding: "0 20px",
-        }}
-      >
-        <div style={{ alignContent: "center" }}>
+    <Footer>
+      <div className="footer-container">
+        <div className="footer-image">
           <img src={APP_LOGO_FOOTER} alt="Logo" />
         </div>
-        <div style={{ textAlign: "left", paddingLeft: "20px", width: 210 }}>
-          <h3 style={{ color: "#fff", fontSize: 20, margin: 0 }}>Thông tin</h3>
-          <Divider
-            style={{
-              border: "1px solid white",
-              marginTop: 7,
-              marginBottom: 16,
-            }}
-          />
+        <div className="footer-information">
+          <h3>Thông tin</h3>
+          <Divider className="footer-divider" />
           <p>
-            <Link to="/ve-tam-tac" style={{ color: "#fff" }}>
-              Về Tâm Tác
-            </Link>
+            <Link to="/ve-tam-tac">Về Tấm Tắc</Link>
           </p>
           <p>
-            <Link to="/chuyen-com-tam" style={{ color: "#fff" }}>
-              Chuyện Cơm Tâm
-            </Link>
+            <Link to="/chuyen-com-tam">Chuyện Cơm Tấm</Link>
           </p>
         </div>
-        <div style={{ textAlign: "left", paddingLeft: "20px", width: 210 }}>
-          <h3 style={{ color: "#fff", fontSize: 20, margin: 0 }}>Dịch vụ</h3>
-          <Divider
-            style={{
-              border: "1px solid white",
-              marginTop: 7,
-              marginBottom: 16,
-            }}
-          />
+        <div className="footer-information">
+          <h3>Dịch vụ</h3>
+          <Divider className="footer-divider" />
           <p>
-            <Link to="/dat-hang" style={{ color: "#fff" }}>
-              Đặt hàng
-            </Link>
+            <Link to="/dat-hang">Đặt hàng</Link>
           </p>
           <p>
-            <Link to="/nhuong-quyen" style={{ color: "#fff" }}>
-              Nhượng quyền
-            </Link>
+            <Link to="/nhuong-quyen">Nhượng quyền</Link>
           </p>
         </div>
-        <div style={{ textAlign: "left", paddingLeft: "20px" }}>
-          <h3 style={{ color: "#fff", fontSize: 20, margin: 0 }}>Liên hệ</h3>
-          <Divider
-            style={{
-              border: "1px solid white",
-              marginTop: 7,
-              marginBottom: 16,
-            }}
-          />
-          <p style={{ display: "flex", alignItems: "center" }}>
-            <span
-              role="img"
-              aria-label="location"
-              style={{ marginRight: 8, height: 21 }}
-            >
+        <div className="footer-contact">
+          <h3>Liên hệ</h3>
+          <Divider className="footer-divider" />
+          <p className="footer-contact-item">
+            <span role="img" aria-label="location">
               <LocationIcon />
             </span>{" "}
             Lô E2a-7, Đường D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh
           </p>
-          <p style={{ display: "flex", alignItems: "center" }}>
-            <span
-              role="img"
-              aria-label="phone"
-              style={{ marginRight: 8, height: 19 }}
-            >
+          <p className="footer-contact-item">
+            <span role="img" aria-label="phone">
               <PhoneIcon />
             </span>{" "}
             0902-123-456
           </p>
-          <p style={{ display: "flex", alignItems: "center" }}>
-            <span
-              role="img"
-              aria-label="email"
-              style={{ marginRight: 8, height: 18 }}
-            >
+          <p className="footer-contact-item">
+            <span role="img" aria-label="email">
               <MailIcon />
             </span>{" "}
             cskh@tamtac.com
