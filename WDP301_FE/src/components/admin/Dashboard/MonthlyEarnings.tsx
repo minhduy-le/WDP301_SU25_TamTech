@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,23 +11,11 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { Select } from "antd";
-
 const dataSample = {
-  all: [
-    { month: "Jan", revenue: 12000000 },
-    { month: "Feb", revenue: 13500000 },
-    { month: "Mar", revenue: 11000000 },
-  ],
-  branchA: [
+  earnings: [
     { month: "Jan", revenue: 6000000 },
     { month: "Feb", revenue: 8000000 },
     { month: "Mar", revenue: 5000000 },
-  ],
-  branchB: [
-    { month: "Jan", revenue: 6000000 },
-    { month: "Feb", revenue: 5500000 },
-    { month: "Mar", revenue: 6000000 },
   ],
 };
 
@@ -85,10 +72,8 @@ const SalesAnalytics = () => (
 );
 
 const MonthlyEarnings = () => {
-  const [branch, setBranch] = useState<BranchType>("all");
-
-  const currentMonthRevenue = dataSample[branch]?.[2]?.revenue || 0;
-  const lastMonthRevenue = dataSample[branch]?.[1]?.revenue || 0;
+  const currentMonthRevenue = dataSample.earnings?.[2]?.revenue || 0;
+  const lastMonthRevenue = dataSample.earnings?.[1]?.revenue || 0;
 
   return (
     <div style={{ display: "flex", gap: 12, paddingTop: 20 }}>
@@ -124,19 +109,7 @@ const MonthlyEarnings = () => {
                 fontSize: 13,
               }}
             >
-              <div style={{ marginBottom: 12 }}>
-                <Select
-                  defaultValue="all"
-                  style={{ width: 180 }}
-                  onChange={(value) => setBranch(value as BranchType)}
-                  options={[
-                    { value: "all", label: "Tất cả chi nhánh" },
-                    { value: "branchA", label: "Chi nhánh A" },
-                    { value: "branchB", label: "Chi nhánh B" },
-                  ]}
-                />
-              </div>
-              <EarningsChart branch={branch} />
+              <EarningsChart branch={"earnings"} />
             </div>
             <div
               style={{
