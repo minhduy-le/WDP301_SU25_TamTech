@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Image,
   FlatList,
-  Platform,
   Pressable,
   Dimensions,
 } from "react-native";
@@ -225,11 +224,9 @@ const CollectionHome = (props: IProps) => {
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
                     style={{
-                      backgroundColor: APP_COLOR.YELLOW,
+                      backgroundColor: "rgba(255, 244, 150, 0.61)",
                       borderRadius: 10,
                       marginTop: 10,
-                      borderWidth: 1,
-                      borderColor: APP_COLOR.BROWN,
                       gap: 5,
                       marginHorizontal: 5,
                       marginRight: isLastItem ? 10 : 5,
@@ -247,8 +244,9 @@ const CollectionHome = (props: IProps) => {
                           fontWeight: "600",
                           maxWidth: 130,
                           fontFamily: FONTS.medium,
-                          fontSize: 17,
+                          fontSize: 15,
                           color: APP_COLOR.BROWN,
+                          marginBottom: 5,
                         }}
                       >
                         {item.productName}
@@ -257,7 +255,7 @@ const CollectionHome = (props: IProps) => {
                         style={{
                           color: APP_COLOR.BROWN,
                           fontFamily: FONTS.bold,
-                          fontSize: 17,
+                          fontSize: 15,
                           position: "relative",
                           left: 50,
                         }}
@@ -271,6 +269,7 @@ const CollectionHome = (props: IProps) => {
                         alignItems: "center",
                         justifyContent: "center",
                         paddingBottom: 5,
+                        marginBottom: 7,
                       }}
                     >
                       <Pressable

@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   orderInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
+    marginVertical: 15,
   },
   orderText: {
     color: APP_COLOR.GREY,

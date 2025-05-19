@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Dimensions, Image, Text, View } from "react-native";
+import { Dimensions, Image, Platform, Text, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, {
   ICarouselInstance,
@@ -43,7 +43,7 @@ function BannerHome() {
   return (
     <View>
       <Carousel
-        style={{ marginTop: 15 }}
+        style={{ marginTop: Platform.OS === "android" ? 10 : 0 }}
         ref={ref}
         width={width}
         height={width / 3.5}
