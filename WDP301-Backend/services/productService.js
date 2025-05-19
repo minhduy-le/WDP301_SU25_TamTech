@@ -1,117 +1,150 @@
-// const Product = require("../models/product");
-// const { uploadImageToFirebase } = require("../config/firebase");
-// const httpErrors = require("http-errors");
-// const ProductType = require("../models/productType");
+const sequelize = require("../config/database");
+const Product = require("../models/product");
+const ProductRecipe = require("../models/ProductRecipe");
+const Material = require("../models/material");
 
-// const createProduct = async (productData, imageFile) => {
-//   try {
-//     // Validate required fields
-//     if (!productData.name || !productData.price || !productData.productTypeId || !productData.createBy) {
-//       throw httpErrors.BadRequest("Name, price, productTypeId, and createBy are required");
-//     }
+const createProduct = async (productData) => {
+  const { name, description, price, image, productTypeId, createBy, storeId, recipes } = productData;
 
-//     // Handle image upload if provided
-//     let imageUrl = null;
-//     if (imageFile) {
-//       const fileName = `${Date.now()}_${imageFile.originalname}`;
-//       imageUrl = await uploadImageToFirebase(imageFile.buffer, fileName);
-//       if (!imageUrl) {
-//         throw httpErrors.InternalServerError("Failed to upload image to Firebase");
-//       }
-//     }
+  const transaction = await sequelize.transaction();
 
-//     // Set default branchId to 1 if not provided
-//     const finalProductData = {
-//       ...productData,
-//       image: imageUrl,
-//       branchId: productData.branchId || 1,
-//       createAt: new Date(),
-//     };
+  try {
+    for (const recipe of recipes) {
+      const material = await Material.findByPk(recipe.materialId, { transaction });
+      if (!material) {
+        throw new Error(`Material with ID ${recipe.materialId} not found`);
+      }
+      if (material.quantity < recipe.quantity) {
+        throw new Error(
+          `Insufficient quantity for material ${material.name}. Available: ${material.quantity}, Required: ${recipe.quantity}`
+        );
+      }
+    }
 
-//     // Create product in database
-//     const product = await Product.create(finalProductData);
+    const product = await Product.create(
+      {
+        name,
+        description,
+        price,
+        image,
+        productTypeId,
+        createBy,
+        storeId,
+      },
+      { transaction }
+    );
 
-//     return product;
-//   } catch (error) {
-//     if (error.name === "SequelizeValidationError") {
-//       throw httpErrors.BadRequest(error.message);
-//     }
-//     if (error.name === "SequelizeForeignKeyConstraintError") {
-//       throw httpErrors.BadRequest("Invalid productTypeId or branchId");
-//     }
-//     throw error;
-//   }
-// };
+    for (const recipe of recipes) {
+      await ProductRecipe.create(
+        {
+          productId: product.productId,
+          materialId: recipe.materialId,
+          quantity: recipe.quantity,
+        },
+        { transaction }
+      );
 
-// const getAllProducts = async () => {
-//   try {
-//     const products = await Product.findAll({
-//       where: { isActive: true }, // Chỉ lấy sản phẩm có isActive là true
-//       attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
-//       include: [
-//         {
-//           model: ProductType,
-//           as: "ProductType",
-//           attributes: ["productTypeId", "name"],
-//         },
-//       ],
-//     });
-//     return products;
-//   } catch (error) {
-//     throw httpErrors.InternalServerError("Failed to retrieve products");
-//   }
-// };
+      await Material.update(
+        { quantity: sequelize.literal(`quantity - ${recipe.quantity}`) },
+        { where: { materialId: recipe.materialId }, transaction }
+      );
+    }
 
-// const getProductById = async (productId) => {
-//   try {
-//     const product = await Product.findOne({
-//       where: { productId, isActive: true }, // Chỉ lấy sản phẩm có isActive là true
-//       include: [
-//         {
-//           model: ProductType,
-//           as: "ProductType",
-//           attributes: ["productTypeId", "name"],
-//         },
-//       ],
-//     });
-//     if (!product) {
-//       throw httpErrors.NotFound("Product not found or inactive");
-//     }
-//     return product;
-//   } catch (error) {
-//     if (error.name === "SequelizeDatabaseError") {
-//       throw httpErrors.InternalServerError("Database error occurred");
-//     }
-//     if (error.name === "NotFound") {
-//       throw error;
-//     }
-//     throw httpErrors.InternalServerError("Failed to retrieve product");
-//   }
-// };
+    await transaction.commit();
 
-// const getProductsByTypeId = async (productTypeId) => {
-//   try {
-//     const products = await Product.findAll({
-//       where: { productTypeId, isActive: true }, // Chỉ lấy sản phẩm có isActive là true
-//       attributes: ["productId", "name", "price", "image", "productTypeId", "createBy", "createAt"],
-//       include: [
-//         {
-//           model: ProductType,
-//           as: "ProductType",
-//           attributes: ["productTypeId", "name"],
-//         },
-//       ],
-//     });
-//     if (products.length === 0) {
-//       throw httpErrors.NotFound("No active products found for this product type");
-//     }
-//     return products;
-//   } catch (error) {
-//     if (error.name === "NotFound") {
-//       throw error;
-//     }
-//     throw httpErrors.InternalServerError("Failed to retrieve products by type");
-//   }
-// };
+    const createdProduct = await Product.findByPk(product.productId, {
+      include: [{ model: require("../models/ProductRecipe"), as: "ProductRecipes" }],
+    });
 
-// module.exports = { createProduct, getAllProducts, getProductById, getProductsByTypeId };
+    return createdProduct;
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+};
+
+const getProducts = async ({ page, limit, offset }) => {
+  const { count, rows } = await Product.findAndCountAll({
+    where: { isActive: true },
+    limit,
+    offset,
+    order: [["price", "DESC"]],
+    include: [
+      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: require("../models/ProductType"), as: "ProductType" },
+      { model: require("../models/Store"), as: "Store" },
+    ],
+  });
+
+  return {
+    products: rows,
+    totalPages: Math.ceil(count / limit),
+  };
+};
+
+const getProductsByType = async (productTypeId) => {
+  const products = await Product.findAll({
+    where: { productTypeId, isActive: true },
+    include: [
+      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: require("../models/ProductType"), as: "ProductType" },
+      { model: require("../models/Store"), as: "Store" },
+    ],
+  });
+
+  return products;
+};
+
+const updateProduct = async (productId, updateData) => {
+  const product = await Product.findByPk(productId);
+  if (!product || !product.isActive) {
+    return null;
+  }
+
+  const { name, description, price, image, productTypeId } = updateData;
+
+  await product.update({
+    name: name || product.name,
+    description: description !== undefined ? description : product.description,
+    price: price || product.price,
+    image: image || product.image,
+    productTypeId: productTypeId || product.productTypeId,
+  });
+
+  return await Product.findByPk(productId, {
+    include: [
+      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: require("../models/ProductType"), as: "ProductType" },
+      { model: require("../models/Store"), as: "Store" },
+    ],
+  });
+};
+
+const softDeleteProduct = async (productId) => {
+  const product = await Product.findByPk(productId);
+  if (!product || !product.isActive) {
+    return false;
+  }
+
+  await product.update({ isActive: false });
+  return true;
+};
+
+const getProductById = async (productId) => {
+  const product = await Product.findByPk(productId, {
+    where: { isActive: true },
+    include: [
+      {
+        model: require("../models/ProductRecipe"),
+        as: "ProductRecipes",
+        include: [{ model: Material, as: "Material" }],
+      },
+      { model: require("../models/ProductType"), as: "ProductType" },
+      { model: require("../models/Store"), as: "Store" },
+    ],
+  });
+
+  return product;
+};
+
+module.exports = { createProduct, getProducts, getProductsByType, updateProduct, softDeleteProduct, getProductById };

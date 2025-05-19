@@ -6,6 +6,12 @@ const sequelize = new Sequelize(process.env.MYSQL_DATABASE, process.env.MYSQL_US
   port: process.env.MYSQL_PORT,
   dialect: "mysql",
   logging: false,
+  dialectOptions: {
+    ssl: {
+      require: true, // Enforce SSL
+      rejectUnauthorized: false, // Use true in production with valid certificates
+    },
+  },
 });
 
 module.exports = sequelize;

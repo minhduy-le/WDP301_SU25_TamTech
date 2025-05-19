@@ -143,15 +143,14 @@ const HomeTab = () => {
 
       {totalQuantity > 0 && (
         <Pressable style={styles.cartButton} onPress={() => setShowCart(true)}>
-          <AntDesign name="shoppingcart" size={24} color="white" />
+          <AntDesign
+            name="shoppingcart"
+            size={24}
+            color="white"
+            style={{ marginHorizontal: "auto" }}
+          />
           <View style={styles.cartBadge}>
             <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
-          </View>
-          <View style={styles.cartButtonContent}>
-            <Text style={styles.cartButtonText}>Giỏ hàng</Text>
-            <Text style={styles.cartButtonPrice}>
-              {currencyFormatter(totalPrice)}
-            </Text>
           </View>
         </Pressable>
       )}
@@ -256,12 +255,13 @@ const styles = StyleSheet.create({
   },
   cartButton: {
     position: "absolute",
-    bottom: 25,
-    left: 20,
+    bottom: 5,
     right: 20,
     backgroundColor: APP_COLOR.ORANGE,
-    borderRadius: 8,
+    borderRadius: 50,
     padding: 15,
+    width: 60,
+    height: 60,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#000",
@@ -275,8 +275,8 @@ const styles = StyleSheet.create({
   },
   cartBadge: {
     position: "absolute",
-    top: -8,
-    right: 5,
+    top: -5,
+    right: -5,
     backgroundColor: APP_COLOR.BROWN,
     borderRadius: 12,
     minWidth: 24,
@@ -289,23 +289,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 12,
     fontWeight: "bold",
-  },
-  cartButtonContent: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginLeft: 15,
-  },
-  cartButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  cartButtonPrice: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
   },
   modalOverlay: {
     position: "absolute",
@@ -383,15 +366,18 @@ const styles = StyleSheet.create({
   orderInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 5,
   },
   orderText: {
     color: APP_COLOR.BROWN,
     fontFamily: FONTS.bold,
+    marginVertical: "auto",
   },
   orderPrice: {
     fontSize: 25,
     fontFamily: FONTS.bold,
     color: APP_COLOR.BROWN,
+    textDecorationLine: "underline",
   },
   orderButton: {
     backgroundColor: APP_COLOR.BROWN,

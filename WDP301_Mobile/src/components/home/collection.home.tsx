@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Image,
   FlatList,
-  Platform,
   Pressable,
   Dimensions,
 } from "react-native";
@@ -157,9 +156,14 @@ const CollectionHome = (props: IProps) => {
       ></View>
       {loading === false ? (
         <View style={styles.container}>
-          <View
+          <Pressable
+            onPress={() =>
+              router.navigate({
+                pathname: "/(auth)/restaurants",
+                params: { id },
+              })
+            }
             style={{
-              justifyContent: "space-between",
               flexDirection: "row",
               alignItems: "center",
             }}
@@ -174,17 +178,8 @@ const CollectionHome = (props: IProps) => {
             >
               {name}
             </Text>
-            <Pressable
-              onPress={() =>
-                router.navigate({
-                  pathname: "/(auth)/restaurants",
-                  params: { id },
-                })
-              }
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
+            <View
+              style={{ position: "absolute", flexDirection: "row", right: 3 }}
             >
               <Text
                 style={{
@@ -199,9 +194,11 @@ const CollectionHome = (props: IProps) => {
                 name="navigate-next"
                 size={20}
                 color={APP_COLOR.BROWN}
+                style={{ marginTop: 2 }}
               />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
+
           <FlatList
             data={restaurants}
             horizontal
@@ -225,14 +222,19 @@ const CollectionHome = (props: IProps) => {
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
                     style={{
-                      backgroundColor: APP_COLOR.YELLOW,
+                      backgroundColor: APP_COLOR.DARK_YELLOW,
                       borderRadius: 10,
                       marginTop: 10,
-                      borderWidth: 1,
-                      borderColor: APP_COLOR.BROWN,
                       gap: 5,
                       marginHorizontal: 5,
                       marginRight: isLastItem ? 10 : 5,
+                      shadowColor: "#000",
+                      shadowOffset: {
+                        width: 0,
+                        height: 2,
+                      },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
                     }}
                   >
                     <Image
@@ -247,8 +249,9 @@ const CollectionHome = (props: IProps) => {
                           fontWeight: "600",
                           maxWidth: 130,
                           fontFamily: FONTS.medium,
-                          fontSize: 17,
+                          fontSize: 15,
                           color: APP_COLOR.BROWN,
+                          marginBottom: 5,
                         }}
                       >
                         {item.productName}
@@ -257,7 +260,7 @@ const CollectionHome = (props: IProps) => {
                         style={{
                           color: APP_COLOR.BROWN,
                           fontFamily: FONTS.bold,
-                          fontSize: 17,
+                          fontSize: 15,
                           position: "relative",
                           left: 50,
                         }}
@@ -271,6 +274,7 @@ const CollectionHome = (props: IProps) => {
                         alignItems: "center",
                         justifyContent: "center",
                         paddingBottom: 5,
+                        marginBottom: 7,
                       }}
                     >
                       <Pressable

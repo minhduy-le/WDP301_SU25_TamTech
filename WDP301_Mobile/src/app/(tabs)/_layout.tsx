@@ -2,16 +2,16 @@ import { Tabs } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { APP_COLOR } from "@/utils/constant";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Platform } from "react-native";
 import { FONTS } from "@/theme/typography";
 import Entypo from "@expo/vector-icons/Entypo";
-
+import AntDesign from "@expo/vector-icons/AntDesign";
 const TabLayout = () => {
   const getIcons = (routeName: string, focused: boolean, size: number) => {
     const styles = StyleSheet.create({
       qrIcon: {
-        width: 60,
-        height: 60,
+        width: 55,
+        height: 55,
         borderRadius: 30,
         backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
         justifyContent: "center",
@@ -24,6 +24,7 @@ const TabLayout = () => {
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         marginBottom: 30,
+        elevation: 3,
       },
     });
     if (routeName === "index") {
@@ -48,9 +49,9 @@ const TabLayout = () => {
     if (routeName === "ai") {
       return (
         <View style={styles.qrIcon}>
-          <MaterialCommunityIcons
-            name="qrcode-scan"
-            size={35}
+          <AntDesign
+            name="aliwangwang-o1"
+            size={28}
             color={focused ? APP_COLOR.ORANGE : APP_COLOR.BROWN}
           />
         </View>
@@ -98,7 +99,7 @@ const TabLayout = () => {
         tabBarInactiveTintColor: APP_COLOR.BROWN,
         tabBarStyle: {
           borderTopWidth: 0,
-          // marginBottom: 20,
+          marginBottom: Platform.OS === "android" ? 20 : 0,
           height: 80,
           paddingBottom: 5,
           backgroundColor: APP_COLOR.BACKGROUND_ORANGE,

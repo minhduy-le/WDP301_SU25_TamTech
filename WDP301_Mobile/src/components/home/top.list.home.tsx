@@ -1,15 +1,8 @@
-import {
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, Image, Text, View } from "react-native";
 import BannerHome from "./banner.home";
-import { APP_FONT } from "@/utils/constant";
+import { APP_COLOR } from "@/utils/constant";
+import { FONTS } from "@/theme/typography";
 
-const styles = StyleSheet.create({});
 const data1 = [
   {
     key: 1,
@@ -61,51 +54,73 @@ const data1 = [
   { key: 20, name: "Milk Tea", source: require("@/assets/icons/salad.png") },
 ];
 
+const groupDataIntoRows = (data: any, itemsPerRow: number) => {
+  const rows = [];
+  for (let i = 0; i < data.length; i += itemsPerRow) {
+    rows.push(data.slice(i, i + itemsPerRow));
+  }
+  return rows;
+};
+
 const TopListHome = () => {
+  const rows = groupDataIntoRows(data1, 2);
   return (
     <View>
       <BannerHome />
-      <ScrollView
+      <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
-        directionalLockEnabled={true}
-        alwaysBounceVertical={false}
-        style={{ marginVertical: 15 }}
-      >
-        <FlatList
-          contentContainerStyle={{ alignSelf: "flex-start" }}
-          numColumns={Math.ceil(data1.length / 1)}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          data={data1}
-          renderItem={({ item, index }) => {
-            return (
+        data={rows}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={{ marginHorizontal: 5 }}>
+            {item.map((child: any, idx: number) => (
               <View
+                key={idx}
                 style={{
-                  padding: 5,
-                  width: 100,
+                  marginTop: 10,
+                  paddingHorizontal: 3,
+                  borderRadius: 50,
                   alignItems: "center",
+                  backgroundColor: APP_COLOR.YELLOW,
+                  flexDirection: "row",
+                  alignSelf: "flex-start",
                 }}
               >
-                <Image
-                  source={item.source}
+                <View
                   style={{
-                    height: 35,
-                    width: 35,
+                    backgroundColor: APP_COLOR.DARK_YELLOW,
+                    height: 50,
+                    width: 50,
+                    borderRadius: 50,
+                    margin: 6,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  <Image
+                    source={child.source}
+                    style={{
+                      height: 40,
+                      width: 40,
+                    }}
+                  />
+                </View>
                 <Text
                   style={{
                     textAlign: "center",
+                    padding: 7,
+                    fontFamily: FONTS.semiBold,
+                    color: APP_COLOR.BROWN,
                   }}
                 >
-                  {item.name}
+                  {child.name}
                 </Text>
               </View>
-            );
-          }}
-        />
-      </ScrollView>
+            ))}
+          </View>
+        )}
+      />
     </View>
   );
 };

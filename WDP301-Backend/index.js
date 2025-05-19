@@ -9,6 +9,8 @@ const userRoutes = require("./routes/userRoutes");
 const productTypeRoutes = require("./routes/productTypeRoutes");
 const storeRoutes = require("./routes/storeRoutes");
 const materialRoutes = require("./routes/materialRoutes");
+const productRoutes = require("./routes/productRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
@@ -27,6 +29,8 @@ app.use("/api/auth", userRoutes);
 app.use("/api/product-types", productTypeRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/materials", materialRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
@@ -46,7 +50,7 @@ sequelize
     console.error("Lỗi:", err);
   });
 
-app.listen(port, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log(`Server running at http://localhost:${port}`);
   console.log(`API docs available at http://localhost:${port}/api-docs`);
 });

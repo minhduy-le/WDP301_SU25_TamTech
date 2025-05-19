@@ -1,25 +1,12 @@
-import {
-  currencyFormatter,
-  getOrderHistoryAPI,
-  getURLBaseBackend,
-} from "@/utils/api";
+import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
-import demo from "@/assets/demo.jpg";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -133,7 +120,9 @@ const OrderPage = () => {
   }, [currentPage]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    >
       <View style={{ flex: 1 }}>
         <View
           style={{
@@ -146,7 +135,7 @@ const OrderPage = () => {
           <View style={{ flexDirection: "row" }}>
             <Text
               style={{
-                color: APP_COLOR.ORANGE,
+                color: APP_COLOR.BROWN,
                 marginVertical: "auto",
                 fontFamily: FONTS.bold,
                 fontSize: 20,
@@ -156,7 +145,7 @@ const OrderPage = () => {
             </Text>
             <Image
               source={logo}
-              style={{ width: 100, height: 100, marginLeft: 110 }}
+              style={{ width: 150, height: 100, marginLeft: 40 }}
             />
           </View>
         </View>
