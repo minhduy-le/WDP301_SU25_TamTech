@@ -1,25 +1,12 @@
-import {
-  currencyFormatter,
-  getOrderHistoryAPI,
-  getURLBaseBackend,
-} from "@/utils/api";
+import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
-import demo from "@/assets/demo.jpg";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";

@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import HomePage from "./pages/HomePage";
 import Menu from "./pages/Menu";
+import Checkout from "./pages/Checkout";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -40,6 +41,7 @@ function App() {
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/register" element={<Register />} />
           <Route path="/menu" element={<Menu />} />
+          <Route path="/checkout" element={<Checkout />} />
         </Route>
         <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
