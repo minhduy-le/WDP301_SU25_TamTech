@@ -6,6 +6,7 @@ export const APP_COLOR = {
   WHITE: "#FFFFFF",
   WHEAT: "#EFE6DB",
   BROWN: "#632713",
+  DARK_YELLOW: "rgba(248, 169, 31, 0.15)",
   BACKGROUND_ORANGE: "#FDE3CF",
 };
 
