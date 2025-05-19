@@ -17,6 +17,10 @@ export interface LoginResponseDto {
   token: string;
 }
 
+export interface GoogleLoginDto {
+  idToken: string;
+}
+
 export interface RegisterDto {
   fullName: string;
   email: string;
@@ -150,6 +154,18 @@ export const useVerifyOTP = () => {
   return useMutation({
     mutationFn: async (verifyOTP: VerifyOTPDto) => {
       const response = await axiosInstance.post(`auth/verify-otp`, verifyOTP);
+      return response.data;
+    },
+  });
+};
+
+export const useLoginGoogle = () => {
+  return useMutation({
+    mutationFn: async (newAccount: GoogleLoginDto) => {
+      const response = await axiosInstance.post(
+        `auth/google-login`,
+        newAccount
+      );
       return response.data;
     },
   });
