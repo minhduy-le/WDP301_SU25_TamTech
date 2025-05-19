@@ -20,12 +20,10 @@ const User = sequelize.define(
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true,
     },
     phone_number: {
       type: DataTypes.STRING(12),
       allowNull: true,
-      unique: true,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
