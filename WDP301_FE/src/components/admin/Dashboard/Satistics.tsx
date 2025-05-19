@@ -2,12 +2,12 @@ const fakeData = [
   {
     title: "Tổng doanh thu ngày",
     value: "12,500,000₫",
-    filter: "Hôm nay",
+    filter: "Today",
   },
   {
     title: "Số lượng đơn",
     value: "120",
-    filter: "Tháng này",
+    filter: "This Month",
   },
   {
     title: "Các món ăn bán chạy",
@@ -17,14 +17,14 @@ const fakeData = [
   {
     title: "Trung bình mỗi đơn hàng",
     value: "104,167₫",
-    filter: "Hôm nay",
+    filter: "Today",
   },
 ];
 
 const Satistics = () => (
   <div>
-    <h2 style={{ fontWeight: "bold" }}>Dashboard</h2>
-    <div style={{ marginBottom: 10, display: "flex", justifyContent: "space-between" }}>Welcome ___{`{name}`}___
+    <h1 style={{ fontWeight: "bold", color: "#da7339", marginTop:0 }}>Dashboard</h1>
+    <h2 style={{ marginBottom: 10, display: "flex", justifyContent: "space-between" }}>Welcome ___{`{name}`}___
     <button
         style={{
           border: "1px solid #333",
@@ -36,7 +36,7 @@ const Satistics = () => (
       >
         Filter + Export to PDF/Excel
       </button>
-    </div>
+    </h2>
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
     </div>
     <div style={{ display: "flex", gap: 24 }}>
