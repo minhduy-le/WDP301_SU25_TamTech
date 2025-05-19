@@ -1,7 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const Product = require("./product");
-const Material = require("./material");
 
 const ProductRecipe = sequelize.define(
   "ProductRecipe",
@@ -38,9 +36,5 @@ const ProductRecipe = sequelize.define(
     timestamps: false,
   }
 );
-
-// Set up relationships
-ProductRecipe.belongsTo(Product, { foreignKey: "productId", as: "Product" });
-ProductRecipe.belongsTo(Material, { foreignKey: "materialId", as: "Material" });
 
 module.exports = ProductRecipe;

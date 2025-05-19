@@ -1,0 +1,151 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Materials
+ *   description: Material management endpoints
+ */
+const express = require("express");
+const router = express.Router();
+const verifyToken = require("../middlewares/verifyToken");
+const materialService = require("../services/materialService");
+
+/**
+ * @swagger
+ * /api/materials:
+ *   post:
+ *     summary: Create a new material
+ *     tags: [Materials]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - quantity
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Material name
+ *               quantity:
+ *                 type: integer
+ *                 description: Material quantity
+ *     responses:
+ *       201:
+ *         description: Material created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *                     storeId:
+ *                       type: integer
+ *                       description: Hardcoded to 1
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post("/", verifyToken, async (req, res, next) => {
+  try {
+    const materialData = {
+      name: req.body.name,
+      quantity: parseInt(req.body.quantity),
+    };
+
+    const newMaterial = await materialService.createMaterial(materialData);
+    res.status(201).json({
+      status: 201,
+      message: "Material created successfully",
+      data: newMaterial,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/materials:
+ *   get:
+ *     summary: Get all materials
+ *     tags: [Materials]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of materials with their associated stores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       materialId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       quantity:
+ *                         type: integer
+ *                       storeId:
+ *                         type: integer
+ *                       Store:
+ *                         type: object
+ *                         properties:
+ *                           storeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           address:
+ *                             type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/", async (req, res, next) => {
+  try {
+    const materials = await materialService.getAllMaterials();
+    res.status(200).json({
+      status: 200,
+      message: "Materials retrieved successfully",
+      data: materials,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      status: error.status || 500,
+      message: error.message || "Internal server error",
+    });
+  }
+});
+
+module.exports = router;
