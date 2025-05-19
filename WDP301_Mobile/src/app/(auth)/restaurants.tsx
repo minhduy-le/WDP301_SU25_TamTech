@@ -6,16 +6,15 @@ import {
   View,
   StyleSheet,
   ScrollView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { TextInput } from "react-native-gesture-handler";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import debounce from "debounce";
-import demo from "@/assets/demo.jpg";
 import { currencyFormatter } from "@/utils/api";
 import { useCurrentApp } from "@/context/app.context";
 import axios from "axios";
@@ -118,34 +117,57 @@ const RestaurantsPage = () => {
     ? Object.values(cart[restaurant._id]?.items || {})
     : [];
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    >
       <View
         style={{
           flexDirection: "row",
           gap: 5,
+          justifyContent: "center",
           alignItems: "center",
-          padding: 10,
         }}
       >
-        <MaterialIcons
-          onPress={() => router.back()}
-          name="arrow-back"
-          size={24}
-          color={APP_COLOR.ORANGE}
-        />
         <TextInput
-          placeholder="Tìm kiếm món ăn..."
+          placeholder="Hôm nay bạn muốn ăn gì?"
           onChangeText={(text: string) => handleSearch(text)}
+          placeholderTextColor={APP_COLOR.BROWN}
           style={{
-            flex: 1,
-            backgroundColor: "#eee",
-            paddingVertical: 3,
-            paddingHorizontal: 10,
-            borderRadius: 3,
+            backgroundColor: APP_COLOR.WHITE,
+            gap: 10,
+            flexDirection: "row",
+            marginVertical: 5,
+            borderRadius: 30,
+            width: "75%",
+            height: 45,
+            borderWidth: 1,
+            borderColor: APP_COLOR.BROWN,
+            marginLeft: 12,
+            marginTop: Platform.OS === "android" ? 25 : 0,
+            paddingLeft: 5,
           }}
         />
+        <Pressable style={styles.cartButton} onPress={() => setShowCart(true)}>
+          <AntDesign name="shoppingcart" size={30} color={APP_COLOR.BROWN} />
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
+          </View>
+        </Pressable>
       </View>
-      <View style={{ flex: 1 }}>
+      {restaurants[0]?.productType && (
+        <Text
+          style={{
+            fontFamily: FONTS.bold,
+            color: APP_COLOR.BROWN,
+            fontSize: 20,
+            marginTop: 10,
+            marginLeft: 10,
+          }}
+        >
+          {restaurants[0].productType}
+        </Text>
+      )}
+      <View style={{ flex: 1, marginTop: 20 }}>
         <FlatList
           data={restaurants}
           keyExtractor={(item) => item.productId}
@@ -156,30 +178,53 @@ const RestaurantsPage = () => {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  padding: 10,
-                  gap: 10,
-                  borderBottomColor: "#eee",
-                  borderBottomWidth: 1,
+                  backgroundColor: APP_COLOR.WHITE,
+                  marginBottom: 15,
+                  width: "85%",
+                  marginHorizontal: "auto",
+                  borderRadius: 10,
                 }}
               >
-                <Image source={demo} style={{ height: 100, width: 100 }} />
-                <View style={{ flex: 1 }}>
-                  <Text>{item.productName}</Text>
-                  <Text
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <Image
+                    src={item.productImage}
                     style={{
-                      color: APP_COLOR.ORANGE,
-                      fontFamily: FONTS.medium,
-                      fontSize: 17,
+                      height: 100,
+                      width: 100,
+                      borderTopLeftRadius: 10,
+                      borderBottomLeftRadius: 10,
                     }}
-                  >
-                    {currencyFormatter(item.productPrice)}
-                  </Text>
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontFamily: FONTS.regular,
+                        color: APP_COLOR.BROWN,
+                        fontSize: 17,
+                        marginTop: 5,
+                      }}
+                    >
+                      {item.productName}
+                    </Text>
+                    <Text
+                      style={{
+                        color: APP_COLOR.BROWN,
+                        fontFamily: FONTS.bold,
+                        fontSize: 17,
+                      }}
+                    >
+                      {currencyFormatter(item.productPrice)}
+                    </Text>
+                  </View>
                 </View>
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 5,
+                    position: "absolute",
+                    bottom: 5,
+                    right: 10,
                   }}
                 >
                   <Pressable
@@ -192,10 +237,17 @@ const RestaurantsPage = () => {
                     <AntDesign
                       name="minussquareo"
                       size={24}
-                      color={quantity > 0 ? APP_COLOR.ORANGE : APP_COLOR.GREY}
+                      color={quantity > 0 ? APP_COLOR.BROWN : APP_COLOR.GREY}
                     />
                   </Pressable>
-                  <Text style={{ minWidth: 25, textAlign: "center" }}>
+                  <Text
+                    style={{
+                      minWidth: 25,
+                      textAlign: "center",
+                      fontFamily: FONTS.regular,
+                      color: APP_COLOR.BROWN,
+                    }}
+                  >
                     {quantity}
                   </Text>
                   <Pressable
@@ -207,7 +259,7 @@ const RestaurantsPage = () => {
                     <AntDesign
                       name="plussquare"
                       size={24}
-                      color={APP_COLOR.ORANGE}
+                      color={APP_COLOR.BROWN}
                     />
                   </Pressable>
                 </View>
@@ -216,20 +268,6 @@ const RestaurantsPage = () => {
           }}
         />
       </View>
-      {totalQuantity > 0 && (
-        <Pressable style={styles.cartButton} onPress={() => setShowCart(true)}>
-          <AntDesign name="shoppingcart" size={24} color="white" />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
-          </View>
-          <View style={styles.cartButtonContent}>
-            <Text style={styles.cartButtonText}>Giỏ hàng</Text>
-            <Text style={styles.cartButtonPrice}>
-              {currencyFormatter(totalPrice)}
-            </Text>
-          </View>
-        </Pressable>
-      )}
       {showCart && (
         <Animated.View entering={FadeIn} style={styles.modalOverlay}>
           <Pressable
@@ -294,29 +332,20 @@ const RestaurantsPage = () => {
 
 const styles = StyleSheet.create({
   cartButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: APP_COLOR.ORANGE,
-    borderRadius: 8,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    borderRadius: 50,
     padding: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: 60,
+    height: 60,
+    position: "relative",
+    top: Platform.OS === "android" ? 10 : 0,
+    left: -5,
   },
   cartBadge: {
     position: "absolute",
-    top: -8,
-    right: 20,
-    backgroundColor: "red",
+    top: 1,
+    right: -3,
+    backgroundColor: APP_COLOR.BROWN,
     borderRadius: 12,
     minWidth: 24,
     height: 24,

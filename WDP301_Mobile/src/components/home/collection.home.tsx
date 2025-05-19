@@ -224,12 +224,19 @@ const CollectionHome = (props: IProps) => {
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
                     style={{
-                      backgroundColor: "rgba(255, 244, 150, 0.61)",
+                      backgroundColor: "rgba(249, 239, 57, 0.26)",
                       borderRadius: 10,
                       marginTop: 10,
                       gap: 5,
                       marginHorizontal: 5,
                       marginRight: isLastItem ? 10 : 5,
+                      shadowColor: "#000",
+                      shadowOffset: {
+                        width: 0,
+                        height: 2,
+                      },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
                     }}
                   >
                     <Image
