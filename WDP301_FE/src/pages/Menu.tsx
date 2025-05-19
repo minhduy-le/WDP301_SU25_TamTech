@@ -15,7 +15,7 @@ const Menu = () => {
           </div>
         </div>
       </div>
-      <div style={{ display: "flex" }}>
+      <div className="menu-sell">
         <div className="menu-categories">
           <div className="category-item father">Thực đơn</div>
           <div className="category-item active">. Cơm Tấm</div>
@@ -45,9 +45,7 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">99.000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
@@ -75,9 +73,7 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">99.000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
@@ -105,9 +101,7 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">1000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
@@ -135,9 +129,7 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">1000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
@@ -165,9 +157,7 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">99.000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
@@ -195,22 +185,14 @@ const Menu = () => {
                     - Canh rau củ
                     <br />- Nước ngọt tự chọn
                   </p>
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <div className="card-price-container">
                     <div className="card-price">1000đ</div>
                     <Button className="add-button">Thêm</Button>
                   </div>
                 </div>
               </Card>
             </Col>
-            <Col
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                width: "-webkit-fill-available",
-              }}
-            >
+            <Col className="button-show-more">
               {" "}
               <Button className="custom-button">
                 Hiển Thị Thêm XX Sản Phẩm

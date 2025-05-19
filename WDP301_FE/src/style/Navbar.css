@@ -5,9 +5,6 @@ header {
   display: flex;
   align-items: center;
   width: -webkit-fill-available;
-  /* position: fixed;
-  top: 0;
-  left: 0; */
   height: 71px !important;
   justify-content: space-between;
 }
@@ -15,6 +12,19 @@ header {
 .menu-item a {
   color: #d97706 !important;
   font-size: 16px;
+}
+
+.header-icon button {
+  color: #d97706;
+}
+
+.header-icon button span,
+.header-icon button:focus-visible {
+  outline: none !important;
+}
+
+.header-button-icon {
+  margin-right: 10px;
 }
 
 .ant-btn-text:hover,

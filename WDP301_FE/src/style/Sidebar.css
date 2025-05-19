@@ -1,11 +1,39 @@
 header.header-sidebar {
   padding: 0 !important;
   height: 81px !important;
+  background: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px solid rgb(235, 239, 245);
 }
 
 .header-menu-sidebar {
   padding: 16px;
   background-color: #da7339 !important;
+  height: 100%;
+  border-right: 0;
+}
+
+.header-hamburger {
+  font-size: 16px;
+  width: 64px !important;
+  height: 64px;
+  border: none !important;
+  outline: none !important;
+}
+
+.header-function {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  gap: 20px;
+  height: 46px;
+}
+
+.ant-menu-item img {
+  width: 46px;
 }
 
 .aside-sidebar {
@@ -13,6 +41,8 @@ header.header-sidebar {
   max-width: none !important;
   min-width: unset !important;
   flex: none !important;
+  background-color: rgb(242, 245, 248);
+  padding-bottom: 0px;
 }
 
 .ant-layout-sider-collapsed.aside-sidebar {
@@ -54,7 +84,6 @@ header.header-sidebar {
 }
 
 .ant-menu-item:has(img) {
-  /* width: 46px !important; */
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -91,4 +120,20 @@ li:active:has(img) {
 .ant-menu-inline li:has(img):hover,
 .ant-menu-inline-collapsed li:has(img):hover {
   background-color: transparent !important;
+}
+
+.home-background {
+  padding: 0 24px 24px;
+  background-color: #fff;
+}
+
+.home-background .ant-breadcrumb {
+  margin: 6px 0;
+}
+
+.home-background .ant-layout-content {
+  margin: 0px;
+  min-height: 280px;
+  border-radius: 8px;
+  background: transparent;
 }
