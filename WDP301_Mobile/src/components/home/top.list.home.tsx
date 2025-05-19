@@ -2,7 +2,6 @@ import { FlatList, Image, Text, View } from "react-native";
 import BannerHome from "./banner.home";
 import { APP_COLOR } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
-
 const data1 = [
   {
     key: 1,

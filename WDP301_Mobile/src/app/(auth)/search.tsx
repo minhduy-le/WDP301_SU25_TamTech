@@ -1,182 +1,156 @@
-import { FlatList, Image, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { APP_COLOR } from "@/utils/constant";
-import { TextInput } from "react-native-gesture-handler";
-import { router } from "expo-router";
-import { useState, useCallback } from "react";
-import debounce from "debounce";
-import Entypo from "@expo/vector-icons/Entypo";
+import React, { useCallback, useState } from "react";
 import axios from "axios";
-import { useCurrentApp } from "@/context/app.context";
-import ShareButton from "@/components/button/share.button";
-interface IAddress {
-  place_id: string;
-  description: string;
+import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import debounce from "debounce";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Image,
+  View,
+  TextInput,
+  Text,
+  FlatList,
+  StyleSheet,
+} from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+import menu from "@/assets/Menu.png";
+
+interface IProduct {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImage: string;
 }
-const data = [
-  {
-    key: 1,
-    name: "Quán Tiền Bối",
-    source: require("@/assets/icons/noodles.png"),
-  },
-  {
-    key: 2,
-    name: "Bún, Mì, Phở",
-    source: require("@/assets/icons/bun-pho.png"),
-  },
-  { key: 3, name: "Fast Food", source: require("@/assets/icons/fastfood.png") },
-  { key: 4, name: "Pizza", source: require("@/assets/icons/pizza.png") },
-  { key: 5, name: "Burger", source: require("@/assets/icons/burger.png") },
-  {
-    key: 6,
-    name: "Sống Khỏe",
-    source: require("@/assets/icons/egg-cucmber.png"),
-  },
-  { key: 7, name: "Giảm 50k", source: require("@/assets/icons/moi-moi.png") },
-  { key: 8, name: "Milk Tea", source: require("@/assets/icons/salad.png") },
-];
+
 const SearchPage = () => {
-  const { setLocationReal } = useCurrentApp();
-  const [restaurants, setRestaurants] = useState<IAddress[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const handleCreateOrderLocation = (description: string) => {
-    setSearchTerm(description);
-    setLocationReal(description);
-    setRestaurants([]);
-  };
-  const handleChooseLocation = () => {
-    router.push("/(tabs)/");
-  };
-  const handleSearch = useCallback(
+  const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = useState<IProduct[]>([]);
+
+  const fetchProducts = useCallback(
     debounce(async (text: string) => {
-      setSearchTerm(text);
-      if (!text) return;
-      const res = await axios.get(
-        `https://maps.gomaps.pro/maps/api/place/queryautocomplete/json?input=${text}&language=vi&key=AlzaSyNOiNuM9dYaAZxahUvMvBOIjx4xyOSi3yr`
-      );
-      if (res.data) {
-        setRestaurants(res.data.predictions);
+      if (!text.trim()) {
+        setProducts([]);
+        return;
+      }
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/products?page=0&size=10&keyword=${text}`
+        );
+        if (res.data?.data?.content) {
+          setProducts(res.data.data.content);
+        } else {
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+        setProducts([]);
       }
     }, 500),
     []
   );
-  const DefaultResult = () => {
-    return (
-      <View
-        style={{
-          backgroundColor: "white",
-          padding: 10,
-          gap: 10,
-        }}
-      >
-        <Text>Phổ biến</Text>
-        <FlatList
-          data={data}
-          numColumns={2}
-          renderItem={({ item, index }) => {
-            return (
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: 10,
-                  flex: 1,
-                  borderColor: "#eee",
-                  borderTopWidth: index === 0 || index === 1 ? 1 : 0,
-                  borderBottomWidth: 1,
-                  borderLeftWidth: 1,
-                  borderRightWidth: index % 2 === 1 ? 1 : 0,
-                }}
-              >
-                <Text>{item.name}</Text>
-                <Image
-                  source={item.source}
-                  style={{
-                    height: 35,
-                    width: 35,
-                  }}
-                />
-              </View>
-            );
-          }}
-        />
-      </View>
-    );
+
+  const handleChangeText = (text: string) => {
+    setSearchTerm(text);
+    fetchProducts(text);
   };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 5,
-          alignItems: "center",
-          padding: 10,
-        }}
-      >
-        <MaterialIcons
-          onPress={() => router.back()}
-          name="arrow-back"
-          size={24}
-          color={APP_COLOR.ORANGE}
-        />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.searchContainer}>
+        <FontAwesome name="search" size={20} color={APP_COLOR.BROWN} />
         <TextInput
-          placeholder="Địa chỉ giao hàng"
-          onChangeText={(text: string) => {
-            setSearchTerm(text);
-            handleSearch(text);
-          }}
+          placeholder="Hôm nay bạn muốn ăn gì nào?"
+          style={styles.input}
+          onChangeText={handleChangeText}
           value={searchTerm}
-          autoFocus
-          style={{
-            flex: 1,
-            backgroundColor: "#eee",
-            paddingVertical: 3,
-            paddingHorizontal: 10,
-            borderRadius: 3,
-          }}
-        />
-        <ShareButton
-          title="Chọn địa chỉ giao hàng"
-          onPress={handleChooseLocation}
         />
       </View>
-      <Pressable style={{ backgroundColor: "#eee", flex: 1 }}>
-        {searchTerm.length === 0 ? (
-          <DefaultResult />
-        ) : (
-          <Pressable style={{ backgroundColor: "white", gap: 10 }}>
-            {restaurants?.map((item) => {
-              return (
-                <Pressable
-                  key={item.place_id}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 10,
-                    gap: 10,
-                    borderBottomColor: "#eee",
-                    borderBottomWidth: 1,
-                  }}
-                  onPress={() => handleCreateOrderLocation(item.description)}
-                >
-                  <Entypo
-                    name="location-pin"
-                    size={20}
-                    color={APP_COLOR.ORANGE}
-                    style={{
-                      marginRight: 10,
-                    }}
-                  />
-                  <Text>{item.description}</Text>
-                </Pressable>
-              );
-            })}
-          </Pressable>
-        )}
-      </Pressable>
+
+      {products.length > 0 ? (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.productId}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          renderItem={({ item }) => (
+            <View style={styles.itemContainer}>
+              <Image
+                source={{ uri: item.productImage }}
+                style={styles.productImage}
+              />
+              <View style={styles.productDetails}>
+                <Text style={styles.productName}>{item.productName}</Text>
+                <Text style={styles.productPrice}>
+                  {item.productPrice.toLocaleString()}đ
+                </Text>
+              </View>
+            </View>
+          )}
+        />
+      ) : (
+        <View style={styles.imageWrapper}>
+          <Image style={styles.fallbackImage} source={menu} />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    paddingHorizontal: 15,
+    backgroundColor: APP_COLOR.WHITE,
+    borderRadius: 30,
+    width: "90%",
+    height: 50,
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  input: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  itemContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    marginBottom: 10,
+    marginHorizontal: 10,
+    borderRadius: 10,
+    elevation: 2,
+  },
+  productImage: {
+    height: 100,
+    width: 100,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
+  },
+  productDetails: {
+    flex: 1,
+    padding: 10,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  productPrice: {
+    color: "gray",
+    marginTop: 5,
+  },
+  imageWrapper: {
+    flex: 1,
+    alignItems: "center",
+  },
+  fallbackImage: {
+    width: "100%",
+    height: "85%",
+    resizeMode: "contain",
+  },
+});
+
 export default SearchPage;
