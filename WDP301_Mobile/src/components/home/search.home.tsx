@@ -1,4 +1,11 @@
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { router } from "expo-router";
 import { APP_COLOR } from "@/utils/constant";
@@ -15,11 +22,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: APP_COLOR.BROWN,
     marginHorizontal: "auto",
-    marginTop: 20,
+    marginTop: Platform.OS === "android" ? 25 : 0,
   },
   safeArea: {
     flex: 1,
-    paddingTop: 10,
+    paddingTop: Platform.OS === "android" ? 10 : 0,
   },
 });
 const SearchHome = () => {

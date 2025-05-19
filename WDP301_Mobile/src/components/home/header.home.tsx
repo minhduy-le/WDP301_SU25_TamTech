@@ -7,6 +7,7 @@ import {
   Pressable,
   FlatList,
   Modal,
+  Platform,
 } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import * as Location from "expo-location";
@@ -26,7 +27,8 @@ interface IPropsBranches {
 }
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    marginTop: Platform.OS === "ios" ? 30 : 20,
+    marginBottom: Platform.OS === "ios" ? 20 : 0,
     paddingTop: 20,
     gap: 3,
     height: 50,
@@ -165,7 +167,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           style={{
             fontFamily: FONTS.medium,
             fontSize: 15,
-            width: "70%",
+            width: Platform.OS === "android" ? "70%" : "60%",
           }}
           numberOfLines={1}
           ellipsizeMode="tail"

@@ -188,3 +188,18 @@
   align-items: center;
   justify-content: center;
 }
+
+.card-price-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.button-show-more {
+  display: flex;
+  justify-content: center;
+  width: -webkit-fill-available;
+}
+
+.menu-sell {
+  display: flex;
+}

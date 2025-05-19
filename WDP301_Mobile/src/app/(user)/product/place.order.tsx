@@ -13,6 +13,7 @@ import {
   View,
   StyleSheet,
   Modal,
+  Platform,
 } from "react-native";
 import Toast from "react-native-root-toast";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -24,6 +25,7 @@ import CustomerInforInput from "@/components/input/customerInfo.input";
 import ShareButton from "@/components/button/share.button";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface IOrderItem {
   image: string;
@@ -49,7 +51,6 @@ const PlaceOrderPage = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [newAddress, setNewAddress] = useState<ICusInfor>();
   const [cusAddress, setCusAddress] = useState();
   const [cusPhone, setCusPhone] = useState();
   const { branchId } = useCurrentApp();
@@ -154,7 +155,7 @@ const PlaceOrderPage = () => {
             opacity: 1,
           });
           setCart(0);
-          router.replace("/(tabs)/");
+          router.replace("/(tabs)");
         }
       }
     } catch (error) {
@@ -222,9 +223,7 @@ const PlaceOrderPage = () => {
   }, [decodeToken]);
   const styles = StyleSheet.create({
     container: {
-      paddingTop: 5,
-      gap: 3,
-      marginBottom: 30,
+      paddingTop: 2,
     },
     headerContainer: {
       paddingTop: 5,
@@ -385,7 +384,7 @@ const PlaceOrderPage = () => {
           opacity: 1,
         });
         setCart(0);
-        router.replace("/(tabs)/");
+        router.replace("/(tabs)");
       }
     });
 
@@ -421,406 +420,399 @@ const PlaceOrderPage = () => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-        paddingTop: 30,
-      }}
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
     >
-      <Pressable style={{ height: 100 }} onPress={() => setModalVisible(true)}>
-        <View
-          style={{
-            flexDirection: "row",
-          }}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        }}
+      >
+        <Pressable
+          style={{ height: Platform.OS === "ios" ? 80 : 90 }}
+          onPress={() => setModalVisible(true)}
         >
-          <View style={styles.headerContainer}>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Tên khách hàng: </Text>
-              <Text style={styles.cusInfo}>
-                {selectedAddress ? selectedAddress.fullName : "FPT University"}
-              </Text>
-            </View>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Số điện thoại: </Text>
-              <Text style={styles.cusInfo}>
-                {selectedAddress ? selectedAddress.phone : "0889679561"}
-              </Text>
-            </View>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
-              <Text
-                style={styles.cusInfo}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {selectedAddress
-                  ? selectedAddress.address
-                  : "Hồ Chí Minh, Việt Nam"}
-              </Text>
+          <View
+            style={{
+              flexDirection: "row",
+            }}
+          >
+            <View style={styles.headerContainer}>
+              <View style={styles.customersInfo}>
+                <Text style={styles.locationText}>Tên khách hàng: </Text>
+                <Text style={styles.cusInfo}>
+                  {selectedAddress
+                    ? selectedAddress.fullName
+                    : "FPT University"}
+                </Text>
+              </View>
+              <View style={styles.customersInfo}>
+                <Text style={styles.locationText}>Số điện thoại: </Text>
+                <Text style={styles.cusInfo}>
+                  {selectedAddress ? selectedAddress.phone : "0889679561"}
+                </Text>
+              </View>
+              <View style={styles.customersInfo}>
+                <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
+                <Text
+                  style={styles.cusInfo}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {selectedAddress
+                    ? selectedAddress.address
+                    : "Hồ Chí Minh, Việt Nam"}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </Pressable>
-      <ScrollView style={{ flex: 1, padding: 10 }}>
-        <Text
-          style={{
-            fontFamily: FONTS.bold,
-            fontSize: 20,
-            color: APP_COLOR.BROWN,
-            marginBottom: 5,
-          }}
-        >
-          Chi tiết đơn hàng
-        </Text>
-        {orderItems?.map((item, index) => {
-          return (
-            <View
-              key={`${item.productId}-${index}`}
-              style={{
-                gap: 10,
-                flexDirection: "row",
-                paddingBottom: 5,
-              }}
-            >
-              <Image
-                style={{ height: 70, width: 70, borderRadius: 10 }}
-                source={{
-                  uri: item.image,
+        </Pressable>
+        <ScrollView style={{ flex: 1, padding: 10 }}>
+          <Text
+            style={{
+              fontFamily: FONTS.bold,
+              fontSize: 20,
+              color: APP_COLOR.BROWN,
+              marginBottom: 5,
+            }}
+          >
+            Chi tiết đơn hàng
+          </Text>
+          {orderItems?.map((item, index) => {
+            return (
+              <View
+                key={`${item.productId}-${index}`}
+                style={{
+                  gap: 10,
+                  flexDirection: "row",
+                  paddingBottom: 5,
                 }}
-              />
-              <View style={{ flexDirection: "row" }}>
-                <Text
-                  style={{
-                    fontFamily: FONTS.regular,
-                    fontSize: 20,
-                    color: APP_COLOR.BROWN,
+              >
+                <Image
+                  style={{ height: 70, width: 70, borderRadius: 10 }}
+                  source={{
+                    uri: item.image,
                   }}
-                >
-                  {item.title} x{" "}
-                </Text>
-                <View>
+                />
+                <View style={{ flexDirection: "row" }}>
                   <Text
                     style={{
-                      fontWeight: "600",
                       fontFamily: FONTS.regular,
                       fontSize: 20,
                       color: APP_COLOR.BROWN,
                     }}
                   >
-                    {item.quantity}
+                    {item.title} x{" "}
+                  </Text>
+                  <View>
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontFamily: FONTS.regular,
+                        fontSize: 20,
+                        color: APP_COLOR.BROWN,
+                      }}
+                    >
+                      {item.quantity}
+                    </Text>
+                  </View>
+                  <Text
+                    style={{
+                      fontFamily: FONTS.bold,
+                      fontSize: 20,
+                      color: APP_COLOR.BROWN,
+                      position: "absolute",
+                      top: 35,
+                      left: 190,
+                    }}
+                  >
+                    {currencyFormatter(item.price)}
                   </Text>
                 </View>
+              </View>
+            );
+          })}
+          {orderItems?.length > 0 && (
+            <View style={{ marginVertical: 10 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  borderTopWidth: 1,
+                  borderTopColor: APP_COLOR.BROWN,
+                }}
+              >
+                <Text
+                  style={{
+                    color: APP_COLOR.BROWN,
+                    fontFamily: FONTS.bold,
+                    fontSize: 20,
+                    marginVertical: "auto",
+                  }}
+                >
+                  Tổng cộng (
+                  {restaurant &&
+                    cart?.[restaurant._id] &&
+                    cart?.[restaurant._id].quantity}{" "}
+                  món)
+                </Text>
                 <Text
                   style={{
                     fontFamily: FONTS.bold,
-                    fontSize: 20,
+                    fontSize: 25,
                     color: APP_COLOR.BROWN,
-                    position: "absolute",
-                    top: 35,
-                    left: 190,
+                    textDecorationLine: "underline",
                   }}
                 >
-                  {currencyFormatter(item.price)}
+                  {currencyFormatter(
+                    restaurant &&
+                      cart?.[restaurant._id] &&
+                      cart?.[restaurant._id].sum
+                  )}
                 </Text>
               </View>
             </View>
-          );
-        })}
-        {orderItems?.length > 0 && (
-          <View style={{ marginVertical: 15 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderTopWidth: 1,
-                borderTopColor: APP_COLOR.BROWN,
-              }}
-            >
-              <Text
-                style={{
-                  color: APP_COLOR.BROWN,
-                  fontFamily: FONTS.bold,
-                  fontSize: 20,
-                  marginVertical: "auto",
-                }}
-              >
-                Tổng cộng (
-                {restaurant &&
-                  cart?.[restaurant._id] &&
-                  cart?.[restaurant._id].quantity}{" "}
-                món)
-              </Text>
-              <Text
-                style={{
-                  fontFamily: FONTS.bold,
-                  fontSize: 25,
-                  color: APP_COLOR.BROWN,
-                  textDecorationLine: "underline",
-                }}
-              >
-                {currencyFormatter(
-                  restaurant &&
-                    cart?.[restaurant._id] &&
-                    cart?.[restaurant._id].sum
-                )}
-              </Text>
-            </View>
-          </View>
-        )}
-        <Formik
-          validationSchema={ChangePasswordSchema}
-          initialValues={{
-            promotionCode: "",
-            note: "",
-            address: "",
-            phoneNumber: "",
-            branchId: 0,
-            pointUsed: 0,
-            pointEarned: 0,
-            paymentMethodId: 0,
-            orderItems: [
-              {
-                productId: 0,
-                quantity: 0,
-              },
-            ],
-            pickUp: false,
-          }}
-          onSubmit={(values) => {
-            const numericPointUsed = Number(values.pointUsed) || 0;
-            if (numericPointUsed < 0) {
-              Toast.show("Điểm sử dụng không thể là số âm!", {
-                duration: Toast.durations.LONG,
-                textColor: "white",
-                backgroundColor: "red",
-                opacity: 1,
-              });
-              return;
-            }
+          )}
+          <Formik
+            validationSchema={ChangePasswordSchema}
+            initialValues={{
+              promotionCode: "",
+              note: "",
+              address: "",
+              phoneNumber: "",
+              branchId: 0,
+              pointUsed: 0,
+              pointEarned: 0,
+              paymentMethodId: 0,
+              orderItems: [
+                {
+                  productId: 0,
+                  quantity: 0,
+                },
+              ],
+              pickUp: false,
+            }}
+            onSubmit={(values) => {
+              const numericPointUsed = Number(values.pointUsed) || 0;
+              if (numericPointUsed < 0) {
+                Toast.show("Điểm sử dụng không thể là số âm!", {
+                  duration: Toast.durations.LONG,
+                  textColor: "white",
+                  backgroundColor: "red",
+                  opacity: 1,
+                });
+                return;
+              }
 
-            handleCreateOrder(
-              values.promotionCode,
-              values.note,
-              values.address,
-              values.phoneNumber,
-              values.branchId,
-              numericPointUsed,
-              values.pointEarned,
-              values.paymentMethodId,
-              values.orderItems,
-              values.pickUp
-            );
-          }}
-        >
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-            setFieldValue,
-          }) => {
-            useEffect(() => {
-              if (cusAddress || cusPhone) {
-                setFieldValue("address", cusAddress);
-                setFieldValue("phoneNumber", cusPhone);
-              }
-              if (orderDetails) {
-                setFieldValue("orderItems", orderDetails);
-              }
-              if (branchId) {
-                setFieldValue("branchId", branchId);
-              }
-              if (restaurant && cart?.[restaurant._id]) {
-                const totalAmount = cart[restaurant._id].sum;
-                const earnedPoints = Math.floor(totalAmount / 1000);
-                setFieldValue("pointEarned", earnedPoints);
-                const currentPointUsed = Number(values.pointUsed) || 0;
-                setFieldValue("pointUsed", currentPointUsed);
-              }
-            }, [
-              cusAddress,
-              cusPhone,
-              orderDetails,
-              restaurant,
-              cart,
-              branchId,
-            ]);
-            return (
-              <View style={styles.container}>
-                <CustomerInforInput
-                  title="Mã khuyến mãi"
-                  onChangeText={handleChange("promotionCode")}
-                  onBlur={handleBlur("promotionCode")}
-                  value={values.promotionCode}
-                  error={errors.promotionCode}
-                  touched={touched.promotionCode}
-                />
-                <CustomerInforInput
-                  title="Ghi chú"
-                  onChangeText={handleChange("note")}
-                  onBlur={handleBlur("note")}
-                  value={values.note}
-                  error={errors.note}
-                  touched={touched.note}
-                />
-                <CustomerInforInput
-                  title="Sử dụng điểm"
-                  onChangeText={(text: any) => {
-                    const numericValue = Number(text) || 0;
-                    if (numericValue >= 0) {
-                      setFieldValue("pointUsed", numericValue);
-                    }
-                  }}
-                  onBlur={handleBlur("pointUsed")}
-                  value={String(values.pointUsed)}
-                  error={errors.pointUsed}
-                  touched={touched.pointUsed}
-                  keyboardType="numeric"
-                />
-                <View style={styles.dropdownContainer}>
-                  <Text style={styles.dropdownLabel}>
-                    Phương thức thanh toán
-                  </Text>
-                  <View style={styles.dropdown}>
-                    {dropdownItems.map((item, index) => (
-                      <Pressable
-                        key={`${item.id}-${index}`}
-                        style={[
-                          styles.dropdownItem,
-                          selectedOption === item.id &&
-                            styles.selectedDropdownItem,
-                        ]}
-                        onPress={() =>
-                          handlePaymentMethodChange(item.id, setFieldValue)
-                        }
-                      >
-                        <Text
-                          style={[
-                            styles.dropdownText,
-                            selectedOption === item.id &&
-                              styles.selectedDropdownText,
-                          ]}
-                        >
-                          {item.title}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                  {errors.paymentMethodId && touched.paymentMethodId && (
-                    <Text style={styles.errorText}>
-                      {errors.paymentMethodId}
+              handleCreateOrder(
+                values.promotionCode,
+                values.note,
+                values.address,
+                values.phoneNumber,
+                values.branchId,
+                numericPointUsed,
+                values.pointEarned,
+                values.paymentMethodId,
+                values.orderItems,
+                values.pickUp
+              );
+            }}
+          >
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+              setFieldValue,
+            }) => {
+              useEffect(() => {
+                if (cusAddress || cusPhone) {
+                  setFieldValue("address", cusAddress);
+                  setFieldValue("phoneNumber", cusPhone);
+                }
+                if (orderDetails) {
+                  setFieldValue("orderItems", orderDetails);
+                }
+                if (branchId) {
+                  setFieldValue("branchId", branchId);
+                }
+                if (restaurant && cart?.[restaurant._id]) {
+                  const totalAmount = cart[restaurant._id].sum;
+                  const earnedPoints = Math.floor(totalAmount / 1000);
+                  setFieldValue("pointEarned", earnedPoints);
+                  const currentPointUsed = Number(values.pointUsed) || 0;
+                  setFieldValue("pointUsed", currentPointUsed);
+                }
+              }, [
+                cusAddress,
+                cusPhone,
+                orderDetails,
+                restaurant,
+                cart,
+                branchId,
+              ]);
+              return (
+                <View style={styles.container}>
+                  <CustomerInforInput
+                    title="Mã khuyến mãi"
+                    onChangeText={handleChange("promotionCode")}
+                    onBlur={handleBlur("promotionCode")}
+                    value={values.promotionCode}
+                    error={errors.promotionCode}
+                    touched={touched.promotionCode}
+                  />
+                  <CustomerInforInput
+                    title="Ghi chú"
+                    onChangeText={handleChange("note")}
+                    onBlur={handleBlur("note")}
+                    value={values.note}
+                    error={errors.note}
+                    touched={touched.note}
+                  />
+                  <CustomerInforInput
+                    title="Sử dụng điểm"
+                    onChangeText={(text: any) => {
+                      const numericValue = Number(text) || 0;
+                      if (numericValue >= 0) {
+                        setFieldValue("pointUsed", numericValue);
+                      }
+                    }}
+                    onBlur={handleBlur("pointUsed")}
+                    value={String(values.pointUsed)}
+                    error={errors.pointUsed}
+                    touched={touched.pointUsed}
+                    keyboardType="numeric"
+                  />
+                  <View style={styles.dropdownContainer}>
+                    <Text style={styles.dropdownLabel}>
+                      Phương thức thanh toán
                     </Text>
-                  )}
-                </View>
-                <CustomerInforInput
-                  title="Mang đi"
-                  value={values.pickUp}
-                  setValue={(v) => setFieldValue("pickUp", v)}
-                  isBoolean={true}
-                />
-                <ShareButton
-                  loading={loading}
-                  title="Tạo đơn hàng"
-                  onPress={() => {
-                    handleCreateOrder(
-                      values.promotionCode,
-                      values.note,
-                      values.address,
-                      values.phoneNumber,
-                      values.branchId,
-                      values.pointUsed,
-                      values.pointEarned,
-                      values.paymentMethodId,
-                      values.orderItems,
-                      values.pickUp
-                    );
-                  }}
-                  textStyle={{
-                    textTransform: "uppercase",
-                    color: "#fff",
-                    paddingVertical: 5,
-                    fontFamily: FONTS.regular,
-                    fontSize: 20,
-                  }}
-                  btnStyle={{
-                    justifyContent: "center",
-                    borderRadius: 10,
-                    paddingVertical: 10,
-                    backgroundColor: APP_COLOR.BROWN,
-                    width: "100%",
-                  }}
-                  pressStyle={{ alignSelf: "stretch" }}
-                />
-              </View>
-            );
-          }}
-        </Formik>
-      </ScrollView>
-      <Modal
-        visible={modalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text
-              style={{
-                fontFamily: FONTS.regular,
-                fontSize: 20,
-                marginBottom: 10,
-              }}
-            >
-              Chọn địa chỉ giao hàng
-            </Text>
-            <ScrollView>
-              {addresses.map((address: any, index: number) => (
-                <Pressable
-                  key={`${address.userId}-${index}`}
-                  onPress={() => handleSelectAddress(address, locationReal)}
-                  style={styles.addressItem}
-                >
-                  <View>
-                    <Text style={styles.textNameInfor}>{address.fullName}</Text>
-                    {locationReal ? (
-                      <Text style={styles.textInfor}>{locationReal}</Text>
-                    ) : (
-                      <Text style={styles.textNameInfor}>
-                        {address.address}
+                    <View style={styles.dropdown}>
+                      {dropdownItems.map((item, index) => (
+                        <Pressable
+                          key={`${item.id}-${index}`}
+                          style={[
+                            styles.dropdownItem,
+                            selectedOption === item.id &&
+                              styles.selectedDropdownItem,
+                          ]}
+                          onPress={() =>
+                            handlePaymentMethodChange(item.id, setFieldValue)
+                          }
+                        >
+                          <Text
+                            style={[
+                              styles.dropdownText,
+                              selectedOption === item.id &&
+                                styles.selectedDropdownText,
+                            ]}
+                          >
+                            {item.title}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    {errors.paymentMethodId && touched.paymentMethodId && (
+                      <Text style={styles.errorText}>
+                        {errors.paymentMethodId}
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.textInfor}>{address.phone}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            <View style={{ flexDirection: "row" }}>
+                  <CustomerInforInput
+                    title="Mang đi"
+                    value={values.pickUp}
+                    setValue={(v) => setFieldValue("pickUp", v)}
+                    isBoolean={true}
+                  />
+                  <ShareButton
+                    loading={loading}
+                    title="Tạo đơn hàng"
+                    onPress={() => {
+                      handleCreateOrder(
+                        values.promotionCode,
+                        values.note,
+                        values.address,
+                        values.phoneNumber,
+                        values.branchId,
+                        values.pointUsed,
+                        values.pointEarned,
+                        values.paymentMethodId,
+                        values.orderItems,
+                        values.pickUp
+                      );
+                    }}
+                    textStyle={{
+                      textTransform: "uppercase",
+                      color: "#fff",
+                      paddingVertical: 5,
+                      fontFamily: FONTS.regular,
+                      fontSize: 20,
+                    }}
+                    btnStyle={{
+                      justifyContent: "center",
+                      borderRadius: 10,
+                      paddingVertical: 10,
+                      backgroundColor: APP_COLOR.BROWN,
+                      width: "100%",
+                    }}
+                    pressStyle={{ alignSelf: "stretch" }}
+                  />
+                </View>
+              );
+            }}
+          </Formik>
+        </ScrollView>
+        <Modal
+          visible={modalVisible}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text
+                style={{
+                  fontFamily: FONTS.regular,
+                  fontSize: 20,
+                  marginBottom: 10,
+                }}
+              >
+                Chọn địa chỉ giao hàng
+              </Text>
+              <ScrollView>
+                {addresses.map((address: any, index: number) => (
+                  <Pressable
+                    key={`${address.userId}-${index}`}
+                    style={styles.addressItem}
+                    onPress={() => handleSelectAddress(address, locationReal)}
+                  >
+                    <Text style={styles.textInfor}>{address.fullName}</Text>
+                    <Text style={styles.textNameInfor}>{address.phone}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
               <Pressable
+                style={styles.modalButton}
                 onPress={handleCreateNewAddress}
-                style={styles.modalButton}
               >
-                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
+                <Text
+                  style={{
+                    fontFamily: FONTS.regular,
+                    fontSize: 18,
+                    color: "white",
+                  }}
+                >
                   Tạo địa chỉ mới
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                style={styles.modalButton}
-              >
-                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
-                  Đóng
                 </Text>
               </Pressable>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
