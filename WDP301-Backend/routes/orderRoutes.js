@@ -7,8 +7,33 @@ const OrderItem = require("../models/orderItem");
 const Product = require("../models/product");
 const OrderStatus = require("../models/orderStatus");
 const PaymentMethod = require("../models/paymentMethod");
+const Information = require("../models/information");
+const axios = require("axios");
+require("dotenv").config();
 
 const currentDateTime = new Date().toISOString();
+
+// Mapping to standardize province names
+const provinceMapping = {
+  TPHCM: "TP. Hồ Chí Minh",
+  HCM: "TP. Hồ Chí Minh",
+  "Hồ Chí Minh": "TP. Hồ Chí Minh",
+  "TP. HCM": "TP. Hồ Chí Minh",
+  "Thành Phố Hồ Chí Minh": "TP. Hồ Chí Minh",
+  "Hà Nội": "TP. Hà Nội",
+  HN: "TP. Hà Nội",
+  "TP Hà Nội": "TP. Hà Nội",
+  "Đà Nẵng": "TP. Đà Nẵng",
+  DN: "TP. Đà Nẵng",
+  "Cần Thơ": "TP. Cần Thơ",
+  "Hải Phòng": "TP. Hải Phòng",
+};
+
+const standardizeProvince = (province) => {
+  if (!province) return "TP. Hồ Chí Minh"; // Giá trị mặc định nếu không xác định được
+  const normalizedProvince = province.trim().toUpperCase();
+  return provinceMapping[normalizedProvince] || provinceMapping[province] || province;
+};
 
 /**
  * @swagger
@@ -92,7 +117,7 @@ router.post("/", verifyToken, async (req, res) => {
   try {
     const { storeId, order_discount_value, order_shipping_fee, payment_method_name, order_address, items } = req.body;
 
-    console.log("Request Body:", req.body); // Log req.body to debug items
+    console.log("Request Body:", req.body);
 
     if (!storeId || !payment_method_name || !order_address || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -198,7 +223,6 @@ router.get("/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    // Find the order by orderId with correct alias "OrderItems"
     const order = await Order.findOne({
       where: { orderId },
       include: [
@@ -233,7 +257,6 @@ router.get("/:orderId", async (req, res) => {
       });
     }
 
-    // Format the response
     const orderDetails = {
       orderId: order.orderId,
       order_amount: order.order_amount,
@@ -320,6 +343,143 @@ router.get("/payment-callback", async (req, res) => {
     });
   } catch (error) {
     console.error("Error handling payment callback:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/shipping/calculate:
+ *   post:
+ *     summary: Calculate shipping fee and save address
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - deliver_address
+ *             properties:
+ *               deliver_address:
+ *                 type: string
+ *                 example: "643 Điện Biên Phủ, Phường 1, Quận 3, TPHCM"
+ *     responses:
+ *       200:
+ *         description: Shipping fee calculated and address saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 fee:
+ *                   type: number
+ *       400:
+ *         description: Missing required fields or invalid address
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post("/shipping/calculate", verifyToken, async (req, res) => {
+  try {
+    const { deliver_address, weight } = req.body;
+
+    if (!deliver_address) {
+      return res.status(400).json({
+        status: 400,
+        message: "Missing required field: deliver_address",
+      });
+    }
+
+    // Sử dụng giá trị mặc định cho weight nếu không được cung cấp
+    const defaultWeight = weight || 1000;
+
+    // Default pick address (sender address)
+    const pickProvince = "TP. Hồ Chí Minh";
+    const pickDistrict = "Quận 1";
+    const pickWard = "Phường Bến Nghé";
+    const pickAddress = "123 Đường Số 1";
+
+    // Parse deliver address manually with improved logic
+    const addressParts = deliver_address.split(",").map((part) => part.trim());
+    let deliverWard = "Phường 1";
+    let deliverDistrict = "Quận 3";
+    let deliverProvince = "TPHCM";
+
+    for (let part of addressParts) {
+      part = part.toLowerCase();
+      if (part.includes("phường") || part.includes("p.")) deliverWard = part;
+      else if (part.includes("quận")) deliverDistrict = part;
+      else if (part.includes("thành phố") || part.includes("tp")) deliverProvince = part;
+    }
+    deliverProvince = standardizeProvince(deliverProvince.replace(/tp/gi, "TP.").replace(/\s+/g, " ").trim());
+    const deliverFullAddress = deliver_address;
+
+    console.log("Parsed Address:", { deliverProvince, deliverDistrict, deliverWard, deliverFullAddress });
+
+    // Call GHTK API to calculate shipping fee using GET method
+    const ghtkApiUrl = process.env.GHTK_API_BASE_URL + "/services/shipment/fee";
+    const queryParams = {
+      pick_province: pickProvince,
+      pick_district: pickDistrict,
+      pick_ward: pickWard,
+      pick_address: pickAddress,
+      province: deliverProvince,
+      district: deliverDistrict,
+      ward: deliverWard,
+      address: deliverFullAddress,
+      weight: defaultWeight,
+      value: 0,
+      deliver_option: "none",
+    };
+    console.log("GHTK Query Params:", queryParams);
+
+    const response = await axios.get(ghtkApiUrl, {
+      params: queryParams,
+      headers: {
+        Token: process.env.GHTK_API_TOKEN,
+      },
+    });
+
+    console.log("GHTK API Response:", response.data);
+    if (response.data.success === false) {
+      throw new Error(`GHTK Error: ${response.data.message || "Unknown error"}`);
+    }
+
+    // Lấy đúng giá trị fee từ response.data.fee.fee
+    const shippingFee = response.data.fee && response.data.fee.fee ? response.data.fee.fee : 0;
+    if (shippingFee === 0) {
+      console.warn("Warning: GHTK returned zero shipping fee, possible invalid data.");
+    }
+
+    // Save address to Information table
+    const newAddress = await Information.create({
+      userId: req.userId,
+      address: deliver_address,
+    });
+
+    // Chỉ trả về status, message, và fee
+    res.status(200).json({
+      status: 200,
+      message: "Shipping fee calculated and address saved successfully",
+      fee: shippingFee,
+    });
+  } catch (error) {
+    console.error("Error calculating shipping fee:", error);
+    if (error.response) {
+      console.error("GHTK API Error:", error.response.data);
+    }
     res.status(500).json({
       status: 500,
       message: error.message || "Internal Server Error",
