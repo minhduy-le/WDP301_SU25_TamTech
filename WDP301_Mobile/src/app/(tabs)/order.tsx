@@ -18,35 +18,58 @@ const OrderPage = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   const styles = StyleSheet.create({
-    text: {
+    deliveryText: {
+      fontFamily: FONTS.bold,
+      fontSize: 17,
+    },
+    dateText: {
       fontFamily: FONTS.regular,
       fontSize: 17,
-      color: APP_COLOR.ORANGE,
+      color: APP_COLOR.BROWN,
+      position: "absolute",
+      left: 180,
+    },
+    text: {
+      fontFamily: FONTS.bold,
+      fontSize: 17,
+      color: APP_COLOR.BROWN,
+      marginLeft: 5,
+      marginBottom: 5,
+      marginTop: 5,
     },
     earnPoint: {
       fontFamily: FONTS.regular,
       fontSize: 17,
-      color: "green",
+      color: APP_COLOR.BROWN,
+    },
+    statusLayout: {
+      width: 120,
+      height: 35,
+    },
+    statusText: {
+      fontFamily: FONTS.bold,
+      fontSize: 10,
+      marginHorizontal: "auto",
+      marginVertical: "auto",
     },
     container: {
-      flex: 1,
-      position: "absolute",
-      bottom: 25,
-      left: 200,
+      marginHorizontal: "auto",
+      flexDirection: "row",
+      gap: 10,
     },
     button: {
       backgroundColor: APP_COLOR.WHITE,
       borderWidth: 1,
-      borderColor: APP_COLOR.ORANGE,
-      paddingVertical: 12,
+      borderColor: APP_COLOR.BROWN,
+      paddingVertical: 9,
       paddingHorizontal: 20,
       borderRadius: 8,
-      width: 120,
+      width: 150,
       height: 42,
     },
     buttonText: {
-      color: APP_COLOR.ORANGE,
-      fontSize: 15,
+      color: APP_COLOR.BROWN,
+      fontSize: 17,
       fontFamily: FONTS.regular,
       marginHorizontal: "auto",
     },
@@ -62,15 +85,11 @@ const OrderPage = () => {
       borderRadius: 8,
       marginHorizontal: 10,
     },
-    paginationText: {
-      color: APP_COLOR.WHITE,
-      fontSize: 16,
+    orderText: {
       fontFamily: FONTS.regular,
-    },
-    paginationText1: {
-      color: APP_COLOR.ORANGE,
-      fontSize: 16,
-      fontFamily: FONTS.regular,
+      color: APP_COLOR.BROWN,
+      fontSize: 17,
+      marginVertical: 5,
     },
   });
 
@@ -79,9 +98,122 @@ const OrderPage = () => {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-
-    return `${day}-${month}-${year}`;
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}${" "}${day}/${month}/${year}`;
   }
+  const sampleData = [
+    {
+      id: 1,
+      orderId: "#2701270005",
+      address: "Hồ Chí Minh City",
+      orderStatus: "Đang chuẩn bị",
+      pointEarned: 7,
+      amount: 100000,
+      createdAt: "2025-05-19T23:57:09.213+07:00",
+      deliveryStatus: "Mang đi",
+    },
+    {
+      id: 2,
+      orderId: "#2701270005",
+      address: "Hà Nội",
+      orderStatus: "Đang giao",
+      pointEarned: 10,
+      amount: 15000,
+      createdAt: "2025-05-18T14:25:00.000+07:00",
+      deliveryStatus: "Mang đi",
+    },
+    {
+      id: 3,
+      orderId: "#2701270005",
+      address: "Đà Nẵng",
+      orderStatus: "Đặt hàng thành công",
+      pointEarned: 5,
+      amount: 80000,
+      createdAt: "2025-05-17T11:03:45.000+07:00",
+      deliveryStatus: "Dùng tại quán",
+    },
+    {
+      id: 4,
+      orderId: "#2701270005",
+      address: "Cần Thơ",
+      orderStatus: "Đã hủy",
+      pointEarned: 0,
+      amount: 120000,
+      createdAt: "2025-05-16T09:12:30.000+07:00",
+      deliveryStatus: "Giao hàng",
+    },
+    {
+      id: 5,
+      orderId: "#2701270005",
+      address: "Hải Phòng",
+      orderStatus: "Đang chuẩn bị",
+      pointEarned: 6,
+      amount: 140000,
+      createdAt: "2025-05-15T16:20:10.000+07:00",
+      deliveryStatus: "Mang đi",
+    },
+    {
+      id: 6,
+      orderId: "#2701270005",
+      address: "Biên Hòa",
+      orderStatus: "Chờ thanh toán",
+      pointEarned: 9,
+      amount: 180000,
+      createdAt: "2025-05-14T18:45:00.000+07:00",
+      deliveryStatus: "Dùng tại quán",
+    },
+    {
+      id: 7,
+      orderId: "#2701270005",
+      address: "Nha Trang",
+      orderStatus: "Đã giao",
+      pointEarned: 4,
+      amount: 70000,
+      createdAt: "2025-05-13T21:10:20.000+07:00",
+      deliveryStatus: "Mang đi",
+    },
+    {
+      id: 8,
+      orderId: "#2701270005",
+      address: "Huế",
+      orderStatus: "Đã hủy",
+      pointEarned: 0,
+      amount: 60000,
+      createdAt: "2025-05-12T13:33:40.000+07:00",
+      deliveryStatus: "Dùng tại quán",
+    },
+    {
+      id: 9,
+      orderId: "#2701270005",
+      address: "Vũng Tàu",
+      orderStatus: "Đang chuẩn bị",
+      pointEarned: 8,
+      amount: 200000,
+      createdAt: "2025-05-11T10:05:00.000+07:00",
+      deliveryStatus: "Dùng tại quán",
+    },
+    {
+      id: 10,
+      orderId: "#2701270005",
+      address: "Bình Dương",
+      orderStatus: "Đang giao",
+      pointEarned: 11,
+      amount: 220000,
+      createdAt: "2025-05-10T07:30:00.000+07:00",
+      deliveryStatus: "Mang đi",
+    },
+    {
+      id: 11,
+      orderId: "#2701270005",
+      address: "Quảng Ninh",
+      orderStatus: "Đã giao",
+      pointEarned: 6,
+      amount: 130000,
+      createdAt: "2025-05-09T15:50:00.000+07:00",
+      deliveryStatus: "Dùng tại quán",
+    },
+  ];
 
   const handleViewDetails = (id: number) => {
     router.navigate({
@@ -141,16 +273,16 @@ const OrderPage = () => {
                 fontSize: 20,
               }}
             >
-              Lịch sử đơn hàng
+              Lịch sử mua hàng
             </Text>
             <Image
               source={logo}
-              style={{ width: 150, height: 100, marginLeft: 40 }}
+              style={{ width: 150, height: 100, marginLeft: 35 }}
             />
           </View>
         </View>
         <ScrollView style={{ flex: 1 }}>
-          {orderHistory.map((item, index) => {
+          {sampleData.map((item, index) => {
             return (
               <View key={index}>
                 <View
@@ -158,75 +290,195 @@ const OrderPage = () => {
                     padding: 10,
                     flexDirection: "row",
                     gap: 10,
-                    backgroundColor: "rgba(249, 179, 50, 0.26)",
+                    backgroundColor: APP_COLOR.DARK_YELLOW,
                     borderRadius: 10,
-                    width: "95%",
+                    width: "90%",
                     marginHorizontal: "auto",
                   }}
                 >
-                  <View style={{ gap: 10 }}>
-                    <Text style={styles.text}>{item.address}</Text>
-                    <Text style={styles.text}>
-                      {formatDateToDDMMYYYY(item.createdAt)}
-                    </Text>
-                    <Text style={styles.text}>
-                      {currencyFormatter(item.amount)}{" "}
-                      <Text style={styles.earnPoint}>
-                        (+ {item.pointEarned} điểm)
+                  <View style={{ gap: 10, width: 320 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        paddingVertical: "auto",
+                        borderBottomWidth: 0.5,
+                        borderColor: APP_COLOR.BROWN,
+                        marginHorizontal: 5,
+                        paddingBottom: 5,
+                      }}
+                    >
+                      <Text style={styles.deliveryText}>
+                        <Text style={{ color: APP_COLOR.BROWN }}>
+                          {item.deliveryStatus}
+                        </Text>
                       </Text>
-                    </Text>
+                      <Text style={styles.dateText}>
+                        {formatDateToDDMMYYYY(item.createdAt)}
+                      </Text>
+                    </View>
                     <View style={{ flexDirection: "row" }}>
-                      <Text style={styles.text}>
-                        Trạng thái:{" "}
-                        {(() => {
-                          switch (item.orderStatus) {
-                            case "Đang chuẩn bị":
-                              return (
-                                <Text style={{ color: APP_COLOR.ORANGE }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            case "Đang giao":
-                              return (
-                                <Text style={{ color: APP_COLOR.YELLOW }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            case "Đã giao":
-                              return (
-                                <Text style={{ color: "green" }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            case "Đã hủy":
-                              return (
-                                <Text style={{ color: "red" }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            case "Đặt hàng thành công":
-                              return (
-                                <Text style={{ color: "blue" }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            case "Chờ thanh toán":
-                              return (
-                                <Text style={{ color: "orange" }}>
-                                  {item.orderStatus}
-                                </Text>
-                              );
-                            default:
-                              return null;
-                          }
-                        })()}
-                      </Text>
+                      <View>
+                        <Text style={styles.text}>{item.address}</Text>
+                        <Text style={styles.text}>
+                          {currencyFormatter(item.amount)} {" | "}
+                          <Text style={styles.earnPoint}>
+                            (+ {item.pointEarned} điểm)
+                          </Text>
+                        </Text>
+                      </View>
+                      <View style={{ marginLeft: 15 }}>
+                        <Text style={styles.orderText}>{item.orderId}</Text>
+                        <View style={styles.statusLayout}>
+                          <Text>
+                            {(() => {
+                              switch (item.orderStatus) {
+                                case "Đang chuẩn bị":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: APP_COLOR.BROWN,
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                case "Đang giao":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: APP_COLOR.DELIVERY,
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                case "Đã giao":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: APP_COLOR.DONE,
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                case "Đã hủy":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: APP_COLOR.CANCEL,
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                case "Đặt hàng thành công":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: APP_COLOR.PENDING,
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                case "Chờ thanh toán":
+                                  return (
+                                    <View
+                                      style={[
+                                        styles.statusLayout,
+                                        {
+                                          backgroundColor: "orange",
+                                          borderRadius: 50,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.statusText,
+                                          { color: APP_COLOR.WHITE },
+                                        ]}
+                                      >
+                                        {item.orderStatus}
+                                      </Text>
+                                    </View>
+                                  );
+                                default:
+                                  return null;
+                              }
+                            })()}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: "row" }}>
                       <View style={styles.container}>
                         <TouchableOpacity
                           style={styles.button}
                           onPress={() => handleViewDetails(item.id)}
                         >
                           <Text style={styles.buttonText}>Xem chi tiết</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.button}
+                          onPress={() => handleViewDetails(item.id)}
+                        >
+                          <Text style={styles.buttonText}>Đánh giá</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -237,30 +489,6 @@ const OrderPage = () => {
             );
           })}
         </ScrollView>
-
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            style={styles.paginationButton}
-            onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-            disabled={currentPage === 0}
-          >
-            <Text style={styles.paginationText}>Trước</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.paginationText1}>
-            Trang {currentPage + 1} / {totalPages}
-          </Text>
-
-          <TouchableOpacity
-            style={styles.paginationButton}
-            onPress={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))
-            }
-            disabled={currentPage === totalPages - 1}
-          >
-            <Text style={styles.paginationText}>Tiếp</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </SafeAreaView>
   );
