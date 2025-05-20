@@ -8,6 +8,11 @@ export const APP_COLOR = {
   BROWN: "#632713",
   DARK_YELLOW: "rgba(248, 169, 31, 0.15)",
   BACKGROUND_ORANGE: "#FDE3CF",
+  PROCESSING: "F8A91F",
+  DONE: "#1A3F22",
+  CANCEL: "#D71616",
+  PENDING: "rgba(17, 21, 248, 0.97)",
+  DELIVERY: "rgba(155, 160, 12, 0.97)",
 };
 
 export const APP_FONT = {
