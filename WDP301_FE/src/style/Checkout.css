@@ -16,10 +16,10 @@
 }
 
 .section-card {
-  border-radius: 10px;
-  background-color: #fff;
+  background-color: transparent;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
 }
 
 .confirm-card {
@@ -50,7 +50,8 @@
 .checkbox-label {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-left: 18px;
+  margin-top: 14px;
 }
 
 .checkbox-label .ant-checkbox-wrapper {
@@ -82,13 +83,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
 }
 
 .order-item .sub-item {
   display: block;
   color: #666;
-  font-size: 14px;
+  font-size: 15px;
   margin-left: 16px;
 }
 
@@ -132,8 +132,8 @@
 
 .submit-button {
   margin-top: 20px;
-  background-color: #52c41a !important;
-  border-color: #52c41a !important;
+  background-color: #78a243 !important;
+  border-color: #78a243 !important;
   border-radius: 5px;
   height: 40px;
   font-size: 16px;
@@ -147,10 +147,36 @@
 
 .ant-input {
   height: 40px;
+  font-size: 15px;
+}
+
+.ant-radio-inner {
+  background: #ebd187 !important;
+  border: none !important;
+}
+
+.ant-radio-inner::after {
+  background-color: #000000 !important;
+}
+
+.ant-radio-wrapper {
+  height: max-content;
+}
+
+.radio-group .ant-radio-group {
+  margin-bottom: 0;
+  align-content: center;
+}
+
+.ant-input::placeholder {
+  color: #da7339;
 }
 
 .ant-select-single .ant-select-selector {
-  height: 40px !important;
-  display: flex;
-  align-items: center;
+  background-color: transparent !important;
+  font-size: 15px;
+}
+
+.ant-radio-label {
+  font-size: 15px;
 }
