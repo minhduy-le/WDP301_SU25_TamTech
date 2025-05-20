@@ -160,7 +160,7 @@ const RootLayout = () => {
               <Stack.Screen
                 name="(user)/order/[id]"
                 options={{
-                  headerTitle: "Chi tiết đơn hàng",
+                  headerShown: false,
                 }}
               />
               <Stack.Screen
