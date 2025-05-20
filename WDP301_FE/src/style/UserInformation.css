@@ -1,0 +1,93 @@
+.user-info-container {
+  background-color: #fff7e6;
+  font-family: "Playfair Display", serif;
+  padding: 20px 55px 65px 55px;
+}
+
+.user-sider {
+  background-color: #f4d7a0 !important;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.user-details {
+  text-align: center;
+  font-family: "Playfair Display", serif;
+}
+
+.user-name {
+  font-size: 15px;
+  color: #000;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.user-email {
+  font-size: 15px;
+  color: #000;
+  margin-bottom: 20px;
+}
+
+.sidebar-menu {
+  background: none;
+  border: none;
+}
+
+.menu-item {
+  font-size: 15px;
+  color: #2d1e1a !important;
+  padding: 10px 0;
+  background: none;
+  height: auto !important;
+  line-height: normal !important;
+  margin-bottom: 10px !important;
+  font-family: "Playfair Display", serif;
+}
+
+.menu-item.active {
+  background-color: #a8c56c;
+  color: #fff;
+}
+
+.menu-item span {
+  margin-right: 10px;
+  color: #2d1e1a;
+}
+
+.content-col {
+  background-color: #f4d7a0;
+  padding: 20px;
+  border-radius: 10px;
+  min-height: 510px;
+}
+
+.content-header {
+  font-size: 20px;
+  color: #2d1e1a;
+  font-family: "Playfair Display", serif;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.qr-code-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.qr-code {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+}
+
+.qr-text {
+  font-size: 15px;
+  color: #2d1e1a;
+  text-align: left;
+  font-family: "Playfair Display", serif;
+}
+
+.qr-text p {
+  margin: 5px 0;
+}

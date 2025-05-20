@@ -16,6 +16,7 @@ import HomePage from "./pages/HomePage";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import UserInfomation from "./pages/UserInformation";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -44,6 +45,7 @@ function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/user-information" element={<UserInfomation />} />
         </Route>
         <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
