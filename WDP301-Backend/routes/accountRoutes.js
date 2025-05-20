@@ -6,6 +6,7 @@
  */
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middlewares/verifyToken");
 const accountService = require("../services/accountService");
 
 /**
@@ -36,7 +37,7 @@ const accountService = require("../services/accountService");
  *                 description: Email address of the user
  *               password:
  *                 type: string
- *                 description: Password for the user account
+ *                 description: Password for the user account (will be hashed)
  *               phone_number:
  *                 type: string
  *                 description: Phone number of the user
@@ -53,7 +54,7 @@ const accountService = require("../services/accountService");
  *                 description: Role of the user
  *     responses:
  *       201:
- *         description: User created successfully
+ *         description: User created successfully with isActive set to true
  *         content:
  *           application/json:
  *             schema:
@@ -76,6 +77,7 @@ const accountService = require("../services/accountService");
  *                       type: string
  *                     isActive:
  *                       type: boolean
+ *                       description: Set to true by default
  *                     date_of_birth:
  *                       type: string
  *                       format: date
@@ -96,7 +98,7 @@ const accountService = require("../services/accountService");
  *       500:
  *         description: Server error
  */
-router.post("/", async (req, res, next) => {
+router.post("/", verifyToken, async (req, res, next) => {
   try {
     const userData = {
       fullName: req.body.fullName,
@@ -106,6 +108,7 @@ router.post("/", async (req, res, next) => {
       date_of_birth: req.body.date_of_birth,
       note: req.body.note,
       role: req.body.role,
+      isActive: true, // Ensure isActive is set to true
     };
 
     const newUser = await accountService.createUser(userData);
@@ -176,7 +179,7 @@ router.post("/", async (req, res, next) => {
  *       500:
  *         description: Server error
  */
-router.get("/", async (req, res, next) => {
+router.get("/", verifyToken, async (req, res, next) => {
   try {
     const users = await accountService.getAllUsers();
     res.status(200).json({
@@ -254,7 +257,7 @@ router.get("/", async (req, res, next) => {
  *       500:
  *         description: Server error
  */
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", verifyToken, async (req, res, next) => {
   try {
     const userId = parseInt(req.params.id);
     const user = await accountService.getUserById(userId);
@@ -301,7 +304,7 @@ router.get("/:id", async (req, res, next) => {
  *                 description: Email address of the user
  *               password:
  *                 type: string
- *                 description: Password for the user account
+ *                 description: Password for the user account (will be hashed)
  *               phone_number:
  *                 type: string
  *                 description: Phone number of the user
@@ -375,7 +378,7 @@ router.get("/:id", async (req, res, next) => {
  *       500:
  *         description: Server error
  */
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", verifyToken, async (req, res, next) => {
   try {
     const userId = parseInt(req.params.id);
     const userData = {
@@ -441,7 +444,7 @@ router.put("/:id", async (req, res, next) => {
  *       500:
  *         description: Server error
  */
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", verifyToken, async (req, res, next) => {
   try {
     const userId = parseInt(req.params.id);
     await accountService.deactivateUser(userId);

@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const httpErrors = require("http-errors");
+const bcrypt = require("bcrypt");
 
 const createUser = async (userData) => {
   try {
@@ -25,6 +26,12 @@ const createUser = async (userData) => {
     if (existingUser) {
       throw httpErrors.BadRequest("Email already exists");
     }
+
+    // Hash password
+    userData.password = await bcrypt.hash(userData.password, 10);
+
+    // Ensure isActive is true
+    userData.isActive = true;
 
     // Create user in database
     const user = await User.create(userData);
@@ -133,6 +140,11 @@ const updateUser = async (userId, userData) => {
       if (!validRoles.includes(userData.role)) {
         throw httpErrors.BadRequest("Invalid role");
       }
+    }
+
+    // Hash password if provided
+    if (userData.password) {
+      userData.password = await bcrypt.hash(userData.password, 10);
     }
 
     // Update user
