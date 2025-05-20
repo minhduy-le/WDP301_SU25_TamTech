@@ -55,14 +55,16 @@ const SearchPage = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchContainer}>
-        <FontAwesome name="search" size={20} color={APP_COLOR.BROWN} />
-        <TextInput
-          placeholder="Hôm nay bạn muốn ăn gì nào?"
-          style={styles.input}
-          onChangeText={handleChangeText}
-          value={searchTerm}
-        />
+      <View style={{ backgroundColor: APP_COLOR.BROWN }}>
+        <View style={styles.searchContainer}>
+          <FontAwesome name="search" size={20} color={APP_COLOR.BROWN} />
+          <TextInput
+            placeholder="Hôm nay bạn muốn ăn gì nào?"
+            style={styles.input}
+            onChangeText={handleChangeText}
+            value={searchTerm}
+          />
+        </View>
       </View>
 
       {products.length > 0 ? (
@@ -97,7 +99,7 @@ const SearchPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    backgroundColor: APP_COLOR.BROWN,
   },
   searchContainer: {
     flexDirection: "row",
@@ -144,11 +146,11 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     flex: 1,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   fallbackImage: {
     width: "100%",
-    height: "85%",
+    height: "80%",
     resizeMode: "contain",
   },
 });
