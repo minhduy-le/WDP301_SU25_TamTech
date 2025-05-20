@@ -27,6 +27,24 @@ const app = initializeApp({
 const storage = getStorage(app);
 const auth = getAuth(app);
 
+// In firebase.js
+const uploadFileToFirebase = async (fileBuffer, fileName, contentType) => {
+  const bucket = storage.bucket();
+  // You might want a different path for invoices vs. images
+  const remoteFilePath = contentType === "application/pdf" ? `invoices/${fileName}` : `images/${fileName}`;
+  const file = bucket.file(remoteFilePath);
+
+  await file.save(fileBuffer, {
+    metadata: { contentType: contentType }, // Use the provided contentType
+  });
+
+  const [url] = await file.getSignedUrl({
+    action: "read",
+    expires: "03-09-2491", // Consider if this expiry is appropriate for all files
+  });
+  return url;
+};
+
 const uploadImageToFirebase = async (imageBuffer, fileName) => {
   const bucket = storage.bucket();
   const file = bucket.file(`images/${fileName}`);
@@ -40,4 +58,4 @@ const uploadImageToFirebase = async (imageBuffer, fileName) => {
   return url;
 };
 
-module.exports = { uploadImageToFirebase, auth };
+module.exports = { uploadFileToFirebase, auth, uploadImageToFirebase }; // Export the modified function
