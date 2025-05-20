@@ -10,13 +10,20 @@ import {
   Typography,
   Space,
   Checkbox,
+  Divider,
+  TimePicker,
 } from "antd";
 import "../style/Checkout.css";
+import { useState } from "react";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
 const Checkout = () => {
+  const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
+  const currentDate = dayjs().format("DD/MM/YYYY");
+
   return (
     <Layout className="layout">
       <div className="header">
@@ -25,159 +32,535 @@ const Checkout = () => {
         </Title>
       </div>
       <Row gutter={16}>
-        {/* Left Section */}
         <Col span={12}>
-          <Card title="THÔNG TIN KHÁCH HÀNG" className="section-card">
+          <Card className="section-card">
             <Space direction="vertical" style={{ width: "100%" }}>
-              <div className="radio-group">
+              <div className="radio-group" style={{ display: "flex" }}>
+                <Title
+                  level={3}
+                  style={{
+                    margin: "0 25px 0 0",
+                    fontFamily: "'Playfair Display', serif",
+                  }}
+                >
+                  Hình thức
+                </Title>
                 <Radio.Group defaultValue="delivery">
-                  <Radio value="delivery">Giao hàng</Radio>
-                  <Radio value="pickup">Đường quán</Radio>
+                  <Radio
+                    value="delivery"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    Giao hàng
+                  </Radio>
+                  <Radio
+                    value="pickup"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    Dùng tại quán
+                  </Radio>
                 </Radio.Group>
               </div>
-              <Input placeholder="Tên khách hàng" />
-              <Input placeholder="Số điện thoại" />
-              <Input placeholder="Email" />
-              <div className="checkbox-label">
-                <Checkbox defaultChecked />
-                <Text>Đặt hộ</Text>
-              </div>
-              <Input placeholder="Tên người nhận" />
-              <Input placeholder="Số điện thoại người nhận" />
-              <Select defaultValue="huyen" style={{ width: "100%" }}>
-                <Option value="huyen">Quận huyện</Option>
-              </Select>
-              <Select defaultValue="xa" style={{ width: "100%" }}>
-                <Option value="xa">Đường</Option>
-              </Select>
-              <Input placeholder="Địa chỉ chi tiết" />
+              <Title
+                level={3}
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Thông tin khách hàng
+              </Title>
+              <Input
+                placeholder="Tên khách hàng"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
+              <Input
+                placeholder="Số điện thoại"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
+              <Input
+                placeholder="Email"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
+              <Row>
+                <Title
+                  level={3}
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Thông tin giao hàng
+                </Title>
+                <div className="checkbox-label">
+                  <Checkbox defaultChecked />
+                  <Text style={{ fontFamily: "'Playfair Display', serif" }}>
+                    Đặt hộ
+                  </Text>
+                </div>
+              </Row>
+              <Input
+                placeholder="Tên người nhận"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
+              <Input
+                placeholder="Số điện thoại người nhận"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col span={11}>
+                  <Select
+                    defaultValue="tinh"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      fontFamily: "'Playfair Display', serif",
+                    }}
+                  >
+                    <Option value="tinh">Tỉnh thành</Option>
+                  </Select>
+                </Col>
+                <Col span={11}>
+                  <Select
+                    defaultValue="huyen"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      fontFamily: "'Playfair Display', serif",
+                    }}
+                  >
+                    <Option value="huyen">Quận huyện</Option>
+                  </Select>
+                </Col>
+              </Row>
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col span={11}>
+                  <Select
+                    defaultValue="xa"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      fontFamily: "'Playfair Display', serif",
+                    }}
+                  >
+                    <Option value="xa">Phường xã</Option>
+                  </Select>
+                </Col>
+                <Col span={11}>
+                  <Select
+                    defaultValue="duong"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      fontFamily: "'Playfair Display', serif",
+                    }}
+                  >
+                    <Option value="duong">Đường</Option>
+                  </Select>
+                </Col>
+              </Row>
+              <Input
+                placeholder="Địa chỉ chi tiết"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Playfair Display', serif",
+                }}
+              />
               <div className="delivery-info">
-                <Radio.Group defaultValue="now">
-                  <Radio value="now">Giao ngay</Radio>
-                  <Radio value="later">
+                <Radio.Group
+                  value={deliveryTimeOption}
+                  onChange={(e) => setDeliveryTimeOption(e.target.value)}
+                >
+                  <Radio
+                    value="now"
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Giao ngay
+                  </Radio>
+                  <Radio
+                    value="later"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
                     Hẹn lịch giao lúc{" "}
-                    <span className="time">13:45 ngày 07.02.2025</span>
+                    <TimePicker
+                      format="HH:mm"
+                      placeholder="Chọn thời gian ngay tại đây luôn"
+                      // minuteStep={5}
+                      style={{ width: 112 }}
+                    />{" "}
+                    ngày <span>{currentDate}</span>
                   </Radio>
                 </Radio.Group>
               </div>
             </Space>
           </Card>
 
-          <Card
-            title="PHƯƠNG THỨC THANH TOÁN"
-            className="section-card payment-method"
-          >
+          <Divider className="divider" />
+
+          <Card className="section-card payment-method">
+            <Title
+              level={3}
+              style={{ fontFamily: "'Playfair Display', serif", marginTop: 0 }}
+            >
+              Phương thức thanh toán
+            </Title>
             <Radio.Group defaultValue="cash">
               <Space direction="vertical">
-                <Radio value="momo">Ví MOMO</Radio>
-                <Radio value="vnpay">Ví VNPay</Radio>
-                <Radio value="qr">Quét mã QR VNPay</Radio>
-                <Radio value="cash">Tiền mặt (COD)</Radio>
+                <Radio
+                  value="momo"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Ví MOMO
+                </Radio>
+                <Radio
+                  value="vnpay"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Ví VNPay
+                </Radio>
+                <Radio
+                  value="qr"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Quét mã QR VNPay
+                </Radio>
+                <Radio
+                  value="cash"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Tiền mặt (COD)
+                </Radio>
               </Space>
             </Radio.Group>
           </Card>
         </Col>
 
-        {/* Right Section */}
         <Col span={12}>
           <Card className="confirm-card section-card order-details">
-            <Title className="title-card">TẤM TẮC LÀNG ĐẠI HỌC</Title>
-            <Text>
+            <Title
+              className="title-card"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              TẤM TẮC LÀNG ĐẠI HỌC
+            </Title>
+            <Text style={{ fontFamily: "'Playfair Display', serif" }}>
               Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
             </Text>
-            <div className="order-item">
-              <Text>COMBO - SÀ BÌ CHƯỞNG</Text>
-              <div className="order-price">
-                <Text>134,000đ</Text>
-                <div className="quantity-controls">
-                  <Button>-</Button>
-                  <span>1</span>
-                  <Button>+</Button>
-                </div>
-              </div>
-              <Text className="sub-item">• Canh chua</Text>
-              <Text className="sub-item">• Nước ngọt: Coca Cola</Text>
-              <Text className="sub-item">• Com thêm</Text>
+            <div className="order-item" style={{ marginTop: 16 }}>
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col>
+                  <Text
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 17,
+                    }}
+                  >
+                    COMBO - SÀ BÌ CHƯỞNG
+                  </Text>
+                  <Text
+                    className="sub-item"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    • Canh chua
+                  </Text>
+                  <Text
+                    className="sub-item"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    • Nước ngọt: Coca Cola
+                  </Text>
+                  <Text
+                    className="sub-item"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    • Cơm thêm
+                  </Text>
+                </Col>
+                <Col>
+                  <div className="order-price">
+                    <Text
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        color: "#DA7339",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        marginRight: 13,
+                      }}
+                    >
+                      134,000đ
+                    </Text>
+                    <div className="quantity-controls">
+                      <Button>-</Button>
+                      <span>1</span>
+                      <Button>+</Button>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
             </div>
             <div className="order-item">
-              <Text>COMBO - SÀ BÌ CHƯỞNG</Text>
-              <div className="order-price">
-                <Text>134,000đ</Text>
-                <div className="quantity-controls">
-                  <Button>-</Button>
-                  <span>1</span>
-                  <Button>+</Button>
-                </div>
-              </div>
-              <Text className="sub-item">• Canh chua</Text>
-              <Text className="sub-item">• Nước ngọt: Coca Cola</Text>
-              <Text className="sub-item">• Rau thêm</Text>
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col>
+                  <Text
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 17,
+                    }}
+                  >
+                    CƠM SƯỜN CỌNG
+                  </Text>
+                  <Text
+                    className="sub-item"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    • Canh chua
+                  </Text>
+                  <Text
+                    className="sub-item"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                  >
+                    Ghi chú: Lấy thêm cơm
+                  </Text>
+                </Col>
+                <Col>
+                  <div className="order-price">
+                    <Text
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        color: "#DA7339",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        marginRight: 13,
+                      }}
+                    >
+                      85,000đ
+                    </Text>
+                    <div className="quantity-controls">
+                      <Button>-</Button>
+                      <span>1</span>
+                      <Button>+</Button>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
             </div>
             <div className="order-item">
-              <Text>CƠM SƯỜN CƯNG</Text>
-              <div className="order-price">
-                <Text>85,000đ</Text>
-                <div className="quantity-controls">
-                  <Button>-</Button>
-                  <span>1</span>
-                  <Button>+</Button>
-                </div>
-              </div>
-              <Text className="sub-item">• Canh chua</Text>
-              <Text className="sub-item">Ghi chú: Lấy thêm cơm</Text>
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col>
+                  <Text
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 17,
+                    }}
+                  >
+                    Chả Trứng Hấp
+                  </Text>
+                </Col>
+                <Col>
+                  <div className="order-price">
+                    <Text
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        color: "#DA7339",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        marginRight: 13,
+                      }}
+                    >
+                      60,000đ
+                    </Text>
+                    <div className="quantity-controls">
+                      <Button>-</Button>
+                      <span>1</span>
+                      <Button>+</Button>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
             </div>
             <div className="order-item">
-              <Text>Chả Trứng Hấp</Text>
-              <div className="order-price">
-                <Text>60,000đ</Text>
-                <div className="quantity-controls">
-                  <Button>-</Button>
-                  <span>1</span>
-                  <Button>+</Button>
-                </div>
-              </div>
+              <Row style={{ justifyContent: "space-between" }}>
+                <Col>
+                  <Text
+                    style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 17,
+                    }}
+                  >
+                    Coca Cola
+                  </Text>
+                </Col>
+                <Col>
+                  <div className="order-price">
+                    <Text
+                      style={{
+                        fontFamily: "'Playfair Display', serif",
+                        color: "#DA7339",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        marginRight: 13,
+                      }}
+                    >
+                      12,000đ
+                    </Text>
+                    <div className="quantity-controls">
+                      <Button>-</Button>
+                      <span>1</span>
+                      <Button>+</Button>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
             </div>
-            <div className="order-item">
-              <Text>Coca Cola</Text>
-              <div className="order-price">
-                <Text>12,000đ</Text>
-                <div className="quantity-controls">
-                  <Button>-</Button>
-                  <span>1</span>
-                  <Button>+</Button>
-                </div>
-              </div>
-            </div>
+          </Card>
+          <Card className="confirm-card section-card order-details">
+            <Row style={{ justifyContent: "space-between" }}>
+              <Col span={20}>
+                <Input
+                  placeholder="Nhập mã khuyến mãi"
+                  style={{
+                    marginTop: "10px",
+                    background: "#efe6db",
+                    fontFamily: "'Playfair Display', serif",
+                  }}
+                />
+              </Col>
+              <Col>
+                <Button
+                  type="primary"
+                  className="apply-promo"
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    height: 40,
+                  }}
+                >
+                  Áp dụng
+                </Button>
+              </Col>
+            </Row>
             <Input
-              placeholder="Nhập mã khuyến mãi"
-              style={{ marginTop: "10px" }}
+              placeholder="Ghi chú cho cửa hàng"
+              style={{
+                marginTop: "8px",
+                background: "#efe6db",
+                fontFamily: "'Playfair Display', serif",
+              }}
             />
-            <Button type="primary" className="apply-promo">
-              Áp dụng
-            </Button>
+          </Card>
+          <Card className="confirm-card section-card order-details">
             <div className="order-summary">
               <div className="summary-item">
-                <Text>Giao gốc</Text>
-                <Text>442,000đ</Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 15,
+                  }}
+                >
+                  Giá gốc
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: "#DA7339",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  442,000đ
+                </Text>
               </div>
               <div className="summary-item">
-                <Text>Giảm giá trên món</Text>
-                <Text>-21,400đ</Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 15,
+                  }}
+                >
+                  Giảm giá trên món
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: "#DA7339",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  -21,400đ
+                </Text>
               </div>
               <div className="summary-item">
-                <Text>Giảm giá khuyến mãi</Text>
-                <Text>62,500đ</Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 15,
+                  }}
+                >
+                  Giảm giá từ khuyến mãi
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: "#DA7339",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  62,500đ
+                </Text>
               </div>
               <div className="summary-item">
-                <Text>Phí giao hàng</Text>
-                <Text>16,000đ</Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 15,
+                  }}
+                >
+                  Phí giao hàng
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: "#DA7339",
+                    fontWeight: 700,
+                    fontSize: 15,
+                  }}
+                >
+                  16,000đ
+                </Text>
               </div>
+              <Divider style={{ border: "1px solid black" }} />
               <div className="summary-item total">
-                <Text>TỔNG CỘNG</Text>
-                <Text>372,900đ</Text>
+                <Text style={{ fontFamily: "'Playfair Display', serif" }}>
+                  TỔNG CỘNG
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: 15,
+                  }}
+                >
+                  372,900đ
+                </Text>
               </div>
             </div>
-            <Button type="primary" block className="submit-button">
+            <Button
+              type="primary"
+              block
+              className="submit-button"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               Đặt hàng
             </Button>
           </Card>
