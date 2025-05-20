@@ -71,8 +71,8 @@ const getProducts = async ({ page, limit, offset }) => {
     order: [["price", "DESC"]],
     include: [
       { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
-      { model: require("../models/ProductType"), as: "ProductType" },
-      { model: require("../models/Store"), as: "Store" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
     ],
   });
 
@@ -87,8 +87,8 @@ const getProductsByType = async (productTypeId) => {
     where: { productTypeId, isActive: true },
     include: [
       { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
-      { model: require("../models/ProductType"), as: "ProductType" },
-      { model: require("../models/Store"), as: "Store" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
     ],
   });
 
@@ -114,8 +114,8 @@ const updateProduct = async (productId, updateData) => {
   return await Product.findByPk(productId, {
     include: [
       { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
-      { model: require("../models/ProductType"), as: "ProductType" },
-      { model: require("../models/Store"), as: "Store" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
     ],
   });
 };
@@ -139,8 +139,8 @@ const getProductById = async (productId) => {
         as: "ProductRecipes",
         include: [{ model: Material, as: "Material" }],
       },
-      { model: require("../models/ProductType"), as: "ProductType" },
-      { model: require("../models/Store"), as: "Store" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
     ],
   });
 
