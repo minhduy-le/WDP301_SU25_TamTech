@@ -11,8 +11,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        // url: "http://localhost:3000",
-        url: "https://wdp-301-0fd32c261026.herokuapp.com/",
+        url: "http://localhost:3000",
+        // url: "https://wdp-301-0fd32c261026.herokuapp.com/",
         description: "Local server",
       },
     ],
