@@ -185,7 +185,8 @@ declare global {
     ];
   }
   interface IOrderDetails {
-    id: number;
+    id: string;
+    customerName: string | null;
     subTotal: number;
     promotionCode: string | null;
     discountValue: number;
@@ -197,6 +198,7 @@ declare global {
     orderStatus: string;
     note: string;
     payment_code: string | null;
+    payment_methods: string | null;
     address: string;
     phone: string;
     pointUsed: number;
