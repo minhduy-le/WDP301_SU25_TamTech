@@ -13,6 +13,22 @@ const getUserProfile = async (userId) => {
   return user;
 };
 
+const updateUserProfile = async (userId, updateData) => {
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
 
+  const { fullName, email, phone_number, date_of_birth } = updateData;
 
-module.exports = { getUserProfile };
+  await user.update({
+    fullName: fullName || user.fullName,
+    email: email || user.email,
+    phone_number: phone_number !== undefined ? phone_number : user.phone_number,
+    date_of_birth: date_of_birth !== undefined ? date_of_birth : user.date_of_birth,
+  });
+
+  return await getUserProfile(userId); // Trả về profile đã cập nhật
+};
+
+module.exports = { getUserProfile, updateUserProfile };
