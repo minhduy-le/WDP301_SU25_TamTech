@@ -470,13 +470,13 @@ const OrderPage = () => {
                       <View style={styles.container}>
                         <TouchableOpacity
                           style={styles.button}
-                          onPress={() => handleViewDetails(item.id)}
+                          onPress={() => handleViewDetails(item.orderId)}
                         >
                           <Text style={styles.buttonText}>Xem chi tiết</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.button}
-                          onPress={() => handleViewDetails(item.id)}
+                          onPress={() => handleViewDetails(item.orderId)}
                         >
                           <Text style={styles.buttonText}>Đánh giá</Text>
                         </TouchableOpacity>

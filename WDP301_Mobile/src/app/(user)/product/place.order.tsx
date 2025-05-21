@@ -223,7 +223,9 @@ const PlaceOrderPage = () => {
   }, [decodeToken]);
   const styles = StyleSheet.create({
     container: {
-      paddingTop: 2,
+      paddingTop: 5,
+      gap: 3,
+      marginBottom: 30,
     },
     headerContainer: {
       paddingTop: 5,
@@ -420,241 +422,236 @@ const PlaceOrderPage = () => {
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        paddingTop: 30,
+      }}
     >
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-        }}
-      >
-        <Pressable
-          style={{ height: Platform.OS === "ios" ? 80 : 90 }}
-          onPress={() => setModalVisible(true)}
+      <Pressable style={{ height: 100 }} onPress={() => setModalVisible(true)}>
+        <View
+          style={{
+            flexDirection: "row",
+            marginTop: Platform.OS === "ios" ? 20 : 0,
+          }}
         >
-          <View
-            style={{
-              flexDirection: "row",
-            }}
-          >
-            <View style={styles.headerContainer}>
-              <View style={styles.customersInfo}>
-                <Text style={styles.locationText}>Tên khách hàng: </Text>
-                <Text style={styles.cusInfo}>
-                  {selectedAddress
-                    ? selectedAddress.fullName
-                    : "FPT University"}
-                </Text>
-              </View>
-              <View style={styles.customersInfo}>
-                <Text style={styles.locationText}>Số điện thoại: </Text>
-                <Text style={styles.cusInfo}>
-                  {selectedAddress ? selectedAddress.phone : "0889679561"}
-                </Text>
-              </View>
-              <View style={styles.customersInfo}>
-                <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
-                <Text
-                  style={styles.cusInfo}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {selectedAddress
-                    ? selectedAddress.address
-                    : "Hồ Chí Minh, Việt Nam"}
-                </Text>
-              </View>
+          <View style={styles.headerContainer}>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Tên khách hàng: </Text>
+              <Text style={styles.cusInfo}>
+                {selectedAddress ? selectedAddress.fullName : "FPT University"}
+              </Text>
+            </View>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Số điện thoại: </Text>
+              <Text style={styles.cusInfo}>
+                {selectedAddress ? selectedAddress.phone : "0889679561"}
+              </Text>
+            </View>
+            <View style={styles.customersInfo}>
+              <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
+              <Text
+                style={styles.cusInfo}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {selectedAddress
+                  ? selectedAddress.address
+                  : "Hồ Chí Minh, Việt Nam"}
+              </Text>
             </View>
           </View>
-        </Pressable>
-        <ScrollView style={{ flex: 1, padding: 10 }}>
-          <Text
-            style={{
-              fontFamily: FONTS.bold,
-              fontSize: 20,
-              color: APP_COLOR.BROWN,
-              marginBottom: 5,
-            }}
-          >
-            Chi tiết đơn hàng
-          </Text>
-          {orderItems?.map((item, index) => {
-            return (
-              <View
-                key={`${item.productId}-${index}`}
-                style={{
-                  gap: 10,
-                  flexDirection: "row",
-                  paddingBottom: 5,
+        </View>
+      </Pressable>
+      <ScrollView style={{ flex: 1, padding: 10 }}>
+        <Text
+          style={{
+            fontFamily: FONTS.bold,
+            fontSize: 20,
+            color: APP_COLOR.BROWN,
+            marginBottom: 5,
+          }}
+        >
+          Chi tiết đơn hàng
+        </Text>
+        {orderItems?.map((item, index) => {
+          return (
+            <View
+              key={`${item.productId}-${index}`}
+              style={{
+                gap: 10,
+                flexDirection: "row",
+                paddingBottom: 5,
+              }}
+            >
+              <Image
+                style={{ height: 70, width: 70, borderRadius: 10 }}
+                source={{
+                  uri: item.image,
                 }}
-              >
-                <Image
-                  style={{ height: 70, width: 70, borderRadius: 10 }}
-                  source={{
-                    uri: item.image,
+              />
+              <View style={{ flexDirection: "row" }}>
+                <Text
+                  style={{
+                    fontFamily: FONTS.regular,
+                    fontSize: 20,
+                    color: APP_COLOR.BROWN,
                   }}
-                />
-                <View style={{ flexDirection: "row" }}>
+                >
+                  {item.title} x{" "}
+                </Text>
+                <View>
                   <Text
                     style={{
+                      fontWeight: "600",
                       fontFamily: FONTS.regular,
                       fontSize: 20,
                       color: APP_COLOR.BROWN,
                     }}
                   >
-                    {item.title} x{" "}
-                  </Text>
-                  <View>
-                    <Text
-                      style={{
-                        fontWeight: "600",
-                        fontFamily: FONTS.regular,
-                        fontSize: 20,
-                        color: APP_COLOR.BROWN,
-                      }}
-                    >
-                      {item.quantity}
-                    </Text>
-                  </View>
-                  <Text
-                    style={{
-                      fontFamily: FONTS.bold,
-                      fontSize: 20,
-                      color: APP_COLOR.BROWN,
-                      position: "absolute",
-                      top: 35,
-                      left: 190,
-                    }}
-                  >
-                    {currencyFormatter(item.price)}
+                    {item.quantity}
                   </Text>
                 </View>
-              </View>
-            );
-          })}
-          {orderItems?.length > 0 && (
-            <View style={{ marginVertical: 10 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  borderTopWidth: 1,
-                  borderTopColor: APP_COLOR.BROWN,
-                }}
-              >
                 <Text
                   style={{
-                    color: APP_COLOR.BROWN,
                     fontFamily: FONTS.bold,
                     fontSize: 20,
-                    marginVertical: "auto",
-                  }}
-                >
-                  Tổng cộng (
-                  {restaurant &&
-                    cart?.[restaurant._id] &&
-                    cart?.[restaurant._id].quantity}{" "}
-                  món)
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: FONTS.bold,
-                    fontSize: 25,
                     color: APP_COLOR.BROWN,
-                    textDecorationLine: "underline",
+                    position: "absolute",
+                    top: 35,
+                    left: 190,
                   }}
                 >
-                  {currencyFormatter(
-                    restaurant &&
-                      cart?.[restaurant._id] &&
-                      cart?.[restaurant._id].sum
-                  )}
+                  {currencyFormatter(item.price)}
                 </Text>
               </View>
             </View>
-          )}
-          <Formik
-            validationSchema={ChangePasswordSchema}
-            initialValues={{
-              promotionCode: "",
-              note: "",
-              address: "",
-              phoneNumber: "",
-              branchId: 0,
-              pointUsed: 0,
-              pointEarned: 0,
-              paymentMethodId: 0,
-              orderItems: [
-                {
-                  productId: 0,
-                  quantity: 0,
-                },
-              ],
-              pickUp: false,
-            }}
-            onSubmit={(values) => {
-              const numericPointUsed = Number(values.pointUsed) || 0;
-              if (numericPointUsed < 0) {
-                Toast.show("Điểm sử dụng không thể là số âm!", {
-                  duration: Toast.durations.LONG,
-                  textColor: "white",
-                  backgroundColor: "red",
-                  opacity: 1,
-                });
-                return;
-              }
+          );
+        })}
+        {orderItems?.length > 0 && (
+          <View style={{ marginVertical: 15 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                borderTopWidth: 1,
+                borderTopColor: APP_COLOR.BROWN,
+              }}
+            >
+              <Text
+                style={{
+                  color: APP_COLOR.BROWN,
+                  fontFamily: FONTS.bold,
+                  fontSize: 20,
+                  marginVertical: "auto",
+                }}
+              >
+                Tổng cộng (
+                {restaurant &&
+                  cart?.[restaurant._id] &&
+                  cart?.[restaurant._id].quantity}{" "}
+                món)
+              </Text>
+              <Text
+                style={{
+                  fontFamily: FONTS.bold,
+                  fontSize: 25,
+                  color: APP_COLOR.BROWN,
+                  textDecorationLine: "underline",
+                }}
+              >
+                {currencyFormatter(
+                  restaurant &&
+                    cart?.[restaurant._id] &&
+                    cart?.[restaurant._id].sum
+                )}
+              </Text>
+            </View>
+          </View>
+        )}
+        <Formik
+          validationSchema={ChangePasswordSchema}
+          initialValues={{
+            promotionCode: "",
+            note: "",
+            address: "",
+            phoneNumber: "",
+            branchId: 0,
+            pointUsed: 0,
+            pointEarned: 0,
+            paymentMethodId: 0,
+            orderItems: [
+              {
+                productId: 0,
+                quantity: 0,
+              },
+            ],
+            pickUp: false,
+          }}
+          onSubmit={(values) => {
+            const numericPointUsed = Number(values.pointUsed) || 0;
+            if (numericPointUsed < 0) {
+              Toast.show("Điểm sử dụng không thể là số âm!", {
+                duration: Toast.durations.LONG,
+                textColor: "white",
+                backgroundColor: "red",
+                opacity: 1,
+              });
+              return;
+            }
 
-              handleCreateOrder(
-                values.promotionCode,
-                values.note,
-                values.address,
-                values.phoneNumber,
-                values.branchId,
-                numericPointUsed,
-                values.pointEarned,
-                values.paymentMethodId,
-                values.orderItems,
-                values.pickUp
-              );
-            }}
-          >
-            {({
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              values,
-              errors,
-              touched,
-              setFieldValue,
-            }) => {
-              useEffect(() => {
-                if (cusAddress || cusPhone) {
-                  setFieldValue("address", cusAddress);
-                  setFieldValue("phoneNumber", cusPhone);
-                }
-                if (orderDetails) {
-                  setFieldValue("orderItems", orderDetails);
-                }
-                if (branchId) {
-                  setFieldValue("branchId", branchId);
-                }
-                if (restaurant && cart?.[restaurant._id]) {
-                  const totalAmount = cart[restaurant._id].sum;
-                  const earnedPoints = Math.floor(totalAmount / 1000);
-                  setFieldValue("pointEarned", earnedPoints);
-                  const currentPointUsed = Number(values.pointUsed) || 0;
-                  setFieldValue("pointUsed", currentPointUsed);
-                }
-              }, [
-                cusAddress,
-                cusPhone,
-                orderDetails,
-                restaurant,
-                cart,
-                branchId,
-              ]);
-              return (
+            handleCreateOrder(
+              values.promotionCode,
+              values.note,
+              values.address,
+              values.phoneNumber,
+              values.branchId,
+              numericPointUsed,
+              values.pointEarned,
+              values.paymentMethodId,
+              values.orderItems,
+              values.pickUp
+            );
+          }}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            errors,
+            touched,
+            setFieldValue,
+          }) => {
+            useEffect(() => {
+              if (cusAddress || cusPhone) {
+                setFieldValue("address", cusAddress);
+                setFieldValue("phoneNumber", cusPhone);
+              }
+              if (orderDetails) {
+                setFieldValue("orderItems", orderDetails);
+              }
+              if (branchId) {
+                setFieldValue("branchId", branchId);
+              }
+              if (restaurant && cart?.[restaurant._id]) {
+                const totalAmount = cart[restaurant._id].sum;
+                const earnedPoints = Math.floor(totalAmount / 1000);
+                setFieldValue("pointEarned", earnedPoints);
+                const currentPointUsed = Number(values.pointUsed) || 0;
+                setFieldValue("pointUsed", currentPointUsed);
+              }
+            }, [
+              cusAddress,
+              cusPhone,
+              orderDetails,
+              restaurant,
+              cart,
+              branchId,
+            ]);
+            return (
+              <SafeAreaView style={{ flex: 1 }}>
                 <View style={styles.container}>
                   <CustomerInforInput
                     title="Mã khuyến mãi"
@@ -761,58 +758,73 @@ const PlaceOrderPage = () => {
                     pressStyle={{ alignSelf: "stretch" }}
                   />
                 </View>
-              );
-            }}
-          </Formik>
-        </ScrollView>
-        <Modal
-          visible={modalVisible}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text
-                style={{
-                  fontFamily: FONTS.regular,
-                  fontSize: 20,
-                  marginBottom: 10,
-                }}
-              >
-                Chọn địa chỉ giao hàng
-              </Text>
-              <ScrollView>
-                {addresses.map((address: any, index: number) => (
-                  <Pressable
-                    key={`${address.userId}-${index}`}
-                    style={styles.addressItem}
-                    onPress={() => handleSelectAddress(address, locationReal)}
-                  >
-                    <Text style={styles.textInfor}>{address.fullName}</Text>
-                    <Text style={styles.textNameInfor}>{address.phone}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-              <Pressable
-                style={styles.modalButton}
-                onPress={handleCreateNewAddress}
-              >
-                <Text
-                  style={{
-                    fontFamily: FONTS.regular,
-                    fontSize: 18,
-                    color: "white",
-                  }}
+              </SafeAreaView>
+            );
+          }}
+        </Formik>
+      </ScrollView>
+      <Modal
+        visible={modalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text
+              style={{
+                fontFamily: FONTS.regular,
+                fontSize: 20,
+                marginBottom: 10,
+              }}
+            >
+              Chọn địa chỉ giao hàng
+            </Text>
+            <ScrollView>
+              {addresses.map((address: any, index: number) => (
+                <Pressable
+                  key={`${address.userId}-${index}`}
+                  onPress={() => handleSelectAddress(address, locationReal)}
+                  style={styles.addressItem}
                 >
+                  <View>
+                    <Text style={styles.textNameInfor}>{address.fullName}</Text>
+                    {locationReal ? (
+                      <Text style={styles.textInfor}>{locationReal}</Text>
+                    ) : (
+                      <Text style={styles.textNameInfor}>
+                        {address.address}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.textInfor}>{address.phone}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+
+            <View style={{ flexDirection: "row" }}>
+              <Pressable
+                onPress={handleCreateNewAddress}
+                style={styles.modalButton}
+              >
+                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
                   Tạo địa chỉ mới
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setModalVisible(false)}
+                style={styles.modalButton}
+              >
+                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
+                  Đóng
                 </Text>
               </Pressable>
             </View>
           </View>
-        </Modal>
-      </View>
-    </SafeAreaView>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
