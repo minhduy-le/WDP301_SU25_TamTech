@@ -13,6 +13,8 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ShareButton from "../button/share.button";
+import { APP_COLOR } from "@/utils/constant";
+import Toast from "react-native-root-toast";
 
 interface DecodedToken {
   id: number;
@@ -20,6 +22,13 @@ interface DecodedToken {
   address: string;
   phone: string;
 }
+const sampleData = {
+  id: 1,
+  name: "Lê Minh Duy",
+  address: "Thành phố Thủ Đức, Thành phố Hồ Chí Minh",
+  phone: "0889679561",
+};
+
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 15,
@@ -45,40 +54,40 @@ const UserInfo = () => {
     getAccessToken();
   }, []);
 
-  const handleUpdateUser = async (name: string, phone: string) => {
-    if (decodeToken?.id) {
-      //   const res =
-      //   if (res.data) {
-      //     Toast.show("Cập nhật thông tin user thành công!", {
-      //       duration: Toast.durations.LONG,
-      //       textColor: "white",
-      //       backgroundColor: APP_COLOR.ORANGE,
-      //       opacity: 1,
-      //     });
-      //     setDecodeToken((prev) =>
-      //       prev
-      //         ? {
-      //             ...prev,
-      //             name,
-      //             phone,
-      //           }
-      //         : null
-      //     );
-      //   } else {
-      //     const m = Array.isArray(res.message) ? res.message[0] : res.message;
-      //     Toast.show(m, {
-      //       duration: Toast.durations.LONG,
-      //       textColor: "white",
-      //       backgroundColor: APP_COLOR.ORANGE,
-      //       opacity: 1,
-      //     });
-      //   }
-    }
-  };
+  // const handleUpdateUser = async (name: string, phone: string) => {
+  //   if (sampleData?.id) {
+  //       const res = await updateUserInfo({ id: sampleData.id, name, phone });
+  //       if(res.data) {
+  //         Toast.show("Cập nhật thông tin user thành công!", {
+  //           duration: Toast.durations.LONG,
+  //           textColor: "white",
+  //           backgroundColor: APP_COLOR.ORANGE,
+  //           opacity: 1,
+  //         });
+  //         setDecodeToken((prev) =>
+  //           prev
+  //             ? {
+  //                 ...prev,
+  //                 name,
+  //                 phone,
+  //               }
+  //             : null
+  //         );
+  //       } else {
+  //         const m = Array.isArray(res.message) ? res.message[0] : res.message;
+  //         Toast.show(m, {
+  //           duration: Toast.durations.LONG,
+  //           textColor: "white",
+  //           backgroundColor: APP_COLOR.ORANGE,
+  //           opacity: 1,
+  //         });
+  //       }
+  //   }
+  // };
 
-  if (!decodeToken) {
-    return null;
-  }
+  // if (!decodeToken) {
+  //   return null;
+  // }
 
   return (
     <KeyboardAvoidingView
@@ -88,17 +97,18 @@ const UserInfo = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
           <View style={{ alignItems: "center", gap: 5 }}>
-            <Text>{decodeToken.name}</Text>
+            <Text style={{ color: "grey" }}>{sampleData.name}</Text>
           </View>
           <Formik
             validationSchema={UpdateUserSchema}
             initialValues={{
-              name: decodeToken.name,
-              address: decodeToken.address,
-              phone: decodeToken.phone,
+              name: sampleData.name,
+              address: sampleData.address,
+              phone: sampleData.phone,
             }}
-            onSubmit={(values) =>
-              handleUpdateUser(values?.name ?? "", values?.phone ?? "")
+            onSubmit={
+              (values) => console.log("Test")
+              // handleUpdateUser(values?.name ?? "", values?.phone ?? "")
             }
           >
             {({
@@ -139,7 +149,8 @@ const UserInfo = () => {
                 />
                 <ShareButton
                   title="Lưu thay đổi"
-                  onPress={() => handleUpdateUser(values.name, values.phone)}
+                  onPress={() => console.log("Lưu")}
+                  // onPress={() => handleUpdateUser(values.name, values.phone)}
                 />
               </View>
             )}

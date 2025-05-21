@@ -48,7 +48,7 @@ const SearchHome = () => {
             marginVertical: "auto",
           }}
         >
-          Chọn địa chỉ bạn muốn giao đến
+          Chọn món ăn bạn cần tìm
         </Text>
       </Pressable>
     </SafeAreaView>
