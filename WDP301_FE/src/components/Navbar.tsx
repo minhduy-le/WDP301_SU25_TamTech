@@ -1,7 +1,7 @@
-import { Layout, Menu, Button } from "antd";
+import { Layout, Menu, Button, Input } from "antd";
 import { Link } from "react-router-dom";
 import "../style/Navbar.css";
-import { ShoppingCartOutlined } from "@ant-design/icons";
+import { ShoppingCartOutlined, SearchOutlined } from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
 import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
@@ -16,7 +16,7 @@ const Navbar = () => {
       </div>
       <Menu mode="horizontal" className="header-menu">
         <Menu.Item key="1">
-          <Link to="/ve-tam-tac">Về Tâm Tác</Link>
+          <Link to="/ve-tam-tac">Về Tấm Tác</Link>
         </Menu.Item>
         <Menu.Item key="2">
           <Link to="/dat-hang">Đặt Hàng</Link>
@@ -24,28 +24,41 @@ const Navbar = () => {
         <Menu.Item key="3">
           <Link to="/thuc-don-ai">Thực đơn từ AI</Link>
         </Menu.Item>
-        <Menu.Item key="4">
-          <Link to="/chuyen-com-tam">Chuyện Cơm Tâm</Link>
-        </Menu.Item>
-        <Menu.Item key="5">
-          <Link to="/nhuong-quyen">Nhượng Quyền</Link>
-        </Menu.Item>
         <Menu.Item key="6">
           <Link to="/cua-hang">Cửa Hàng</Link>
         </Menu.Item>
       </Menu>
+      <Input
+        className="header-search"
+        placeholder="Tìm kiếm món ăn, combo, cửa hàng..."
+        prefix={<SearchOutlined style={{ color: "#da7339" }} />}
+        style={{
+          borderRadius: 20,
+          background: "##fff7e6",
+          border: "2px solid #da7339",
+          width: 300,
+          height: 40,
+          margin: "0 24px",
+          fontSize: 16,
+          color: "#7c4a03"
+        }}
+      />
       <div className="header-icon">
         <Button
           type="text"
           icon={<BellIcon />}
-          className="header-button-icon"
+          style={{ color: "#d97706", marginRight: "10px" }}
         />
         <Button
           type="text"
           icon={<AccountIcon />}
-          className="header-button-icon"
+          style={{ color: "#d97706", marginRight: "10px" }}
         />
-        <Button type="text" icon={<ShoppingCartOutlined />} />
+        <Button
+          type="text"
+          icon={<ShoppingCartOutlined />}
+          style={{ color: "#d97706" }}
+        />
       </div>
     </Header>
   );
