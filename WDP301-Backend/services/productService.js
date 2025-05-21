@@ -2,6 +2,7 @@ const sequelize = require("../config/database");
 const Product = require("../models/product");
 const ProductRecipe = require("../models/ProductRecipe");
 const Material = require("../models/material");
+const { Op } = require("sequelize");
 
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes } = productData;
@@ -147,4 +148,60 @@ const getProductById = async (productId) => {
   return product;
 };
 
-module.exports = { createProduct, getProducts, getProductsByType, updateProduct, softDeleteProduct, getProductById };
+const getBestSellerProducts = async () => {
+  const products = await Product.findAll({
+    where: {
+      productTypeId: [1, 3], // Chỉ lấy productTypeId 1 hoặc 3
+      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+    },
+    include: [
+      {
+        model: require("../models/OrderItem"),
+        as: "OrderItems", // Liên kết với OrderItem để kiểm tra sản phẩm có trong đơn hàng
+        attributes: [], // Không cần lấy thuộc tính của OrderItem
+        required: true, // Chỉ lấy sản phẩm có trong order_items
+      },
+      {
+        model: require("../models/productType"),
+        as: "ProductType",
+        attributes: ["productTypeId", "name"], // Lấy thông tin productType
+      },
+    ],
+    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường yêu cầu
+    group: ["Product.productId"], // Tránh trùng lặp sản phẩm
+    order: [["productTypeId", "ASC"]], // Sắp xếp theo productTypeId tăng dần
+  });
+
+  return products;
+};
+
+const searchProductsByName = async (searchTerm) => {
+  const products = await Product.findAll({
+    where: {
+      name: {
+        [Op.like]: `%${searchTerm}%`, // Tìm kiếm chuỗi con trong name, không phân biệt hoa thường
+      },
+      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+    },
+    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường cần thiết
+    include: [
+      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]], // Sắp xếp theo tên tăng dần
+  });
+
+  return products;
+};
+
+module.exports = {
+  createProduct,
+  getProducts,
+  getProductsByType,
+  updateProduct,
+  softDeleteProduct,
+  getProductById,
+  getBestSellerProducts,
+  searchProductsByName,
+};
