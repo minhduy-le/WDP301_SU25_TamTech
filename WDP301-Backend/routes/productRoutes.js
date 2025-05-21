@@ -68,6 +68,109 @@ router.get("/best-seller", async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/products/search:
+ *   get:
+ *     summary: Search products by name (partial match)
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name or part of the name to search for
+ *     responses:
+ *       200:
+ *         description: List of products matching the search term
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Missing or invalid search term
+ *       500:
+ *         description: Server error
+ */
+router.get("/search", async (req, res, next) => {
+  try {
+    const { name } = req.query;
+
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({
+        status: 400,
+        message: "Search term 'name' is required and must be a non-empty string",
+      });
+    }
+
+    const products = await productService.searchProductsByName(name.trim());
+
+    res.status(200).json({
+      status: 200,
+      message: "Products retrieved successfully",
+      products,
+    });
+  } catch (error) {
+    console.error("Error searching products:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/products:
  *   post:
  *     summary: Create a new product with recipes
