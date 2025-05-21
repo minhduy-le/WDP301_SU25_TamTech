@@ -1,19 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const orderService = require("../services/orderService");
+const { createOrder, handlePaymentSuccess } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
-const OrderItem = require("../models/orderItem");
-const Product = require("../models/product");
-const OrderStatus = require("../models/orderStatus");
-const PaymentMethod = require("../models/paymentMethod");
 const Information = require("../models/information");
 const axios = require("axios");
 require("dotenv").config();
 
-const currentDateTime = new Date().toISOString();
-
-// Mapping to standardize province names
 const provinceMapping = {
   TPHCM: "TP. Hồ Chí Minh",
   HCM: "TP. Hồ Chí Minh",
@@ -39,7 +32,7 @@ const standardizeProvince = (province) => {
  * @swagger
  * /api/orders:
  *   post:
- *     summary: Create a new order and get VNPay payment URL
+ *     summary: Create a new order
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -50,303 +43,241 @@ const standardizeProvince = (province) => {
  *           schema:
  *             type: object
  *             required:
- *               - storeId
- *               - payment_method_name
+ *               - orderItems
+ *               - order_shipping_fee
+ *               - payment_method_id
  *               - order_address
- *               - items
  *             properties:
- *               storeId:
- *                 type: integer
- *                 example: 1
- *               order_discount_value:
- *                 type: number
- *                 example: 10000
- *               order_shipping_fee:
- *                 type: number
- *                 example: 15000
- *               payment_method_name:
- *                 type: string
- *                 enum: ["Vnpay", "Momo", "Zalopay"]
- *                 example: "Vnpay"
- *               order_address:
- *                 type: string
- *                 example: "123 Main St, City"
- *               items:
+ *               orderItems:
  *                 type: array
  *                 items:
  *                   type: object
- *                   required:
- *                     - productId
- *                     - quantity
  *                   properties:
  *                     productId:
  *                       type: integer
- *                       example: 1
  *                     quantity:
  *                       type: integer
- *                       example: 2
+ *                     price:
+ *                       type: number
+ *               order_discount_value:
+ *                 type: number
+ *                 description: Discount value applied to the order
+ *               order_shipping_fee:
+ *                 type: number
+ *                 description: Shipping fee for the order
+ *               payment_method_id:
+ *                 type: integer
+ *                 description: "Payment method ID (1: Vnpay, 2: Momo, 3: Zalopay, 4: PayOS)"
+ *               order_address:
+ *                 type: string
+ *                 description: Delivery address for the order
  *     responses:
  *       201:
- *         description: Order created successfully with VNPay payment URL
+ *         description: Order created successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
  *                 message:
  *                   type: string
- *                 order:
- *                   type: object
- *                   properties:
- *                     orderId:
- *                       type: integer
- *                     order_discount_percent:
- *                       type: number
- *                 paymentUrl:
+ *                 orderId:
+ *                   type: integer
+ *                 checkoutUrl:
  *                   type: string
  *       400:
- *         description: Missing required fields
+ *         description: Invalid input
  *       401:
  *         description: Unauthorized
  *       500:
  *         description: Server error
  */
-router.post("/", verifyToken, async (req, res) => {
-  try {
-    const { storeId, order_discount_value, order_shipping_fee, payment_method_name, order_address, items } = req.body;
-
-    console.log("Request Body:", req.body);
-
-    if (!storeId || !payment_method_name || !order_address || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        status: 400,
-        message: "Missing required fields or invalid items",
-      });
-    }
-
-    const orderData = {
-      storeId,
-      order_discount_value,
-      order_shipping_fee,
-      payment_method_name,
-      order_address,
-    };
-
-    const result = await orderService.createOrder(orderData, items, req.userId);
-
-    res.status(200).json({
-      status: 200,
-      message: "Order created successfully",
-      order: result.order,
-      paymentUrl: result.paymentUrl,
-    });
-  } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
-  }
-});
+router.post("/", verifyToken, createOrder);
 
 /**
  * @swagger
- * /api/orders/{orderId}:
+ * /api/orders/success:
  *   get:
- *     summary: Get order details by orderId
+ *     summary: Handle successful payment callback (GET)
  *     tags: [Orders]
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: orderId
- *         required: true
  *         schema:
  *           type: integer
- *         description: The ID of the order to retrieve
+ *         required: true
+ *         description: The ID of the order
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Payment status code from PayOS
  *     responses:
  *       200:
- *         description: Order details retrieved successfully
+ *         description: Payment processed and invoice generated
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
  *                 message:
  *                   type: string
- *                 order:
- *                   type: object
- *                   properties:
- *                     orderId:
- *                       type: integer
- *                     order_amount:
- *                       type: number
- *                     order_discount_value:
- *                       type: number
- *                     order_discount_percent:
- *                       type: number
- *                     order_shipping_fee:
- *                       type: number
- *                     order_subtotal:
- *                       type: number
- *                     payment_method:
- *                       type: string
- *                     status:
- *                       type: string
- *                     order_create_at:
- *                       type: string
- *                     order_address:
- *                       type: string
- *                     invoiceUrl:
- *                       type: string
- *                     items:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           productId:
- *                             type: integer
- *                           productName:
- *                             type: string
- *                           quantity:
- *                             type: integer
- *                           price:
- *                             type: number
+ *                 invoiceUrl:
+ *                   type: string
+ *       400:
+ *         description: Invalid input or payment failed
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Server error
+ *   post:
+ *     summary: Handle successful payment callback (POST)
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Payment status code from PayOS
+ *     responses:
+ *       200:
+ *         description: Payment processed and invoice generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 invoiceUrl:
+ *                   type: string
+ *       400:
+ *         description: Invalid input or payment failed
  *       404:
  *         description: Order not found
  *       500:
  *         description: Server error
  */
-router.get("/:orderId", async (req, res) => {
+router.get("/success", handlePaymentSuccess);
+router.post("/success", handlePaymentSuccess);
+
+/**
+ * @swagger
+ * /api/orders/cancel:
+ *   get:
+ *     summary: Handle payment cancellation callback
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Payment cancelled
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/cancel", async (req, res) => {
+  const { orderId } = req.query;
+  if (!orderId) {
+    console.log("Missing orderId in cancel callback");
+    return res.status(400).json({ message: "Order ID is required" });
+  }
   try {
-    const { orderId } = req.params;
-
-    const order = await Order.findOne({
-      where: { orderId },
-      include: [
-        {
-          model: OrderItem,
-          as: "OrderItems",
-          include: [
-            {
-              model: Product,
-              as: "Product",
-              attributes: ["name"],
-            },
-          ],
-        },
-        {
-          model: OrderStatus,
-          as: "OrderStatus",
-          attributes: ["status"],
-        },
-        {
-          model: PaymentMethod,
-          as: "PaymentMethod",
-          attributes: ["name"],
-        },
-      ],
-    });
-
+    const order = await Order.findByPk(orderId);
     if (!order) {
-      return res.status(404).json({
-        status: 404,
-        message: "Order not found",
-      });
+      console.log("Order not found for orderId:", orderId);
+      return res.status(404).json({ message: "Order not found" });
     }
-
-    const orderDetails = {
-      orderId: order.orderId,
-      order_amount: order.order_amount,
-      order_discount_value: order.order_discount_value,
-      order_discount_percent: order.order_discount_percent,
-      order_shipping_fee: order.order_shipping_fee,
-      order_subtotal: order.order_subtotal,
-      payment_method: order.PaymentMethod?.name || "Unknown",
-      status: order.OrderStatus?.status || "Unknown",
-      order_create_at: order.order_create_at.toISOString(),
-      order_address: order.order_address,
-      invoiceUrl: order.invoiceUrl,
-      items: order.OrderItems.map((item) => ({
-        productId: item.productId,
-        productName: item.Product?.name || "Unknown Product",
-        quantity: item.quantity,
-        price: item.price,
-      })),
-    };
-
-    res.status(200).json({
-      status: 200,
-      message: "Order details retrieved successfully",
-      order: orderDetails,
-    });
+    // Có thể cập nhật trạng thái thành "Cancelled" nếu cần
+    console.log("Payment cancelled for orderId:", orderId);
+    res.status(200).json({ message: "Payment cancelled" });
   } catch (error) {
-    console.error("Error retrieving order:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    console.log("Error in cancel callback:", error.message);
+    res.status(500).json({ message: "Failed to process cancellation", error: error.message });
   }
 });
 
 /**
  * @swagger
- * /api/orders/payment-callback:
- *   get:
- *     summary: Handle VNPay payment callback
+ * /api/orders/webhook:
+ *   post:
+ *     summary: Handle PayOS webhook for payment status updates
  *     tags: [Orders]
- *     parameters:
- *       - in: query
- *         name: vnp_ResponseCode
- *         schema:
- *           type: string
- *         description: VNPay response code
- *       - in: query
- *         name: vnp_TxnRef
- *         schema:
- *           type: string
- *         description: Order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderCode
+ *               - status
+ *               - code
+ *             properties:
+ *               orderCode:
+ *                 type: integer
+ *                 description: The order ID
+ *               status:
+ *                 type: string
+ *                 description: Payment status (e.g., PAID, CANCELLED)
+ *               code:
+ *                 type: string
+ *                 description: Payment status code from PayOS
  *     responses:
  *       200:
- *         description: Payment callback processed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
- *                 success:
- *                   type: boolean
- *                 orderId:
- *                   type: integer
+ *         description: Webhook processed
  *       400:
- *         description: Invalid payment signature
+ *         description: Invalid input
  *       404:
  *         description: Order not found
  *       500:
  *         description: Server error
  */
-router.get("/payment-callback", async (req, res) => {
+router.post("/webhook", async (req, res) => {
+  console.log("PayOS webhook received:", req.body);
+  const { orderCode, status, code } = req.body;
+  if (!orderCode) {
+    console.log("Missing orderCode in webhook");
+    return res.status(400).json({ message: "Order code is required" });
+  }
   try {
-    const result = await orderService.handlePaymentCallback(req.query);
-
-    res.status(200).json({
-      status: 200,
-      message: result.success ? "Payment successful" : "Payment failed",
-      success: result.success,
-      orderId: result.orderId,
-    });
+    const order = await Order.findOne({ where: { orderId: orderCode } });
+    if (!order) {
+      console.log("Order not found for orderCode:", orderCode);
+      return res.status(404).json({ message: "Order not found" });
+    }
+    if (status === "PAID" && code === "00") {
+      console.log("Webhook updating status_id to 2 for orderId:", orderCode);
+      order.status_id = 2;
+      order.payment_time = new Date();
+      await order.save();
+    }
+    res.status(200).json({ message: "Webhook processed" });
   } catch (error) {
-    console.error("Error handling payment callback:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    console.log("Error in webhook:", error.message);
+    res.status(500).json({ message: "Failed to process webhook", error: error.message });
   }
 });
 
