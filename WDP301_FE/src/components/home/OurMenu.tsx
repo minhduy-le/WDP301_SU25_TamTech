@@ -59,42 +59,11 @@ const sideDishes: Item[] = [
   },
 ];
 
-const drinks: Item[] = [
-  {
-    id: 1,
-    name: "Trà Đào Cam Sả",
-    image: "https://gachaybo.com/wp-content/uploads/2021/06/tra-dao-cam-sa.jpg",
-    description: "Vị ngọt thanh, thơm mát",
-    price: 35000,
-    isFavorite: true,
-  },
-  {
-    id: 2,
-    name: "Trà Sữa Trân Châu",
-    image: "https://file.huengaynay.vn/data2/image/news/2022/20220817/origin/1811660739183.jpg",
-    description: "Béo ngậy, topping ngập tràn",
-    price: 40000,
-  },
-  {
-    id: 3,
-    name: "Soda Việt Quất",
-    image: "https://file.hstatic.net/200000528965/file/ruot-cai-thien-cac-van-de-ve-tieu-hoa_519e7933a481436a9a460b5cdfbfae27_grande.jpg",
-    description: "Chua nhẹ, thơm vị trái cây",
-    price: 32000,
-  },
-  {
-    id: 4,
-    name: "Nước Sâm",
-    image: "https://static.gia-hanoi.com/uploads/2024/05/nau-nuoc-sam-bi-dao.jpg",
-    description: "Thanh mát, ngọt dịu",
-    price: 15000,
-    isFavorite: true,
-  },
-];
-
 const OurMenu: React.FC = () => {
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [drinks, setDrinks] = useState<Product[]>([]);
+  const [loadingMain, setLoadingMain] = useState(true);
+  const [loadingDrinks, setLoadingDrinks] = useState(true);
   const [activeTab, setActiveTab] = useState('mainDishes');
   const [hoverMain, setHoverMain] = useState(false);
   const [hoverSide, setHoverSide] = useState(false);
@@ -109,20 +78,42 @@ const OurMenu: React.FC = () => {
           name: item.name,
           image: item.image,
           description: item.description,
-          price: item.price,
+          price: parseFloat(item.price),
           quantity: 1,
-          isFavorite: false, 
+          isFavorite: false,
         }));
-        console.log(data);
+        console.log('Main Dishes:', data);
         setMainDishes(data);
       } catch (error) {
         console.error('Lỗi khi fetch món chính:', error);
       } finally {
-        setLoading(false);
+        setLoadingMain(false);
+      }
+    };
+
+    const fetchDrinks = async () => {
+      try {
+        const response = await axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/2');
+        const data = response.data.products.map((item: Product) => ({
+          productId: item.productId,
+          name: item.name,
+          image: item.image,
+          description: item.description,
+          price: parseFloat(item.price),
+          quantity: 1,
+          isFavorite: false,
+        }));
+        console.log('Drinks:', data);
+        setDrinks(data);
+      } catch (error) {
+        console.error('Lỗi khi fetch đồ uống:', error);
+      } finally {
+        setLoadingDrinks(false);
       }
     };
 
     fetchMainDishes();
+    fetchDrinks();
   }, []);
 
   const items = activeTab === 'mainDishes' ? mainDishes : activeTab === 'sideDishes' ? sideDishes : drinks;
@@ -196,7 +187,7 @@ const OurMenu: React.FC = () => {
       </div>
 
       <Row gutter={[24, 24]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {loading && activeTab === 'mainDishes' ? (
+        {(activeTab === 'mainDishes' && loadingMain) || (activeTab === 'drinks' && loadingDrinks) ? (
           <Col span={24}>
             <p style={{ textAlign: 'center', fontSize: 16, color: '#666' }}>Đang tải dữ liệu...</p>
           </Col>
@@ -206,7 +197,7 @@ const OurMenu: React.FC = () => {
           </Col>
         ) : (
           items.map((item) => (
-            <Col key={item.name} xs={24} sm={12} md={6}>
+            <Col key={item.id || item.productId} xs={24} sm={12} md={6}>
               <Card
                 hoverable
                 style={{
