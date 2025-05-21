@@ -19,7 +19,7 @@ import "./ProductDetail.css";
 const { Title, Text, Paragraph } = Typography;
 
 const product = {
-  name: "POMEGRANATE",
+  name: "COMBO - SƯỜN CHUNG",
   price: 100000,
   image: "https://sakos.vn/wp-content/uploads/2024/09/bia.jpg",
   rating: 5,
@@ -70,7 +70,7 @@ const ProductDetail: React.FC = () => {
           zIndex: 1,
         }}
       />
-      <Row gutter={[48, 32]} style={{padding: "50px 50px 0 50px" }}>
+      <Row gutter={[48, 32]} style={{padding: "45px 120px 0 120px" }}>
         <Col xs={24} md={10} style={{display: "flex", justifyContent: "center", alignItems: "center", width: "100vw"}}>
           <Image
             src={product.image}
@@ -85,7 +85,7 @@ const ProductDetail: React.FC = () => {
           />
         </Col>
         <Col xs={24} md={14}>
-          <Title level={2} style={{ marginBottom: 8, color: '#7c4a03' }}>
+          <Title level={2} style={{ marginBottom: 8, color: '#7c4a03', fontWeight: 700 }}>
             {product.name}
           </Title>
           <Text strong style={{ fontSize: 22, color: "#ff7a45" }}>
@@ -147,27 +147,9 @@ const ProductDetail: React.FC = () => {
               style={{ background: '#fffbe6', border: '1px solid #ff7a45' }}
             />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <Text type="secondary" style={{ color: '#7c4a03' }}>Categories: </Text>
-            {product.categories.map((cat) => (
-              <Tag
-                key={cat}
-                style={{
-                  background: '#fffbe6',
-                  color: '#ff7a45',
-                  border: '1px solid #ff7a45',
-                  fontWeight: 500,
-                  borderRadius: 6,
-                  marginRight: 4,
-                }}
-              >
-                {cat}
-              </Tag>
-            ))}
-          </div>
         </Col>
       </Row>
-      <div style={{ marginTop: 48, padding: "0 50px" }}>
+      <div style={{ marginTop: 48, padding: "0 120px" }}>
         <Tabs
           rootClassName="custom-tabs"
           defaultActiveKey="1"
@@ -234,7 +216,7 @@ const ProductDetail: React.FC = () => {
           ]}
         />
       </div>
-      <div style={{ margin: "48px 0 0 0", padding: "0 50px 50px 50px" }}>
+      <div style={{ margin: "48px 0 0 0", padding: "0 120px 50px 120px" }}>
         <Title level={1} style={{ marginBottom: 24, textAlign: "center", color: "#ff7a45", fontWeight: "bold" }}>CÁC MÓN LIÊN QUAN</Title>
         <Row gutter={[24, 24]}>
           {[
