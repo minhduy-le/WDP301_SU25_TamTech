@@ -2,6 +2,11 @@ import { Layout, Menu } from "antd";
 import "../style/UserInformation.css";
 import { useState } from "react";
 import OrderTracking from "./OrderTracking";
+import UserBoldIcon from "../components/icon/UserBoldIcon";
+import { ContainerOutlined } from "@ant-design/icons";
+import SearchIcon from "../components/icon/SearchIcon";
+import PromotionIcon from "../components/icon/PromotionIcon";
+import HomeSideIcon from "../components/icon/HomeSideIcon";
 
 const { Sider, Content } = Layout;
 
@@ -28,32 +33,34 @@ const UserInfomation = () => {
             >
               <Menu.Item key="1" className="menu-item active">
                 <span role="img" aria-label="profile">
-                  👤
-                </span>{" "}
+                  <UserBoldIcon />
+                </span>
                 Thông tin thành viên
               </Menu.Item>
               <Menu.Item key="2" className="menu-item">
                 <span role="img" aria-label="order">
-                  🔍
-                </span>{" "}
+                  <SearchIcon />
+                </span>
                 Tra cứu đơn hàng
               </Menu.Item>
               <Menu.Item key="3" className="menu-item">
                 <span role="img" aria-label="history">
-                  ⏳
-                </span>{" "}
+                  <ContainerOutlined
+                    style={{ fontSize: 20, color: "#2D1E1A" }}
+                  />
+                </span>
                 Lịch sử mua hàng
               </Menu.Item>
               <Menu.Item key="4" className="menu-item">
                 <span role="img" aria-label="address">
-                  📍
-                </span>{" "}
+                  <PromotionIcon />
+                </span>
                 Ưu đãi
               </Menu.Item>
               <Menu.Item key="5" className="menu-item">
                 <span role="img" aria-label="home">
-                  🏠
-                </span>{" "}
+                  <HomeSideIcon />
+                </span>
                 Địa chỉ giao hàng
               </Menu.Item>
             </Menu>

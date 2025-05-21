@@ -38,6 +38,7 @@
   color: #2d1e1a !important;
   padding: 10px 0;
   background: none;
+  border-radius: 15px !important;
   height: auto !important;
   line-height: normal !important;
   margin-bottom: 10px !important;
@@ -90,4 +91,17 @@
 
 .qr-text p {
   margin: 5px 0;
+}
+
+.sidebar-menu .ant-menu-title-content {
+  display: flex;
+  /* justify-content: center; */
+}
+
+.user-details .ant-menu-item-selected {
+  background-color: #a8c56c !important;
+}
+
+.anticon-container {
+  margin-right: 0 !important;
 }
