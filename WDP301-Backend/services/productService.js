@@ -2,6 +2,7 @@ const sequelize = require("../config/database");
 const Product = require("../models/product");
 const ProductRecipe = require("../models/ProductRecipe");
 const Material = require("../models/material");
+const { Op } = require("sequelize");
 
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes } = productData;
@@ -174,6 +175,26 @@ const getBestSellerProducts = async () => {
   return products;
 };
 
+const searchProductsByName = async (searchTerm) => {
+  const products = await Product.findAll({
+    where: {
+      name: {
+        [Op.like]: `%${searchTerm}%`, // Tìm kiếm chuỗi con trong name, không phân biệt hoa thường
+      },
+      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+    },
+    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường cần thiết
+    include: [
+      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]], // Sắp xếp theo tên tăng dần
+  });
+
+  return products;
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -182,4 +203,5 @@ module.exports = {
   softDeleteProduct,
   getProductById,
   getBestSellerProducts,
+  searchProductsByName,
 };
