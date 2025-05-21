@@ -147,4 +147,39 @@ const getProductById = async (productId) => {
   return product;
 };
 
-module.exports = { createProduct, getProducts, getProductsByType, updateProduct, softDeleteProduct, getProductById };
+const getBestSellerProducts = async () => {
+  const products = await Product.findAll({
+    where: {
+      productTypeId: [1, 3], // Chỉ lấy productTypeId 1 hoặc 3
+      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+    },
+    include: [
+      {
+        model: require("../models/OrderItem"),
+        as: "OrderItems", // Liên kết với OrderItem để kiểm tra sản phẩm có trong đơn hàng
+        attributes: [], // Không cần lấy thuộc tính của OrderItem
+        required: true, // Chỉ lấy sản phẩm có trong order_items
+      },
+      {
+        model: require("../models/productType"),
+        as: "ProductType",
+        attributes: ["productTypeId", "name"], // Lấy thông tin productType
+      },
+    ],
+    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường yêu cầu
+    group: ["Product.productId"], // Tránh trùng lặp sản phẩm
+    order: [["productTypeId", "ASC"]], // Sắp xếp theo productTypeId tăng dần
+  });
+
+  return products;
+};
+
+module.exports = {
+  createProduct,
+  getProducts,
+  getProductsByType,
+  updateProduct,
+  softDeleteProduct,
+  getProductById,
+  getBestSellerProducts,
+};

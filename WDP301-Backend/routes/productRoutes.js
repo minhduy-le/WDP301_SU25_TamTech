@@ -7,6 +7,67 @@ const axios = require("axios");
 
 /**
  * @swagger
+ * /api/products/best-seller:
+ *   get:
+ *     summary: Get best seller products based on order items
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of best seller products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *       500:
+ *         description: Server error
+ */
+router.get("/best-seller", async (req, res, next) => {
+  try {
+    const products = await productService.getBestSellerProducts();
+
+    res.status(200).json({
+      status: 200,
+      message: "Best seller products retrieved successfully",
+      products,
+    });
+  } catch (error) {
+    console.error("Error retrieving best seller products:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/products:
  *   post:
  *     summary: Create a new product with recipes

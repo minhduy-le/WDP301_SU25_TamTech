@@ -10,7 +10,7 @@ const PaymentMethod = sequelize.define(
       autoIncrement: true,
     },
     name: {
-      type: DataTypes.ENUM("Vnpay", "Momo", "Zalopay"),
+      type: DataTypes.ENUM("Vnpay", "Momo", "Zalopay", "PayOS"),
       allowNull: false,
     },
   },
