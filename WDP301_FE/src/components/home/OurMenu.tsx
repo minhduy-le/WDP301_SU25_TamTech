@@ -22,58 +22,28 @@ interface Product {
   isFavorite?: boolean;
 }
 
-const sideDishes: Item[] = [
-  {
-    id: 1,
-    name: "Canh Rong Biển",
-    image: "https://file.hstatic.net/200000700229/article/nau-canh-rong-bien-1_09c034dc42454fefb6159984b3aa94c1.jpg",
-    description: "Giải nhiệt, bổ dưỡng",
-    price: 15000,
-    quantity: 4,
-    isFavorite: true,
-  },
-  {
-    id: 2,
-    name: "Chả Trứng",
-    image: "https://cdn.tgdd.vn/Files/2018/01/29/1062867/cach-lam-cha-trung-hap-don-gian-tai-nha-202203041434088984.jpg",
-    description: "Béo thơm, mềm mịn",
-    price: 12000,
-    quantity: 1,
-  },
-  {
-    id: 3,
-    name: "Rau Luộc Chấm Kho Quẹt",
-    image: "https://file.hstatic.net/200000385717/article/ia-chi-ban-com-chay-kho-quet-can-tho-duoc-yeu-thich-nhat-07-1649155337_2f52b84169dd496c8c30794a1d1d556d.jpg",
-    description: "Đậm đà hương vị quê",
-    price: 18000,
-    quantity: 3,
-    isFavorite: true,
-  },
-  {
-    id: 4,
-    name: "Đồ Chua",
-    image: "https://www.seriouseats.com/thmb/v0epZZi6W-RBZlA0rxi81OB-HBI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/20230712-SEA-DoChua-MaureenCelestine-hero-fc08b05e43f0470aa611993727f8e2e9.jpg",
-    description: "Chua ngọt, tươi mát",
-    price: 10000,
-    quantity: 2,
-  },
-];
-
 const OurMenu: React.FC = () => {
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
   const [drinks, setDrinks] = useState<Product[]>([]);
+  const [sideDishes, setSideDishes] = useState<Product[]>([]);
   const [loadingMain, setLoadingMain] = useState(true);
   const [loadingDrinks, setLoadingDrinks] = useState(true);
+  const [loadingSide, setLoadingSide] = useState(true);
   const [activeTab, setActiveTab] = useState('mainDishes');
   const [hoverMain, setHoverMain] = useState(false);
   const [hoverSide, setHoverSide] = useState(false);
   const [hoverDrink, setHoverDrink] = useState(false);
 
   useEffect(() => {
-    const fetchMainDishes = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/1');
-        const data = response.data.products.map((item: Product) => ({
+        const [mainResponse, drinksResponse, sideResponse] = await Promise.all([
+          axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/1'),
+          axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/2'),
+          axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/3'),
+        ]);
+
+        const mainData = mainResponse.data.products.map((item: Product) => ({
           productId: item.productId,
           name: item.name,
           image: item.image,
@@ -82,38 +52,44 @@ const OurMenu: React.FC = () => {
           quantity: 1,
           isFavorite: false,
         }));
-        console.log('Main Dishes:', data);
-        setMainDishes(data);
+
+        const drinksData = drinksResponse.data.products.map((item: Product) => ({
+          productId: item.productId,
+          name: item.name,
+          image: item.image,
+          description: item.description,
+          price: parseFloat(item.price),
+          quantity: 1,
+          isFavorite: false,
+        }));
+
+        const sideData = sideResponse.data.products.map((item: Product) => ({
+          productId: item.productId,
+          name: item.name,
+          image: item.image,
+          description: item.description,
+          price: parseFloat(item.price),
+          quantity: 1,
+          isFavorite: false,
+        }));
+
+        console.log('Main Dishes:', mainData);
+        console.log('Drinks:', drinksData);
+        console.log('Side Dishes:', sideData);
+
+        setMainDishes(mainData);
+        setDrinks(drinksData);
+        setSideDishes(sideData);
       } catch (error) {
-        console.error('Lỗi khi fetch món chính:', error);
+        console.error('Lỗi khi fetch dữ liệu:', error);
       } finally {
         setLoadingMain(false);
-      }
-    };
-
-    const fetchDrinks = async () => {
-      try {
-        const response = await axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/2');
-        const data = response.data.products.map((item: Product) => ({
-          productId: item.productId,
-          name: item.name,
-          image: item.image,
-          description: item.description,
-          price: parseFloat(item.price),
-          quantity: 1,
-          isFavorite: false,
-        }));
-        console.log('Drinks:', data);
-        setDrinks(data);
-      } catch (error) {
-        console.error('Lỗi khi fetch đồ uống:', error);
-      } finally {
         setLoadingDrinks(false);
+        setLoadingSide(false);
       }
     };
 
-    fetchMainDishes();
-    fetchDrinks();
+    fetchData();
   }, []);
 
   const items = activeTab === 'mainDishes' ? mainDishes : activeTab === 'sideDishes' ? sideDishes : drinks;
@@ -187,7 +163,7 @@ const OurMenu: React.FC = () => {
       </div>
 
       <Row gutter={[24, 24]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {(activeTab === 'mainDishes' && loadingMain) || (activeTab === 'drinks' && loadingDrinks) ? (
+        {(activeTab === 'mainDishes' && loadingMain) || (activeTab === 'drinks' && loadingDrinks) || (activeTab === 'sideDishes' && loadingSide) ? (
           <Col span={24}>
             <p style={{ textAlign: 'center', fontSize: 16, color: '#666' }}>Đang tải dữ liệu...</p>
           </Col>
@@ -197,7 +173,7 @@ const OurMenu: React.FC = () => {
           </Col>
         ) : (
           items.map((item) => (
-            <Col key={item.id || item.productId} xs={24} sm={12} md={6}>
+            <Col key={item.productId} xs={24} sm={12} md={6}>
               <Card
                 hoverable
                 style={{
@@ -206,6 +182,7 @@ const OurMenu: React.FC = () => {
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                   border: 'none',
+                  minHeight: 360,
                 }}
                 bodyStyle={{ padding: '16px' }}
                 onMouseEnter={(e) => {
@@ -240,7 +217,7 @@ const OurMenu: React.FC = () => {
               >
                 <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#f97316' }}>{item.name}</h3>
                 <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px', lineHeight: '1.5' }}>
-                  {item.description || 'Món ăn thơm ngon, hấp dẫn'}
+                  {item.description && item.description.length > 50 ? item.description.slice(0, 50) + '...' : item.description || 'Món ăn thơm ngon, hấp dẫn'}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Tag
