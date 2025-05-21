@@ -10,9 +10,12 @@ import {
   Text,
   FlatList,
   StyleSheet,
+  Pressable,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import menu from "@/assets/Menu.png";
+import { FONTS } from "@/theme/typography";
+import { router } from "expo-router";
 
 interface IProduct {
   productId: string;
@@ -24,7 +27,6 @@ interface IProduct {
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<IProduct[]>([]);
-
   const fetchProducts = useCallback(
     debounce(async (text: string) => {
       if (!text.trim()) {
@@ -47,7 +49,6 @@ const SearchPage = () => {
     }, 500),
     []
   );
-
   const handleChangeText = (text: string) => {
     setSearchTerm(text);
     fetchProducts(text);
@@ -73,18 +74,20 @@ const SearchPage = () => {
           keyExtractor={(item) => item.productId}
           contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Image
-                source={{ uri: item.productImage }}
-                style={styles.productImage}
-              />
-              <View style={styles.productDetails}>
-                <Text style={styles.productName}>{item.productName}</Text>
-                <Text style={styles.productPrice}>
-                  {item.productPrice.toLocaleString()}đ
-                </Text>
+            <Pressable onPress={() => {}}>
+              <View style={styles.itemContainer}>
+                <Image
+                  source={{ uri: item.productImage }}
+                  style={styles.productImage}
+                />
+                <View style={styles.productDetails}>
+                  <Text style={styles.productName}>{item.productName}</Text>
+                  <Text style={styles.productPrice}>
+                    {item.productPrice.toLocaleString()}đ
+                  </Text>
+                </View>
               </View>
-            </View>
+            </Pressable>
           )}
         />
       ) : (
@@ -138,10 +141,13 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
   },
   productPrice: {
-    color: "gray",
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
     marginTop: 5,
   },
   imageWrapper: {

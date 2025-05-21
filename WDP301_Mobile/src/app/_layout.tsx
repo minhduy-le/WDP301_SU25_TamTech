@@ -1,10 +1,6 @@
 import AppProvider from "context/app.context";
-import {
-  DefaultTheme,
-  ThemeProvider,
-  DarkTheme,
-} from "@react-navigation/native";
-import { ErrorBoundaryProps, Stack } from "expo-router";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { ErrorBoundaryProps, Stack, Tabs } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RootSiblingParent } from "react-native-root-siblings";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -167,14 +163,14 @@ const RootLayout = () => {
                 name="(user)/product/place.order"
                 options={{ headerShown: false }}
               />
-              <Stack.Screen
+              <Tabs.Screen
                 name="(user)/account/info"
-                options={{ headerTitle: "Cập nhật thông tin" }}
+                options={{ headerShown: false }}
               />
 
-              <Stack.Screen
+              <Tabs.Screen
                 name="(user)/account/password"
-                options={{ headerTitle: "Cập nhật mật khẩu" }}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="(user)/account/customer.info"
