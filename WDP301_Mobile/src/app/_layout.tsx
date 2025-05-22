@@ -163,6 +163,16 @@ const RootLayout = () => {
                   headerShown: false,
                 }}
               />
+              <Tabs.Screen
+                name="chat/[id]"
+                options={{
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: APP_COLOR.WHITE,
+                  headerStyle: {
+                    backgroundColor: APP_COLOR.BROWN,
+                  },
+                }}
+              />
               <Stack.Screen
                 name="(user)/product/place.order"
                 options={{ headerShown: false }}

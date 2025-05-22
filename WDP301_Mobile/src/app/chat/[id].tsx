@@ -1,7 +1,9 @@
+import { FONTS } from "@/theme/typography";
+import { APP_COLOR } from "@/utils/constant";
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { View, Text, FlatList, StyleSheet, TextInput } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 interface Message {
   id: string;
@@ -46,7 +48,7 @@ const ChatPage = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View>
       <View style={styles.message}>
         <FlatList
           data={messages}
@@ -56,55 +58,63 @@ const ChatPage = () => {
           contentContainerStyle={styles.chatContainer}
         />
       </View>
-      <View>
+      <View style={styles.messageView}>
         <TextInput
           placeholder="Nhập tin nhắn..."
           onChangeText={(text: string) => handleChat(text)}
+          placeholderTextColor={APP_COLOR.BROWN}
           style={styles.inputContainer}
         />
+        <Ionicons
+          name="send"
+          size={30}
+          color={APP_COLOR.BROWN}
+          style={{ position: "absolute", bottom: 60, right: 20 }}
+        />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f4f4f4",
-  },
   message: {
-    marginBottom: 40,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    paddingBottom: 100,
   },
   chatContainer: {
     padding: 10,
-    paddingBottom: 80,
+    paddingBottom: 70,
     marginBottom: 30,
   },
   messageContainer: {
-    maxWidth: "80%",
+    maxWidth: "90%",
     padding: 10,
     borderRadius: 20,
     marginBottom: 10,
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: "#0078ff",
+    backgroundColor: APP_COLOR.BROWN,
   },
   otherMessage: {
     alignSelf: "flex-start",
-    backgroundColor: "#e1e1e1",
+    backgroundColor: "rgba(81, 80, 80, 0.7)",
   },
   messageText: {
-    color: "white",
+    color: APP_COLOR.WHITE,
     fontSize: 16,
+    fontFamily: FONTS.regular,
+  },
+  messageView: {
+    flexDirection: "row",
   },
   inputContainer: {
     position: "absolute",
-    bottom: 10,
+    bottom: 50,
     left: 10,
     right: 10,
-    backgroundColor: "#fff",
-    padding: 10,
+    backgroundColor: APP_COLOR.WHITE,
+    padding: 15,
     borderRadius: 30,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
@@ -113,6 +123,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    fontFamily: FONTS.regular,
+    width: "80%",
   },
 });
 
