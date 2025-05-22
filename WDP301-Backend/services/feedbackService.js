@@ -37,7 +37,35 @@ const createFeedback = async ({ userId, productId, comment, rating }) => {
   return feedback;
 };
 
+const getFeedbackByProductId = async (productId) => {
+  // Validate productId
+  if (!productId) {
+    throw httpErrors.BadRequest("Product ID is required");
+  }
+
+  // Check if product exists
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    throw httpErrors.NotFound("Product not found");
+  }
+
+  // Fetch feedback with associated user data
+  const feedback = await Feedback.findAll({
+    where: { productId },
+    include: [
+      {
+        model: User,
+        as: "User",
+        attributes: ["fullName"],
+      },
+    ],
+    order: [["createdAt", "DESC"]],
+  });
+
+  return feedback;
+};
+
 module.exports = {
   createFeedback,
-  //   getFeedbackByProductId,
+  getFeedbackByProductId,
 };
