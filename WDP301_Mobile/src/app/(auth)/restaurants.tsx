@@ -66,7 +66,6 @@ const RestaurantsPage = () => {
         items: {},
       };
     }
-
     newCart[restaurant._id].sum =
       (newCart[restaurant._id].sum || 0) + priceChange;
     newCart[restaurant._id].quantity =
@@ -129,7 +128,7 @@ const RestaurantsPage = () => {
         }}
       >
         <TextInput
-          placeholder="Hôm nay bạn muốn ăn gì?"
+          placeholder={`Bạn muốn ăn gì nào?`}
           onChangeText={(text: string) => handleSearch(text)}
           placeholderTextColor={APP_COLOR.BROWN}
           style={{
@@ -280,7 +279,7 @@ const RestaurantsPage = () => {
               <AntDesign
                 name="close"
                 size={24}
-                color="grey"
+                color={APP_COLOR.BROWN}
                 onPress={() => setShowCart(false)}
               />
             </View>
@@ -329,7 +328,6 @@ const RestaurantsPage = () => {
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   cartButton: {
     backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
@@ -410,7 +408,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
   },
   cartScroll: {
     maxHeight: 400,
@@ -428,16 +427,18 @@ const styles = StyleSheet.create({
   },
   cartItemTitle: {
     fontSize: 14,
-    fontWeight: "500",
+    fontFamily: FONTS.semiBold,
+    color: APP_COLOR.BROWN,
   },
   cartItemQuantity: {
     fontSize: 12,
-    color: APP_COLOR.GREY,
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.regular,
     marginTop: 4,
   },
   cartItemPrice: {
-    color: APP_COLOR.ORANGE,
-    fontWeight: "600",
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.bold,
   },
   modalFooter: {
     marginTop: 20,
@@ -451,15 +452,21 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   orderText: {
-    color: APP_COLOR.GREY,
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.semiBold,
+    marginVertical: "auto",
   },
   orderPrice: {
-    fontWeight: "600",
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
+    fontSize: 18,
+    textDecorationLine: "underline",
   },
   orderButton: {
-    backgroundColor: APP_COLOR.ORANGE,
+    backgroundColor: APP_COLOR.BROWN,
     padding: 15,
     borderRadius: 8,
+    marginBottom: 30,
   },
   orderButtonPressed: {
     opacity: 0.5,
@@ -471,5 +478,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
 export default RestaurantsPage;

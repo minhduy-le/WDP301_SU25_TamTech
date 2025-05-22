@@ -18,7 +18,7 @@ const payos = new PayOS(
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
 
-const YOUR_DOMAIN = process.env.FRONTEND_URL || "http://localhost:3000";
+const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
 
 const createOrder = async (req, res) => {
   // Debug: Log the entire request body

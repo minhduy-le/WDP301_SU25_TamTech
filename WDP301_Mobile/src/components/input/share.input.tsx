@@ -11,18 +11,19 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { FONTS } from "@/theme/typography";
 const styles = StyleSheet.create({
   inputGroup: {
-    padding: 5,
-    gap: 10,
+    gap: 5,
   },
   text: {
-    fontSize: 25,
+    fontSize: 20,
     fontFamily: FONTS.regular,
+    color: APP_COLOR.BROWN,
   },
   input: {
     borderWidth: 1,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 10,
+    color: APP_COLOR.BROWN,
   },
   eye: {
     position: "absolute",
@@ -84,7 +85,10 @@ const ShareInput = (props: IProps) => {
           keyboardType={keyboardType}
           style={[
             styles.input,
-            { borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN },
+            {
+              borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
+              fontFamily: FONTS.regular,
+            },
           ]}
           secureTextEntry={secureTextEntry && !isShowPassword}
           placeholder={placeholder}

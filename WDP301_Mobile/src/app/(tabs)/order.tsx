@@ -59,7 +59,7 @@ const OrderPage = () => {
     },
     button: {
       backgroundColor: APP_COLOR.WHITE,
-      borderWidth: 1,
+      borderWidth: 0.5,
       borderColor: APP_COLOR.BROWN,
       paddingVertical: 9,
       paddingHorizontal: 20,
@@ -70,7 +70,7 @@ const OrderPage = () => {
     buttonText: {
       color: APP_COLOR.BROWN,
       fontSize: 17,
-      fontFamily: FONTS.regular,
+      fontFamily: FONTS.bold,
       marginHorizontal: "auto",
     },
     paginationContainer: {
@@ -475,10 +475,20 @@ const OrderPage = () => {
                           <Text style={styles.buttonText}>Xem chi tiết</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={styles.button}
+                          style={[
+                            styles.button,
+                            { backgroundColor: APP_COLOR.ORANGE },
+                          ]}
                           onPress={() => handleViewDetails(item.orderId)}
                         >
-                          <Text style={styles.buttonText}>Đánh giá</Text>
+                          <Text
+                            style={[
+                              styles.buttonText,
+                              { color: APP_COLOR.WHITE },
+                            ]}
+                          >
+                            Đánh giá
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>

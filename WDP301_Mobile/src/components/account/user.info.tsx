@@ -8,18 +8,29 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Image,
 } from "react-native";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ShareButton from "../button/share.button";
-
+import { APP_COLOR } from "@/utils/constant";
+import Toast from "react-native-root-toast";
+import { FONTS } from "@/theme/typography";
+import logo from "@/assets/logo.png";
 interface DecodedToken {
   id: number;
   name: string;
   address: string;
   phone: string;
 }
+const sampleData = {
+  id: 1,
+  name: "Lê Minh Duy",
+  address: "Thành phố Thủ Đức, Thành phố Hồ Chí Minh",
+  phone: "0889679561",
+};
+
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 15,
@@ -45,40 +56,40 @@ const UserInfo = () => {
     getAccessToken();
   }, []);
 
-  const handleUpdateUser = async (name: string, phone: string) => {
-    if (decodeToken?.id) {
-      //   const res =
-      //   if (res.data) {
-      //     Toast.show("Cập nhật thông tin user thành công!", {
-      //       duration: Toast.durations.LONG,
-      //       textColor: "white",
-      //       backgroundColor: APP_COLOR.ORANGE,
-      //       opacity: 1,
-      //     });
-      //     setDecodeToken((prev) =>
-      //       prev
-      //         ? {
-      //             ...prev,
-      //             name,
-      //             phone,
-      //           }
-      //         : null
-      //     );
-      //   } else {
-      //     const m = Array.isArray(res.message) ? res.message[0] : res.message;
-      //     Toast.show(m, {
-      //       duration: Toast.durations.LONG,
-      //       textColor: "white",
-      //       backgroundColor: APP_COLOR.ORANGE,
-      //       opacity: 1,
-      //     });
-      //   }
-    }
-  };
+  // const handleUpdateUser = async (name: string, phone: string) => {
+  //   if (sampleData?.id) {
+  //       const res = await updateUserInfo({ id: sampleData.id, name, phone });
+  //       if(res.data) {
+  //         Toast.show("Cập nhật thông tin user thành công!", {
+  //           duration: Toast.durations.LONG,
+  //           textColor: "white",
+  //           backgroundColor: APP_COLOR.ORANGE,
+  //           opacity: 1,
+  //         });
+  //         setDecodeToken((prev) =>
+  //           prev
+  //             ? {
+  //                 ...prev,
+  //                 name,
+  //                 phone,
+  //               }
+  //             : null
+  //         );
+  //       } else {
+  //         const m = Array.isArray(res.message) ? res.message[0] : res.message;
+  //         Toast.show(m, {
+  //           duration: Toast.durations.LONG,
+  //           textColor: "white",
+  //           backgroundColor: APP_COLOR.ORANGE,
+  //           opacity: 1,
+  //         });
+  //       }
+  //   }
+  // };
 
-  if (!decodeToken) {
-    return null;
-  }
+  // if (!decodeToken) {
+  //   return null;
+  // }
 
   return (
     <KeyboardAvoidingView
@@ -87,18 +98,31 @@ const UserInfo = () => {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
+          <Image
+            source={logo}
+            style={{ height: 150, width: 300, marginHorizontal: "auto" }}
+          />
           <View style={{ alignItems: "center", gap: 5 }}>
-            <Text>{decodeToken.name}</Text>
+            <Text
+              style={{
+                fontSize: 20,
+                color: APP_COLOR.BROWN,
+                fontFamily: FONTS.semiBold,
+              }}
+            >
+              Thay đổi thông tin của bạn
+            </Text>
           </View>
           <Formik
             validationSchema={UpdateUserSchema}
             initialValues={{
-              name: decodeToken.name,
-              address: decodeToken.address,
-              phone: decodeToken.phone,
+              name: sampleData.name,
+              address: sampleData.address,
+              phone: sampleData.phone,
             }}
-            onSubmit={(values) =>
-              handleUpdateUser(values?.name ?? "", values?.phone ?? "")
+            onSubmit={
+              (values) => console.log("Test")
+              // handleUpdateUser(values?.name ?? "", values?.phone ?? "")
             }
           >
             {({
@@ -111,9 +135,11 @@ const UserInfo = () => {
               isValid,
               dirty,
             }) => (
-              <View style={{ marginTop: 20, gap: 20 }}>
+              <View
+                style={{ marginTop: 20, gap: 15, marginHorizontal: "auto" }}
+              >
                 <ShareInput
-                  title="Họ tên"
+                  title="Họ và tên"
                   onChangeText={handleChange("name")}
                   onBlur={handleBlur("name")}
                   value={values.name}
@@ -137,13 +163,29 @@ const UserInfo = () => {
                   error={errors.phone}
                   touched={touched.phone}
                 />
-                <ShareButton
-                  title="Lưu thay đổi"
-                  onPress={() => handleUpdateUser(values.name, values.phone)}
-                />
               </View>
             )}
           </Formik>
+          <ShareButton
+            title="Lưu thay đổi"
+            btnStyle={{
+              backgroundColor: APP_COLOR.BROWN,
+              width: "auto",
+              marginHorizontal: "25%",
+              borderWidth: 0.5,
+              borderRadius: 10,
+              borderColor: APP_COLOR.BROWN,
+              marginTop: 30,
+            }}
+            textStyle={{
+              color: APP_COLOR.WHITE,
+              fontSize: 17,
+              marginHorizontal: 20,
+              fontFamily: FONTS.regular,
+            }}
+            onPress={() => console.log("Lưu")}
+            // onPress={() => handleUpdateUser(values.name, values.phone)}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

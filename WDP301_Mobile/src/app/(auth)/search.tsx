@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import debounce from "debounce";
@@ -10,9 +10,13 @@ import {
   Text,
   FlatList,
   StyleSheet,
+  Pressable,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, AntDesign } from "@expo/vector-icons";
 import menu from "@/assets/Menu.png";
+import { FONTS } from "@/theme/typography";
+import { router } from "expo-router";
+import { useCurrentApp } from "@/context/app.context";
 
 interface IProduct {
   productId: string;
@@ -24,6 +28,7 @@ interface IProduct {
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<IProduct[]>([]);
+  const { cart, setCart, restaurant } = useCurrentApp();
 
   const fetchProducts = useCallback(
     debounce(async (text: string) => {
@@ -53,6 +58,62 @@ const SearchPage = () => {
     fetchProducts(text);
   };
 
+  const handleQuantityChange = (item: any, action: "MINUS" | "PLUS") => {
+    if (!restaurant?._id) return;
+
+    const total = action === "MINUS" ? -1 : 1;
+    const priceChange = total * item.productPrice;
+
+    const newCart = { ...cart };
+    if (!newCart[restaurant._id]) {
+      newCart[restaurant._id] = {
+        sum: 0,
+        quantity: 0,
+        items: {},
+      };
+    }
+    newCart[restaurant._id].sum =
+      (newCart[restaurant._id].sum || 0) + priceChange;
+    newCart[restaurant._id].quantity =
+      (newCart[restaurant._id].quantity || 0) + total;
+
+    if (!newCart[restaurant._id].items[item.productId]) {
+      newCart[restaurant._id].items[item.productId] = {
+        data: {
+          ...item,
+          basePrice: item.productPrice,
+          title: item.productName,
+        },
+        quantity: 0,
+      };
+    }
+
+    const currentQuantity =
+      (newCart[restaurant._id].items[item.productId].quantity || 0) + total;
+
+    if (currentQuantity <= 0) {
+      delete newCart[restaurant._id].items[item.productId];
+      if (Object.keys(newCart[restaurant._id].items).length === 0) {
+        delete newCart[restaurant._id];
+      }
+    } else {
+      newCart[restaurant._id].items[item.productId] = {
+        data: {
+          ...item,
+          basePrice: item.productPrice,
+          title: item.productName,
+        },
+        quantity: currentQuantity,
+      };
+    }
+    setCart(newCart);
+  };
+
+  const getItemQuantity = (itemId: string) => {
+    if (!restaurant?._id) return 0;
+    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ backgroundColor: APP_COLOR.BROWN }}>
@@ -72,20 +133,71 @@ const SearchPage = () => {
           data={products}
           keyExtractor={(item) => item.productId}
           contentContainerStyle={{ paddingBottom: 20 }}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <Image
-                source={{ uri: item.productImage }}
-                style={styles.productImage}
-              />
-              <View style={styles.productDetails}>
-                <Text style={styles.productName}>{item.productName}</Text>
-                <Text style={styles.productPrice}>
-                  {item.productPrice.toLocaleString()}đ
-                </Text>
-              </View>
-            </View>
-          )}
+          renderItem={({ item }) => {
+            const quantity = getItemQuantity(item.productId);
+            return (
+              <Pressable onPress={() => {}}>
+                <View style={styles.itemContainer}>
+                  <Image
+                    source={{ uri: item.productImage }}
+                    style={styles.productImage}
+                  />
+                  <View style={styles.productDetails}>
+                    <Text style={styles.productName}>{item.productName}</Text>
+                    <Text style={styles.productPrice}>
+                      {item.productPrice.toLocaleString()}đ
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                      position: "absolute",
+                      bottom: 5,
+                      right: 10,
+                    }}
+                  >
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "MINUS")}
+                      style={({ pressed }) => ({
+                        opacity: quantity > 0 ? (pressed ? 0.5 : 1) : 0.3,
+                      })}
+                      disabled={quantity === 0}
+                    >
+                      <AntDesign
+                        name="minussquareo"
+                        size={24}
+                        color={quantity > 0 ? APP_COLOR.BROWN : APP_COLOR.GREY}
+                      />
+                    </Pressable>
+                    <Text
+                      style={{
+                        minWidth: 25,
+                        textAlign: "center",
+                        fontFamily: FONTS.regular,
+                        color: APP_COLOR.BROWN,
+                      }}
+                    >
+                      {quantity}
+                    </Text>
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "PLUS")}
+                      style={({ pressed }) => ({
+                        opacity: pressed ? 0.5 : 1,
+                      })}
+                    >
+                      <AntDesign
+                        name="plussquare"
+                        size={24}
+                        color={APP_COLOR.BROWN}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+              </Pressable>
+            );
+          }}
         />
       ) : (
         <View style={styles.imageWrapper}>
@@ -138,10 +250,13 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
   },
   productPrice: {
-    color: "gray",
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.semiBold,
+    fontSize: 16,
     marginTop: 5,
   },
   imageWrapper: {
