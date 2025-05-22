@@ -224,6 +224,11 @@ const RestaurantsPage = () => {
                     position: "absolute",
                     bottom: 5,
                     right: 10,
+                    borderWidth: 0.5,
+                    borderColor: APP_COLOR.BROWN,
+                    paddingHorizontal: 5,
+                    paddingVertical: 3,
+                    borderRadius: 50,
                   }}
                 >
                   <Pressable
@@ -234,21 +239,25 @@ const RestaurantsPage = () => {
                     disabled={quantity === 0}
                   >
                     <AntDesign
-                      name="minussquareo"
+                      name="minuscircle"
                       size={24}
-                      color={quantity > 0 ? APP_COLOR.BROWN : APP_COLOR.GREY}
+                      color={
+                        quantity > 0 ? APP_COLOR.BUTTON_YELLOW : APP_COLOR.BROWN
+                      }
                     />
                   </Pressable>
+
                   <Text
                     style={{
                       minWidth: 25,
                       textAlign: "center",
-                      fontFamily: FONTS.regular,
+                      fontFamily: FONTS.medium,
                       color: APP_COLOR.BROWN,
                     }}
                   >
                     {quantity}
                   </Text>
+
                   <Pressable
                     onPress={() => handleQuantityChange(item, "PLUS")}
                     style={({ pressed }) => ({
@@ -256,9 +265,9 @@ const RestaurantsPage = () => {
                     })}
                   >
                     <AntDesign
-                      name="plussquare"
+                      name="pluscircle"
                       size={24}
-                      color={APP_COLOR.BROWN}
+                      color={APP_COLOR.BUTTON_YELLOW}
                     />
                   </Pressable>
                 </View>
