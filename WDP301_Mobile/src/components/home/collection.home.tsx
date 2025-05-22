@@ -273,8 +273,13 @@ const CollectionHome = (props: IProps) => {
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "center",
-                        paddingBottom: 5,
+                        paddingVertical: 3,
+                        paddingHorizontal: 5,
+                        borderRadius: 50,
                         marginBottom: 7,
+                        borderWidth: 0.5,
+                        borderColor: APP_COLOR.BROWN,
+                        marginHorizontal: "auto",
                       }}
                     >
                       <Pressable
@@ -288,7 +293,9 @@ const CollectionHome = (props: IProps) => {
                           name="minuscircle"
                           size={24}
                           color={
-                            quantity > 0 ? APP_COLOR.ORANGE : APP_COLOR.BROWN
+                            quantity > 0
+                              ? APP_COLOR.BUTTON_YELLOW
+                              : APP_COLOR.BROWN
                           }
                         />
                       </Pressable>
@@ -313,7 +320,7 @@ const CollectionHome = (props: IProps) => {
                         <AntDesign
                           name="pluscircle"
                           size={24}
-                          color={APP_COLOR.ORANGE}
+                          color={APP_COLOR.BUTTON_YELLOW}
                         />
                       </Pressable>
                     </View>

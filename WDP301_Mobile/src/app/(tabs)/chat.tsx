@@ -1,4 +1,3 @@
-import EmployeeHeader from "@/components/employee/topheader.employee";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -82,8 +81,6 @@ const ChatList = () => {
     },
   ];
 
-  const insets = useSafeAreaInsets();
-
   useEffect(() => {
     const getAccessToken = async () => {
       try {
@@ -121,52 +118,56 @@ const ChatList = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View
-        style={{
-          paddingTop: insets.top,
-          paddingHorizontal: 20,
-          paddingBottom: 20,
-          backgroundColor: APP_COLOR.YELLOW,
-          flexDirection: "row",
-        }}
-      >
-        <View>
-          <Text style={styles.text}>{decodeToken.name}</Text>
-          <Text style={styles.text}>{decodeToken.phone}</Text>
-          <Text style={styles.text}>{decodeToken.address}</Text>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    >
+      <View style={styles.container}>
+        <View
+          style={{
+            paddingHorizontal: 20,
+            backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+            flexDirection: "row",
+          }}
+        >
+          <View>
+            <Text style={[styles.text, { fontFamily: FONTS.bold }]}>
+              0828 024 246
+            </Text>
+            <Text style={styles.text}>
+              Nhà Văn hóa Sinh viên, Đông Hòa, Dĩ An, Bình Dương
+            </Text>
+          </View>
+          <Image source={logo} style={styles.img} />
         </View>
-        <Image source={logo} style={styles.img} />
+        <FlatList
+          data={users}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+        />
       </View>
-      <FlatList
-        data={users}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-      />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
   },
   listContainer: {
-    padding: 10,
+    paddingHorizontal: 10,
   },
   userContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    paddingVertical: 10,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 50,
     marginRight: 15,
   },
   textContainer: {
@@ -185,12 +186,18 @@ const styles = StyleSheet.create({
     color: "#777",
     fontSize: 12,
   },
-  text: { color: APP_COLOR.ORANGE, fontSize: 20, fontFamily: FONTS.regular },
+  text: {
+    color: APP_COLOR.BROWN,
+    fontSize: 17,
+    fontFamily: FONTS.regular,
+    width: 200,
+  },
   img: {
     height: 100,
-    width: 100,
-    position: "absolute",
-    right: 10,
+    width: 145,
+    position: "relative",
+    top: -20,
+    left: 10,
   },
 });
 

@@ -109,6 +109,10 @@ const RootLayout = () => {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="(auth)/qrcode"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="(auth)/popup.sale"
                 options={{
                   headerShown: false,
@@ -157,6 +161,16 @@ const RootLayout = () => {
                 name="(user)/order/[id]"
                 options={{
                   headerShown: false,
+                }}
+              />
+              <Tabs.Screen
+                name="chat/[id]"
+                options={{
+                  headerBackButtonDisplayMode: "minimal",
+                  headerTintColor: APP_COLOR.WHITE,
+                  headerStyle: {
+                    backgroundColor: APP_COLOR.BROWN,
+                  },
                 }}
               />
               <Stack.Screen

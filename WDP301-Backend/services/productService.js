@@ -156,7 +156,7 @@ const getBestSellerProducts = async () => {
     },
     include: [
       {
-        model: require("../models/OrderItem"),
+        model: require("../models/orderItem"),
         as: "OrderItems", // Liên kết với OrderItem để kiểm tra sản phẩm có trong đơn hàng
         attributes: [], // Không cần lấy thuộc tính của OrderItem
         required: true, // Chỉ lấy sản phẩm có trong order_items

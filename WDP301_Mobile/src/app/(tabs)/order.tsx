@@ -2,7 +2,15 @@ import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import logo from "@/assets/logo.png";
@@ -10,7 +18,7 @@ import { FONTS } from "@/theme/typography";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 const OrderPage = () => {
   const [orderHistory, setOrderHistory] = useState<IOrderHistoryCus[]>([]);
   const [orderId, setOrderid] = useState();
@@ -215,7 +223,7 @@ const OrderPage = () => {
     },
   ];
 
-  const handleViewDetails = (id: number) => {
+  const handleViewDetails = (id: string) => {
     router.navigate({
       pathname: "/(user)/order/[id]",
       params: { id: id },
@@ -281,7 +289,9 @@ const OrderPage = () => {
             />
           </View>
         </View>
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}
+        >
           {sampleData.map((item, index) => {
             return (
               <View key={index}>
@@ -499,6 +509,29 @@ const OrderPage = () => {
             );
           })}
         </ScrollView>
+        <Pressable onPress={() => router.navigate("/(auth)/qrcode")}>
+          <View
+            style={{
+              backgroundColor: APP_COLOR.BROWN,
+              height: 60,
+              width: 60,
+              borderRadius: 50,
+              position: "absolute",
+              right: 30,
+              top: -40,
+            }}
+          >
+            <MaterialCommunityIcons
+              name="qrcode-scan"
+              size={30}
+              color={APP_COLOR.WHITE}
+              style={{
+                marginHorizontal: "auto",
+                marginVertical: "auto",
+              }}
+            />
+          </View>
+        </Pressable>
       </View>
     </SafeAreaView>
   );

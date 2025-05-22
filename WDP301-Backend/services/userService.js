@@ -13,7 +13,9 @@ const { auth } = require("../config/firebase");
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL || process.env.REDISCLOUD_URL || "redis://localhost:6379",
 });
-redisClient.connect().catch(console.error);
+redisClient.connect().catch((err) => {
+  console.error("Redis connection error:", err.message);
+});
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -52,17 +54,32 @@ const userService = {
 
     const transaction = await User.sequelize.transaction();
 
+    let user;
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await User.create(
+      console.log("Hashed password:", hashedPassword);
+      user = await User.create(
         { fullName, email, phone_number, password: hashedPassword, isActive: false },
         { transaction }
       );
+      console.log("User created with ID:", user.id);
       await Information.create({ userId: user.id, address: null }, { transaction });
+      console.log("Information record created for user ID:", user.id);
       await transaction.commit();
+      console.log("Transaction committed successfully");
+    } catch (error) {
+      console.error("Transaction error in registerUser:", error.message);
+      await transaction.rollback();
+      console.log("Transaction rolled back successfully");
+      throw error;
+    }
 
+    // Handle OTP and email sending separately
+    try {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      console.log("Generated OTP:", otp);
       await redisClient.setEx(`otp:${email}`, 600, otp);
+      console.log("OTP stored in Redis for email:", email);
 
       const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
       let emailHtml = emailTemplate
@@ -80,12 +97,15 @@ const userService = {
         html: emailHtml,
         attachments: [{ filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" }],
       });
-
-      return user;
+      console.log("Email sent to:", email);
     } catch (error) {
-      await transaction.rollback();
-      throw error;
+      console.error("Error in OTP or email sending:", error.message);
+      // Log the error, but don't roll back the database transaction
+      // The user can resend the OTP using /api/auth/resend-otp
+      console.log("Proceeding despite OTP/email failure; user can resend OTP later");
     }
+
+    return user;
   },
 
   async verifyOtp(email, otp) {
