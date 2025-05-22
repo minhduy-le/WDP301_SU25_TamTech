@@ -2,7 +2,7 @@ const PayOS = require("@payos/node");
 require("dotenv").config();
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
-const User = require("../models/user"); // Import User model
+const User = require("../models/user");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
@@ -10,7 +10,7 @@ const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 
 // Unique identifier to confirm this file is loaded
-console.log("Loading orderService.js version 2025-05-21-bw-pdf-invoice");
+console.log("Loading orderService.js version 2025-05-22-bw-professional-invoice-english");
 
 const payos = new PayOS(
   "1c2c9333-3b87-4c3d-9058-2a47c4731355",
@@ -19,29 +19,25 @@ const payos = new PayOS(
 );
 
 const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
+// const YOUR_DOMAIN = "httP://localhost:3000";
 
 const createOrder = async (req, res) => {
-  // Debug: Log the entire request body
   console.log("Request body:", JSON.stringify(req.body, null, 2));
 
-  // Validate req.body
   if (!req.body || typeof req.body !== "object") {
     console.log("Invalid req.body:", req.body);
     return res.status(400).json({ message: "Request body is missing or invalid" });
   }
 
   const { orderItems, order_discount_value, order_shipping_fee, payment_method_id, order_address } = req.body;
-  const userId = req.userId; // From verifyToken middleware
-  const storeId = 1; // Default storeId as specified
+  const userId = req.userId;
+  const storeId = 1;
 
-  // Debug: Log destructured variables
   console.log("Destructured orderItems:", orderItems);
   console.log("Destructured userId:", userId);
 
-  // Debug: Log before validation
   console.log("Before orderItems validation:", orderItems);
 
-  // Validate orderItems
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
     return res.status(400).json({ message: "Order items are required" });
@@ -65,7 +61,6 @@ const createOrder = async (req, res) => {
     return res.status(400).json({ message: "Valid payment method ID is required (1-4)" });
   }
 
-  // Validate orderItems structure
   for (const item of orderItems) {
     if (!item.productId || !item.quantity || !item.price) {
       console.log("Invalid order item:", item);
@@ -90,27 +85,21 @@ const createOrder = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Debug: Log orderItems before calculations
     console.log("orderItems before calculations:", orderItems);
 
-    // Calculate order_amount (sum of price * quantity for all items, excluding shipping)
     const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     console.log("Calculated order_amount:", order_amount);
 
-    // Calculate order_discount_percent based on order_discount_value and order_amount
     const order_discount_percent =
       order_discount_value && order_amount > 0 ? (order_discount_value / order_amount) * 100 : 0;
     console.log("Calculated order_discount_percent:", order_discount_percent);
 
-    // Calculate order_subtotal (order_amount before discounts + shipping)
     const order_subtotal = order_amount + (order_shipping_fee || 0);
     console.log("Calculated order_subtotal:", order_subtotal);
 
-    // Calculate order_point_earn (1 point per 10000 in order_amount)
     const order_point_earn = Math.floor(order_amount / 10000);
     console.log("Calculated order_point_earn:", order_point_earn);
 
-    // Create order in the database
     console.log("Creating order with data:", {
       storeId,
       userId,
@@ -137,14 +126,13 @@ const createOrder = async (req, res) => {
         order_shipping_fee: order_shipping_fee || 0,
         order_subtotal,
         payment_method_id,
-        status_id: 1, // Pending status
+        status_id: 1,
         order_create_at: new Date(),
         order_address,
       },
       { transaction }
     );
 
-    // Create order items
     const orderItemData = orderItems.map((item) => ({
       orderId: order.orderId,
       productId: item.productId,
@@ -161,9 +149,8 @@ const createOrder = async (req, res) => {
       throw bulkCreateError;
     }
 
-    // Create PayOS payment link
     const paymentLinkData = {
-      amount: Math.round(order_subtotal - (order_discount_value || 0)), // Total after discount
+      amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
       orderCode: order.orderId,
       returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
@@ -185,9 +172,21 @@ const createOrder = async (req, res) => {
       throw payosError;
     }
 
-    // Commit transaction
-    console.log("Committing transaction");
     await transaction.commit();
+
+    const savedOrder = await Order.findOne({
+      where: { orderId: order.orderId },
+    });
+    if (!savedOrder) {
+      console.log("Order not found after commit for orderId:", order.orderId);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const recheckOrder = await Order.findOne({
+        where: { orderId: order.orderId },
+      });
+      if (!recheckOrder) {
+        return res.status(500).json({ message: "Order was not saved correctly after commit" });
+      }
+    }
 
     console.log("Order created successfully, responding with:", {
       message: "Order created successfully",
@@ -202,13 +201,14 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in transaction block:", error.message);
+    console.log("Error stack:", error.stack);
     await transaction.rollback();
     res.status(500).json({ message: "Failed to create order", error: error.message });
   }
 };
 
 const handlePaymentSuccess = async (req, res) => {
-  const { orderId, code } = req.query; // Lấy code từ query parameters
+  const { orderId, code } = req.query;
   console.log("handlePaymentSuccess called with query:", req.query);
 
   if (!orderId) {
@@ -217,14 +217,33 @@ const handlePaymentSuccess = async (req, res) => {
   }
 
   try {
-    const order = await Order.findByPk(orderId);
-    if (!order) {
-      console.log("Order not found for orderId:", orderId);
-      return res.status(404).json({ message: "Order not found" });
+    const parsedOrderId = parseInt(orderId, 10);
+    if (isNaN(parsedOrderId)) {
+      console.log("Invalid orderId format:", orderId);
+      return res.status(400).json({ message: "Order ID must be a valid number" });
     }
 
-    // Lấy thông tin người dùng từ bảng User
-    const user = await User.findByPk(order.userId, {
+    let order = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      console.log(`Attempt ${attempt} to find order with orderId:`, parsedOrderId);
+      order = await Order.findOne({
+        where: { orderId: parsedOrderId },
+      });
+      if (order) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (!order) {
+      console.log("Order not found after retries for orderId:", parsedOrderId);
+      return res.status(404).json({
+        message: "Order not found",
+        details:
+          "The order may not have been created successfully. Please check your order history or contact support.",
+      });
+    }
+
+    const user = await User.findOne({
+      where: { id: order.userId },
       attributes: ["fullName"],
     });
     if (!user) {
@@ -235,95 +254,119 @@ const handlePaymentSuccess = async (req, res) => {
     console.log("Current order status_id:", order.status_id);
 
     if (code === "00") {
-      console.log("Payment successful, updating status_id to 2 for orderId:", orderId);
+      console.log("Payment successful, updating status_id to 2 for orderId:", parsedOrderId);
       order.status_id = 2;
       order.payment_time = new Date();
+      await order.save();
 
-      // Lấy danh sách order items
-      const orderItems = await OrderItem.findAll({
-        where: { orderId },
-        attributes: ["productId", "quantity", "price"],
+      let invoiceUrl = null;
+      try {
+        const orderItems = await OrderItem.findAll({
+          where: { orderId: parsedOrderId },
+          attributes: ["productId", "quantity", "price"],
+        });
+
+        const qrCodeUrl = await QRCode.toDataURL(`${YOUR_DOMAIN}/order/${parsedOrderId}`);
+
+        const doc = new PDFDocument({ size: "A4", margin: 40 });
+        const buffers = [];
+        doc.on("data", buffers.push.bind(buffers));
+        doc.on("end", async () => {
+          const pdfBuffer = Buffer.concat(buffers);
+          invoiceUrl = await uploadFileToFirebase(pdfBuffer, `invoice_${parsedOrderId}.pdf`, "application/pdf");
+          order.invoiceUrl = invoiceUrl;
+          await order.save();
+          console.log("Order updated with invoiceUrl:", invoiceUrl);
+        });
+
+        // Sử dụng font mặc định của PDFKit
+        doc.font("Helvetica").fontSize(12);
+
+        // Header: Thông tin công ty
+        doc.fontSize(20).text("ABC COMPANY LIMITED", 40, 30, { align: "center" });
+        doc.fontSize(10).text("Phone: +84 909 123 456 | Email: info@abc.com", 40, 60, { align: "center" });
+        doc.moveTo(40, 80).lineTo(560, 80).stroke(); // Đường kẻ ngang
+
+        // Tiêu đề hóa đơn
+        doc.fontSize(16).text("INVOICE", 40, 100, { align: "left" });
+        doc.fontSize(10).text(`Invoice #: ${order.orderId}`, 400, 100, { align: "right" });
+        doc.text(`Date: ${new Date().toLocaleString("en-US")}`, 400, 115, { align: "right" });
+        doc.moveDown(1);
+
+        // Thông tin khách hàng (bỏ địa chỉ)
+        doc.fontSize(12).text("CUSTOMER INFORMATION", 40, doc.y + 20);
+        doc.fontSize(10).text(`Name: ${user.fullName || "Guest"}`, 60, doc.y + 20);
+        doc.moveDown(2);
+
+        // Bảng chi tiết sản phẩm
+        doc.fontSize(12).text("ORDER DETAILS", 40, doc.y);
+        doc
+          .fontSize(10)
+          .text("Item", 40, doc.y + 20)
+          .moveUp();
+        doc.text("Quantity", 200, doc.y).moveUp();
+        doc.text("Unit Price (VND)", 300, doc.y).moveUp();
+        doc.text("Total (VND)", 400, doc.y).moveUp();
+        doc
+          .moveTo(40, doc.y + 15)
+          .lineTo(560, doc.y + 15)
+          .stroke();
+        let yPosition = doc.y + 20;
+        orderItems.forEach((item) => {
+          doc.text(`Product ${item.productId}`, 40, yPosition, { width: 160 });
+          doc.text(`${item.quantity}`, 200, yPosition, { width: 100, align: "right" });
+          doc.text(`${item.price.toLocaleString("en-US")}`, 300, yPosition, { width: 100, align: "right" });
+          doc.text(`${(item.quantity * item.price).toLocaleString("en-US")}`, 400, yPosition, {
+            width: 100,
+            align: "right",
+          });
+          yPosition += 20;
+        });
+        doc.moveTo(40, yPosition).lineTo(560, yPosition).stroke();
+
+        // Tổng cộng
+        yPosition += 20;
+        doc.fontSize(12).text("Subtotal", 300, yPosition, { align: "right" });
+        doc.text(`${order.order_amount.toLocaleString("en-US")} VND`, 400, yPosition, { align: "right" });
+        doc.text("Shipping Fee", 300, yPosition + 15, { align: "right" });
+        doc.text(`${order.order_shipping_fee.toLocaleString("en-US")} VND`, 400, yPosition + 15, { align: "right" });
+        doc.text("Discount", 300, yPosition + 30, { align: "right" });
+        doc.text(`${(order.order_discount_value || 0).toLocaleString("en-US")} VND`, 400, yPosition + 30, {
+          align: "right",
+        });
+        doc
+          .moveTo(300, yPosition + 45)
+          .lineTo(560, yPosition + 45)
+          .stroke();
+        doc.fontSize(14).text("TOTAL", 300, yPosition + 50, { align: "right" });
+        doc.text(`${order.order_subtotal.toLocaleString("en-US")} VND`, 400, yPosition + 50, { align: "right" });
+        doc.moveDown(2);
+
+        // Thông tin thanh toán
+        doc.fontSize(12).text("PAYMENT INFORMATION", 40, doc.y);
+        doc.fontSize(10).text("Method: Online Payment", 60, doc.y + 20);
+        doc.text("Status: Paid", 60, doc.y + 35);
+        doc.text(
+          `Time: ${order.payment_time?.toLocaleString("en-US") || new Date().toLocaleString("en-US")}`,
+          60,
+          doc.y + 50
+        );
+        doc.moveDown(2);
+
+        // QR Code
+        const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
+        doc.image(qrImage, 400, doc.y, { width: 100 });
+        doc.fontSize(8).text("Scan to view order details", 400, doc.y + 110, { align: "center" });
+
+        doc.end();
+      } catch (pdfError) {
+        console.log("Error generating invoice:", pdfError.message);
+      }
+
+      res.status(200).json({
+        message: "Payment processed, invoice generated",
+        invoiceUrl: order.invoiceUrl || "Invoice generation failed",
       });
-
-      // Tạo QR code cho đơn hàng
-      const qrCodeUrl = await QRCode.toDataURL(`${YOUR_DOMAIN}/order/${orderId}`);
-
-      // Tạo PDF invoice
-      const doc = new PDFDocument({ size: "A4", margin: 50 });
-      const buffers = [];
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", async () => {
-        const pdfBuffer = Buffer.concat(buffers);
-        const invoiceUrl = await uploadFileToFirebase(pdfBuffer, `invoice_${orderId}.pdf`, "application/pdf");
-        order.invoiceUrl = invoiceUrl;
-        await order.save();
-        console.log("Order updated with status_id=2 and invoiceUrl:", invoiceUrl);
-      });
-
-      // Thiết kế PDF invoice bằng tiếng Anh, không màu, dễ nhìn
-      doc.font("Helvetica").fontSize(20).text(`Invoice #${order.orderId}`, { align: "center" });
-      doc.moveDown(1);
-
-      // Order details
-      doc.fontSize(12).text(`Order Date: ${order.order_create_at.toLocaleString()}`, { align: "left" });
-      doc.text(`Delivery Method: Takeaway`, { align: "left" });
-      doc.text(`Order ID: ${order.orderId}`, { align: "right" });
-      doc.moveDown(1);
-
-      // Customer info
-      doc.fontSize(14).text("Customer Information", { align: "left" });
-      doc.fontSize(12).text(`${user.fullName} (#${order.orderId.toString().padEnd(10, "5")})`, { indent: 20 });
-      doc.text(`${order.order_address}`, { indent: 20 });
-      doc.moveDown(1);
-
-      // Order items
-      doc.fontSize(14).text("Order Details", { align: "left" });
-      doc.moveDown(0.5);
-      // Header cho bảng
-      doc.fontSize(10).text("Item", 50, doc.y, { continued: true, width: 200 });
-      doc.text("Quantity", 250, doc.y, { continued: true, width: 100 });
-      doc.text("Price", 350, doc.y, { continued: true, width: 100 });
-      doc.text("Total", 450, doc.y, { width: 100 });
-      doc.moveDown(0.5);
-      // Vẽ đường kẻ ngang
-      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-      doc.moveDown(0.5);
-      // Danh sách items
-      orderItems.forEach((item) => {
-        doc.text(`Product ${item.productId}`, 50, doc.y, { continued: true, width: 200 });
-        doc.text(`${item.quantity}`, 250, doc.y, { continued: true, width: 100 });
-        doc.text(`${item.price} VND`, 350, doc.y, { continued: true, width: 100 });
-        doc.text(`${item.quantity * item.price} VND`, 450, doc.y, { width: 100 });
-        doc.moveDown(0.5);
-      });
-      // Đường kẻ ngang kết thúc bảng
-      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-      doc.moveDown(1);
-
-      // Payment details
-      doc.fontSize(14).text("Payment Details", { align: "left" });
-      doc.fontSize(12).text(`Subtotal: ${order.order_amount} VND`, { indent: 20 });
-      doc.text(`Shipping Fee: ${order.order_shipping_fee} VND`, { indent: 20 });
-      doc.text(`Discount: ${order.order_discount_value || 0} VND`, { indent: 20 });
-      doc.text(`Total: ${order.order_subtotal} VND`, { indent: 20 });
-      doc.text(`Points Earned: ${order.order_point_earn} points`, { indent: 20 });
-      doc.moveDown(1);
-
-      // Payment status
-      doc.fontSize(14).text("Payment Information", { align: "left" });
-      doc.fontSize(12).text("Method: Online Payment", { indent: 20 });
-      doc.text("Status: Paid", { indent: 20 });
-      doc.moveDown(2);
-
-      // Thêm QR code
-      const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-      doc.image(qrImage, 250, doc.y, { width: 100 });
-      doc.moveDown(0.5);
-      doc.fontSize(10).text("Scan to view order", { align: "center" });
-
-      doc.end();
-
-      res.status(200).json({ message: "Payment processed, invoice generated", invoiceUrl: order.invoiceUrl });
     } else {
       console.log("Payment failed, code:", code);
       res.status(400).json({ message: "Payment failed or invalid code" });
