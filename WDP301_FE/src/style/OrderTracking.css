@@ -19,7 +19,7 @@
 }
 
 .content-col {
-  background-color: #f4d7a0;
+  background-color: #ebd187;
   padding: 20px !important;
   border-radius: 10px;
 }
@@ -111,7 +111,7 @@
 }
 
 .ant-steps-icon {
-  color: #f4d7a0 !important;
+  color: #ebd187 !important;
 }
 
 :where(.css-dev-only-do-not-override-1m2bkf9).ant-steps
