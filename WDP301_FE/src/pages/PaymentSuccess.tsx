@@ -1,6 +1,7 @@
 import { Col } from "antd";
 import "../style/PaymentSuccess.css";
 import { Link } from "react-router-dom";
+import SHIP from "../assets/ship.png";
 
 const PaymentSuccess = () => {
   return (
@@ -9,13 +10,9 @@ const PaymentSuccess = () => {
         <div className="success-content">
           <h1 className="success-title">Thanh toán thành công</h1>
           <div className="scooter-image">
-            <img
-              src="https://via.placeholder.com/200x150"
-              alt="Delivery Scooter"
-              className="scooter-img"
-            />
+            <img src={SHIP} alt="Delivery Scooter" className="scooter-img" />
           </div>
-          <p className="order-details">
+          <p className="order-information">
             Đơn hàng được tạo lúc 13:46, 27/01/2025
             <br />
             Mã đơn hàng: 2501270005
