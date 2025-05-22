@@ -57,7 +57,8 @@ router.post("/register", async (req, res) => {
     if (error.message === "Email or phone number already exists") {
       return res.status(409).json({ message: error.message });
     }
-    res.status(500).json({ message: "Server error" });
+    console.error("Error in /register route:", error.message);
+    res.status(500).json({ message: error.message || "Server error" });
   }
 });
 

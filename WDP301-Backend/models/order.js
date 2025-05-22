@@ -63,6 +63,14 @@ const Order = sequelize.define(
         key: "paymentMethodId",
       },
     },
+    assignToShipperId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
     shipped_by: {
       type: DataTypes.STRING(50),
       allowNull: true,
@@ -74,6 +82,10 @@ const Order = sequelize.define(
         model: "order_statuses",
         key: "orderStatusId",
       },
+    },
+    certificationOfDelivered: {
+      type: DataTypes.STRING(1000),
+      allowNull: true,
     },
     order_create_at: {
       type: DataTypes.DATE,
