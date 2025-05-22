@@ -8,6 +8,7 @@ import { ContainerOutlined } from "@ant-design/icons";
 import SearchIcon from "../components/icon/SearchIcon";
 import PromotionIcon from "../components/icon/PromotionIcon";
 import HomeSideIcon from "../components/icon/HomeSideIcon";
+import AddressOrder from "./AdressOrder";
 
 const { Sider, Content } = Layout;
 
@@ -100,6 +101,7 @@ const UserInfomation = () => {
             )}
             {activePage === "2" && <OrderTracking />}
             {activePage === "3" && <OrderHistory />}
+            {activePage === "5" && <AddressOrder />}
           </Content>
         </Layout>
       </Layout>
