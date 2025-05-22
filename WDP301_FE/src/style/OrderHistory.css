@@ -102,3 +102,29 @@
   padding: 4px 12px;
   font-size: 14px;
 }
+
+.feedback-item {
+  padding: 10px;
+}
+
+.feedback-item .ant-input {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 40px;
+}
+
+/* .modal-feedback .ant-modal-content {
+  max-height: calc(-200px + 100vh);
+  overflow-y: hidden;
+} */
+/* ::-webkit-scrollbar {
+  width: 20px;
+} */
+
+.submt-button-feedback {
+  background-color: #da7339 !important;
+  border-color: #da7339 !important;
+  color: white !important;
+  outline: none !important;
+  width: -webkit-fill-available;
+}
