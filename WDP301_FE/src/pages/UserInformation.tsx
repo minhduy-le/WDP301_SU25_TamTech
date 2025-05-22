@@ -2,6 +2,7 @@ import { Layout, Menu } from "antd";
 import "../style/UserInformation.css";
 import { useState } from "react";
 import OrderTracking from "./OrderTracking";
+import OrderHistory from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
 import { ContainerOutlined } from "@ant-design/icons";
 import SearchIcon from "../components/icon/SearchIcon";
@@ -98,6 +99,7 @@ const UserInfomation = () => {
               </div>
             )}
             {activePage === "2" && <OrderTracking />}
+            {activePage === "3" && <OrderHistory />}
           </Content>
         </Layout>
       </Layout>
