@@ -26,9 +26,10 @@
   object-fit: contain;
 }
 
-.order-details {
+.order-information {
   font-size: 15px;
   color: #2d1e1a;
+  text-align: center;
   margin-bottom: 20px;
   line-height: 1.5;
   font-family: "Playfair Display", serif;
