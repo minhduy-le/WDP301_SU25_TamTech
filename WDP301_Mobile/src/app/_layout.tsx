@@ -109,6 +109,10 @@ const RootLayout = () => {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="(auth)/qrcode"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="(auth)/popup.sale"
                 options={{
                   headerShown: false,
