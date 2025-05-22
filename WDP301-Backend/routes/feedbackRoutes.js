@@ -84,4 +84,64 @@ router.post("/", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/feedback/product/{productId}:
+ *   get:
+ *     summary: Get feedback for a product
+ *     description: Retrieve all feedback for a specific product
+ *     tags: [Feedback]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the product to fetch feedback for
+ *     responses:
+ *       200:
+ *         description: List of feedback for the product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   userId:
+ *                     type: integer
+ *                   productId:
+ *                     type: integer
+ *                   comment:
+ *                     type: string
+ *                   rating:
+ *                     type: integer
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   User:
+ *                     type: object
+ *                     properties:
+ *                       fullName:
+ *                         type: string
+ *       400:
+ *         description: Invalid product ID
+ *       500:
+ *         description: Server error
+ */
+router.get("/product/:productId", async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const feedback = await feedbackService.getFeedbackByProductId(productId);
+    res.status(200).json(feedback);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
