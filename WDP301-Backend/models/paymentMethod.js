@@ -23,7 +23,7 @@ const PaymentMethod = sequelize.define(
 // Pre-populate the PaymentMethod table with the allowed values
 (async () => {
   await PaymentMethod.sync({ force: false });
-  const methods = ["Vnpay", "Momo", "Zalopay"];
+  const methods = ["Vnpay", "Momo", "Zalopay", "PayOS"];
   for (const method of methods) {
     await PaymentMethod.findOrCreate({
       where: { name: method },

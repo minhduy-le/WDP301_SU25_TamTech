@@ -8,6 +8,7 @@ const Order = require("./order");
 const OrderItem = require("./orderItem");
 const PaymentMethod = require("./paymentMethod");
 const OrderStatus = require("./orderStatus");
+const Feedback = require("./feedback");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -36,6 +37,11 @@ OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 
 Product.hasMany(OrderItem, { foreignKey: "productId", as: "OrderItems" });
 
+Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
+Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
+User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
+
 module.exports = {
   Product,
   ProductType,
@@ -47,4 +53,5 @@ module.exports = {
   OrderItem,
   PaymentMethod,
   OrderStatus,
+  Feedback,
 };
