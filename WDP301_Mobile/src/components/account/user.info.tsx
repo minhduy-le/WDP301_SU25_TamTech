@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Image,
 } from "react-native";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
@@ -15,7 +16,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ShareButton from "../button/share.button";
 import { APP_COLOR } from "@/utils/constant";
 import Toast from "react-native-root-toast";
-
+import { FONTS } from "@/theme/typography";
+import logo from "@/assets/logo.png";
 interface DecodedToken {
   id: number;
   name: string;
@@ -96,8 +98,20 @@ const UserInfo = () => {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
+          <Image
+            source={logo}
+            style={{ height: 150, width: 300, marginHorizontal: "auto" }}
+          />
           <View style={{ alignItems: "center", gap: 5 }}>
-            <Text style={{ color: "grey" }}>{sampleData.name}</Text>
+            <Text
+              style={{
+                fontSize: 20,
+                color: APP_COLOR.BROWN,
+                fontFamily: FONTS.semiBold,
+              }}
+            >
+              Thay đổi thông tin của bạn
+            </Text>
           </View>
           <Formik
             validationSchema={UpdateUserSchema}
@@ -121,9 +135,11 @@ const UserInfo = () => {
               isValid,
               dirty,
             }) => (
-              <View style={{ marginTop: 20, gap: 20 }}>
+              <View
+                style={{ marginTop: 20, gap: 15, marginHorizontal: "auto" }}
+              >
                 <ShareInput
-                  title="Họ tên"
+                  title="Họ và tên"
                   onChangeText={handleChange("name")}
                   onBlur={handleBlur("name")}
                   value={values.name}
@@ -147,14 +163,29 @@ const UserInfo = () => {
                   error={errors.phone}
                   touched={touched.phone}
                 />
-                <ShareButton
-                  title="Lưu thay đổi"
-                  onPress={() => console.log("Lưu")}
-                  // onPress={() => handleUpdateUser(values.name, values.phone)}
-                />
               </View>
             )}
           </Formik>
+          <ShareButton
+            title="Lưu thay đổi"
+            btnStyle={{
+              backgroundColor: APP_COLOR.BROWN,
+              width: "auto",
+              marginHorizontal: "25%",
+              borderWidth: 0.5,
+              borderRadius: 10,
+              borderColor: APP_COLOR.BROWN,
+              marginTop: 30,
+            }}
+            textStyle={{
+              color: APP_COLOR.WHITE,
+              fontSize: 17,
+              marginHorizontal: 20,
+              fontFamily: FONTS.regular,
+            }}
+            onPress={() => console.log("Lưu")}
+            // onPress={() => handleUpdateUser(values.name, values.phone)}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

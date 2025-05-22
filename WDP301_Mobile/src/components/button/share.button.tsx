@@ -108,6 +108,8 @@ const ShareButton = (props: IProps) => {
                   />
                 </>
               );
+            case "Lưu thay đổi":
+              return <></>;
             default:
               return (
                 <>

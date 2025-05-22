@@ -115,7 +115,10 @@ const AccountPage = () => {
         >
           <View style={{ width: "50%" }}>
             <Text
-              style={[styles.text, { fontFamily: FONTS.medium, fontSize: 20 }]}
+              style={[
+                styles.text,
+                { fontFamily: FONTS.medium, fontSize: 19, width: 300 },
+              ]}
             >
               {time}
             </Text>
@@ -228,7 +231,35 @@ const AccountPage = () => {
             color={APP_COLOR.BROWN}
           />
         </Pressable>
+        <Pressable
+          onPress={() => handleLogout()}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            justifyContent: "space-between",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 10,
+              alignItems: "center",
+            }}
+          >
+            <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Đăng xuất</Text>
+          </View>
 
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
         <View
           style={{
             flex: 1,
@@ -236,28 +267,7 @@ const AccountPage = () => {
             gap: 10,
             paddingBottom: 15,
           }}
-        >
-          <Pressable
-            onPress={handleLogout}
-            style={({ pressed }) => ({
-              opacity: pressed === true ? 0.5 : 1,
-              padding: 10,
-              marginHorizontal: 10,
-              backgroundColor: APP_COLOR.ORANGE,
-              borderRadius: 3,
-            })}
-          >
-            <Text
-              style={{
-                textAlign: "center",
-                color: "white",
-              }}
-            >
-              Đăng Xuất
-            </Text>
-          </Pressable>
-          <View style={{ marginBottom: 10 }}></View>
-        </View>
+        ></View>
       </View>
     </SafeAreaView>
   );
