@@ -26,7 +26,6 @@ import {
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import axios from "axios";
 import type { ColumnType } from "antd/es/table";
-
 const { Option } = Select;
 
 interface ProductType {
@@ -86,12 +85,13 @@ const ProductManagement: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "add" | "edit">("view");
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
+      setTableLoading(true);
       const response = await axios.get<{ products?: Product[], data?: Product[], results?: Product[] } | Product[]>(
         "https://wdp-301-0fd32c261026.herokuapp.com/api/products"
       );
@@ -115,7 +115,7 @@ const ProductManagement: React.FC = () => {
       message.error("Không thể tải danh sách sản phẩm! Vui lòng kiểm tra kết nối mạng và API server.");
       console.error("Fetch products error:", error);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
     }
   };
 
@@ -128,7 +128,7 @@ const ProductManagement: React.FC = () => {
     setSelectedProduct(null);
     setModalMode("add");
     form.resetFields();
-    form.setFieldsValue({ isActive: true });
+    form.setFieldsValue({ isActive: true }); 
     setFileList([]);
     setModalVisible(true);
   };
@@ -176,28 +176,35 @@ const ProductManagement: React.FC = () => {
   };
 
   const handleModalOk = async () => {
+    setIsSubmitting(true);
     try {
       const values = await form.validateFields();
-      let imageUrl = values.image;
+      let imageUrl = values.image; 
 
-      if (fileList.length > 0 && fileList[0].originFileObj) {
+      if (Array.isArray(values.image) && values.image.length > 0 && values.image[0].originFileObj) {
         imageUrl = await new Promise(resolve => {
             const reader = new FileReader();
-            reader.readAsDataURL(fileList[0].originFileObj as Blob);
+            reader.readAsDataURL(values.image[0].originFileObj as Blob);
             reader.onload = () => resolve(reader.result as string);
         });
-      } else if (fileList.length > 0 && fileList[0].url) {
-        imageUrl = fileList[0].url;
-      } else if (editingProduct?.image && modalMode === 'edit') {
-        imageUrl = editingProduct.image;
-      } else {
-        imageUrl = "";
+      } else if (Array.isArray(values.image) && values.image.length > 0 && values.image[0].url) {
+        imageUrl = values.image[0].url;
+      } else if (typeof values.image === 'string') {
+        imageUrl = values.image;
       }
+       else if (editingProduct?.image && modalMode === 'edit' && (!values.image || values.image.length === 0) ) {
+        imageUrl = editingProduct.image;
+      }
+       else {
+        imageUrl = ""; 
+      }
+
 
       const productPayload = {
         ...values,
         image: imageUrl,
       };
+      delete productPayload.imageUpload; 
 
       if (modalMode === "add") {
         const newProduct = {
@@ -231,6 +238,8 @@ const ProductManagement: React.FC = () => {
         errorMessage = error.response.data.message;
       }
       message.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -239,7 +248,7 @@ const ProductManagement: React.FC = () => {
     if (newFileList.length > 0) {
         form.setFieldsValue({ image: newFileList });
     } else {
-        form.setFieldsValue({ image: null });
+        form.setFieldsValue({ image: null }); 
     }
   };
 
@@ -253,31 +262,37 @@ const ProductManagement: React.FC = () => {
       );
   }, [products, searchText, typeFilter]);
 
-  const columns = [
+  const headerColor = "#A05A2C";
+  const headerBgColor = "#F9E4B7";
+  const evenRowBgColor = "#FFFDF5";
+  const oddRowBgColor = "#FFF7E6";
+  const cellTextColor = "#5D4037";
+  const borderColor = "#F5EAD9";
+  const tableBorderColor = "#E9C97B";
+
+  const columns: ColumnType<Product>[] = [
     {
-        title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Ảnh</span>,
-        dataIndex: "image",
+      title: "Ảnh", 
+      dataIndex: "image",
       key: "image",
-      width: 70,
+      width: 80, 
       render: (img: string, record: Product) => (
         <Image
-          src={img || "https://via.placeholder.com/50x50?text=N/A"}
+          src={img || "https://via.placeholder.com/60x60?text=N/A"}
           alt={record.name}
           width={60}
           height={60}
           style={{ objectFit: "cover", borderRadius: 6, border: "1px solid #f0f0f0" }}
-          preview={{
-            mask: <EyeOutlined style={{ fontSize: 14 }} />,
-          }}
-          fallback="https://via.placeholder.com/40x40?text=Lỗi"
+          preview={{ mask: <EyeOutlined style={{ fontSize: 14 }} /> }}
+          fallback="https://via.placeholder.com/60x60?text=Lỗi"
         />
       ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Tên</span>,
+      title: "Tên sản phẩm",
       dataIndex: "name",
       key: "name",
-      width: 180,
+      width: 200, // Tăng width cho tên sản phẩm
       ellipsis: true,
       sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
       render: (name: string) => (
@@ -287,22 +302,23 @@ const ProductManagement: React.FC = () => {
       ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Mô tả</span>,
+      title: "Mô tả",
       dataIndex: "description",
       key: "description",
-      width: 200,
+      width: 220, 
       ellipsis: true,
       render: (desc: string) => (
         <Tooltip title={desc}>
-          <span style={{ color: "#777" }}>{desc}</span>
+          <span>{desc}</span> 
         </Tooltip>
       ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Giá</span>,
+      title: "Giá",
       dataIndex: "price",
       key: "price",
-      width: 100,
+      width: 120, // Tăng width
+      align: 'right' as const,
       sorter: (a: Product, b: Product) => a.price - b.price,
       render: (price: number) => (
         <span style={{ color: "#A05A2C", fontWeight: 600 }}>
@@ -311,14 +327,13 @@ const ProductManagement: React.FC = () => {
       ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Loại</span>,
+      title: "Loại",
       dataIndex: ["ProductType", "name"],
       key: "productType",
-      width: 120,
+      width: 130, 
       ellipsis: true,
       sorter: (a: Product, b: Product) => (a.ProductType?.name || "").localeCompare(b.ProductType?.name || ""),
       filters: productTypeApiOptions.map(type => ({ text: type.name, value: type.name })),
-      onFilter: (value: string | number | boolean, record: Product) => record.ProductType?.name === value,
       render: (_: any, record: Product) => (
         <Tooltip title={record.ProductType?.name || "Không xác định"}>
             <Tag color="#F9E4B7" style={{ color: "#A05A2C", fontWeight: 500, padding: "3px 8px", borderRadius: "6px" }}>
@@ -328,15 +343,15 @@ const ProductManagement: React.FC = () => {
       ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Trạng thái</span>,
+      title: "Trạng thái",
       dataIndex: "isActive",
       key: "isActive",
-      width: 110,
+      width: 120, 
+      align: 'center' as const,
       filters: [
         { text: 'Đang bán', value: true },
         { text: 'Ngừng bán', value: false },
       ],
-      onFilter: (value: string | number | boolean, record: Product) => record.isActive === value,
       render: (isActive: boolean) =>
         isActive ? (
           <Tag color="#D97B41" style={{ color: "#fff", fontWeight: 500, padding: "3px 8px", borderRadius: "6px" }}>
@@ -349,34 +364,21 @@ const ProductManagement: React.FC = () => {
         ),
     },
     {
-      title: <span style={{ color: "#A05A2C", fontWeight: "bold" }}>Hành động</span>,
+      title: "Hành động",
       key: "actions",
       align: "center" as const,
-      width: 100,
+      width: 120,
       fixed: 'right',
       render: (_: any, record: Product) => (
         <Space size="small">
           <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              icon={<EyeOutlined style={{ color: "#D97B41", fontSize: 17 }} />}
-              onClick={() => handleView(record)}
-            />
+            <Button type="text" style={{ outline: "none", boxShadow: "none", border: "none" }} icon={<EyeOutlined style={{ color: "#D97B41", fontSize: 17 }} />} onClick={() => handleView(record)} />
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <Button
-              type="text"
-              icon={<EditOutlined style={{ color: "#1890ff", fontSize: 17 }} />}
-              onClick={() => handleEdit(record)}
-            />
+            <Button type="text" icon={<EditOutlined style={{ color: "#A05A2C", fontSize: 17 }} />} onClick={() => handleEdit(record)} style={{ outline: "none", boxShadow: "none", border: "none" }} />
           </Tooltip>
           <Tooltip title="Xóa">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined style={{ fontSize: 17 }} />}
-              onClick={() => handleDelete(record.productId)}
-            />
+            <Button type="text" danger icon={<DeleteOutlined style={{ fontSize: 17 }} />} onClick={() => handleDelete(record.productId)} style={{ outline: "none", boxShadow: "none", border: "none" }} />
           </Tooltip>
         </Space>
       ),
@@ -384,9 +386,45 @@ const ProductManagement: React.FC = () => {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FFF9F0", padding: "20px" }}>
+    <div style={{ minHeight: "100vh", background: "#FFF9F0", padding: "20px 30px 30px 60px" }}>
+      <style>{`
+        .ant-table-thead > tr > th {
+          background-color: ${headerBgColor} !important;
+          color: ${headerColor} !important;
+          font-weight: bold !important;
+          border-right: 1px solid ${borderColor} !important;
+          border-bottom: 2px solid ${tableBorderColor} !important;
+        }
+        .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child {
+            border-right: none !important;
+        }
+        .product-table .ant-table-tbody > tr.even-row-product > td {
+          background-color: ${evenRowBgColor};
+          color: ${cellTextColor};
+          border-right: 1px solid ${borderColor};
+          border-bottom: 1px solid ${borderColor};
+        }
+        .product-table .ant-table-tbody > tr.odd-row-product > td {
+          background-color: ${oddRowBgColor};
+          color: ${cellTextColor};
+          border-right: 1px solid ${borderColor};
+          border-bottom: 1px solid ${borderColor};
+        }
+        .product-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) {
+           border-right: none;
+        }
+        .product-table .ant-table-tbody > tr:hover > td {
+          background-color: #FDEBC8 !important;
+        }
+        .product-table .ant-table-cell-fix-right {
+           background: inherit !important;
+        }
+        .product-table .ant-table-thead > tr > th.ant-table-cell-fix-right {
+          background-color: ${headerBgColor} !important;
+        }
+      `}</style>
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
-        <h1 style={{ fontWeight: 700, color: "#A05A2C", fontSize: 32, marginBottom: 24, textAlign: "left" }}>
+        <h1 style={{ fontWeight: 800, color: "#A05A2C", fontSize: 36, marginBottom: 24, textAlign: "left" }}>
           Quản lý Sản phẩm
         </h1>
         <Card
@@ -395,7 +433,7 @@ const ProductManagement: React.FC = () => {
             borderRadius: 12,
             boxShadow: "0 6px 16px rgba(160, 90, 44, 0.08)",
             padding: "12px 24px",
-            border: "1px solid #F9E4B7",
+            border: `1px solid ${tableBorderColor}`,
             marginBottom: 24,
           }}
         >
@@ -411,8 +449,9 @@ const ProductManagement: React.FC = () => {
             />
             <Select
               value={typeFilter}
-              style={{ width: 200 }}
+              style={{ width: 200, borderRadius: 6 }}
               onChange={(value) => setTypeFilter(value)}
+              dropdownStyle={{ borderRadius: 8 }}
             >
               {typeOptionsForFilter.map((type) => (
                 <Option key={type} value={type} style={{ color: type === "Tất cả" ? "#888" : "#A05A2C" }}>
@@ -431,18 +470,17 @@ const ProductManagement: React.FC = () => {
             </Button>
           </div>
           <Table
-            columns={columns as ColumnType<Product>[]}
+            className="product-table" 
+            columns={columns} 
             dataSource={filteredProducts}
-            loading={loading}
+            loading={tableLoading} 
             rowKey="productId"
-            pagination={{ 
-                pageSize: 8, 
-                showSizeChanger: true, 
-                pageSizeOptions: ['8', '15', '25', '50'],
-                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sản phẩm`,
-                style: { marginTop: 16 }
+            style={{ 
+                borderRadius: 8, 
+                border: `1px solid ${tableBorderColor}`,
+                overflow: 'hidden' 
             }}
-            style={{ background: "#fff", borderRadius: 8, border: "1px solid #f0f0f0" }}
+            rowClassName={(_, index) => (index % 2 === 0 ? 'even-row-product' : 'odd-row-product')}
             sticky
           />
         </Card>
@@ -464,208 +502,88 @@ const ProductManagement: React.FC = () => {
           }}
           footer={
             modalMode === "view"
-              ? [
-                  <Button key="close" onClick={() => setModalVisible(false)} style={{ borderRadius: 6}}>
-                    Đóng
-                  </Button>,
-                ]
+              ? [ <Button key="close" onClick={() => setModalVisible(false)} style={{ borderRadius: 6}}> Đóng </Button>, ]
               : [
-                  <Button key="cancel" onClick={() => {
-                      setModalVisible(false);
-                      form.resetFields();
-                      setFileList([]);
-                    }}
-                    style={{ borderRadius: 6}}
-                    >
-                    Hủy
-                  </Button>,
-                  <Button
-                    key="submit"
-                    type="primary"
-                    onClick={handleModalOk}
-                    style={{ background: "#D97B41", borderColor: "#D97B41", borderRadius: 6 }}
-                    loading={loading && (modalMode === 'add' || modalMode === 'edit')}
-                  >
+                  <Button key="cancel" onClick={() => { setModalVisible(false); form.resetFields(); setFileList([]); }} style={{ borderRadius: 6}} disabled={isSubmitting} > Hủy </Button>,
+                  <Button key="submit" type="primary" onClick={handleModalOk} style={{ background: "#D97B41", borderColor: "#D97B41", borderRadius: 6 }} loading={isSubmitting} >
                     {modalMode === "add" ? "Thêm mới" : "Cập nhật"}
                   </Button>,
                 ]
           }
           width={modalMode === 'view' ? 700 : 600}
-          // Đã sửa lỗi destroyOnClose ở đây
           destroyOnHidden
-          styles={{
-            body: { background: "#FFF9F0", borderRadius: "0 0 12px 12px", padding: "24px" },
-          }}
+          styles={{ body: { background: "#FFF9F0", borderRadius: "0 0 12px 12px", padding: "24px" } }}
           style={{ borderRadius: 12, top: 20 }}
         >
-          {/* Nội dung Modal không thay đổi */}
           {modalMode === 'view' && selectedProduct ? (
-            <Card
-              bordered={false}
-              style={{
-                background: "#fff",
-                borderRadius: 8,
-                padding: 0,
-              }}
-            >
-              <Descriptions
-                bordered
-                column={{ xxl: 2, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
-                size="default"
-                labelStyle={{ color: "#A05A2C", fontWeight: 500, width: '150px' }}
-                contentStyle={{ color: "#555" }}
+            <Card bordered={false} style={{ background: "#fff", borderRadius: 8, padding: 0, }} >
+              <Descriptions bordered column={{ xxl: 2, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }} size="default"
+                labelStyle={{ color: "#A05A2C", fontWeight: 500, width: '150px', background: '#FFF9F0' }} 
+                contentStyle={{ color: "#555", background: '#FFFFFF' }}
               >
                 <Descriptions.Item label="Ảnh" span={selectedProduct.description && selectedProduct.description.length > 100 ? 2 : 1}>
-                  <Image
-                    src={selectedProduct.image || "https://via.placeholder.com/120x120?text=No+Image"}
-                    width={120}
-                    height={120}
-                    style={{ objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }}
-                  />
+                  <Image src={selectedProduct.image || "https://via.placeholder.com/120x120?text=No+Image"} width={120} height={120} style={{ objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }} />
                 </Descriptions.Item>
                 <Descriptions.Item label="Tên sản phẩm" >{selectedProduct.name}</Descriptions.Item>
-                {selectedProduct.description && selectedProduct.description.length <= 100 && (
-                     <Descriptions.Item label="Mô tả" span={1}>{selectedProduct.description}</Descriptions.Item>
-                )}
+                {selectedProduct.description && selectedProduct.description.length <= 100 && ( <Descriptions.Item label="Mô tả" span={1}>{selectedProduct.description}</Descriptions.Item> )}
                 <Descriptions.Item label="Giá">{selectedProduct.price?.toLocaleString()}đ</Descriptions.Item>
                 <Descriptions.Item label="Loại">{selectedProduct.ProductType?.name || "N/A"}</Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
-                  {selectedProduct.isActive ? (
-                    <Tag color="#D97B41" style={{ color: "#fff", borderRadius: 6 }}>Đang bán</Tag>
-                  ) : (
-                    <Tag color="#8c8c8c" style={{ color: "#fff", borderRadius: 6 }}>Ngừng bán</Tag>
-                  )}
+                  {selectedProduct.isActive ? ( <Tag color="#D97B41" style={{ color: "#fff", borderRadius: 6 }}>Đang bán</Tag> ) : ( <Tag color="#8c8c8c" style={{ color: "#fff", borderRadius: 6 }}>Ngừng bán</Tag> )}
                 </Descriptions.Item>
-                 {selectedProduct.quantity !== undefined && <Descriptions.Item label="Số lượng tồn">{selectedProduct.quantity}</Descriptions.Item>}
+                {selectedProduct.quantity !== undefined && <Descriptions.Item label="Số lượng tồn">{selectedProduct.quantity}</Descriptions.Item>}
               </Descriptions>
               {selectedProduct.description && selectedProduct.description.length > 100 && (
-                  <Descriptions layout="vertical" bordered style={{marginTop: 16}} labelStyle={{ color: "#A05A2C", fontWeight: 500}} contentStyle={{ color: "#555" }}>
+                  <Descriptions layout="vertical" bordered style={{marginTop: 16}} labelStyle={{ color: "#A05A2C", fontWeight: 500, background: '#FFF9F0'}} contentStyle={{ color: "#555", background: '#FFFFFF'}}>
                       <Descriptions.Item label="Mô tả chi tiết">{selectedProduct.description}</Descriptions.Item>
                   </Descriptions>
               )}
-
               {selectedProduct.ProductRecipes && selectedProduct.ProductRecipes.length > 0 && (
                 <div style={{ marginTop: 20 }}>
                     <h4 style={{ color: "#A05A2C", fontWeight: 600, marginBottom: 10 }}>Công thức (Recipe):</h4>
                     <Table
-                    dataSource={selectedProduct.ProductRecipes.map((r) => ({
-                        ...r,
-                        materialName: r.Material?.name || "Không rõ",
-                    }))}
-                    columns={[
-                        { title: "Nguyên liệu", dataIndex: "materialName", key: "materialName", render: (text) => <span style={{color: "#666"}}>{text}</span> },
-                        { title: "Số lượng", dataIndex: "quantity", key: "quantity", render: (text) => <span style={{color: "#666"}}>{text}</span> },
-                    ]}
-                    pagination={false}
-                    rowKey="productRecipeId"
-                    size="small"
-                    style={{ background: "#FFF9F0", borderRadius: 8, border: "1px solid #f0f0f0" }}
-                    />
+                    dataSource={selectedProduct.ProductRecipes.map((r) => ({ ...r, materialName: r.Material?.name || "Không rõ", }))}
+                    columns={[ { title: "Nguyên liệu", dataIndex: "materialName", key: "materialName", render: (text) => <span style={{color: cellTextColor}}>{text}</span> }, { title: "Số lượng", dataIndex: "quantity", key: "quantity", render: (text) => <span style={{color: cellTextColor}}>{text}</span> }, ]}
+                    pagination={false} rowKey="productRecipeId" size="small" style={{ background: evenRowBgColor, borderRadius: 8, border: `1px solid ${borderColor}` }} />
                 </div>
               )}
             </Card>
           ) : (
-            <Form
-              form={form}
-              layout="vertical"
-              style={{ background: "#fff", padding: "24px", borderRadius: "8px", border: "1px solid #f0f0f0"}}
-              initialValues={{ isActive: true }}
-            >
-              <Form.Item
-                name="image"
-                label={<span style={{ color: "#A05A2C" }}>Ảnh sản phẩm</span>}
+            <Form form={form} layout="vertical" style={{ background: "#fff", padding: "24px", borderRadius: "8px", border: "1px solid #f0f0f0"}} initialValues={{ isActive: true }} >
+              <Form.Item name="image" label={<span style={{ color: "#A05A2C" }}>Ảnh sản phẩm</span>}
                 rules={[{ required: modalMode === 'add', message: "Vui lòng tải lên ảnh sản phẩm!" }]}
-                valuePropName="fileList"
-                getValueFromEvent={(e) => {
-                    if (Array.isArray(e)) {
-                        return e;
-                    }
-                    return e && e.fileList;
-                }}
+                valuePropName="fileList" 
+                getValueFromEvent={(e) => { if (Array.isArray(e)) { return e; } return e && e.fileList; }}
               >
-                <Upload
-                  listType="picture-card"
-                  fileList={fileList}
-                  onChange={onUploadChange}
-                  beforeUpload={() => false}
-                  maxCount={1}
-                  accept="image/*"
-                >
-                  {fileList.length < 1 && (
-                    <div>
-                      <PlusOutlined />
-                      <div style={{ marginTop: 8 }}>Tải lên</div>
-                    </div>
-                  )}
+                <Upload listType="picture-card" fileList={fileList} onChange={onUploadChange} beforeUpload={() => false} maxCount={1} accept="image/*" >
+                  {fileList.length < 1 && ( <div> <PlusOutlined /> <div style={{ marginTop: 8 }}>Tải lên</div> </div> )}
                 </Upload>
               </Form.Item>
-              <Form.Item
-                name="name"
-                label={<span style={{ color: "#A05A2C" }}>Tên sản phẩm</span>}
-                rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]}
-              >
+              <Form.Item name="name" label={<span style={{ color: "#A05A2C" }}>Tên sản phẩm</span>} rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]} >
                 <Input placeholder="Ví dụ: Cơm tấm sườn bì chả" style={{borderRadius: 6}} />
               </Form.Item>
-              <Form.Item
-                name="description"
-                label={<span style={{ color: "#A05A2C" }}>Mô tả</span>}
-                rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
-              >
+              <Form.Item name="description" label={<span style={{ color: "#A05A2C" }}>Mô tả</span>} rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]} >
                 <Input.TextArea rows={3} placeholder="Mô tả chi tiết về sản phẩm" style={{borderRadius: 6}}/>
               </Form.Item>
               <Space align="start" style={{display: 'flex', marginBottom: 0}} size="large">
-                <Form.Item
-                    name="price"
-                    label={<span style={{ color: "#A05A2C" }}>Giá</span>}
-                    rules={[{ required: true, message: "Vui lòng nhập giá!" }]}
-                    style={{ flex: 1 }}
-                >
-                    <InputNumber
-                    style={{ width: "100%", borderRadius: 6 }}
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                    parser={(value: any) => value!.replace(/\$\s?|(,*)/g, "")}
-                    placeholder="Ví dụ: 35000"
-                    min={0}
-                    />
+                <Form.Item name="price" label={<span style={{ color: "#A05A2C" }}>Giá</span>} rules={[{ required: true, message: "Vui lòng nhập giá!" }]} style={{ flex: 1 }} >
+                  <InputNumber style={{ width: "100%", borderRadius: 6 }} formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value: any) => value!.replace(/\$\s?|(,*)/g, "")} placeholder="Ví dụ: 35000" min={0} />
                 </Form.Item>
-                <Form.Item
-                    name="quantity"
-                    label={<span style={{ color: "#A05A2C" }}>Số lượng tồn kho</span>}
-                    rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]}
-                    style={{ flex: 1 }}
-                >
-                    <InputNumber
-                    style={{ width: "100%", borderRadius: 6 }}
-                    placeholder="Ví dụ: 100"
-                    min={0}
-                    />
+                <Form.Item name="quantity" label={<span style={{ color: "#A05A2C" }}>Số lượng tồn kho</span>} rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]} style={{ flex: 1 }} >
+                  <InputNumber style={{ width: "100%", borderRadius: 6 }} placeholder="Ví dụ: 100" min={0} />
                 </Form.Item>
               </Space>
               <Space align="start" style={{display: 'flex', marginBottom: 0}} size="large">
-                <Form.Item
-                    name="productTypeId"
-                    label={<span style={{ color: "#A05A2C" }}>Loại sản phẩm</span>}
-                    rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm!" }]}
-                    style={{ flex: 1 }}
-                >
-                    <Select placeholder="Chọn loại sản phẩm" style={{borderRadius: 6}}>
-                    {productTypeApiOptions.map((type) => (
-                        <Option key={type.productTypeId} value={type.productTypeId}>
-                        {type.name}
-                        </Option>
-                    ))}
-                    </Select>
+                <Form.Item name="productTypeId" label={<span style={{ color: "#A05A2C" }}>Loại sản phẩm</span>} rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm!" }]} style={{ flex: 1 }} >
+                  <Select placeholder="Chọn loại sản phẩm" style={{borderRadius: 6}}>
+                  {productTypeApiOptions.map((type) => ( <Option key={type.productTypeId} value={type.productTypeId}> {type.name} </Option> ))}
+                  </Select>
                 </Form.Item>
-                <Form.Item
-                    name="isActive"
-                    label={<span style={{ color: "#A05A2C" }}>Trạng thái</span>}
-                    initialValue={true}
-                    style={{ flex: 1 }}
-                >
-                    <Select style={{borderRadius: 6}}>
-                    <Option value={true}>Đang bán</Option>
-                    <Option value={false}>Ngừng bán</Option>
-                    </Select>
+                <Form.Item name="isActive" label={<span style={{ color: "#A05A2C" }}>Trạng thái</span>} initialValue={true} style={{ flex: 1 }} >
+                  <Select style={{borderRadius: 6}}>
+                  <Option value={true}>Đang bán</Option>
+                  <Option value={false}>Ngừng bán</Option>
+                  </Select>
                 </Form.Item>
               </Space>
             </Form>
