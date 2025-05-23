@@ -29,6 +29,7 @@
     "qrcode": "^1.5.4",
     "redis": "^5.0.1",
     "sequelize": "^6.37.7",
+    "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "vnpay": "^2.2.0"
