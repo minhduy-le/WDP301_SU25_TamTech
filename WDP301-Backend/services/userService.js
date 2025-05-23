@@ -330,6 +330,32 @@ const userService = {
     await user.update({ password: hashedPassword });
     await redisClient.del(`reset:${user.email}`);
   },
+
+  async changePassword(oldPassword, newPassword, userId) {
+    if (
+      !oldPassword ||
+      !newPassword ||
+      oldPassword.length < 6 ||
+      oldPassword.length > 250 ||
+      newPassword.length < 6 ||
+      newPassword.length > 250
+    ) {
+      throw new Error("Invalid input");
+    }
+
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Incorrect old password");
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await user.update({ password: hashedNewPassword });
+  },
 };
 
 module.exports = userService;
