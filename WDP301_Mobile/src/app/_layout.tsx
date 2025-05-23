@@ -194,6 +194,14 @@ const RootLayout = () => {
                 name="(user)/account/customer.info"
                 options={{ headerTitle: "Nhập thông tin người dùng" }}
               />
+              <Tabs.Screen
+                name="(user)/like/[id]"
+                options={{ headerShown: false }}
+              />
+              <Tabs.Screen
+                name="(user)/like/feedback.success"
+                options={{ headerShown: false }}
+              />
             </Stack>
           </ThemeProvider>
         </AppProvider>

@@ -229,7 +229,12 @@ const OrderPage = () => {
       params: { id: id },
     });
   };
-
+  const handleFeedback = (id: string) => {
+    router.navigate({
+      pathname: "/(user)/like/[id]",
+      params: { id: id },
+    });
+  };
   const [decodeToken, setDecodeToken] = useState<any>("");
 
   useEffect(() => {
@@ -489,7 +494,7 @@ const OrderPage = () => {
                             styles.button,
                             { backgroundColor: APP_COLOR.ORANGE },
                           ]}
-                          onPress={() => handleViewDetails(item.orderId)}
+                          onPress={() => handleFeedback(item.orderId)}
                         >
                           <Text
                             style={[

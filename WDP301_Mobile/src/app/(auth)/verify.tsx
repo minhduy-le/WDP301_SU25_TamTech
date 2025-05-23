@@ -69,7 +69,7 @@ const VerifyPage = () => {
   const { phoneNumber, isLogin } = useLocalSearchParams();
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number | null;
     if (countdown > 0) {
       timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
