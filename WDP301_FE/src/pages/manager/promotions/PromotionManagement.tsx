@@ -221,7 +221,6 @@ const PromotionManagement: React.FC = () => {
       });
   }, [promotions, searchText, statusFilter]);
 
-  // ---- STYLING CHO BẢNG ----
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
@@ -442,14 +441,13 @@ const PromotionManagement: React.FC = () => {
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B" }}
+                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
                 allowClear
               />
               <Select
                 value={statusFilter}
                 style={{ width: 200, borderRadius: 6 }}
                 onChange={(value) => setStatusFilter(value)}
-                styles={{ popup: { borderRadius: 8 } }} // Đảm bảo style mới cho dropdown
               >
                 {statusFilterOptions.map((opt) => (
                   <Option key={opt} value={opt}>

@@ -217,7 +217,7 @@ const ManagerSidebar: React.FC = () => {
               prefix={<SearchOutlined style={{ color: '#A05A2C' }} />}
               style={{
                 width: 200,
-                borderRadius: "20px",
+                borderRadius: "25px",
                 background: "#F9E4B7",
                 color: "#A05A2C", 
                 border: "1px solid #E9C97B",

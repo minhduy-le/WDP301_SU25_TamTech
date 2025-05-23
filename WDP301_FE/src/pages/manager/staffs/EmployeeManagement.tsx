@@ -12,8 +12,8 @@ import {
   message,
   Tooltip,
   DatePicker,
-  Avatar, // Thêm Avatar
-  Upload,   // Thêm Upload
+  Avatar,
+  Upload,   
   Descriptions,
 } from "antd";
 import {
@@ -421,7 +421,7 @@ const EmployeeManagement: React.FC = () => {
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B" }}
+                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
                 allowClear
               />
               <Select
