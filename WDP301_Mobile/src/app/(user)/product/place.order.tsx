@@ -26,6 +26,8 @@ import ShareButton from "@/components/button/share.button";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Feather from "@expo/vector-icons/Feather";
+import logo from "@/assets/logo.png";
 
 interface IOrderItem {
   image: string;
@@ -56,8 +58,8 @@ const PlaceOrderPage = () => {
   const { branchId } = useCurrentApp();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const dropdownItems = [
-    { id: "1", title: "Tiền mặt" },
-    { id: "2", title: "VNPay" },
+    { id: "1", title: "COD" },
+    { id: "2", title: "VietQR" },
   ];
   const [addresses, setAddresses] = useState<ICusInfor[]>([
     {
@@ -83,6 +85,7 @@ const PlaceOrderPage = () => {
   const [orderDetails, setOrderDetails] = useState<
     { productId: number; quantity: number }[]
   >([]);
+  const [couponStatus, setCouponStatus] = useState(false);
   const handleCreateOrder = async (
     promotionCode: string,
     note: string,
@@ -223,26 +226,22 @@ const PlaceOrderPage = () => {
   }, [decodeToken]);
   const styles = StyleSheet.create({
     container: {
-      paddingTop: 5,
       gap: 3,
-      marginBottom: 30,
     },
     headerContainer: {
       paddingTop: 5,
       gap: 3,
-      height: 50,
+      borderBottomColor: APP_COLOR.BROWN,
+      borderBottomWidth: 0.5,
+      paddingBottom: 5,
     },
-    locationText: { color: APP_COLOR.BROWN, fontFamily: FONTS.medium },
     customersInfo: {
       flexDirection: "row",
-      marginLeft: 10,
     },
     cusInfo: {
-      fontFamily: FONTS.medium,
+      fontFamily: FONTS.regular,
       fontSize: 17,
       color: APP_COLOR.BROWN,
-      position: "relative",
-      bottom: 2,
     },
     modalContainer: {
       flex: 1,
@@ -281,6 +280,16 @@ const PlaceOrderPage = () => {
       fontFamily: FONTS.regular,
       fontSize: 17,
     },
+    textInputView: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    textInputText: {
+      color: APP_COLOR.BROWN,
+      fontFamily: FONTS.bold,
+      fontSize: 20,
+      marginVertical: "auto",
+    },
     dropdownContainer: {
       marginBottom: 15,
     },
@@ -307,7 +316,7 @@ const PlaceOrderPage = () => {
     },
     dropdownText: {
       fontFamily: FONTS.regular,
-      fontSize: 16,
+      fontSize: 17,
       color: APP_COLOR.BROWN,
     },
     selectedDropdownText: {
@@ -373,7 +382,7 @@ const PlaceOrderPage = () => {
           opacity: 1,
         });
         setCart(0);
-        router.replace("/(tabs)/");
+        router.replace("/(tabs)");
       }
     };
     const subscription = Linking.addEventListener("url", handleDeepLink);
@@ -422,49 +431,90 @@ const PlaceOrderPage = () => {
   };
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-        paddingTop: 30,
       }}
     >
-      <Pressable style={{ height: 100 }} onPress={() => setModalVisible(true)}>
+      <ScrollView style={{ flex: 1, paddingHorizontal: 10 }}>
+        <Image
+          source={logo}
+          style={{
+            width: 150,
+            height: 100,
+            alignSelf: "center",
+          }}
+        />
         <View
           style={{
             flexDirection: "row",
-            marginTop: Platform.OS === "ios" ? 20 : 0,
+            justifyContent: "space-between",
+            position: "relative",
+            top: -5,
           }}
         >
-          <View style={styles.headerContainer}>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Tên khách hàng: </Text>
-              <Text style={styles.cusInfo}>
-                {selectedAddress ? selectedAddress.fullName : "FPT University"}
-              </Text>
+          <Text
+            style={{
+              fontFamily: FONTS.bold,
+              fontSize: 20,
+              color: APP_COLOR.BROWN,
+              position: "relative",
+              top: 5,
+            }}
+          >
+            Giao hàng
+          </Text>
+          <Pressable onPress={() => setModalVisible(true)}>
+            <View
+              style={{
+                backgroundColor: APP_COLOR.BROWN,
+                padding: 7,
+                borderRadius: 50,
+              }}
+            >
+              <Feather name="edit-2" size={20} color={APP_COLOR.WHITE} />
             </View>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Số điện thoại: </Text>
-              <Text style={styles.cusInfo}>
-                {selectedAddress ? selectedAddress.phone : "0889679561"}
-              </Text>
-            </View>
-            <View style={styles.customersInfo}>
-              <Text style={styles.locationText}>Địa chỉ giao hàng: </Text>
-              <Text
-                style={styles.cusInfo}
-                numberOfLines={1}
-                ellipsizeMode="tail"
+          </Pressable>
+        </View>
+        <Pressable style={{ paddingBottom: 10 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: Platform.OS === "ios" ? 20 : 0,
+            }}
+          >
+            <View style={styles.headerContainer}>
+              <View
+                style={[
+                  styles.customersInfo,
+                  { justifyContent: "space-between", width: "98%" },
+                ]}
               >
-                {selectedAddress
-                  ? selectedAddress.address
-                  : "Hồ Chí Minh, Việt Nam"}
-              </Text>
+                <Text style={styles.cusInfo}>
+                  {selectedAddress
+                    ? selectedAddress.fullName
+                    : "FPT University"}
+                </Text>
+                <Text style={styles.cusInfo}>
+                  {selectedAddress ? selectedAddress.phone : "0889679561"}
+                </Text>
+              </View>
+              <View style={styles.customersInfo}>
+                <Text
+                  style={styles.cusInfo}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {selectedAddress
+                    ? selectedAddress.address
+                    : "Hồ Chí Minh, Việt Nam"}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </Pressable>
-      <ScrollView style={{ flex: 1, padding: 10 }}>
+        </Pressable>
+
         <Text
           style={{
             fontFamily: FONTS.bold,
@@ -485,42 +535,28 @@ const PlaceOrderPage = () => {
                 paddingBottom: 5,
               }}
             >
-              <Image
-                style={{ height: 70, width: 70, borderRadius: 10 }}
-                source={{
-                  uri: item.image,
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  width: "100%",
                 }}
-              />
-              <View style={{ flexDirection: "row" }}>
+              >
                 <Text
                   style={{
                     fontFamily: FONTS.regular,
-                    fontSize: 20,
+                    fontSize: 17,
                     color: APP_COLOR.BROWN,
                   }}
                 >
-                  {item.title} x{" "}
+                  {item.title} x {item.quantity}
                 </Text>
-                <View>
-                  <Text
-                    style={{
-                      fontWeight: "600",
-                      fontFamily: FONTS.regular,
-                      fontSize: 20,
-                      color: APP_COLOR.BROWN,
-                    }}
-                  >
-                    {item.quantity}
-                  </Text>
-                </View>
+
                 <Text
                   style={{
-                    fontFamily: FONTS.bold,
-                    fontSize: 20,
+                    fontFamily: FONTS.regular,
+                    fontSize: 17,
                     color: APP_COLOR.BROWN,
-                    position: "absolute",
-                    top: 35,
-                    left: 190,
                   }}
                 >
                   {currencyFormatter(item.price)}
@@ -529,47 +565,7 @@ const PlaceOrderPage = () => {
             </View>
           );
         })}
-        {orderItems?.length > 0 && (
-          <View style={{ marginVertical: 15 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderTopWidth: 1,
-                borderTopColor: APP_COLOR.BROWN,
-              }}
-            >
-              <Text
-                style={{
-                  color: APP_COLOR.BROWN,
-                  fontFamily: FONTS.bold,
-                  fontSize: 20,
-                  marginVertical: "auto",
-                }}
-              >
-                Tổng cộng (
-                {restaurant &&
-                  cart?.[restaurant._id] &&
-                  cart?.[restaurant._id].quantity}{" "}
-                món)
-              </Text>
-              <Text
-                style={{
-                  fontFamily: FONTS.bold,
-                  fontSize: 25,
-                  color: APP_COLOR.BROWN,
-                  textDecorationLine: "underline",
-                }}
-              >
-                {currencyFormatter(
-                  restaurant &&
-                    cart?.[restaurant._id] &&
-                    cart?.[restaurant._id].sum
-                )}
-              </Text>
-            </View>
-          </View>
-        )}
+
         <Formik
           validationSchema={ChangePasswordSchema}
           initialValues={{
@@ -651,114 +647,244 @@ const PlaceOrderPage = () => {
               branchId,
             ]);
             return (
-              <SafeAreaView style={{ flex: 1 }}>
-                <View style={styles.container}>
+              <View style={styles.container}>
+                {orderItems?.length > 0 && (
+                  <View
+                    style={{
+                      marginVertical: 15,
+                      borderTopWidth: 0.5,
+                      borderTopColor: APP_COLOR.BROWN,
+                      paddingTop: 10,
+                    }}
+                  >
+                    <View style={styles.textInputView}>
+                      <Text style={styles.textInputText}>
+                        Tổng tiền (
+                        {restaurant &&
+                          cart?.[restaurant._id] &&
+                          cart?.[restaurant._id].quantity}{" "}
+                        món)
+                      </Text>
+                      <Pressable
+                        onPress={() => {
+                          couponStatus === true
+                            ? setCouponStatus(false)
+                            : setCouponStatus(true);
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: APP_COLOR.ORANGE,
+                            fontFamily: FONTS.regular,
+                            textDecorationLine: "underline",
+                            marginVertical: "auto",
+                          }}
+                        >
+                          {values.promotionCode ? (
+                            <Text
+                              style={{
+                                textDecorationLine: "none",
+                                fontSize: 18,
+                              }}
+                            >
+                              {values.promotionCode}
+                            </Text>
+                          ) : (
+                            "Áp dụng mã khuyến mãi"
+                          )}
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={styles.textInputView}>
+                      <Text
+                        style={[
+                          styles.textInputText,
+                          { fontFamily: FONTS.regular, fontSize: 17 },
+                        ]}
+                      >
+                        Thành tiền
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: FONTS.regular,
+                          fontSize: 17,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
+                        {currencyFormatter(
+                          restaurant &&
+                            cart?.[restaurant._id] &&
+                            cart?.[restaurant._id].sum
+                        )}
+                      </Text>
+                    </View>
+                    <View style={styles.textInputView}>
+                      <Text
+                        style={[
+                          styles.textInputText,
+                          { fontFamily: FONTS.regular, fontSize: 17 },
+                        ]}
+                      >
+                        Phí giao hàng
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: FONTS.regular,
+                          fontSize: 17,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
+                        {currencyFormatter(20000)}
+                      </Text>
+                    </View>
+                    <View style={styles.textInputView}>
+                      <Text
+                        style={[
+                          styles.textInputText,
+                          { fontFamily: FONTS.regular, fontSize: 17 },
+                        ]}
+                      >
+                        Giảm giá
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: FONTS.regular,
+                          fontSize: 17,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
+                        {currencyFormatter(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.textInputView}>
+                      <Text
+                        style={[
+                          styles.textInputText,
+                          { fontFamily: FONTS.bold, fontSize: 17 },
+                        ]}
+                      >
+                        Số tiền thanh toán
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: FONTS.bold,
+                          fontSize: 17,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
+                        {currencyFormatter(200000)}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                {couponStatus && (
                   <CustomerInforInput
-                    title="Mã khuyến mãi"
                     onChangeText={handleChange("promotionCode")}
                     onBlur={handleBlur("promotionCode")}
                     value={values.promotionCode}
                     error={errors.promotionCode}
                     touched={touched.promotionCode}
+                    placeholder="Nhập mã khuyến mãi"
                   />
-                  <CustomerInforInput
-                    title="Ghi chú"
-                    onChangeText={handleChange("note")}
-                    onBlur={handleBlur("note")}
-                    value={values.note}
-                    error={errors.note}
-                    touched={touched.note}
-                  />
-                  <CustomerInforInput
-                    title="Sử dụng điểm"
-                    onChangeText={(text: any) => {
-                      const numericValue = Number(text) || 0;
-                      if (numericValue >= 0) {
-                        setFieldValue("pointUsed", numericValue);
-                      }
-                    }}
-                    onBlur={handleBlur("pointUsed")}
-                    value={String(values.pointUsed)}
-                    error={errors.pointUsed}
-                    touched={touched.pointUsed}
-                    keyboardType="numeric"
-                  />
-                  <View style={styles.dropdownContainer}>
-                    <Text style={styles.dropdownLabel}>
-                      Phương thức thanh toán
-                    </Text>
-                    <View style={styles.dropdown}>
-                      {dropdownItems.map((item, index) => (
-                        <Pressable
-                          key={`${item.id}-${index}`}
+                )}
+                <CustomerInforInput
+                  title="Sử dụng điểm"
+                  onChangeText={(text: any) => {
+                    const numericValue = Number(text) || 0;
+                    if (numericValue >= 0) {
+                      setFieldValue("pointUsed", numericValue);
+                    }
+                  }}
+                  onBlur={handleBlur("pointUsed")}
+                  value={String(values.pointUsed)}
+                  error={errors.pointUsed}
+                  touched={touched.pointUsed}
+                  keyboardType="numeric"
+                />
+                <View style={styles.dropdownContainer}>
+                  <Text style={styles.dropdownLabel}>
+                    Phương thức thanh toán
+                  </Text>
+                  <View style={styles.dropdown}>
+                    {dropdownItems.map((item, index) => (
+                      <Pressable
+                        key={`${item.id}-${index}`}
+                        style={[
+                          styles.dropdownItem,
+                          selectedOption === item.id &&
+                            styles.selectedDropdownItem,
+                        ]}
+                        onPress={() =>
+                          handlePaymentMethodChange(item.id, setFieldValue)
+                        }
+                      >
+                        <Text
                           style={[
-                            styles.dropdownItem,
+                            styles.dropdownText,
                             selectedOption === item.id &&
-                              styles.selectedDropdownItem,
+                              styles.selectedDropdownText,
                           ]}
-                          onPress={() =>
-                            handlePaymentMethodChange(item.id, setFieldValue)
-                          }
                         >
-                          <Text
-                            style={[
-                              styles.dropdownText,
-                              selectedOption === item.id &&
-                                styles.selectedDropdownText,
-                            ]}
-                          >
-                            {item.title}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                    {errors.paymentMethodId && touched.paymentMethodId && (
-                      <Text style={styles.errorText}>
-                        {errors.paymentMethodId}
-                      </Text>
-                    )}
+                          {item.title}
+                        </Text>
+                      </Pressable>
+                    ))}
                   </View>
-                  <CustomerInforInput
-                    title="Mang đi"
-                    value={values.pickUp}
-                    setValue={(v) => setFieldValue("pickUp", v)}
-                    isBoolean={true}
-                  />
-                  <ShareButton
-                    loading={loading}
-                    title="Tạo đơn hàng"
-                    onPress={() => {
-                      handleCreateOrder(
-                        values.promotionCode,
-                        values.note,
-                        values.address,
-                        values.phoneNumber,
-                        values.branchId,
-                        values.pointUsed,
-                        values.pointEarned,
-                        values.paymentMethodId,
-                        values.orderItems,
-                        values.pickUp
-                      );
-                    }}
-                    textStyle={{
-                      textTransform: "uppercase",
-                      color: "#fff",
-                      paddingVertical: 5,
-                      fontFamily: FONTS.regular,
-                      fontSize: 20,
-                    }}
-                    btnStyle={{
-                      justifyContent: "center",
-                      borderRadius: 10,
-                      paddingVertical: 10,
-                      backgroundColor: APP_COLOR.BROWN,
-                      width: "100%",
-                    }}
-                    pressStyle={{ alignSelf: "stretch" }}
-                  />
+                  {errors.paymentMethodId && touched.paymentMethodId && (
+                    <Text style={styles.errorText}>
+                      {errors.paymentMethodId}
+                    </Text>
+                  )}
                 </View>
-              </SafeAreaView>
+                <CustomerInforInput
+                  title="Mang đi"
+                  value={values.pickUp}
+                  setValue={(v) => setFieldValue("pickUp", v)}
+                  isBoolean={true}
+                />
+                <CustomerInforInput
+                  onChangeText={handleChange("note")}
+                  onBlur={handleBlur("note")}
+                  value={values.note}
+                  error={errors.note}
+                  touched={touched.note}
+                  placeholder="Ghi chú"
+                />
+                <ShareButton
+                  loading={loading}
+                  title="Tạo đơn hàng"
+                  onPress={() => {
+                    handleCreateOrder(
+                      values.promotionCode,
+                      values.note,
+                      values.address,
+                      values.phoneNumber,
+                      values.branchId,
+                      values.pointUsed,
+                      values.pointEarned,
+                      values.paymentMethodId,
+                      values.orderItems,
+                      values.pickUp
+                    );
+                  }}
+                  textStyle={{
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    paddingVertical: 5,
+                    fontFamily: FONTS.regular,
+                    fontSize: 20,
+                  }}
+                  btnStyle={{
+                    justifyContent: "center",
+                    borderRadius: 10,
+                    paddingVertical: 10,
+                    backgroundColor: APP_COLOR.BROWN,
+                    width: "100%",
+                  }}
+                  pressStyle={{ alignSelf: "stretch" }}
+                />
+              </View>
             );
           }}
         </Formik>
@@ -824,7 +950,7 @@ const PlaceOrderPage = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
