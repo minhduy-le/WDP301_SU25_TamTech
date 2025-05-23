@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 
+interface ApiResponse<T> {
+  status: number;
+  message: string;
+  products?: T;
+}
 export interface ProductDto {
   productId: string;
   name: string;
@@ -20,8 +25,18 @@ interface MutationVariables {
 }
 
 const fetchProducts = async (): Promise<ProductDto[]> => {
-  const response = await axiosInstance.get<ProductDto[]>("products");
-  return response.data;
+  // const response = await axiosInstance.get<ProductDto[]>("products");
+  const response = await axiosInstance.get("products");
+  const {
+    status,
+    message: responseMessage,
+    products,
+  } = response.data as ApiResponse<ProductDto[]>;
+  // return response.data;
+  if (status >= 200 && status < 300 && products) {
+    return Array.isArray(products) ? products : [];
+  }
+  throw new Error(responseMessage || "Không thể tải danh sách khách hàng");
 };
 
 export const useProducts = () => {
@@ -79,5 +94,18 @@ export const useDeleteProduct = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
+  });
+};
+
+export const useGetProductByTypeId = (productTypeId: string) => {
+  return useQuery<ProductDto, Error>({
+    queryKey: ["type", productTypeId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<ProductDto>(
+        `products/type/${productTypeId}`
+      );
+      return response.data;
+    },
+    enabled: !!productTypeId,
   });
 };
