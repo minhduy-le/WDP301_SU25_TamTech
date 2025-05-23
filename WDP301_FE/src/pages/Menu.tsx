@@ -7,12 +7,11 @@ const Menu = () => {
       <div className="menu-header">
         <h1 className="menu-title">Thức đơn Tâm Tấc</h1>
         <div className="menu-subtitle">
-          <div className="title-orange">Tấm Tắc </div>{" "}
-          <div>
-            là chuỗi hệ thống cửa hàng cơm tấm với mong muốn mang đến cho sinh
-            viên những bữa cơm tấm chất lượng với giá cả hợp lý, đảm bảo vệ sinh
-            an toàn thực phẩm
-          </div>
+          <div className="title-orange">Tấm Tắc </div> {/* <div> */}
+          là chuỗi hệ thống cửa hàng cơm tấm với mong muốn mang đến cho sinh
+          viên những bữa cơm tấm chất lượng với giá cả hợp lý, đảm bảo vệ sinh
+          an toàn thực phẩm
+          {/* </div> */}
         </div>
       </div>
       <div className="menu-sell">
@@ -23,7 +22,7 @@ const Menu = () => {
           <div className="category-item">. Nước Giải Khát</div>
         </div>
         <div className="menu-items">
-          <Row gutter={[20, 20]}>
+          <Row gutter={[24, 16]}>
             <Col span={11} className="menu-column">
               <Card className="menu-card">
                 <div className="card-image-container">
