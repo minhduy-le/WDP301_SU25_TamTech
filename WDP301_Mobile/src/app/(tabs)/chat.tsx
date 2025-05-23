@@ -8,10 +8,7 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import demo from "@/assets/demo.jpg";
 import { APP_COLOR } from "@/utils/constant";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -162,7 +159,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
-    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
   },
   avatar: {
     width: 60,
@@ -174,17 +170,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontWeight: "bold",
-    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
+    fontSize: 17,
     marginBottom: 5,
   },
   status: {
-    color: "#777",
+    fontFamily: FONTS.regular,
+    color: APP_COLOR.BROWN,
     fontSize: 14,
   },
   time: {
-    color: "#777",
-    fontSize: 12,
+    fontFamily: FONTS.regular,
+    color: APP_COLOR.BROWN,
+    fontSize: 13,
   },
   text: {
     color: APP_COLOR.BROWN,

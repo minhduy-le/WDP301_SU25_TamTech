@@ -169,7 +169,7 @@ const RootLayout = () => {
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: APP_COLOR.WHITE,
                   headerStyle: {
-                    backgroundColor: APP_COLOR.BROWN,
+                    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
                   },
                 }}
               />
