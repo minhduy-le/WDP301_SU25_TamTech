@@ -9,6 +9,9 @@ const OrderItem = require("./orderItem");
 const PaymentMethod = require("./paymentMethod");
 const OrderStatus = require("./orderStatus");
 const Feedback = require("./feedback");
+const ChatRoom = require("./chatRoom");
+const ChatRoomUser = require("./ChatRoomUser");
+const Message = require("./message");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -42,6 +45,21 @@ Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
 Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
 
+// Define relationships for chat-related models
+ChatRoom.hasMany(ChatRoomUser, { foreignKey: "chatRoomId", as: "ChatRoomUsers" });
+ChatRoom.hasMany(Message, { foreignKey: "chatRoomId", as: "Messages" });
+
+ChatRoomUser.belongsTo(ChatRoom, { foreignKey: "chatRoomId", as: "ChatRoom" });
+ChatRoomUser.belongsTo(User, { foreignKey: "userId", as: "User" });
+
+User.hasMany(ChatRoomUser, { foreignKey: "userId", as: "ChatRoomUsers" });
+User.hasMany(Message, { foreignKey: "senderId", as: "SentMessages" });
+User.hasMany(Message, { foreignKey: "receiverId", as: "ReceivedMessages" });
+
+Message.belongsTo(ChatRoom, { foreignKey: "chatRoomId", as: "ChatRoom" });
+Message.belongsTo(User, { foreignKey: "senderId", as: "Sender" });
+Message.belongsTo(User, { foreignKey: "receiverId", as: "Receiver" });
+
 module.exports = {
   Product,
   ProductType,
@@ -54,4 +72,7 @@ module.exports = {
   PaymentMethod,
   OrderStatus,
   Feedback,
+  ChatRoom,
+  ChatRoomUser,
+  Message,
 };
