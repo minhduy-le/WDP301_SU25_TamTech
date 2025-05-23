@@ -137,6 +137,10 @@ const RootLayout = () => {
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
+                name="(auth)/order.success"
+                options={{ headerShown: false }}
+              ></Stack.Screen>
+              <Stack.Screen
                 name="(employee)"
                 options={{ headerShown: false }}
               />
@@ -169,7 +173,7 @@ const RootLayout = () => {
                   headerBackButtonDisplayMode: "minimal",
                   headerTintColor: APP_COLOR.WHITE,
                   headerStyle: {
-                    backgroundColor: APP_COLOR.BROWN,
+                    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
                   },
                 }}
               />

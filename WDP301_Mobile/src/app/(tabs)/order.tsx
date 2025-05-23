@@ -512,13 +512,24 @@ const OrderPage = () => {
         <Pressable onPress={() => router.navigate("/(auth)/qrcode")}>
           <View
             style={{
-              backgroundColor: APP_COLOR.BROWN,
-              height: 60,
-              width: 60,
-              borderRadius: 50,
               position: "absolute",
-              right: 30,
-              top: -40,
+              bottom: -25,
+              right: 20,
+              backgroundColor: APP_COLOR.BROWN,
+              borderRadius: 50,
+              padding: 15,
+              width: 60,
+              height: 60,
+              flexDirection: "row",
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
             }}
           >
             <MaterialCommunityIcons
