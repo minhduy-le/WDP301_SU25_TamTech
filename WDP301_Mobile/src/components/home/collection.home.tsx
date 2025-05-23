@@ -143,12 +143,10 @@ const CollectionHome = (props: IProps) => {
 
     setCart(newCart);
   };
-
   const getItemQuantity = (itemId: string) => {
     if (!restaurant?._id) return 0;
     return cart[restaurant._id]?.items[itemId]?.quantity || 0;
   };
-
   return (
     <>
       <View
@@ -238,9 +236,38 @@ const CollectionHome = (props: IProps) => {
                     }}
                   >
                     <Image
-                      style={{ height: 130, width: 140, borderRadius: 10 }}
+                      style={{
+                        height: 130,
+                        width: 140,
+                        borderRadius: 10,
+                        opacity: 0.85,
+                      }}
                       source={{ uri: item.productImage }}
                     />
+                    <View
+                      style={{
+                        position: "absolute",
+                        bottom: 105,
+                        right: 10,
+                        flexDirection: "row",
+                        gap: 5,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: APP_COLOR.BUTTON_YELLOW,
+                          fontFamily: FONTS.semiBold,
+                          fontSize: 22,
+                        }}
+                      >
+                        5
+                      </Text>
+                      <AntDesign
+                        name="star"
+                        size={24}
+                        color={APP_COLOR.BUTTON_YELLOW}
+                      />
+                    </View>
                     <View style={{ padding: 5 }}>
                       <Text
                         numberOfLines={1}
