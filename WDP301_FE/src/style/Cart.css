@@ -1,0 +1,108 @@
+.cart-container {
+  position: absolute;
+  top: 100%;
+  border-radius: 10px;
+  right: 0;
+  z-index: 1000;
+  background-color: #efe6db;
+}
+
+.cart-card {
+  border: none;
+  border-radius: 10px;
+  background-color: #efe6db;
+  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
+  position: relative;
+}
+
+.cart-title {
+  font-family: "Playfair Display", serif;
+  color: #2d1e1a;
+  font-size: 20px;
+  font-weight: 700;
+  display: block;
+  text-align: center;
+}
+
+.cart-subtitle {
+  font-family: "Playfair Display", serif;
+  color: #2d1e1a;
+  font-size: 15px;
+  display: block;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.cart-item {
+  padding: 5px 0;
+}
+
+.cart-item-name {
+  font-family: "Playfair Display", serif;
+  color: #2d1e1a;
+  font-size: 17px;
+  font-weight: 600;
+  display: block;
+}
+
+.item-description {
+  font-family: "Playfair Display", serif;
+  color: #2d1e1a;
+  font-size: 15px;
+  display: list-item;
+  list-style-type: disc;
+  margin-top: 2px;
+}
+
+.item-description-list {
+  padding-left: 20px;
+}
+
+.item-price {
+  font-family: "Playfair Display", serif;
+  color: #da7339;
+  font-size: 15px;
+  display: block;
+}
+
+.item-quantity {
+  font-family: "Playfair Display", serif;
+  font-size: 15px;
+  display: block;
+}
+
+.cart-divider {
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+}
+
+.total-text {
+  font-family: "Playfair Display", serif;
+  color: #2d1e1a;
+  font-size: 15px;
+}
+
+.total-price {
+  font-family: "Playfair Display", serif;
+  color: #a52a2a;
+  font-size: 15px;
+}
+
+.confirm-button {
+  background-color: #78a243 !important;
+  border: none;
+  color: #fff !important;
+  font-family: "Playfair Display", serif;
+  font-size: 15px;
+  margin-top: 10px;
+  height: 40px;
+}
+
+.cart-dropdown {
+  position: absolute;
+  top: 82px; /* Position right below the button */
+  right: 0; /* Align with the right edge of the header-icon */
+  z-index: 1000; /* Ensure it appears above other content */
+  width: 400px; /* Match the width of your Cart component */
+}

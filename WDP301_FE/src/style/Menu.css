@@ -37,7 +37,7 @@
 .category-item {
   padding: 2px 16px;
   margin-bottom: 7px;
-  border-radius: 20px;
+  border-radius: 16px;
   font-size: 20px;
   cursor: pointer;
   color: #2d1e1a;
@@ -95,9 +95,9 @@
   font-family: "Playfair Display", serif;
 }
 
-.menu-column {
+/* .menu-column {
   margin: 0 20px;
-}
+} */
 
 .card-image-container {
   position: relative;
@@ -173,6 +173,7 @@
 .title-orange {
   color: #da7339;
   margin-right: 4px;
+  width: 80px;
 }
 
 .custom-button {

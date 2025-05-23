@@ -10,7 +10,16 @@ const Register = () => {
         <img src={APP_LOGIN} alt="Food" className="food-image" />
       </div>
       <div className="form-section">
-        <div className="form-content">
+        <div
+          className="form-content"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            margin: "0 auto",
+            width: "max-content",
+            padding: "0 20px",
+          }}
+        >
           <h1 className="title">
             Tấm <span className="login-brown">ngon,</span>{" "}
             <span className="login-green">Tắc </span>{" "}
@@ -26,7 +35,7 @@ const Register = () => {
           <Button className="login-button">Đăng ký</Button>
           <div className="divider">
             <span className="divider-text">
-              <Link to="/login1">Bạn là người nhà của Tấm Tắc?</Link>
+              <Link to="/login">Bạn là người nhà của Tấm Tắc?</Link>
             </span>
           </div>
         </div>

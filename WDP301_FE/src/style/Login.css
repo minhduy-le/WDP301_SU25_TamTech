@@ -123,3 +123,8 @@
 .ant-menu-light .ant-menu-item:hover::after {
   border-bottom: none !important;
 }
+
+.ant-input-password .ant-input {
+  height: auto;
+  font-family: "Playfair Display", serif;
+}
