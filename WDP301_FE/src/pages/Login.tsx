@@ -1,9 +1,49 @@
-import { Input, Button } from "antd";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Input, Button, message, Form } from "antd";
 import "../style/Login.css";
 import APP_LOGIN from "../assets/login.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore, type LoginDto } from "../hooks/usersApi";
+import { useMutation } from "@tanstack/react-query";
+import Role from "../enums/role.enum";
 
 const Login = () => {
+  const [loginForm] = Form.useForm();
+  const { login } = useAuthStore();
+  const navigate = useNavigate();
+
+  const loginMutation = useMutation<
+    { success: boolean; message: string; role: string },
+    unknown,
+    LoginDto
+  >({
+    mutationFn: login,
+    onSuccess: (response) => {
+      if (response.success) {
+        if (response.role === Role.ADMIN) {
+          navigate("/dashboard");
+          // } else if (
+          //   response.role === RoleCode.STAFF ||
+          //   response.role === RoleCode.THERAPIST
+          // ) {
+          //   navigate(PagePath.BOOKING);
+        } else {
+          navigate("/");
+        }
+        message.success("Đăng nhập thành công");
+      } else {
+        message.error(response.message);
+      }
+    },
+    onError: (error) => {
+      message.error("Login failed: " + (error as Error).message);
+    },
+  });
+
+  const onFinish = (values: any) => {
+    loginMutation.mutate(values);
+  };
+
   return (
     <div className="login-container">
       <div className="image-section">
@@ -28,9 +68,27 @@ const Login = () => {
           <p className="subtitle">
             Thương hiệu cơm tấm hàng đầu dành cho sinh viên.
           </p>
-          <Input placeholder="Tài khoản" className="input-field" />
-          <Input.Password placeholder="Mật khẩu" className="input-field" />
-          <Button className="login-button">Đăng nhập</Button>
+          <Form form={loginForm} name="login" onFinish={onFinish}>
+            <Form.Item
+              name="email"
+              style={{ marginBottom: 0 }}
+              rules={[{ required: true, message: "Nhập email" }]}
+            >
+              <Input placeholder="Email" className="input-field" />
+            </Form.Item>
+            <Form.Item
+              name="password"
+              style={{ marginBottom: 0 }}
+              rules={[{ required: true, message: "Nhập mật khẩu" }]}
+            >
+              <Input.Password placeholder="Mật khẩu" className="input-field" />
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
+              <Button className="login-button" htmlType="submit">
+                Đăng nhập
+              </Button>
+            </Form.Item>
+          </Form>
           <div className="divider">
             <span className="divider-text">
               <Link to="/register">Bạn là người mới của Tấm Tắc?</Link>

@@ -40,7 +40,6 @@ export interface VerifyOTPDto {
 interface User {
   id: string;
   role: string;
-  username: string;
 }
 
 interface AuthState {
@@ -80,14 +79,12 @@ export const useAuthStore = create<AuthState>((set) => {
         const data = response.data;
         if (data.token) {
           const decoded = jwtDecode<{
-            sub: string;
-            accountName: string;
+            id: string;
             role: string;
           }>(data.token);
 
           const user = {
-            id: decoded.sub,
-            username: decoded.accountName,
+            id: decoded.id,
             role: decoded.role,
           };
 
