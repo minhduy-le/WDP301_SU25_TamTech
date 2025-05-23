@@ -1,6 +1,6 @@
 import { Layout, Menu } from "antd";
 import "../style/UserInformation.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import OrderTracking from "./OrderTracking";
 import OrderHistory from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
@@ -10,15 +10,44 @@ import PromotionIcon from "../components/icon/PromotionIcon";
 import HomeSideIcon from "../components/icon/HomeSideIcon";
 import AddressOrder from "./AdressOrder";
 import Promotion from "./Promotion";
+import { useLocation, useNavigationType } from "react-router-dom";
 
 const { Sider, Content } = Layout;
 
 const UserInfomation = () => {
   const [activePage, setActivePage] = useState("1");
+  const location = useLocation();
+  const navigationType = useNavigationType();
 
   const handleMenuClick = (e: { key: string }) => {
     setActivePage(e.key);
+    localStorage.setItem("userInfoActiveTab", e.key);
   };
+
+  useEffect(() => {
+    const savedTab = localStorage.getItem("userInfoActiveTab");
+
+    if (location.pathname === "/user-information") {
+      if (navigationType === "PUSH") {
+        setActivePage("1");
+        localStorage.setItem("userInfoActiveTab", "1");
+      } else if (savedTab) {
+        setActivePage(savedTab);
+      } else {
+        setActivePage("1");
+        localStorage.setItem("userInfoActiveTab", "1");
+      }
+    }
+  }, [location.pathname, navigationType]);
+  // useEffect(() => {
+  //   const savedTab = localStorage.getItem("userInfoActiveTab");
+  //   if (savedTab && location.pathname === "/user-information") {
+  //     setActivePage(savedTab);
+  //   } else {
+  //     setActivePage("1");
+  //     localStorage.setItem("userInfoActiveTab", "1");
+  //   }
+  // }, [location.pathname]);
 
   return (
     <div className="user-info-container">
@@ -34,7 +63,7 @@ const UserInfomation = () => {
               selectedKeys={[activePage]}
               onClick={handleMenuClick}
             >
-              <Menu.Item key="1" className="menu-item active">
+              <Menu.Item key="1" className="menu-item">
                 <span role="img" aria-label="profile">
                   <UserBoldIcon />
                 </span>
