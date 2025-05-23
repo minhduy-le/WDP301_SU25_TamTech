@@ -319,6 +319,60 @@ router.post("/reset-password", verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid input or incorrect old password
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/change-password", verifyToken, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    await userService.changePassword(oldPassword, newPassword, req.userId);
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    if (error.message === "Invalid input" || error.message === "Incorrect old password") {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * @swagger
  * /api/auth/google-login:
  *   post:
  *     summary: Log in or register a user using Google OAuth
