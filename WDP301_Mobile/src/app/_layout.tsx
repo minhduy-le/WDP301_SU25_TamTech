@@ -137,6 +137,10 @@ const RootLayout = () => {
                 options={{ headerShown: false }}
               ></Stack.Screen>
               <Stack.Screen
+                name="(auth)/order.success"
+                options={{ headerShown: false }}
+              ></Stack.Screen>
+              <Stack.Screen
                 name="(employee)"
                 options={{ headerShown: false }}
               />

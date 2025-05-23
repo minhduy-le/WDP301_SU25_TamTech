@@ -6,6 +6,7 @@ import {
   Text,
   TextStyle,
   View,
+  ViewStyle,
 } from "react-native";
 import { ReactNode } from "react";
 import { APP_COLOR } from "utils/constant";
@@ -29,8 +30,8 @@ interface IProps {
   title?: string;
   onPress: () => void;
   textStyle?: StyleProp<TextStyle>;
-  pressStyle?: StyleProp<TextStyle>;
-  btnStyle?: StyleProp<TextStyle>;
+  pressStyle?: StyleProp<ViewStyle>;
+  btnStyle?: StyleProp<ViewStyle>;
   icons?: ReactNode;
   loading?: boolean;
 }
@@ -108,9 +109,7 @@ const ShareButton = (props: IProps) => {
                   />
                 </>
               );
-            case "Lưu thay đổi":
-              return <></>;
-            default:
+            case " ":
               return (
                 <>
                   <FontAwesome5
@@ -120,6 +119,8 @@ const ShareButton = (props: IProps) => {
                   />
                 </>
               );
+            default:
+              return <></>;
           }
         })()}
         {loading && <ActivityIndicator color={"black"} />}
