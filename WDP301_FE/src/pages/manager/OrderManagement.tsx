@@ -71,22 +71,21 @@ const OrderManagement: React.FC = () => {
 
   useEffect(() => {
     setOrders(fakeData);
-    console.log(orders);
     setLoading(false);
   }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "warning";
+        return "#F9E4B7";
       case "processing":
-        return "processing";
+        return "#FAD2A5";
       case "completed":
-        return "success";
+        return "#D97B41";
       case "cancelled":
-        return "error";
+        return "#A05A2C";
       default:
-        return "default";
+        return "#E9C97B";
     }
   };
 
@@ -107,70 +106,67 @@ const OrderManagement: React.FC = () => {
 
   const columns = [
     {
-      title: "Order ID",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Order ID</span>,
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "Customer",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Customer</span>,
       dataIndex: "customerName",
       key: "customerName",
     },
     {
-      title: "Order Date",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Order Date</span>,
       dataIndex: "orderDate",
       key: "orderDate",
       render: (date: string) => new Date(date).toLocaleDateString(),
     },
     {
-      title: "Total Amount",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Total Amount</span>,
       dataIndex: "totalAmount",
       key: "totalAmount",
       render: (amount: number) => `${amount.toLocaleString()}đ`,
     },
     {
-      title: "Status",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Status</span>,
       dataIndex: "status",
       key: "status",
       render: (status: string) => (
-        <Tag icon={getStatusIcon(status)} color={getStatusColor(status)}>
+        <Tag
+          icon={getStatusIcon(status)}
+          color={getStatusColor(status)}
+          style={{
+            color: status === "pending" || status === "processing" ? "#A05A2C" : "#fff",
+            fontWeight: 600,
+            background: getStatusColor(status),
+            borderRadius: 12,
+            padding: "0 12px",
+          }}
+        >
           {status.toUpperCase()}
         </Tag>
       ),
     },
     {
-      title: "Actions",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Actions</span>,
       key: "actions",
       render: (_: any, record: Order) => (
-        <Space>
+        <Space size={12}>
           <Button
-            type="text"
+            type="link"
             icon={<EyeOutlined />}
             onClick={() => {
               setSelectedOrder(record);
               setIsModalVisible(true);
             }}
-            style={{
-              border: "none",
-              color: "#f97316",
-              boxShadow: "none",
-              outline: "none",
-            }}
-            className="custom-orange-button"
+            style={{ color: "#D97B41", fontWeight: 600, padding: 0 }}
           >
             Chi tiết
           </Button>
-
           <Button
+            type="default"
             icon={<DownloadOutlined />}
-            size="small"
-            style={{
-              border: "none",
-              color: "#f97316",
-              boxShadow: "none",
-              outline: "none",
-            }}
-            className="custom-orange-button"
+            style={{ color: "#D97B41", borderColor: "#D97B41", background: "#fff", boxShadow: "none", outline: "none", fontWeight: 600 }}
           >
             Tải biên lai
           </Button>
@@ -189,29 +185,48 @@ const OrderManagement: React.FC = () => {
   });
 
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ width: "100%" }}>
-        <h2 style={{ fontSize: "30px", fontWeight: "bold", color: "#f97316" }}>Quản lý đơn hàng</h2>
-        <Card>
-          <div style={{ marginBottom: 16, display: "flex", gap: 16 }}>
+    <div style={{ minHeight: "100vh", background: "#FFF3D6"}}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <h1 style={{ fontWeight: 800, color: "#D97B41", fontSize: 36, marginBottom: 24, textAlign: "left" }}>
+          Quản lý đơn hàng
+        </h1>
+        <Card
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            boxShadow: "0 4px 12px rgba(217, 123, 65, 0.1)",
+            padding: 24,
+            border: "1px solid #E9C97B",
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ marginBottom: 24, display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Input
-              placeholder="Search orders..."
-              prefix={<SearchOutlined />}
+              placeholder="Tìm kiếm đơn hàng..."
+              prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 200 }}
+              style={{ width: 250, borderColor: "#E9C97B", background: "#F9E4B7" }}
             />
             <Select
               defaultValue="all"
-              style={{ width: 200 }}
+              style={{ width: 200, borderRadius: 20 }}
               onChange={(value) => setStatusFilter(value)}
+              dropdownStyle={{ borderRadius: 12 }}
             >
-              <Option value="all">All Status</Option>
-              <Option value="pending">Pending</Option>
-              <Option value="processing">Processing</Option>
-              <Option value="completed">Completed</Option>
-              <Option value="cancelled">Cancelled</Option>
+              <Option value="all">Tất cả trạng thái</Option>
+              <Option value="pending">Chờ xử lý</Option>
+              <Option value="processing">Đang xử lý</Option>
+              <Option value="completed">Hoàn thành</Option>
+              <Option value="cancelled">Đã hủy</Option>
             </Select>
+            <Button
+              type="default"
+              icon={<DownloadOutlined />}
+              style={{ color: "#D97B41", borderColor: "#D97B41", background: "#fff", boxShadow: "none", outline: "none", fontWeight: 600 }}
+            >
+              Filter + Export to PDF/Excel
+            </Button>
           </div>
 
           <Table
@@ -220,67 +235,79 @@ const OrderManagement: React.FC = () => {
             loading={loading}
             rowKey="id"
             pagination={{
-              pageSize: 10,
+              pageSize: 5,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} orders`,
+              showTotal: (total) => `Tổng ${total} đơn hàng`,
             }}
+            style={{ background: "#fff", borderRadius: 12 }}
+            scroll={{ x: 1000 }}
           />
         </Card>
 
         <Modal
-          title="Order Details"
+          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 24 }}>Chi tiết đơn hàng</span>}
           open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={null}
           width={800}
+          style={{ borderRadius: 16 }}
+          bodyStyle={{ background: "#FFF3D6", borderRadius: 16, padding: 24 }}
         >
           {selectedOrder && (
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label="Order ID">
-                {selectedOrder.id}
-              </Descriptions.Item>
-              <Descriptions.Item label="Customer">
-                {selectedOrder.customerName}
-              </Descriptions.Item>
-              <Descriptions.Item label="Order Date">
-                {new Date(selectedOrder.orderDate).toLocaleString()}
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag
-                  icon={getStatusIcon(selectedOrder.status)}
-                  color={getStatusColor(selectedOrder.status)}
-                >
-                  {selectedOrder.status.toUpperCase()}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Total Amount" span={2}>
-                {selectedOrder.totalAmount.toLocaleString()}đ
-              </Descriptions.Item>
-              <Descriptions.Item label="Order Items" span={2}>
-                <Table
-                  dataSource={selectedOrder.items}
-                  columns={[
-                    {
-                      title: "Item",
-                      dataIndex: "name",
-                      key: "name",
-                    },
-                    {
-                      title: "Quantity",
-                      dataIndex: "quantity",
-                      key: "quantity",
-                    },
-                    {
-                      title: "Price",
-                      dataIndex: "price",
-                      key: "price",
-                      render: (price: number) => `${price.toLocaleString()}đ`,
-                    },
-                  ]}
-                  pagination={false}
-                />
-              </Descriptions.Item>
-            </Descriptions>
+            <Card
+              style={{
+                background: "#fff",
+                borderRadius: 16,
+                boxShadow: "0 2px 8px rgba(217, 123, 65, 0.1)",
+                border: "1px solid #E9C97B",
+                padding: 16,
+              }}
+            >
+              <Descriptions
+                bordered
+                column={2}
+                size="middle"
+                style={{ background: "#fff", borderRadius: 12 }}
+                labelStyle={{ color: "#A05A2C", fontWeight: 600 }}
+                contentStyle={{ color: "#333" }}
+              >
+                <Descriptions.Item label="Mã đơn hàng">{selectedOrder.id}</Descriptions.Item>
+                <Descriptions.Item label="Khách hàng">{selectedOrder.customerName}</Descriptions.Item>
+                <Descriptions.Item label="Ngày đặt">{new Date(selectedOrder.orderDate).toLocaleString()}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <Tag
+                    icon={getStatusIcon(selectedOrder.status)}
+                    color={getStatusColor(selectedOrder.status)}
+                    style={{
+                      color: selectedOrder.status === "pending" || selectedOrder.status === "processing" ? "#A05A2C" : "#fff",
+                      fontWeight: 600,
+                      background: getStatusColor(selectedOrder.status),
+                      borderRadius: 12,
+                      padding: "0 12px",
+                    }}
+                  >
+                    {selectedOrder.status.toUpperCase()}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tổng tiền" span={2}>
+                  {selectedOrder.totalAmount.toLocaleString()}đ
+                </Descriptions.Item>
+                <Descriptions.Item label="Sản phẩm" span={2}>
+                  <Table
+                    dataSource={selectedOrder.items}
+                    columns={[
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Tên</span>, dataIndex: "name", key: "name" },
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Số lượng</span>, dataIndex: "quantity", key: "quantity" },
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Đơn giá</span>, dataIndex: "price", key: "price", render: (price: number) => `${price.toLocaleString()}đ` },
+                    ]}
+                    pagination={false}
+                    rowKey="id"
+                    size="middle"
+                    style={{ background: "#fff", borderRadius: 8 }}
+                  />
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
           )}
         </Modal>
       </div>
