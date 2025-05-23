@@ -12,8 +12,15 @@ import {
   SearchOutlined,
   BellOutlined,
   DownOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  SyncOutlined,
+  PrinterOutlined,
+  FilterOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import "./ManagerSidebar.css";
 
 const { Header, Sider, Content } = Layout;
 
@@ -29,9 +36,48 @@ const ManagerSidebar: React.FC = () => {
       label: "Tổng quan",
     },
     {
-      key: "/manager/orders",
+      key: "orders",
       icon: <ShoppingCartOutlined />,
       label: "Quản lý đơn hàng",
+      children: [
+        {
+          key: "/manager/orders",
+          icon: <EyeOutlined />,
+          label: "Xem đơn hàng",
+        },
+        {
+          key: "/manager/orders/confirm",
+          icon: <CheckCircleOutlined />,
+          label: "Xác nhận đơn",
+        },
+        {
+          key: "/manager/orders/update-status",
+          icon: <SyncOutlined />,
+          label: "Cập nhật trạng thái",
+        },
+        {
+          key: "/manager/orders/print",
+          icon: <PrinterOutlined />,
+          label: "In đơn hàng",
+        },
+      ],
+    },
+    {
+      key: "revenue",
+      icon: <LineChartOutlined />,
+      label: "Quản lý doanh thu",
+      children: [
+        {
+          key: "/manager/revenue/filter",
+          icon: <FilterOutlined />,
+          label: "Lọc doanh thu",
+        },
+        {
+          key: "/manager/revenue/analysis",
+          icon: <BarChartOutlined />,
+          label: "Phân tích doanh thu",
+        },
+      ],
     },
     {
       key: "/manager/customers",
@@ -103,6 +149,7 @@ const ManagerSidebar: React.FC = () => {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
+          defaultOpenKeys={["orders", "revenue"]}
           onClick={({ key }) => navigate(key)}
           items={menuItems}
           style={{
@@ -110,6 +157,7 @@ const ManagerSidebar: React.FC = () => {
             borderRight: 0,
             backgroundColor: "transparent",
           }}
+          className="manager-menu"
         />
       </Sider>
 
@@ -136,6 +184,8 @@ const ManagerSidebar: React.FC = () => {
               width: 64,
               height: 64,
               color: "#f97316",
+              outline: "none",
+          border: "none",
             }}
           />
 

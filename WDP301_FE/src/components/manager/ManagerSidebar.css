@@ -1,0 +1,19 @@
+.manager-menu .ant-menu-item-selected,
+.manager-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background: #fff !important;
+  color: #f97316 !important;
+  font-weight: 600;
+}
+
+.manager-menu .ant-menu-item-selected .anticon {
+  color: #f97316 !important;
+}
+
+.manager-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
+  color: #f97316;
+  font-weight: 600;
+}
+
+.manager-menu .ant-menu-submenu-open > .ant-menu-submenu-title .anticon {
+  color: #f97316;
+}

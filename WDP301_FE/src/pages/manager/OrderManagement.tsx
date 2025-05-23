@@ -190,7 +190,8 @@ const OrderManagement: React.FC = () => {
 
   return (
     <div style={{ display: "flex" }}>
-      <div style={{ padding: "24px", width: "100%" }}>
+      <div style={{ width: "100%" }}>
+        <h2 style={{ fontSize: "30px", fontWeight: "bold", color: "#f97316" }}>Quản lý đơn hàng</h2>
         <Card>
           <div style={{ marginBottom: 16, display: "flex", gap: 16 }}>
             <Input
