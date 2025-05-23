@@ -292,6 +292,7 @@ const PlaceOrderPage = () => {
     },
     dropdownContainer: {
       marginBottom: 15,
+      marginHorizontal: 5,
     },
     dropdownLabel: {
       fontFamily: FONTS.regular,
@@ -301,11 +302,11 @@ const PlaceOrderPage = () => {
     },
     dropdown: {
       flexDirection: "row",
-      gap: 10,
+      gap: 9,
     },
     dropdownItem: {
       flex: 1,
-      padding: 10,
+      padding: 6,
       borderRadius: 8,
       borderWidth: 1,
       borderColor: APP_COLOR.BROWN,
@@ -320,7 +321,7 @@ const PlaceOrderPage = () => {
       color: APP_COLOR.BROWN,
     },
     selectedDropdownText: {
-      color: "white",
+      color: APP_COLOR.WHITE,
     },
     errorText: {
       color: "red",
@@ -855,18 +856,19 @@ const PlaceOrderPage = () => {
                   loading={loading}
                   title="Tạo đơn hàng"
                   onPress={() => {
-                    handleCreateOrder(
-                      values.promotionCode,
-                      values.note,
-                      values.address,
-                      values.phoneNumber,
-                      values.branchId,
-                      values.pointUsed,
-                      values.pointEarned,
-                      values.paymentMethodId,
-                      values.orderItems,
-                      values.pickUp
-                    );
+                    // handleCreateOrder(
+                    //   values.promotionCode,
+                    //   values.note,
+                    //   values.address,
+                    //   values.phoneNumber,
+                    //   values.branchId,
+                    //   values.pointUsed,
+                    //   values.pointEarned,
+                    //   values.paymentMethodId,
+                    //   values.orderItems,
+                    //   values.pickUp
+                    // );
+                    router.navigate("/(auth)/order.success");
                   }}
                   textStyle={{
                     textTransform: "uppercase",
