@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Modal, Descriptions, Space, message } from "antd";
+import { Table, Button, Tag, Modal, Descriptions, Space, message, Card } from "antd";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -55,9 +55,7 @@ const ConfirmOrders: React.FC = () => {
       title: "Bạn có chắc chắn muốn xác nhận đơn hàng này?",
       okText: "Xác nhận",
       cancelText: "Hủy",
-      okButtonProps: {
-        style: { borderColor: "#f97316", outline: "none", boxShadow: "none", background: "#f97316", border: "#f97316" },
-      },
+      okButtonProps: { style: { background: "#D97B41", borderColor: "#D97B41", outline: "none", boxShadow: "none" } },
       onOk: () => {
         setOrders((prev) => prev.filter((order) => order.id !== id));
         message.success("Đã xác nhận đơn hàng!");
@@ -70,10 +68,7 @@ const ConfirmOrders: React.FC = () => {
       title: "Bạn có chắc chắn muốn từ chối đơn hàng này?",
       okText: "Từ chối",
       cancelText: "Hủy",
-      okButtonProps: {
-        danger: true,
-        style: { borderColor: "#f97316", outline: "none", boxShadow: "none", border: "#f97316" },
-      },
+      okButtonProps: { style: { background: "#A05A2C", borderColor: "#A05A2C", outline: "none", boxShadow: "none" } },
       onOk: () => {
         setOrders((prev) => prev.filter((order) => order.id !== id));
         message.error("Đã từ chối đơn hàng!");
@@ -83,97 +78,79 @@ const ConfirmOrders: React.FC = () => {
 
   const columns = [
     {
-      title: "Mã đơn",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Mã đơn</span>,
       dataIndex: "id",
       key: "id",
     },
     {
-      title: "Khách hàng",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Khách hàng</span>,
       dataIndex: "customerName",
       key: "customerName",
     },
     {
-      title: "Ngày đặt",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Ngày đặt</span>,
       dataIndex: "orderDate",
       key: "orderDate",
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
-      title: "Tổng tiền",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Tổng tiền</span>,
       dataIndex: "totalAmount",
       key: "totalAmount",
       render: (amount: number) => `${amount.toLocaleString()}đ`,
     },
     {
-      title: "Trạng thái",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Trạng thái</span>,
       dataIndex: "status",
       key: "status",
       render: (status: string) => {
         if (status === "pending")
           return (
-            <Tag icon={<ClockCircleOutlined />} color="warning">
+            <Tag icon={<ClockCircleOutlined />} color="#E9C97B" style={{ color: "#A05A2C", fontWeight: 600, background: "#F9E4B7", borderRadius: 12, padding: "0 12px" }}>
               Chờ xác nhận
             </Tag>
           );
         if (status === "confirmed")
           return (
-            <Tag icon={<CheckCircleOutlined />} color="success">
+            <Tag icon={<CheckCircleOutlined />} color="#D97B41" style={{ color: "#fff", fontWeight: 600, background: "#FAD2A5", borderRadius: 12, padding: "0 12px" }}>
               Đã xác nhận
             </Tag>
           );
         return (
-          <Tag icon={<CloseCircleOutlined />} color="error">
+          <Tag icon={<CloseCircleOutlined />} color="#A05A2C" style={{ color: "#fff", fontWeight: 600, background: "#D9B28C", borderRadius: 12, padding: "0 12px" }}>
             Đã từ chối
           </Tag>
         );
       },
     },
     {
-      title: "Hành động",
+      title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Hành động</span>,
       key: "actions",
       render: (_: any, record: Order) => (
-        <Space>
+        <Space size={12}>
           <Button
-            type="text"
+            type="link"
             icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedOrder(record);
-              setModalVisible(true);
-            }}
-            style={{
-              border: "none",
-              color: "#f97316",
-              boxShadow: "none",
-              outline: "none",
-            }}
-            className="custom-orange-button"
+            onClick={() => { setSelectedOrder(record); setModalVisible(true); }}
+            style={{ color: "#D97B41", fontWeight: 600, padding: 0 }}
           >
             Chi tiết
           </Button>
           <Button
             type="primary"
             icon={<CheckCircleOutlined />}
-            style={{
-              background: "#f97316",
-              borderColor: "#f97316",
-              border: "#f97316",
-              boxShadow: "none",
-              outline: "none",
-            }}
+            style={{ background: "#D97B41", borderColor: "#D97B41", boxShadow: "none", outline: "none", fontWeight: 600 }}
             disabled={record.status !== "pending"}
             onClick={() => handleConfirm(record.id)}
           >
             Xác nhận
           </Button>
           <Button
-            danger
+            type="default"
             icon={<CloseCircleOutlined />}
+            style={{ color: "#A05A2C", borderColor: "#A05A2C", background: "#fff", boxShadow: "none", outline: "none", fontWeight: 600 }}
             disabled={record.status !== "pending"}
             onClick={() => handleReject(record.id)}
-            style={{
-              boxShadow: "none",
-              outline: "none",
-            }}
           >
             Từ chối
           </Button>
@@ -183,103 +160,95 @@ const ConfirmOrders: React.FC = () => {
   ];
 
   return (
-    <div
-      style={{
-        maxWidth: 1100,
-        background: "#fff",
-        borderRadius: 8,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        <h2
-          style={{
-            color: "#f97316",
-            fontWeight: 700,
-            fontSize: 28,
-            marginBottom: 24,
-          }}
-        >
+    <div style={{ minHeight: "100vh", background: "#FFF3D6"}}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <h2 style={{ color: "#D97B41", fontWeight: 800, fontSize: 36, marginBottom: 24, textAlign: "left" }}>
           Xác nhận đơn hàng
         </h2>
-        <Button
-          type="primary"
-          style={{ background: "#f97316", borderColor: "#f97316", border: "#f97316", outline: "none"}}
+        <Card
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            boxShadow: "0 4px 12px rgba(217, 123, 65, 0.1)",
+            border: "1px solid #E9C97B",
+          }}
         >
-            Xác nhận tất cả
-        </Button>
+          <Table
+            columns={columns}
+            dataSource={orders}
+            rowKey="id"
+            pagination={{ pageSize: 5, showSizeChanger: true }}
+            style={{ background: "#fff", borderRadius: 12 }}
+            scroll={{ x: 1000 }}
+          />
+        </Card>
+        <Modal
+          open={modalVisible}
+          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 24 }}>Chi tiết đơn hàng</span>}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={800}
+          style={{ borderRadius: 16 }}
+          bodyStyle={{ background: "#FFF3D6", borderRadius: 16, padding: 24 }}
+        >
+          {selectedOrder && (
+            <Card
+              style={{
+                background: "#fff",
+                borderRadius: 16,
+                boxShadow: "0 2px 8px rgba(217, 123, 65, 0.1)",
+                border: "1px solid #E9C97B",
+                padding: 16,
+              }}
+            >
+              <Descriptions
+                bordered
+                column={2}
+                size="middle"
+                style={{ background: "#fff", borderRadius: 12 }}
+                labelStyle={{ color: "#A05A2C", fontWeight: 600 }}
+                contentStyle={{ color: "#333" }}
+              >
+                <Descriptions.Item label="Mã đơn">{selectedOrder.id}</Descriptions.Item>
+                <Descriptions.Item label="Khách hàng">{selectedOrder.customerName}</Descriptions.Item>
+                <Descriptions.Item label="Ngày đặt">{new Date(selectedOrder.orderDate).toLocaleString()}</Descriptions.Item>
+                <Descriptions.Item label="Tổng tiền">{selectedOrder.totalAmount.toLocaleString()}đ</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái" span={2}>
+                  {selectedOrder.status === "pending" && (
+                    <Tag icon={<ClockCircleOutlined />} color="#E9C97B" style={{ color: "#A05A2C", fontWeight: 600, background: "#F9E4B7", borderRadius: 12, padding: "0 12px" }}>
+                      Chờ xác nhận
+                    </Tag>
+                  )}
+                  {selectedOrder.status === "confirmed" && (
+                    <Tag icon={<CheckCircleOutlined />} color="#D97B41" style={{ color: "#fff", fontWeight: 600, background: "#FAD2A5", borderRadius: 12, padding: "0 12px" }}>
+                      Đã xác nhận
+                    </Tag>
+                  )}
+                  {selectedOrder.status === "rejected" && (
+                    <Tag icon={<CloseCircleOutlined />} color="#A05A2C" style={{ color: "#fff", fontWeight: 600, background: "#D9B28C", borderRadius: 12, padding: "0 12px" }}>
+                      Đã từ chối
+                    </Tag>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Sản phẩm" span={2}>
+                  <Table
+                    dataSource={selectedOrder.items}
+                    columns={[
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Tên</span>, dataIndex: "name", key: "name" },
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Số lượng</span>, dataIndex: "quantity", key: "quantity" },
+                      { title: <span style={{ color: "#A05A2C", fontWeight: 700 }}>Đơn giá</span>, dataIndex: "price", key: "price", render: (p: number) => `${p.toLocaleString()}đ` },
+                    ]}
+                    pagination={false}
+                    rowKey="id"
+                    size="middle"
+                    style={{ background: "#fff", borderRadius: 8 }}
+                  />
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          )}
+        </Modal>
       </div>
-      <Table
-        columns={columns}
-        dataSource={orders}
-        rowKey="id"
-        pagination={{ pageSize: 8 }}
-      />
-      <Modal
-        open={modalVisible}
-        title="Chi tiết đơn hàng"
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={700}
-      >
-        {selectedOrder && (
-          <Descriptions bordered column={2}>
-            <Descriptions.Item label="Mã đơn">
-              {selectedOrder.id}
-            </Descriptions.Item>
-            <Descriptions.Item label="Khách hàng">
-              {selectedOrder.customerName}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày đặt">
-              {new Date(selectedOrder.orderDate).toLocaleString()}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tổng tiền">
-              {selectedOrder.totalAmount.toLocaleString()}đ
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái" span={2}>
-              {selectedOrder.status === "pending" && (
-                <Tag icon={<ClockCircleOutlined />} color="warning">
-                  Chờ xác nhận
-                </Tag>
-              )}
-              {selectedOrder.status === "confirmed" && (
-                <Tag icon={<CheckCircleOutlined />} color="success">
-                  Đã xác nhận
-                </Tag>
-              )}
-              {selectedOrder.status === "rejected" && (
-                <Tag icon={<CloseCircleOutlined />} color="error">
-                  Đã từ chối
-                </Tag>
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Sản phẩm" span={2}>
-              <Table
-                dataSource={selectedOrder.items}
-                columns={[
-                  { title: "Tên", dataIndex: "name", key: "name" },
-                  { title: "Số lượng", dataIndex: "quantity", key: "quantity" },
-                  {
-                    title: "Đơn giá",
-                    dataIndex: "price",
-                    key: "price",
-                    render: (p: number) => `${p.toLocaleString()}đ`,
-                  },
-                ]}
-                pagination={false}
-                rowKey="id"
-                size="small"
-              />
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Modal>
     </div>
   );
 };
