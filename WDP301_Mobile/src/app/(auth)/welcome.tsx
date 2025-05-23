@@ -264,6 +264,7 @@ const WelcomePage = () => {
                   pressStyle={{ alignSelf: "stretch" }}
                 />
                 <ShareButton
+                  title=" "
                   onPress={handleQuickLogin}
                   textStyle={styles.loginBtnText}
                   btnStyle={styles.loginBtnFast}

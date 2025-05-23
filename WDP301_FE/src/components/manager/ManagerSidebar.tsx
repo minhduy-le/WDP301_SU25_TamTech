@@ -4,7 +4,6 @@ import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  ShoppingCartOutlined,
   UserOutlined,
   BarChartOutlined,
   SettingOutlined,
@@ -14,13 +13,13 @@ import {
   DownOutlined,
   EyeOutlined,
   CheckCircleOutlined,
-  SyncOutlined,
-  PrinterOutlined,
-  FilterOutlined,
-  LineChartOutlined,
+  ShoppingFilled,
+  TagOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
+import logo from '../../assets/logo-footer.png';
 
 const { Header, Sider, Content } = Layout;
 
@@ -29,15 +28,18 @@ const ManagerSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const siderWidth = 200;
+  const siderCollapsedWidth = 80;
+
   const menuItems = [
     {
-      key: "manager/dashboard",
+      key: "/manager/dashboard",
       icon: <BarChartOutlined />,
       label: "Tổng quan",
     },
     {
       key: "orders",
-      icon: <ShoppingCartOutlined />,
+      icon: <ShoppingFilled/>,
       label: "Quản lý đơn hàng",
       children: [
         {
@@ -53,9 +55,19 @@ const ManagerSidebar: React.FC = () => {
       ],
     },
     {
-      key: "/manager/customers",
+      key: "/manager/products",
+      icon: <ShoppingOutlined />,
+      label: "Quản lý sản phẩm",
+    },
+    {
+      key: "/manager/promotions",
+      icon: <TagOutlined />,
+      label: "Quản lý khuyến mãi",
+    },
+    {
+      key: "/manager/staffs",
       icon: <UserOutlined />,
-      label: "Quản lý khách hàng",
+      label: "Quản lý nhân viên",
     },
     {
       key: "/manager/settings",
@@ -71,7 +83,7 @@ const ManagerSidebar: React.FC = () => {
       icon: <UserOutlined />,
     },
     {
-      key: "settings",
+      key: "settingsMenu",
       label: "Cài đặt",
       icon: <SettingOutlined />,
     },
@@ -92,9 +104,17 @@ const ManagerSidebar: React.FC = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
+        width={siderWidth} 
+        collapsedWidth={siderCollapsedWidth} 
         style={{
           backgroundColor: "#D97B41",
           boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
+          position: 'fixed', 
+          height: '100vh',   
+          left: 0,          
+          top: 0,
+          zIndex: 1000,       
+          overflowY: 'auto', 
         }}
         className="aside-sidebar"
       >
@@ -105,7 +125,8 @@ const ManagerSidebar: React.FC = () => {
             textAlign: "center",
             borderBottom: "1px solid #E9C97B",
             marginBottom: "8px",
-            background: "#D97B41",
+            background: "#D97B41", 
+            width: "100%",
           }}
         >
           <h2
@@ -116,27 +137,45 @@ const ManagerSidebar: React.FC = () => {
               fontWeight: "bold",
               transition: "all 0.3s",
               letterSpacing: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '60px', 
             }}
           >
-            {collapsed ? "MP" : "Manager Panel"}
+            <img 
+              src={logo} 
+              alt="logo" 
+              style={{ 
+                maxHeight: '100%', 
+                maxWidth: collapsed ? '90%' : '70%', 
+                objectFit: 'contain',
+                transition: 'all 0.3s'
+              }} 
+            />
           </h2>
         </div>
         <Menu
           className="manager-menu"
           mode="inline"
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={["orders", "revenue"]}
+          defaultOpenKeys={["orders", "revenue"]} 
           onClick={({ key }) => navigate(key)}
           items={menuItems}
           style={{
-            height: "100%",
             borderRight: 0,
             backgroundColor: "#D97B41",
           }}
         />
       </Sider>
 
-      <Layout>
+      <Layout
+        style={{
+          marginLeft: collapsed ? siderCollapsedWidth : siderWidth,
+          transition: 'margin-left 0.2s', 
+          minHeight: "100vh",
+        }}
+      >
         <Header
           style={{
             background: "#FFF3D6",
@@ -145,9 +184,9 @@ const ManagerSidebar: React.FC = () => {
             padding: "0 24px",
             borderBottom: "1px solid #E9C97B",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-            position: "sticky",
+            position: "sticky", 
             top: 0,
-            zIndex: 1,
+            zIndex: 999, 
           }}
         >
           <Button
@@ -180,9 +219,10 @@ const ManagerSidebar: React.FC = () => {
                 width: 200,
                 borderRadius: "20px",
                 background: "#F9E4B7",
-                color: "#A05A2C",
+                color: "#A05A2C", 
                 border: "1px solid #E9C97B",
               }}
+              
             />
 
             <Button
@@ -240,9 +280,7 @@ const ManagerSidebar: React.FC = () => {
         <Content
           style={{
             background: "#FFF3D6",
-            minHeight: 280,
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+            minHeight: 280, 
           }}
         >
           <Outlet />
