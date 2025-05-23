@@ -24,7 +24,6 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     paddingHorizontal: 10,
-    paddingTop: 3,
     borderRadius: 10,
     height: 40,
     width: "100%",
@@ -48,6 +47,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
     borderColor: APP_COLOR.BROWN,
+    marginVertical: "auto",
   },
   checkboxChecked: {
     backgroundColor: APP_COLOR.BROWN,
@@ -80,6 +80,7 @@ interface IProps {
   editable?: boolean;
   resetForm?: boolean;
   isBoolean?: boolean;
+  placeholder?: string;
   dropdownItems?: { id: string; title: string }[];
 }
 
@@ -101,6 +102,7 @@ const CustomerInforInput = (props: IProps) => {
     resetForm = false,
     isBoolean = false,
     dropdownItems,
+    placeholder,
   } = props;
 
   useEffect(() => {
@@ -131,8 +133,6 @@ const CustomerInforInput = (props: IProps) => {
                 fontFamily: FONTS.medium,
                 fontSize: 17,
                 color: APP_COLOR.BROWN,
-                position: "relative",
-                bottom: 2,
               }}
             >
               {value ? "Có" : "Không"}
@@ -185,6 +185,8 @@ const CustomerInforInput = (props: IProps) => {
               if (onBlur) onBlur(e);
               setIsFocus(false);
             }}
+            placeholder={placeholder}
+            placeholderTextColor={APP_COLOR.BROWN}
             keyboardType={keyboardType}
             style={[
               styles.input,

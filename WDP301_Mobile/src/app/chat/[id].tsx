@@ -94,14 +94,14 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: APP_COLOR.BROWN,
+    backgroundColor: APP_COLOR.ORANGE,
   },
   otherMessage: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(81, 80, 80, 0.7)",
+    backgroundColor: APP_COLOR.DARK_YELLOW,
   },
   messageText: {
-    color: APP_COLOR.WHITE,
+    color: APP_COLOR.BROWN,
     fontSize: 16,
     fontFamily: FONTS.regular,
   },

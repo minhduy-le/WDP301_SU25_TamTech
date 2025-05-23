@@ -34,7 +34,7 @@ const QRCodeScannerScreen = () => {
           setCanOpenUrl(supported);
         })
         .catch((err) => {
-          console.error("Error checking URL:", err);
+          console.error("Lỗi xác thực URL:", err);
           setCanOpenUrl(false);
         });
     } else {
@@ -47,11 +47,11 @@ const QRCodeScannerScreen = () => {
     setHasPermission(status === "granted");
     if (status !== "granted") {
       Alert.alert(
-        "Permission Denied",
-        "You need to grant camera access to scan QR codes. Please go to settings to enable it.",
+        "Quyền bị từ chối",
+        "Bạn cần cấp quyền truy cập camera để quét mã QR. Vui lòng vào cài đặt để bật tính năng này.",
         [
-          { text: "Cancel", style: "cancel" },
-          { text: "Open Settings", onPress: () => Linking.openSettings() },
+          { text: "Hủy", style: "cancel" },
+          { text: "Mở cài đặt", onPress: () => Linking.openSettings() },
         ]
       );
     }
@@ -70,7 +70,7 @@ const QRCodeScannerScreen = () => {
             Requesting for camera permission...
           </Text>
           <Button
-            title={"Grant Permission"}
+            title={"Cấp quyền"}
             onPress={askForCameraPermission}
             color={APP_COLOR.BROWN || "#A52A2A"}
           />
@@ -92,7 +92,7 @@ const QRCodeScannerScreen = () => {
             No access to camera. Please grant permission in settings.
           </Text>
           <Button
-            title={"Grant Permission"}
+            title={"Cấp quyền"}
             onPress={askForCameraPermission}
             color={APP_COLOR.BROWN || "#A52A2A"}
           />
@@ -105,9 +105,7 @@ const QRCodeScannerScreen = () => {
       const { type, data } = scanningResult;
       setScanned(true);
       setScannedData({ type, data });
-      console.log(
-        `Bar code with type ${type} and data ${data} has been scanned!`
-      );
+      console.log(`Loại: ${type}, dữ liệu ${data}`);
     } else {
       console.log(
         "Scanned result did not contain data or type:",
@@ -140,12 +138,12 @@ const QRCodeScannerScreen = () => {
             <View style={styles.scanMarkerContainer}>
               <View style={styles.scanMarker}></View>
             </View>
-            <Text style={styles.instructions}>Scan a QR code or barcode</Text>
+            <Text style={styles.instructions}>Quét mã QR hoặc Barcode</Text>
             <View style={styles.buttonContainer}>
               <Button
-                title={`Switch to ${
-                  cameraType === "back" ? "Front" : "Back"
-                } Camera`}
+                title={`Đổi sang camera ${
+                  cameraType === "back" ? "trước" : "sau"
+                }`}
                 onPress={toggleCameraType}
                 color={APP_COLOR.BROWN || "#007AFF"}
               />
@@ -154,12 +152,12 @@ const QRCodeScannerScreen = () => {
         </CameraView>
       ) : (
         <View style={styles.scanResultContainer}>
-          <Text style={styles.resultTitle}>Scan Result:</Text>
+          <Text style={styles.resultTitle}>Đã scan</Text>
           <Text style={styles.resultText}>Type: {scannedData?.type}</Text>
           <Text style={styles.resultText}>Data: {scannedData?.data}</Text>
           {scannedData?.data && canOpenUrl && (
             <Button
-              title="Open Link"
+              title="Mở Link"
               onPress={() =>
                 scannedData?.data && Linking.openURL(scannedData.data)
               }
@@ -168,7 +166,7 @@ const QRCodeScannerScreen = () => {
           )}
           <View style={{ marginTop: 20 }}>
             <Button
-              title={"Scan Again"}
+              title={"Quét lại"}
               onPress={() => {
                 setScanned(false);
                 setScannedData(null);
