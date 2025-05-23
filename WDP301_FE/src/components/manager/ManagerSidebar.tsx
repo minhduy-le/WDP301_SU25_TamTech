@@ -31,7 +31,7 @@ const ManagerSidebar: React.FC = () => {
 
   const menuItems = [
     {
-      key: "/manager/dashboard",
+      key: "manager/dashboard",
       icon: <BarChartOutlined />,
       label: "Tổng quan",
     },
@@ -46,37 +46,10 @@ const ManagerSidebar: React.FC = () => {
           label: "Xem đơn hàng",
         },
         {
-          key: "/manager/orders/confirm",
+          key: "/manager/orders/confirm-orders",
           icon: <CheckCircleOutlined />,
           label: "Xác nhận đơn",
-        },
-        {
-          key: "/manager/orders/update-status",
-          icon: <SyncOutlined />,
-          label: "Cập nhật trạng thái",
-        },
-        {
-          key: "/manager/orders/print",
-          icon: <PrinterOutlined />,
-          label: "In đơn hàng",
-        },
-      ],
-    },
-    {
-      key: "revenue",
-      icon: <LineChartOutlined />,
-      label: "Quản lý doanh thu",
-      children: [
-        {
-          key: "/manager/revenue/filter",
-          icon: <FilterOutlined />,
-          label: "Lọc doanh thu",
-        },
-        {
-          key: "/manager/revenue/analysis",
-          icon: <BarChartOutlined />,
-          label: "Phân tích doanh thu",
-        },
+        }
       ],
     },
     {
@@ -120,7 +93,7 @@ const ManagerSidebar: React.FC = () => {
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "#D97B41",
           boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
         }}
         className="aside-sidebar"
@@ -130,23 +103,26 @@ const ManagerSidebar: React.FC = () => {
           style={{
             padding: "24px 16px",
             textAlign: "center",
-            borderBottom: "1px solid #f0f0f0",
+            borderBottom: "1px solid #E9C97B",
             marginBottom: "8px",
+            background: "#D97B41",
           }}
         >
           <h2
             style={{
-              color: "#f97316",
+              color: "#fff",
               margin: 0,
               fontSize: collapsed ? "20px" : "24px",
               fontWeight: "bold",
               transition: "all 0.3s",
+              letterSpacing: 1,
             }}
           >
             {collapsed ? "MP" : "Manager Panel"}
           </h2>
         </div>
         <Menu
+          className="manager-menu"
           mode="inline"
           selectedKeys={[location.pathname]}
           defaultOpenKeys={["orders", "revenue"]}
@@ -155,20 +131,19 @@ const ManagerSidebar: React.FC = () => {
           style={{
             height: "100%",
             borderRight: 0,
-            backgroundColor: "transparent",
+            backgroundColor: "#D97B41",
           }}
-          className="manager-menu"
         />
       </Sider>
 
       <Layout>
         <Header
           style={{
-            background: "#fff",
+            background: "#FFF3D6",
             display: "flex",
             alignItems: "center",
             padding: "0 24px",
-            borderBottom: "1px solid #f0f0f0",
+            borderBottom: "1px solid #E9C97B",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
             position: "sticky",
             top: 0,
@@ -183,9 +158,10 @@ const ManagerSidebar: React.FC = () => {
               fontSize: "16px",
               width: 64,
               height: 64,
-              color: "#f97316",
+              color: "#D97B41",
               outline: "none",
-          border: "none",
+              border: "none",
+              background: "transparent",
             }}
           />
 
@@ -199,10 +175,13 @@ const ManagerSidebar: React.FC = () => {
           >
             <Input
               placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined />}
+              prefix={<SearchOutlined style={{ color: '#A05A2C' }} />}
               style={{
                 width: 200,
                 borderRadius: "20px",
+                background: "#F9E4B7",
+                color: "#A05A2C",
+                border: "1px solid #E9C97B",
               }}
             />
 
@@ -211,12 +190,13 @@ const ManagerSidebar: React.FC = () => {
               icon={<BellOutlined />}
               style={{
                 fontSize: "18px",
-                color: "#f97316",
+                color: "#D97B41",
                 width: 40,
                 height: 40,
                 outline: "none",
                 boxShadow: "none",
                 border: "none",
+                background: "transparent",
               }}
             />
 
@@ -237,7 +217,7 @@ const ManagerSidebar: React.FC = () => {
                   backgroundColor: "transparent",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f5f5f5";
+                  e.currentTarget.style.backgroundColor = "#E9C97B";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
@@ -246,11 +226,12 @@ const ManagerSidebar: React.FC = () => {
                 <Avatar
                   icon={<UserOutlined />}
                   style={{
-                    backgroundColor: "#f97316",
+                    backgroundColor: "#A05A2C",
+                    color: "#fff",
                   }}
                 />
-                <span style={{ color: "#666" }}>Admin</span>
-                <DownOutlined style={{ color: "#666" }} />
+                <span style={{ color: "#A05A2C", fontWeight: 600 }}>Admin</span>
+                <DownOutlined style={{ color: "#A05A2C" }} />
               </div>
             </Dropdown>
           </div>
@@ -258,9 +239,7 @@ const ManagerSidebar: React.FC = () => {
 
         <Content
           style={{
-            margin: "24px",
-            padding: 24,
-            background: "#fff",
+            background: "#FFF3D6",
             minHeight: 280,
             borderRadius: "8px",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
