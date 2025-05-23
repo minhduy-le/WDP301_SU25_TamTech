@@ -1,5 +1,5 @@
 import { Layout, Menu, Button, Input } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
 import { ShoppingCartOutlined, SearchOutlined } from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
@@ -12,6 +12,7 @@ const { Header } = Layout;
 
 const Navbar = () => {
   const [isCartVisible, setIsCartVisible] = useState(false);
+  const navigate = useNavigate();
 
   const handleCartClick = () => {
     setIsCartVisible(!isCartVisible);
@@ -61,6 +62,7 @@ const Navbar = () => {
           type="text"
           icon={<AccountIcon />}
           style={{ color: "#d97706", marginRight: "10px" }}
+          onClick={() => navigate("/user-information")}
         />
         <Button
           type="text"
