@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useCallback } from "react";
 import { Dimensions, Image, Platform, Text, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, {
@@ -27,12 +28,14 @@ function BannerHome() {
     return () => clearInterval(interval);
   }, []);
 
-  const onPressPagination = (index: number) => {
-    ref.current?.scrollTo({
-      count: index - progress.value,
-      animated: true,
-    });
-  };
+  const onPressPagination = useCallback((index: number) => {
+    if (ref.current) {
+      ref.current.scrollTo({
+        index: index,
+        animated: true,
+      });
+    }
+  }, []);
 
   const sliders = [
     { id: 1, source: bn1 },
