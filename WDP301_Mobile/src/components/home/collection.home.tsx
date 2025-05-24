@@ -258,13 +258,15 @@ const CollectionHome = (props: IProps) => {
                           color: APP_COLOR.BUTTON_YELLOW,
                           fontFamily: FONTS.semiBold,
                           fontSize: 22,
+                          position: "relative",
+                          top: -5,
                         }}
                       >
                         5
                       </Text>
                       <AntDesign
                         name="star"
-                        size={24}
+                        size={20}
                         color={APP_COLOR.BUTTON_YELLOW}
                       />
                     </View>

@@ -149,6 +149,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           fontFamily: FONTS.bold,
           fontSize: 15,
           marginLeft: 5,
+          color: APP_COLOR.BROWN,
         }}
       >
         Giao đến:
@@ -169,6 +170,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
             fontSize: 15,
             width: Platform.OS === "android" ? "70%" : "60%",
             zIndex: 999,
+            color: APP_COLOR.BROWN,
           }}
           numberOfLines={1}
           ellipsizeMode="tail"
