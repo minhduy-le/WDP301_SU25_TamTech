@@ -9,7 +9,7 @@ import Footer from "./components/Footer";
 import Login from "./pages/Login";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOTP from "./pages/VerifyOTP";
-// import Sidebar from "./components/Sidebar";
+// import Sidebar from "./components/Sidebar";np
 import Dashboard from "./pages/manager/Dashboard";
 import Register from "./pages/Register";
 import HomePage from "./pages/HomePage";
