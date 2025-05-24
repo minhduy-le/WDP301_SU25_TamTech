@@ -89,7 +89,7 @@ router.post("/", verifyToken, async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const productTypes = await productTypeService.getProductTypes();
     res.status(200).json(productTypes);
