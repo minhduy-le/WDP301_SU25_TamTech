@@ -87,6 +87,10 @@ const Order = sequelize.define(
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
+    note: {
+      type: DataTypes.STRING(1000),
+      allowNull: true,
+    },
     order_create_at: {
       type: DataTypes.DATE,
       allowNull: false,
