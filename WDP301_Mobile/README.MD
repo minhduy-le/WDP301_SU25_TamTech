@@ -1,3 +1,4 @@
-# SWD/EXE PROJECT
+# WEB DEVELOPMENT PROJECT | FPT UNIVERSITY | SU25
 
-Customer App
+Customers/Manager/Admin Web Application
+Customers Mobile App

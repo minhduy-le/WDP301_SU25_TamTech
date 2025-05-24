@@ -482,7 +482,6 @@ const PlaceOrderPage = () => {
           <View
             style={{
               flexDirection: "row",
-              marginTop: Platform.OS === "ios" ? 20 : 0,
             }}
           >
             <View style={styles.headerContainer}>

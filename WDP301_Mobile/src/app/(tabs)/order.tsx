@@ -3,7 +3,9 @@ import { jwtDecode } from "jwt-decode";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -229,9 +231,19 @@ const OrderPage = () => {
       params: { id: id },
     });
   };
-
+  const handleCancelOrder = (id: string) => {
+    Alert.alert("Bạn muốn hủy?", "Hoạt động này không thể hoàn tác", [
+      { text: "Hủy", style: "cancel" },
+      { text: "Xác nhận", onPress: () => Alert.alert("Đã hủy") },
+    ]);
+  };
+  const handleFeedback = (id: string) => {
+    router.navigate({
+      pathname: "/(user)/like/[id]",
+      params: { id: id },
+    });
+  };
   const [decodeToken, setDecodeToken] = useState<any>("");
-
   useEffect(() => {
     const fetchOrderHistoryWithToken = async () => {
       try {
@@ -478,28 +490,61 @@ const OrderPage = () => {
                     </View>
                     <View style={{ flexDirection: "row" }}>
                       <View style={styles.container}>
-                        <TouchableOpacity
-                          style={styles.button}
-                          onPress={() => handleViewDetails(item.orderId)}
-                        >
-                          <Text style={styles.buttonText}>Xem chi tiết</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.button,
-                            { backgroundColor: APP_COLOR.ORANGE },
-                          ]}
-                          onPress={() => handleViewDetails(item.orderId)}
-                        >
-                          <Text
-                            style={[
-                              styles.buttonText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            Đánh giá
-                          </Text>
-                        </TouchableOpacity>
+                        {item.orderStatus === "Đã giao" ? (
+                          <>
+                            <TouchableOpacity
+                              style={styles.button}
+                              onPress={() => handleViewDetails(item.orderId)}
+                            >
+                              <Text style={styles.buttonText}>
+                                Xem chi tiết
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.button,
+                                { backgroundColor: APP_COLOR.ORANGE },
+                              ]}
+                              onPress={() => handleFeedback(item.orderId)}
+                            >
+                              <Text
+                                style={[
+                                  styles.buttonText,
+                                  { color: APP_COLOR.WHITE },
+                                ]}
+                              >
+                                Đánh giá
+                              </Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.button}
+                              onPress={() => handleViewDetails(item.orderId)}
+                            >
+                              <Text style={styles.buttonText}>
+                                Xem chi tiết
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.button,
+                                { backgroundColor: APP_COLOR.ORANGE },
+                              ]}
+                              onPress={() => handleCancelOrder(item.orderId)}
+                            >
+                              <Text
+                                style={[
+                                  styles.buttonText,
+                                  { color: APP_COLOR.WHITE },
+                                ]}
+                              >
+                                Hủy
+                              </Text>
+                            </TouchableOpacity>
+                          </>
+                        )}
                       </View>
                     </View>
                   </View>

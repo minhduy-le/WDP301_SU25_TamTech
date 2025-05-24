@@ -149,6 +149,7 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           fontFamily: FONTS.bold,
           fontSize: 15,
           marginLeft: 5,
+          color: APP_COLOR.BROWN,
         }}
       >
         Giao đến:
@@ -168,6 +169,8 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
             fontFamily: FONTS.medium,
             fontSize: 15,
             width: Platform.OS === "android" ? "70%" : "60%",
+            zIndex: 999,
+            color: APP_COLOR.BROWN,
           }}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -191,35 +194,6 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
           transform: [{ translateY: -25 }],
         }}
       />
-
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.branchModalContent}>
-            <Text style={styles.modalHeader}>Chọn chi nhánh</Text>
-            <FlatList
-              data={branchesInfo}
-              renderItem={({ item }: { item: IPropsBranches }) => (
-                <Pressable onPress={() => handleBranchSelect(item)}>
-                  <Text style={styles.branchItemHeader}>
-                    {item.branch.name} {"     "}
-                    {(item.distance / 1000).toFixed(1)} Km
-                  </Text>
-                  <Text style={styles.branchItem}>{item.branch.address}</Text>
-                </Pressable>
-              )}
-              keyExtractor={(item: any) => item.id}
-            />
-            <Pressable onPress={() => setIsModalVisible(false)}>
-              <Text style={styles.closeButton}>Đóng</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };

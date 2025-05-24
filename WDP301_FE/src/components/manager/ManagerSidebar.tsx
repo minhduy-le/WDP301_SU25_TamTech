@@ -16,6 +16,7 @@ import {
   ShoppingFilled,
   TagOutlined,
   ShoppingOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
@@ -64,6 +65,12 @@ const ManagerSidebar: React.FC = () => {
       icon: <TagOutlined />,
       label: "Quản lý khuyến mãi",
     },
+    {
+      key: "/manager/feedbacks",
+      icon: <MessageOutlined />,
+      label: "Quản lý phản hồi",
+    },
+    
     {
       key: "/manager/staffs",
       icon: <UserOutlined />,
@@ -217,7 +224,7 @@ const ManagerSidebar: React.FC = () => {
               prefix={<SearchOutlined style={{ color: '#A05A2C' }} />}
               style={{
                 width: 200,
-                borderRadius: "20px",
+                borderRadius: "25px",
                 background: "#F9E4B7",
                 color: "#A05A2C", 
                 border: "1px solid #E9C97B",

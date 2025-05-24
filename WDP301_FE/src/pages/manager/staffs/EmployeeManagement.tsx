@@ -12,8 +12,8 @@ import {
   message,
   Tooltip,
   DatePicker,
-  Avatar, // Thêm Avatar
-  Upload,   // Thêm Upload
+  Avatar,
+  Upload,   
   Descriptions,
 } from "antd";
 import {
@@ -421,7 +421,7 @@ const EmployeeManagement: React.FC = () => {
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B" }}
+                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
                 allowClear
               />
               <Select
@@ -458,7 +458,6 @@ const EmployeeManagement: React.FC = () => {
             dataSource={filteredEmployees}
             loading={loading}
             rowKey="employeeId"
-            pagination={{ pageSize: 8, showSizeChanger: true, showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} nhân viên` }}
             style={{ borderRadius: 8, border: `1px solid ${tableBorderColor}`, overflow: 'hidden' }}
             rowClassName={(_, index) => (index % 2 === 0 ? 'even-row-emp' : 'odd-row-emp')}
             sticky

@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   eye: {
     position: "absolute",
     right: 10,
-    top: 18,
+    top: 13,
   },
 });
 interface IProps {
@@ -102,7 +102,7 @@ const ShareInput = (props: IProps) => {
             style={styles.eye}
             name={isShowPassword ? "eye" : "eye-slash"}
             size={15}
-            color="black"
+            color={APP_COLOR.BROWN}
             onPress={() => setIsShowPassword(!isShowPassword)}
           />
         )}
