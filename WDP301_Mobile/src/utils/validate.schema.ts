@@ -38,7 +38,13 @@ export const SignUpSchema = Yup.object().shape({
   phoneNumber: Yup.string().required("Số điện thoại không được để trống"),
 });
 export const CustomerSignUpSchema = Yup.object().shape({
+  fullName: Yup.string().required("Tên không được để trống "),
   phoneNumber: Yup.string().required("Số điện thoại không được để trống"),
+  email: Yup.string().required("Email không được để trống"),
+  password: Yup.string().required("Mật khẩu không được để trống"),
+  confirmPassword: Yup.string()
+    .required("Xác nhận mật khẩu không được để trống")
+    .oneOf([Yup.ref("password")], "Không trùng với mật khẩu"),
 });
 export const CustomerSignInSchema = Yup.object().shape({
   phoneNumber: Yup.string().required("Số điện thoại không được để trống"),
@@ -61,7 +67,7 @@ export const UpdateUserPasswordSchema = Yup.object().shape({
 
   confirmNewPassword: Yup.string()
     .required("Mật khẩu xác nhận không được để trống")
-    .oneOf([Yup.ref("newPassword")], "Passwords must match"),
+    .oneOf([Yup.ref("newPassword")], "Không trùng với mật khẩu"),
 });
 
 export const RequestPasswordSchema = Yup.object().shape({
