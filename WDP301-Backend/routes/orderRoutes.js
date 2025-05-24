@@ -23,7 +23,7 @@ const provinceMapping = {
 };
 
 const standardizeProvince = (province) => {
-  if (!province) return "TP. Hồ Chí Minh"; // Giá trị mặc định nếu không xác định được
+  if (!province) return "TP. Hồ Chí Minh"; // Default value if province is not specified
   const normalizedProvince = province.trim().toUpperCase();
   return provinceMapping[normalizedProvince] || provinceMapping[province] || province;
 };
@@ -52,25 +52,38 @@ const standardizeProvince = (province) => {
  *                 type: array
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - productId
+ *                     - quantity
+ *                     - price
  *                   properties:
  *                     productId:
  *                       type: integer
+ *                       description: ID of the product
  *                     quantity:
  *                       type: integer
+ *                       description: Quantity of the product
  *                     price:
  *                       type: number
+ *                       description: Price per unit of the product
  *               order_discount_value:
  *                 type: number
  *                 description: Discount value applied to the order
+ *                 nullable: true
  *               order_shipping_fee:
  *                 type: number
  *                 description: Shipping fee for the order
  *               payment_method_id:
  *                 type: integer
- *                 description: "Payment method ID (1: Vnpay, 2: Momo, 3: Zalopay, 4: PayOS)"
+ *                 description: "Payment method ID (1 for Vnpay, 2 for Momo, 3 for Zalopay, 4 for PayOS)"
  *               order_address:
  *                 type: string
  *                 description: Delivery address for the order
+ *               note:
+ *                 type: string
+ *                 description: Optional note for the order (e.g., special delivery instructions)
+ *                 nullable: true
+ *                 example: "Please deliver after 5 PM"
  *     responses:
  *       201:
  *         description: Order created successfully
@@ -210,7 +223,7 @@ router.get("/cancel", async (req, res) => {
       console.log("Order not found for orderId:", orderId);
       return res.status(404).json({ message: "Order not found" });
     }
-    // Có thể cập nhật trạng thái thành "Cancelled" nếu cần
+    // Optionally update status to "Cancelled" if needed
     console.log("Payment cancelled for orderId:", orderId);
     res.status(200).json({ message: "Payment cancelled" });
   } catch (error) {
@@ -333,7 +346,7 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       });
     }
 
-    // Sử dụng giá trị mặc định cho weight nếu không được cung cấp
+    // Use default weight if not provided
     const defaultWeight = weight || 1000;
 
     // Default pick address (sender address)
@@ -388,7 +401,7 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       throw new Error(`GHTK Error: ${response.data.message || "Unknown error"}`);
     }
 
-    // Lấy đúng giá trị fee từ response.data.fee.fee
+    // Get the correct fee value from response.data.fee.fee
     const shippingFee = response.data.fee && response.data.fee.fee ? response.data.fee.fee : 0;
     if (shippingFee === 0) {
       console.warn("Warning: GHTK returned zero shipping fee, possible invalid data.");
@@ -400,7 +413,7 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       address: deliver_address,
     });
 
-    // Chỉ trả về status, message, và fee
+    // Return only status, message, and fee
     res.status(200).json({
       status: 200,
       message: "Shipping fee calculated and address saved successfully",
