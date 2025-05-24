@@ -1,42 +1,76 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 
-interface ApiResponse<T> {
+interface GenericApiResponse<T> {
   status: number;
   message: string;
-  products?: T;
+  data?: T;
 }
+
+interface ProductApiResponse {
+  status: number;
+  message: string;
+  products?: ProductDto[];
+}
+// interface ApiResponse<T> {
+//   status: number;
+//   message: string;
+//   products?: T;
+// }
 export interface ProductDto {
-  productId: string;
+  productId: number;
   name: string;
   description: string;
-  price: string;
+  price: number;
   image: string;
   createAt: Date;
-  productTypeId: string;
+  productTypeId: number;
   createBy: string;
-  storeId: string;
+  storeId: number;
   isActive: boolean;
+  ProductType: {
+    productTypeId: number;
+    name: string;
+  };
+  ProductRecipes: [
+    {
+      productRecipeId: number;
+      productId: number;
+      materialId: number;
+      quantity: number;
+      Material: {
+        materialId: number;
+        name: string;
+        quantity: number;
+        storeId: number;
+      };
+    }
+  ];
 }
 
 interface MutationVariables {
-  productId: string;
+  productId: number;
   data: ProductDto;
 }
 
 const fetchProducts = async (): Promise<ProductDto[]> => {
   // const response = await axiosInstance.get<ProductDto[]>("products");
   const response = await axiosInstance.get("products");
+  // const {
+  //   status,
+  //   message: responseMessage,
+  //   products,
+  // } = response.data as ApiResponse<ProductDto[]>;
   const {
     status,
     message: responseMessage,
-    products,
-  } = response.data as ApiResponse<ProductDto[]>;
+    data,
+  } = response.data as GenericApiResponse<ProductDto[]>;
   // return response.data;
-  if (status >= 200 && status < 300 && products) {
-    return Array.isArray(products) ? products : [];
+  if (status >= 200 && status < 300 && data) {
+    return Array.isArray(data) ? data : [];
   }
-  throw new Error(responseMessage || "Không thể tải danh sách khách hàng");
+  throw new Error(responseMessage || "Không thể tải danh sách sản phẩm");
 };
 
 export const useProducts = () => {
@@ -55,7 +89,7 @@ export const useCreateProduct = () => {
   });
 };
 
-export const useGetProductById = (productId: string) => {
+export const useGetProductById = (productId: number) => {
   return useQuery<ProductDto, Error>({
     queryKey: ["products", productId],
     queryFn: async () => {
@@ -87,8 +121,8 @@ export const useUpdateProduct = () => {
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, string>({
-    mutationFn: async (productId: string): Promise<void> => {
+  return useMutation<void, Error, number>({
+    mutationFn: async (productId: number): Promise<void> => {
       await axiosInstance.delete(`products/${productId}`);
     },
     onSuccess: () => {
@@ -97,15 +131,72 @@ export const useDeleteProduct = () => {
   });
 };
 
-export const useGetProductByTypeId = (productTypeId: string) => {
-  return useQuery<ProductDto, Error>({
+// export const useGetProductByTypeId = (productTypeId: string) => {
+//   return useQuery<ProductDto, Error>({
+//     queryKey: ["type", productTypeId],
+//     queryFn: async () => {
+//       const response = await axiosInstance.get<ProductDto>(
+//         `products/type/${productTypeId}`
+//       );
+//       return response.data;
+//     },
+//     enabled: !!productTypeId,
+//   });
+// };
+export const useGetProductByTypeId = (productTypeId: number) => {
+  return useQuery<ProductDto[], Error>({
     queryKey: ["type", productTypeId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ProductDto>(
+      const response = await axiosInstance.get(
         `products/type/${productTypeId}`
       );
-      return response.data;
+      console.log("Raw API Response:", response.data); // Debug log
+      // Directly use ProductApiResponse to match the API structure
+      const {
+        status,
+        message: responseMessage,
+        products,
+      } = response.data as ProductApiResponse;
+      console.log("Processed Response:", {
+        status,
+        message: responseMessage,
+        products,
+      }); // Debug log
+      if (status >= 200 && status < 300 && products) {
+        const processedProducts = Array.isArray(products)
+          ? products.map((product) => ({
+              ...product,
+              price:
+                typeof product.price === "string"
+                  ? parseFloat(product.price)
+                  : product.price,
+            }))
+          : [];
+        return processedProducts;
+      }
+      throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
     },
     enabled: !!productTypeId,
   });
 };
+// export const useGetProductByTypeId = (productTypeId: number) => {
+//   return useQuery<ProductDto[], Error>({
+//     queryKey: ["type", productTypeId],
+//     queryFn: async () => {
+//       const response = await axiosInstance.get(
+//         `products/type/${productTypeId}`
+//       );
+//       const {
+//         status,
+//         message: responseMessage,
+//         products,
+//       } = response.data as ApiResponse<ProductDto[]>;
+
+//       if (status >= 200 && status < 300 && products) {
+//         return Array.isArray(products) ? products : [];
+//       }
+//       throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+//     },
+//     enabled: !!productTypeId,
+//   });
+// };
