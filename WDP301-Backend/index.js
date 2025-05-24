@@ -44,7 +44,7 @@ app.use("/api/profiles", profileRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/shippers", shipperRoutes);
 app.use("/api/chat", chatRoutes);
-app.use("/api/districts", districtsRoutes);
+app.use("/api/location", districtsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
