@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, {useState, useMemo } from "react";
 import {
   Table,
   Button,
@@ -34,7 +34,7 @@ import timezone from 'dayjs/plugin/timezone';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault(dayjs.tz.guess()); // Hoặc "Asia/Ho_Chi_Minh"
+dayjs.tz.setDefault(dayjs.tz.guess()); 
 
 const { Option } = Select;
 
@@ -44,10 +44,10 @@ interface Employee {
   email: string;
   phoneNumber: string;
   role: string;
-  joinDate: string; // ISO String
-  dateOfBirth?: string; // ISO String, optional
-  address?: string; // optional
-  avatarUrl?: string; // URL string, optional
+  joinDate: string; 
+  dateOfBirth?: string; 
+  address?: string; 
+  avatarUrl?: string; 
   status: 'active' | 'inactive';
 }
 
@@ -105,10 +105,10 @@ const EmployeeManagement: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalMode, setModalMode] = useState<"view" | "add" | "edit">("view");
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [avatarFileList, setAvatarFileList] = useState<UploadFile[]>([]);
 
 
@@ -456,7 +456,7 @@ const EmployeeManagement: React.FC = () => {
             className="employee-table"
             columns={styledColumns as any}
             dataSource={filteredEmployees}
-            loading={loading}
+            // loading={loading}
             rowKey="employeeId"
             style={{ borderRadius: 8, border: `1px solid ${tableBorderColor}`, overflow: 'hidden' }}
             rowClassName={(_, index) => (index % 2 === 0 ? 'even-row-emp' : 'odd-row-emp')}
@@ -490,7 +490,7 @@ const EmployeeManagement: React.FC = () => {
                       setAvatarFileList([]);
                     }}
                     style={{ borderRadius: 6 }}
-                    disabled={isSubmitting} 
+                    // disabled={isSubmitting} 
                   >
                     Hủy
                   </Button>,
@@ -499,7 +499,7 @@ const EmployeeManagement: React.FC = () => {
                     type="primary"
                     onClick={handleModalOk}
                     style={{ background: "#D97B41", borderColor: "#D97B41", borderRadius: 6 }}
-                    loading={isSubmitting} 
+                    // loading={isSubmitting} 
                   >
                     {modalMode === "add" ? "Thêm mới" : "Cập nhật"}
                   </Button>,
