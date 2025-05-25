@@ -105,3 +105,56 @@
 .anticon-container {
   margin-right: 0 !important;
 }
+
+.edit {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.edit svg {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.edit-profile {
+  font-size: 15px;
+  color: #da7339;
+  font-family: "Montserrat", sans-serif;
+  cursor: pointer;
+}
+
+.modal-edit-profile .ant-modal-content {
+  background-color: #efe6db;
+}
+
+.edit-title {
+  font-weight: 700;
+  font-size: 20px;
+  text-align: center;
+  color: #2d1e1a;
+  font-family: "Montserrat", sans-serif;
+}
+
+.modal-edit-profile .ant-form-item-required,
+.modal-edit-profile .ant-form-item-label {
+  font-family: "Montserrat", sans-serif;
+}
+
+.modal-edit-profile .ant-form-item-required::before {
+  display: none !important;
+}
+
+.modal-edit-profile .ant-input {
+  background: #ebd187;
+  font-family: "Montserrat", sans-serif;
+}
+.update-profile-btn {
+  background-color: #78a243 !important;
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+}

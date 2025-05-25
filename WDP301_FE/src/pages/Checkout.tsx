@@ -318,7 +318,7 @@ const Checkout = () => {
             <Radio.Group defaultValue="cash">
               <Space direction="vertical">
                 <Radio
-                  value="qr"
+                  value="4"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Quét mã QR

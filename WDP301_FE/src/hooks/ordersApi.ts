@@ -36,7 +36,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (newOrder: CreateOrder) => {
       const response = await axiosInstance.post(`orders`, newOrder);
-      return response.data;
+      return response.data as OrderReponseDto;
     },
   });
 };

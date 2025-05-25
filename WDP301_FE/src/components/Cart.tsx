@@ -14,7 +14,7 @@ import { useState } from "react";
 const { Text } = Typography;
 
 interface CartItem {
-  userId: string;
+  userId: number;
   productId: number;
   productName: string;
   addOns: { productId: number; productTypeName: string; quantity: number }[];
