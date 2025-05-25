@@ -1,6 +1,6 @@
-import LatestTransaction from "../../components/admin/Dashboard/LatestTransaction";
-import MonthlyEarnings from "../../components/admin/Dashboard/MonthlyEarnings";
-import Satistics from "../../components/admin/Dashboard/Satistics";
+import LatestTransaction from "../../../components/manager/dashboard/LatestTransaction";
+import MonthlyEarnings from "../../../components/manager/dashboard/MonthlyEarnings";
+import Satistics from "../../../components/manager/dashboard/Satistics";
 
 export default function Dashboard() {
   return (

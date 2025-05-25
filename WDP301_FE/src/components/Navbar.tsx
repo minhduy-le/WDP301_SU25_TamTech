@@ -38,7 +38,6 @@ const Navbar = () => {
         </Menu.Item>
       </Menu>
       <Input
-        className="header-search"
         placeholder="Tìm kiếm món ăn, combo, cửa hàng..."
         prefix={<SearchOutlined style={{ color: "#da7339" }} />}
         style={{
@@ -50,6 +49,9 @@ const Navbar = () => {
           margin: "0 24px",
           fontSize: 16,
           color: "#7c4a03",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center", 
         }}
       />
       <div className="header-icon">

@@ -2,15 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Row, Col, Button, InputNumber, Card, Tag } from 'antd';
 import axios from 'axios';
 
-interface Item {
-  id: number;
-  name: string;
-  image: string;
-  description?: string;
-  price: number;
-  quantity?: number;
-  isFavorite?: boolean;
-}
 
 interface Product {
   productId: number;

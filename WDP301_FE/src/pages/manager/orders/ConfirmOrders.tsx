@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect} from "react";
 import {
   Table,
   Tag,
@@ -174,25 +174,25 @@ const ConfirmOrders: React.FC = () => {
       width: 150,
       align: 'center' as const,
       render: (status: string) => {
-        let color = "#A05A2C";
+        // let color = "";
         let icon = <ClockCircleOutlined />;
         let text = "Chờ xác nhận";
         let tagTextColor = cellTextColor;
         let tagBgColor = "#F9E4B7";
 
         if (status === "pending") {
-            color = "#F9E4B7";
+            // color = "#F9E4B7";
             icon = <ClockCircleOutlined style={{color: "#A05A2C"}}/>;
             tagTextColor = "#A05A2C";
             tagBgColor = "#F9E4B7";
         } else if (status === "confirmed") {
-            color = "#87d068";
+            // color = "#87d068";
             icon = <CheckCircleOutlined style={{color: "#fff"}}/>;
             text = "Đã xác nhận";
             tagTextColor = "#fff";
             tagBgColor = "#81C784";
         } else if (status === "rejected") {
-            color = "#f50";
+            // color = "#f50";
             icon = <CloseCircleOutlined style={{color: "#fff"}}/>;
             text = "Đã từ chối";
             tagTextColor = "#fff";

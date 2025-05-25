@@ -10,8 +10,7 @@ import {
   Tabs,
   List,
   Avatar,
-  Card,
-  Tag,
+  Card
 } from "antd";
 import { HeartOutlined} from "@ant-design/icons";
 import "./ProductDetail.css";
