@@ -1,23 +1,32 @@
-import { Layout, Menu } from "antd";
+import { Divider, Layout, Menu, Modal, Form, Input, Button } from "antd";
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
 import OrderTracking from "./OrderTracking";
 import OrderHistory from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
-import { ContainerOutlined } from "@ant-design/icons";
+import { ContainerOutlined, EditOutlined } from "@ant-design/icons";
 import SearchIcon from "../components/icon/SearchIcon";
 import PromotionIcon from "../components/icon/PromotionIcon";
 import HomeSideIcon from "../components/icon/HomeSideIcon";
 import AddressOrder from "./AdressOrder";
 import Promotion from "./Promotion";
 import { useLocation, useNavigationType } from "react-router-dom";
+import { useAuthStore } from "../hooks/usersApi";
+import { useGetProfileUser, useUpdateProfile } from "../hooks/profileApi";
 
 const { Sider, Content } = Layout;
 
 const UserInfomation = () => {
   const [activePage, setActivePage] = useState("1");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
   const location = useLocation();
   const navigationType = useNavigationType();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  const { data: userProfile, refetch } = useGetProfileUser(userId || 0);
+  const { mutate: updateProfile } = useUpdateProfile();
 
   const handleMenuClick = (e: { key: string }) => {
     setActivePage(e.key);
@@ -39,24 +48,60 @@ const UserInfomation = () => {
       }
     }
   }, [location.pathname, navigationType]);
-  // useEffect(() => {
-  //   const savedTab = localStorage.getItem("userInfoActiveTab");
-  //   if (savedTab && location.pathname === "/user-information") {
-  //     setActivePage(savedTab);
-  //   } else {
-  //     setActivePage("1");
-  //     localStorage.setItem("userInfoActiveTab", "1");
-  //   }
-  // }, [location.pathname]);
+
+  const showModal = () => {
+    form.setFieldsValue({
+      fullName: userProfile?.fullName || "",
+      dateOfBirth: userProfile?.date_of_birth || "",
+      phoneNumber: userProfile?.phone_number || "",
+      email: userProfile?.email || "",
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    form.validateFields().then((values) => {
+      updateProfile(
+        {
+          id: userId || 0,
+          data: values,
+        },
+        {
+          onSuccess: () => {
+            refetch();
+            setIsModalVisible(false);
+          },
+          onError: (error) => {
+            console.error("Update failed:", error);
+          },
+        }
+      );
+    });
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
 
   return (
     <div className="user-info-container">
       <Layout style={{ minHeight: "510px", background: "#fff7e6" }}>
         <Sider width={300} className="user-sider">
           <div className="user-details">
-            <p className="user-name">Dummy Tester VietNamese</p>
-            <p className="user-email">0902346789</p>
-            <p className="user-email">dummytestervietnamese@gmail.com</p>
+            <p className="user-name">
+              {userProfile?.fullName || "Dummy Tester VietNamese"}
+            </p>
+            <p className="user-email">
+              {userProfile?.phone_number || "0902346789"}
+            </p>
+            <p className="user-email">
+              {userProfile?.email || "dummytestervietnamese@gmail.com"}
+            </p>
+            <div className="edit" onClick={showModal}>
+              <EditOutlined style={{ color: "#da7339" }} />
+              <div className="edit-profile">Chỉnh sửa</div>
+            </div>
+            <Divider style={{ borderTop: "1px solid #da7339" }} />
             <Menu
               mode="vertical"
               className="sidebar-menu"
@@ -117,7 +162,8 @@ const UserInfomation = () => {
                       <strong>Hạng thành viên:</strong> Vàng
                     </p>
                     <p>
-                      <strong>Điểm tích lũy:</strong> 100 điểm
+                      <strong>Điểm tích lũy:</strong>{" "}
+                      {userProfile?.member_point || "100 điểm"}
                     </p>
                     <p>
                       <strong>Điểm đã sử dụng:</strong> 0 điểm
@@ -136,6 +182,72 @@ const UserInfomation = () => {
           </Content>
         </Layout>
       </Layout>
+
+      <Modal
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Cập nhật"
+        cancelText="Hủy"
+        footer={null}
+        className="modal-edit-profile"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          name="updateProfile"
+          initialValues={{
+            fullName: userProfile?.fullName || "",
+            dateOfBirth: userProfile?.date_of_birth || "",
+            phoneNumber: userProfile?.phone_number || "",
+            email: userProfile?.email || "",
+          }}
+        >
+          <div className="edit-title">Thông tin thành viên</div>
+          <Divider
+            style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }}
+          />
+          <Form.Item
+            name="fullName"
+            label="Họ và tên*"
+            rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="dateOfBirth"
+            label="Ngày sinh*"
+            rules={[{ required: true, message: "Vui lòng nhập ngày sinh!" }]}
+          >
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item
+            name="phoneNumber"
+            label="Số điện thoại*"
+            rules={[
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ type: "email", message: "Email không hợp lệ!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <Button
+              type="primary"
+              onClick={handleOk}
+              className="update-profile-btn"
+            >
+              Cập nhật
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

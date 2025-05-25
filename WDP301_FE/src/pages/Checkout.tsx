@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Layout,
   Row,
@@ -12,12 +13,14 @@ import {
   Checkbox,
   Divider,
   TimePicker,
+  message,
 } from "antd";
 import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import dayjs from "dayjs";
 import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
+import { useCalculateShipping } from "../hooks/ordersApi";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -42,6 +45,7 @@ const Checkout = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
     null
   );
+  const [detailedAddress, setDetailedAddress] = useState("");
   const currentDate = dayjs().format("DD/MM/YYYY");
 
   const { data: districts = [], isLoading, isError } = useDistricts();
@@ -62,11 +66,40 @@ const Checkout = () => {
   );
   const discountOnItems = 0;
   const promoDiscount = 0;
-  const deliveryFee = 16000;
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const total = subtotal - discountOnItems - promoDiscount + deliveryFee;
 
   const handleDistrictChange = (value: number) => {
     setSelectedDistrictId(value);
+  };
+
+  const { mutate: calculateShipping } = useCalculateShipping();
+
+  const handleAddressBlur = () => {
+    if (detailedAddress && selectedDistrictId && wards.length > 0) {
+      const selectedWard = wards.find((ward) => ward.name === wards[0].name);
+      const selectedDistrict = districts.find(
+        (district) => district.districtId === selectedDistrictId
+      );
+      const deliverAddress =
+        `${detailedAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, TPHCM`.trim();
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
+          },
+          onError: (error: any) => {
+            console.error("Error calculating shipping:", error);
+            message.error(
+              "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+            );
+            setDeliveryFee(16000);
+          },
+        }
+      );
+    }
   };
 
   return (
@@ -237,6 +270,9 @@ const Checkout = () => {
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
                 }}
+                value={detailedAddress}
+                onChange={(e) => setDetailedAddress(e.target.value)}
+                onBlur={handleAddressBlur}
               />
               <div className="delivery-info">
                 <Radio.Group
@@ -282,7 +318,7 @@ const Checkout = () => {
             <Radio.Group defaultValue="cash">
               <Space direction="vertical">
                 <Radio
-                  value="qr"
+                  value="4"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Quét mã QR

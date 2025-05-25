@@ -62,7 +62,7 @@ interface AddOn {
 }
 
 interface CartItem {
-  userId: string;
+  userId: number;
   productId: number;
   productName: string;
   addOns: AddOn[];
@@ -73,9 +73,9 @@ interface CartItem {
 interface CartState {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  getCartItemsByUserId: (userId: string) => CartItem[];
+  getCartItemsByUserId: (userId: number) => CartItem[];
   clearCart: () => void;
-  clearCartForUser: (userId: string) => void; // Optional: Clear cart for a specific user
+  clearCartForUser: (userId: number) => void; // Optional: Clear cart for a specific user
 }
 
 export const useCartStore = create<CartState>()(
@@ -106,12 +106,12 @@ export const useCartStore = create<CartState>()(
           return { cartItems: [...existingCart, item] };
         }),
 
-      getCartItemsByUserId: (userId: string) =>
+      getCartItemsByUserId: (userId: number) =>
         get().cartItems.filter((item) => item.userId === userId),
 
       clearCart: () => set({ cartItems: [] }),
 
-      clearCartForUser: (userId: string) =>
+      clearCartForUser: (userId: number) =>
         set((state) => ({
           cartItems: state.cartItems.filter((item) => item.userId !== userId),
         })),
