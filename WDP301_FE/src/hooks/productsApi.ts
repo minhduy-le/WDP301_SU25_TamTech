@@ -7,10 +7,36 @@ interface GenericApiResponse<T> {
   data?: T;
 }
 
+// export const useGetProductById = (productId: string) => {
+//   return useQuery<ProductDto, Error>({
+//     queryKey: ["products", productId],
+//     queryFn: async () => {
+//       const response = await axiosInstance.get(`products/${productId}`);
+//       const {
+//         status,
+//         message: responseMessage,
+//         product,
+//       } = response.data as ProductDetailApiResponse;
+
+//       if (status >= 200 && status < 300 && product && product.length > 0) {
+//         return product[0];
+//       }
+//       throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+//     },
+//     enabled: !!productId,
+//   });
+// };
+
 interface ProductApiResponse {
   status: number;
   message: string;
   products?: ProductDto[];
+}
+
+interface ProductDetailApiResponse {
+  status: number;
+  message: string;
+  product?: ProductDto;
 }
 // interface ApiResponse<T> {
 //   status: number;
@@ -54,19 +80,12 @@ interface MutationVariables {
 }
 
 const fetchProducts = async (): Promise<ProductDto[]> => {
-  // const response = await axiosInstance.get<ProductDto[]>("products");
   const response = await axiosInstance.get("products");
-  // const {
-  //   status,
-  //   message: responseMessage,
-  //   products,
-  // } = response.data as ApiResponse<ProductDto[]>;
   const {
     status,
     message: responseMessage,
     data,
   } = response.data as GenericApiResponse<ProductDto[]>;
-  // return response.data;
   if (status >= 200 && status < 300 && data) {
     return Array.isArray(data) ? data : [];
   }
@@ -89,14 +108,21 @@ export const useCreateProduct = () => {
   });
 };
 
-export const useGetProductById = (productId: number) => {
+export const useGetProductById = (productId: string) => {
   return useQuery<ProductDto, Error>({
     queryKey: ["products", productId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ProductDto>(
-        `products/${productId}`
-      );
-      return response.data;
+      const response = await axiosInstance.get(`products/${productId}`);
+      const {
+        status,
+        message: responseMessage,
+        product,
+      } = response.data as ProductDetailApiResponse;
+
+      if (status >= 200 && status < 300 && product) {
+        return product;
+      }
+      throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
     },
     enabled: !!productId,
   });
@@ -150,18 +176,11 @@ export const useGetProductByTypeId = (productTypeId: number) => {
       const response = await axiosInstance.get(
         `products/type/${productTypeId}`
       );
-      console.log("Raw API Response:", response.data); // Debug log
-      // Directly use ProductApiResponse to match the API structure
       const {
         status,
         message: responseMessage,
         products,
       } = response.data as ProductApiResponse;
-      console.log("Processed Response:", {
-        status,
-        message: responseMessage,
-        products,
-      }); // Debug log
       if (status >= 200 && status < 300 && products) {
         const processedProducts = Array.isArray(products)
           ? products.map((product) => ({
@@ -179,24 +198,3 @@ export const useGetProductByTypeId = (productTypeId: number) => {
     enabled: !!productTypeId,
   });
 };
-// export const useGetProductByTypeId = (productTypeId: number) => {
-//   return useQuery<ProductDto[], Error>({
-//     queryKey: ["type", productTypeId],
-//     queryFn: async () => {
-//       const response = await axiosInstance.get(
-//         `products/type/${productTypeId}`
-//       );
-//       const {
-//         status,
-//         message: responseMessage,
-//         products,
-//       } = response.data as ApiResponse<ProductDto[]>;
-
-//       if (status >= 200 && status < 300 && products) {
-//         return Array.isArray(products) ? products : [];
-//       }
-//       throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
-//     },
-//     enabled: !!productTypeId,
-//   });
-// };
