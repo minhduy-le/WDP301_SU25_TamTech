@@ -5,18 +5,32 @@ import { ShoppingCartOutlined, SearchOutlined } from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
 import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Cart from "./Cart";
+import { useAuthStore } from "../hooks/usersApi";
+import { useCartStore } from "../store/cart.store";
 
 const { Header } = Layout;
 
 const Navbar = () => {
   const [isCartVisible, setIsCartVisible] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  // const { getCartItemsByUserId } = useCartStore();
+  const { getCartItemsByUserId, clearCartForUser } = useCartStore();
 
   const handleCartClick = () => {
     setIsCartVisible(!isCartVisible);
   };
+
+  useEffect(() => {
+    if (!user?.id) {
+      // Optionally clear the cart if no user is logged in
+      // clearCartForUser(user?.id || ""); // Uncomment if you want to clear on logout
+    }
+  }, [user, clearCartForUser]);
+
+  const cartItems = user?.id ? getCartItemsByUserId(user.id) : [];
 
   return (
     <Header>
@@ -25,10 +39,10 @@ const Navbar = () => {
       </div>
       <Menu mode="horizontal" className="header-menu">
         <Menu.Item key="1">
-          <Link to="/ve-tam-tac">Về Tấm Tác</Link>
+          <Link to="/">Về Tấm Tắc</Link>
         </Menu.Item>
         <Menu.Item key="2">
-          <Link to="/dat-hang">Đặt Hàng</Link>
+          <Link to="/menu">Menu</Link>
         </Menu.Item>
         <Menu.Item key="3">
           <Link to="/thuc-don-ai">Thực đơn từ AI</Link>
@@ -51,7 +65,7 @@ const Navbar = () => {
           color: "#7c4a03",
           display: "flex",
           justifyContent: "center",
-          alignItems: "center", 
+          alignItems: "center",
         }}
       />
       <div className="header-icon">
@@ -74,7 +88,7 @@ const Navbar = () => {
         />
         {isCartVisible && (
           <div className="cart-dropdown">
-            <Cart />
+            <Cart cartItems={cartItems} />
           </div>
         )}
       </div>

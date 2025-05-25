@@ -40,7 +40,7 @@ const Checkout = () => {
                   level={3}
                   style={{
                     margin: "0 25px 0 0",
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                 >
                   Hình thức
@@ -48,13 +48,13 @@ const Checkout = () => {
                 <Radio.Group defaultValue="delivery">
                   <Radio
                     value="delivery"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     Giao hàng
                   </Radio>
                   <Radio
                     value="pickup"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     Dùng tại quán
                   </Radio>
@@ -62,7 +62,7 @@ const Checkout = () => {
               </div>
               <Title
                 level={3}
-                style={{ fontFamily: "'Playfair Display', serif" }}
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
               >
                 Thông tin khách hàng
               </Title>
@@ -70,33 +70,33 @@ const Checkout = () => {
                 placeholder="Tên khách hàng"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <Input
                 placeholder="Số điện thoại"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <Input
                 placeholder="Email"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <Row>
                 <Title
                   level={3}
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Thông tin giao hàng
                 </Title>
                 <div className="checkbox-label">
                   <Checkbox defaultChecked />
-                  <Text style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
                     Đặt hộ
                   </Text>
                 </div>
@@ -105,14 +105,14 @@ const Checkout = () => {
                 placeholder="Tên người nhận"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <Input
                 placeholder="Số điện thoại người nhận"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <Row style={{ justifyContent: "space-between" }}>
@@ -122,7 +122,7 @@ const Checkout = () => {
                     style={{
                       width: "100%",
                       background: "transparent",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     <Option value="tinh">Tỉnh thành</Option>
@@ -134,7 +134,7 @@ const Checkout = () => {
                     style={{
                       width: "100%",
                       background: "transparent",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     <Option value="huyen">Quận huyện</Option>
@@ -148,7 +148,7 @@ const Checkout = () => {
                     style={{
                       width: "100%",
                       background: "transparent",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     <Option value="xa">Phường xã</Option>
@@ -160,7 +160,7 @@ const Checkout = () => {
                     style={{
                       width: "100%",
                       background: "transparent",
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     <Option value="duong">Đường</Option>
@@ -171,7 +171,7 @@ const Checkout = () => {
                 placeholder="Địa chỉ chi tiết"
                 style={{
                   background: "transparent",
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               />
               <div className="delivery-info">
@@ -182,7 +182,7 @@ const Checkout = () => {
                   <Radio
                     value="now"
                     style={{
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       marginBottom: 6,
                     }}
                   >
@@ -190,7 +190,7 @@ const Checkout = () => {
                   </Radio>
                   <Radio
                     value="later"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     Hẹn lịch giao lúc{" "}
                     <TimePicker
@@ -211,7 +211,7 @@ const Checkout = () => {
           <Card className="section-card payment-method">
             <Title
               level={3}
-              style={{ fontFamily: "'Playfair Display', serif", marginTop: 0 }}
+              style={{ fontFamily: "'Montserrat', sans-serif", marginTop: 0 }}
             >
               Phương thức thanh toán
             </Title>
@@ -219,25 +219,25 @@ const Checkout = () => {
               <Space direction="vertical">
                 <Radio
                   value="momo"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Ví MOMO
                 </Radio>
                 <Radio
                   value="vnpay"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Ví VNPay
                 </Radio>
                 <Radio
                   value="qr"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Quét mã QR VNPay
                 </Radio>
                 <Radio
                   value="cash"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
+                  style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Tiền mặt (COD)
                 </Radio>
@@ -250,11 +250,11 @@ const Checkout = () => {
           <Card className="confirm-card section-card order-details">
             <Title
               className="title-card"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
               TẤM TẮC LÀNG ĐẠI HỌC
             </Title>
-            <Text style={{ fontFamily: "'Playfair Display', serif" }}>
+            <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
               Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
             </Text>
             <div className="order-item" style={{ marginTop: 16 }}>
@@ -262,7 +262,7 @@ const Checkout = () => {
                 <Col>
                   <Text
                     style={{
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 17,
                     }}
                   >
@@ -270,19 +270,19 @@ const Checkout = () => {
                   </Text>
                   <Text
                     className="sub-item"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     • Canh chua
                   </Text>
                   <Text
                     className="sub-item"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     • Nước ngọt: Coca Cola
                   </Text>
                   <Text
                     className="sub-item"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     • Cơm thêm
                   </Text>
@@ -291,7 +291,7 @@ const Checkout = () => {
                   <div className="order-price">
                     <Text
                       style={{
-                        fontFamily: "'Playfair Display', serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         color: "#DA7339",
                         fontSize: 15,
                         fontWeight: 700,
@@ -314,7 +314,7 @@ const Checkout = () => {
                 <Col>
                   <Text
                     style={{
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 17,
                     }}
                   >
@@ -322,13 +322,13 @@ const Checkout = () => {
                   </Text>
                   <Text
                     className="sub-item"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     • Canh chua
                   </Text>
                   <Text
                     className="sub-item"
-                    style={{ fontFamily: "'Playfair Display', serif" }}
+                    style={{ fontFamily: "'Montserrat', sans-serif" }}
                   >
                     Ghi chú: Lấy thêm cơm
                   </Text>
@@ -337,7 +337,7 @@ const Checkout = () => {
                   <div className="order-price">
                     <Text
                       style={{
-                        fontFamily: "'Playfair Display', serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         color: "#DA7339",
                         fontSize: 15,
                         fontWeight: 700,
@@ -360,7 +360,7 @@ const Checkout = () => {
                 <Col>
                   <Text
                     style={{
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 17,
                     }}
                   >
@@ -371,7 +371,7 @@ const Checkout = () => {
                   <div className="order-price">
                     <Text
                       style={{
-                        fontFamily: "'Playfair Display', serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         color: "#DA7339",
                         fontSize: 15,
                         fontWeight: 700,
@@ -394,7 +394,7 @@ const Checkout = () => {
                 <Col>
                   <Text
                     style={{
-                      fontFamily: "'Playfair Display', serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: 17,
                     }}
                   >
@@ -405,7 +405,7 @@ const Checkout = () => {
                   <div className="order-price">
                     <Text
                       style={{
-                        fontFamily: "'Playfair Display', serif",
+                        fontFamily: "'Montserrat', sans-serif",
                         color: "#DA7339",
                         fontSize: 15,
                         fontWeight: 700,
@@ -432,7 +432,7 @@ const Checkout = () => {
                   style={{
                     marginTop: "10px",
                     background: "#efe6db",
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                 />
               </Col>
@@ -441,7 +441,7 @@ const Checkout = () => {
                   type="primary"
                   className="apply-promo"
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     height: 40,
                   }}
                 >
@@ -454,7 +454,7 @@ const Checkout = () => {
               style={{
                 marginTop: "8px",
                 background: "#efe6db",
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             />
           </Card>
@@ -463,7 +463,7 @@ const Checkout = () => {
               <div className="summary-item">
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 15,
                   }}
                 >
@@ -471,7 +471,7 @@ const Checkout = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "#DA7339",
                     fontWeight: 700,
                     fontSize: 15,
@@ -483,7 +483,7 @@ const Checkout = () => {
               <div className="summary-item">
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 15,
                   }}
                 >
@@ -491,7 +491,7 @@ const Checkout = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "#DA7339",
                     fontWeight: 700,
                     fontSize: 15,
@@ -503,7 +503,7 @@ const Checkout = () => {
               <div className="summary-item">
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 15,
                   }}
                 >
@@ -511,7 +511,7 @@ const Checkout = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "#DA7339",
                     fontWeight: 700,
                     fontSize: 15,
@@ -523,7 +523,7 @@ const Checkout = () => {
               <div className="summary-item">
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 15,
                   }}
                 >
@@ -531,7 +531,7 @@ const Checkout = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     color: "#DA7339",
                     fontWeight: 700,
                     fontSize: 15,
@@ -542,12 +542,12 @@ const Checkout = () => {
               </div>
               <Divider style={{ border: "1px solid black" }} />
               <div className="summary-item total">
-                <Text style={{ fontFamily: "'Playfair Display', serif" }}>
+                <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
                   TỔNG CỘNG
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "'Playfair Display', serif",
+                    fontFamily: "'Montserrat', sans-serif",
                     fontSize: 15,
                   }}
                 >
@@ -559,7 +559,7 @@ const Checkout = () => {
               type="primary"
               block
               className="submit-button"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
               Đặt hàng
             </Button>

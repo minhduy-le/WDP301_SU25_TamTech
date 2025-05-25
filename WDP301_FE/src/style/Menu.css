@@ -2,7 +2,7 @@
   background: #fff7e6;
   min-height: 100vh;
   padding: 20px 130px;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .menu-header {
@@ -93,7 +93,7 @@
 
 .menu-card .ant-card-body {
   padding: 0;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* .menu-column {
@@ -163,7 +163,7 @@
   border: 1px solid #2d1e1a;
   padding: 5px 10px;
   border-radius: 5px;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   width: min-content;
 }
 
@@ -184,7 +184,7 @@
   border-radius: 20px;
   height: 40px;
   padding: 0 24px;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 16px;
   display: flex;
   align-items: center;
@@ -233,7 +233,7 @@
 }
 
 .modal-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 20px;
   text-align: left;
   font-weight: 700;
@@ -253,7 +253,7 @@
 }
 
 .modal-description-item {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 16px;
   color: #2d1e1a;
   margin-bottom: 5px;
@@ -268,7 +268,7 @@
 }
 
 .modal-price {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   color: white;
   background-color: #da7339;
@@ -278,7 +278,7 @@
 
 .modal-price-first {
   color: #2d1e1a;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   text-decoration: line-through;
 }
@@ -295,7 +295,7 @@
   background-color: #d3d3d3;
   border: none;
   color: #2d1e1a;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 16px;
   width: 30px;
   height: 30px;
@@ -315,7 +315,7 @@
 }
 
 .quantity-number {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   color: #efe6db;
 }
@@ -326,7 +326,7 @@
 }
 
 .add-ons-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 17px;
   font-weight: 700;
   color: #2d1e1a;
@@ -342,13 +342,13 @@
 }
 
 .add-on-text {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   color: #2d1e1a;
 }
 
 .add-on-price {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   color: #2d1e1a;
 }
@@ -363,7 +363,7 @@
   background-color: #78a243 !important;
   border: none !important;
   color: #fff !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   font-weight: 700;
   width: 100%;

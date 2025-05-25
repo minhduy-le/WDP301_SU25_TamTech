@@ -5,6 +5,8 @@ import { useGetProductById, useGetProductByTypeId } from "../hooks/productsApi";
 import { type ProductDto } from "../hooks/productsApi";
 import { useProductTypes } from "../hooks/productTypesApi";
 import { type UseQueryResult } from "@tanstack/react-query";
+import { useAuthStore } from "../hooks/usersApi";
+import { useCartStore } from "../store/cart.store";
 
 const { Text } = Typography;
 
@@ -84,6 +86,8 @@ const Menu = () => {
   >({});
 
   const addOnProductQueries = useAddOnProducts();
+  const { user } = useAuthStore();
+  const { addToCart } = useCartStore();
 
   const getProductTypeName = (id: number) => {
     return (
@@ -111,10 +115,55 @@ const Menu = () => {
   };
 
   const handleAddToCart = () => {
-    setIsModalVisible(false);
-    setSelectedProductId(null);
-    setQuantity(1);
-    setAddOnQuantities({});
+    if (productDetail && user?.id) {
+      // Create addOns array with proper type
+      const addOnsWithPrices = addOnProductQueries
+        .flatMap(({ typeId, query }) =>
+          query.data?.map((item, index) => ({
+            productId: item.productId,
+            productTypeName: item.name,
+            quantity: addOnQuantities[`${typeId}-${index}`] || 0,
+            price: Number(item.price), // Include the price for each add-on
+          }))
+        )
+        .filter(
+          (
+            addOn
+          ): addOn is {
+            productId: number;
+            productTypeName: string;
+            quantity: number;
+            price: number;
+          } => addOn !== undefined && addOn.quantity > 0
+        );
+
+      // Calculate total price for add-ons using their own prices
+      const totalAddOnPrice = addOnsWithPrices.reduce(
+        (sum, addOn) => sum + addOn.quantity * addOn.price,
+        0
+      );
+
+      const totalPrice =
+        Number(productDetail.price) * quantity + totalAddOnPrice;
+
+      const cartItem = {
+        userId: user.id,
+        productId: productDetail.productId,
+        productName: productDetail.name,
+        addOns: addOnsWithPrices.map(
+          ({ productId, productTypeName, quantity }) => ({
+            productId,
+            productTypeName,
+            quantity,
+          })
+        ),
+        quantity,
+        totalPrice,
+      };
+
+      addToCart(cartItem);
+      handleModalClose();
+    }
   };
 
   const handleQuantityChange = (change: number) => {

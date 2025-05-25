@@ -16,7 +16,7 @@
 }
 
 .cart-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   font-size: 20px;
   font-weight: 700;
@@ -25,7 +25,7 @@
 }
 
 .cart-subtitle {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   font-size: 15px;
   display: block;
@@ -38,7 +38,7 @@
 }
 
 .cart-item-name {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   font-size: 17px;
   font-weight: 600;
@@ -46,7 +46,7 @@
 }
 
 .item-description {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   font-size: 15px;
   display: list-item;
@@ -59,14 +59,14 @@
 }
 
 .item-price {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #da7339;
   font-size: 15px;
   display: block;
 }
 
 .item-quantity {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   display: block;
 }
@@ -78,13 +78,13 @@
 }
 
 .total-text {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   font-size: 15px;
 }
 
 .total-price {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #a52a2a;
   font-size: 15px;
 }
@@ -93,7 +93,7 @@
   background-color: #78a243 !important;
   border: none;
   color: #fff !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   margin-top: 10px;
   height: 40px;

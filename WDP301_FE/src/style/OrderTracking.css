@@ -1,14 +1,14 @@
 .order-tracking-container {
   background-color: #fff7e6;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .ant-steps-item-content {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .ship-status {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   color: #2d1e1a;
   display: flex;
 }
@@ -29,7 +29,7 @@
   color: #2d1e1a;
   margin-bottom: 20px;
   font-weight: bold;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .order-info {
@@ -96,7 +96,7 @@
   padding: 10px 20px;
   font-size: 15px;
   width: max-content;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .track-order {
@@ -107,7 +107,7 @@
   padding: 10px 20px;
   font-size: 15px;
   width: max-content;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .ant-steps-icon {
