@@ -1,762 +1,120 @@
-// import { Card, Button, Row, Col, Modal, Typography } from "antd";
-// import "../style/Menu.css";
-// import { useState } from "react";
-// import { useGetProductByTypeId } from "../hooks/productsApi";
-
-// const { Text } = Typography;
-
-// const Menu = () => {
-//   const [productTypeId, setProductTypeId] = useState<number>(1);
-//   const {
-//     data: products,
-//     isLoading,
-//     isError,
-//   } = useGetProductByTypeId(productTypeId);
-//   const [isModalVisible, setIsModalVisible] = useState(false);
-//   const [quantity, setQuantity] = useState(1);
-//   const [sideDishQuantities, setSideDishQuantities] = useState({
-//     rongBien: 1,
-//     chuaNamBo: 0,
-//     biDo: 0,
-//   });
-//   const [drinkQuantities, setDrinkQuantities] = useState({
-//     suoi: 1,
-//     cocaCola: 0,
-//     pepsi: 0,
-//   });
-//   const [addOnQuantities, setAddOnQuantities] = useState({
-//     comThem: 0,
-//     chaTrungHap: 0,
-//     suonNuong: 0,
-//   });
-
-//   const showModal = () => {
-//     setIsModalVisible(true);
-//   };
-
-//   const handleModalClose = () => {
-//     setIsModalVisible(false);
-//     setQuantity(1);
-//     setSideDishQuantities({ rongBien: 1, chuaNamBo: 0, biDo: 0 });
-//     setDrinkQuantities({ suoi: 1, cocaCola: 0, pepsi: 0 });
-//     setAddOnQuantities({ comThem: 0, chaTrungHap: 0, suonNuong: 0 });
-//   };
-
-//   const handleAddToCart = () => {
-//     // Logic to add to cart can go here
-//     setIsModalVisible(false);
-//     setQuantity(1);
-//     setSideDishQuantities({ rongBien: 1, chuaNamBo: 0, biDo: 0 });
-//     setDrinkQuantities({ suoi: 1, cocaCola: 0, pepsi: 0 });
-//     setAddOnQuantities({ comThem: 0, chaTrungHap: 0, suonNuong: 0 });
-//   };
-
-//   const handleQuantityChange = (change: number) => {
-//     const newQuantity = quantity + change;
-//     if (newQuantity >= 1) {
-//       setQuantity(newQuantity);
-//     }
-//   };
-
-//   const handleSideDishQuantityChange = (type: string, change: number) => {
-//     setSideDishQuantities((prev) => {
-//       const newValue = prev[type as keyof typeof sideDishQuantities] + change;
-//       return {
-//         ...prev,
-//         [type]: newValue >= 0 ? newValue : 0,
-//       };
-//     });
-//   };
-
-//   const handleDrinkQuantityChange = (type: string, change: number) => {
-//     setDrinkQuantities((prev) => {
-//       const newValue = prev[type as keyof typeof drinkQuantities] + change;
-//       return {
-//         ...prev,
-//         [type]: newValue >= 0 ? newValue : 0,
-//       };
-//     });
-//   };
-
-//   const handleAddOnQuantityChange = (type: string, change: number) => {
-//     setAddOnQuantities((prev) => {
-//       const newValue = prev[type as keyof typeof addOnQuantities] + change;
-//       return {
-//         ...prev,
-//         [type]: newValue >= 0 ? newValue : 0,
-//       };
-//     });
-//   };
-
-//   const handleCategoryClick = (productTypeId: number) => {
-//     setProductTypeId(productTypeId);
-//   };
-
-//   return (
-//     <div className="menu-container">
-//       <div className="menu-header">
-//         <h1 className="menu-title">Thức đơn Tâm Tấc</h1>
-//         <div className="menu-subtitle">
-//           <div className="title-orange">Tấm Tắc </div>
-//           là chuỗi hệ thống cửa hàng cơm tấm với mong muốn mang đến cho sinh
-//           viên những bữa cơm tấm chất lượng với giá cả hợp lý, đảm bảo vệ sinh
-//           an toàn thực phẩm
-//         </div>
-//       </div>
-//       <div className="menu-sell">
-//         <div className="menu-categories">
-//           <div className="category-item father">Thực đơn</div>
-//           {/* <div className="category-item active">. Cơm Tấm</div>
-//           <div className="category-item">. Món Gọi Thêm</div>
-//           <div className="category-item">. Nước Giải Khát</div> */}
-//           <div
-//             className={`category-item ${productTypeId === 1 ? "active" : ""}`}
-//             onClick={() => handleCategoryClick(1)}
-//           >
-//             . Cơm Tấm
-//           </div>
-//           <div
-//             className={`category-item ${productTypeId === 2 ? "active" : ""}`}
-//             onClick={() => handleCategoryClick(2)}
-//           >
-//             . Món Gọi Thêm
-//           </div>
-//           <div
-//             className={`category-item ${productTypeId === 3 ? "active" : ""}`}
-//             onClick={() => handleCategoryClick(3)}
-//           >
-//             . Nước Giải Khát
-//           </div>
-//         </div>
-//         {/* <div className="menu-items">
-//           <Row gutter={[24, 16]}>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">99.000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">99.000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">1000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">1000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">99.000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col span={11} className="menu-column">
-//               <Card className="menu-card">
-//                 <div className="card-image-container">
-//                   <img
-//                     src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                     alt="Combo"
-//                     className="card-image"
-//                   />
-//                   <div className="card-rating">
-//                     <span className="card-rating-star">★</span>
-//                     <span>1000+</span>
-//                   </div>
-//                 </div>
-//                 <div className="card-content">
-//                   <h3 className="card-title">COMBO - SƯỜN BÌ CHẢ</h3>
-//                   <p className="card-description">
-//                     - Cơm: sườn nướng, bì, chả trứng
-//                     <br />
-//                     - Canh rau củ
-//                     <br />- Nước ngọt tự chọn
-//                   </p>
-//                   <div className="card-price-container">
-//                     <div className="card-price">1000đ</div>
-//                     <Button className="add-button" onClick={showModal}>
-//                       Thêm
-//                     </Button>
-//                   </div>
-//                 </div>
-//               </Card>
-//             </Col>
-//             <Col className="button-show-more">
-//               {" "}
-//               <Button className="custom-button">
-//                 Hiển Thị Thêm XX Sản Phẩm
-//               </Button>
-//             </Col>
-//           </Row>
-//         </div> */}
-//         <div className="menu-items">
-//           {isLoading ? (
-//             <div>Loading...</div>
-//           ) : isError ? (
-//             <div>Error loading products. Please try again later.</div>
-//           ) : products && products.length > 0 ? (
-//             <Row gutter={[24, 16]}>
-//               {products.map((product) => (
-//                 <Col span={11} className="menu-column" key={product.productId}>
-//                   <Card className="menu-card">
-//                     <div className="card-image-container">
-//                       <img
-//                         src={product.image}
-//                         alt={product.name}
-//                         className="card-image"
-//                       />
-//                       <div className="card-rating">
-//                         <span className="card-rating-star">★</span>
-//                         <span>1000+</span>
-//                       </div>
-//                     </div>
-//                     <div className="card-content">
-//                       <h3 className="card-title">
-//                         {product.name.toUpperCase()}
-//                       </h3>
-//                       <p className="card-description">{product.description}</p>
-//                       <div className="card-price-container">
-//                         <div className="card-price">
-//                           {Number(product.price).toLocaleString("vi-VN")}đ
-//                         </div>
-//                         <Button className="add-button" onClick={showModal}>
-//                           Thêm
-//                         </Button>
-//                       </div>
-//                     </div>
-//                   </Card>
-//                 </Col>
-//               ))}
-//               <Col className="button-show-more">
-//                 <Button className="custom-button">
-//                   Hiển Thị Thêm {products.length} Sản Phẩm
-//                 </Button>
-//               </Col>
-//             </Row>
-//           ) : (
-//             <div>No products available for this category.</div>
-//           )}
-//         </div>
-//         {/* <div className="menu-items">
-//           {isLoading ? (
-//             <div>Loading...</div>
-//           ) : isError ? (
-//             <div>Error loading products. Please try again later.</div>
-//           ) : products && products.length > 0 ? (
-//             <Row gutter={[24, 16]}>
-//               {products.map((product) => (
-//                 <Col span={11} className="menu-column" key={product.productId}>
-//                   <Card className="menu-card">
-//                     <div className="card-image-container">
-//                       <img
-//                         src={product.image}
-//                         alt={product.name}
-//                         className="card-image"
-//                       />
-//                       <div className="card-rating">
-//                         <span className="card-rating-star">★</span>
-//                         <span>1000+</span>
-//                       </div>
-//                     </div>
-//                     <div className="card-content">
-//                       <h3 className="card-title">
-//                         {product.name.toUpperCase()}
-//                       </h3>
-//                       <p className="card-description">{product.description}</p>
-//                       <div className="card-price-container">
-//                         <div className="card-price">
-//                           {Number(product.price).toLocaleString("vi-VN")}đ
-//                         </div>
-//                         <Button
-//                           className="add-button"
-//                           // onClick={() => showModal(product)}
-//                           onClick={showModal}
-//                         >
-//                           Thêm
-//                         </Button>
-//                       </div>
-//                     </div>
-//                   </Card>
-//                 </Col>
-//               ))}
-//               <Col className="button-show-more">
-//                 <Button className="custom-button">
-//                   Hiển Thị Thêm {products.length} Sản Phẩm
-//                 </Button>
-//               </Col>
-//             </Row>
-//           ) : (
-//             <div>No products available for this category.</div>
-//           )}
-//         </div> */}
-//       </div>
-
-//       <Modal
-//         visible={isModalVisible}
-//         onCancel={handleModalClose}
-//         footer={null}
-//         className="menu-modal"
-//         centered
-//         width={550}
-//       >
-//         <div className="modal-content">
-//           <Row>
-//             <Col span={8}>
-//               <div className="modal-image-container">
-//                 <img
-//                   src="https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-//                   alt="Combo"
-//                   className="modal-image"
-//                 />
-//               </div>
-//             </Col>
-//             <Col span={16} style={{ paddingLeft: 34 }}>
-//               <Text className="modal-title">COMBO - SƯỜN BÌ CHẢ</Text>
-//               <ul className="modal-description-list">
-//                 <li className="modal-description-item">
-//                   Cơm: Sườn nướng, bì, chả trứng
-//                 </li>
-//                 <li className="modal-description-item">Canh rau củ</li>
-//                 <li className="modal-description-item">Nước ngọt tự chọn</li>
-//               </ul>
-//             </Col>
-//           </Row>
-//           <div className="modal-quantity">
-//             <Text className="modal-price">99.000đ</Text>
-//             <Text className="modal-price-first">123.000đ</Text>
-//             <div className="quantity-selector">
-//               <Button
-//                 className="quantity-button minus-button"
-//                 onClick={() => handleQuantityChange(-1)}
-//                 disabled={quantity === 1}
-//               >
-//                 −
-//               </Button>
-//               <Text className="quantity-number">{quantity}</Text>
-//               <Button
-//                 className="quantity-button plus-button"
-//                 onClick={() => handleQuantityChange(1)}
-//               >
-//                 +
-//               </Button>
-//             </div>
-//           </div>
-//           <div className="modal-add-ons">
-//             <Text className="add-ons-title">Canh ăn kèm - chọn 1</Text>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Canh rong biển</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleSideDishQuantityChange("rongBien", -1)}
-//                   disabled={sideDishQuantities.rongBien === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {sideDishQuantities.rongBien}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleSideDishQuantityChange("rongBien", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Canh chua Nam Bộ</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleSideDishQuantityChange("chuaNamBo", -1)}
-//                   disabled={sideDishQuantities.chuaNamBo === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {sideDishQuantities.chuaNamBo}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleSideDishQuantityChange("chuaNamBo", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Canh bí đỏ</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleSideDishQuantityChange("biDo", -1)}
-//                   disabled={sideDishQuantities.biDo === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {sideDishQuantities.biDo}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleSideDishQuantityChange("biDo", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <Text className="add-ons-title">Nước ngọt - chọn 1</Text>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Nước suối</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleDrinkQuantityChange("suoi", -1)}
-//                   disabled={drinkQuantities.suoi === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">{drinkQuantities.suoi}</Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleDrinkQuantityChange("suoi", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Coca Cola</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleDrinkQuantityChange("cocaCola", -1)}
-//                   disabled={drinkQuantities.cocaCola === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {drinkQuantities.cocaCola}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleDrinkQuantityChange("cocaCola", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Pepsi</Text>
-//                 <Text className="add-on-price">+ 0đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleDrinkQuantityChange("pepsi", -1)}
-//                   disabled={drinkQuantities.pepsi === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">{drinkQuantities.pepsi}</Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleDrinkQuantityChange("pepsi", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <Text className="add-ons-title">Thức ăn dùng thêm</Text>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Cơm thêm</Text>
-//                 <Text className="add-on-price">+ 2.000đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleAddOnQuantityChange("comThem", -1)}
-//                   disabled={addOnQuantities.comThem === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {addOnQuantities.comThem}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleAddOnQuantityChange("comThem", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Chả trứng hấp</Text>
-//                 <Text className="add-on-price">+ 12.000đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleAddOnQuantityChange("chaTrungHap", -1)}
-//                   disabled={addOnQuantities.chaTrungHap === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {addOnQuantities.chaTrungHap}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleAddOnQuantityChange("chaTrungHap", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//             <div className="add-on-item">
-//               <div className="add-on-text-with-price">
-//                 <Text className="add-on-text">Sườn nướng</Text>
-//                 <Text className="add-on-price">+ 20.000đ</Text>
-//               </div>
-//               <div className="quantity-selector">
-//                 <Button
-//                   className="quantity-button minus-button"
-//                   onClick={() => handleAddOnQuantityChange("suonNuong", -1)}
-//                   disabled={addOnQuantities.suonNuong === 0}
-//                 >
-//                   −
-//                 </Button>
-//                 <Text className="quantity-number">
-//                   {addOnQuantities.suonNuong}
-//                 </Text>
-//                 <Button
-//                   className="quantity-button plus-button"
-//                   onClick={() => handleAddOnQuantityChange("suonNuong", 1)}
-//                 >
-//                   +
-//                 </Button>
-//               </div>
-//             </div>
-//           </div>
-//           <div className="modal-buttons">
-//             <Button className="add-to-cart-button" onClick={handleAddToCart}>
-//               103.000đ - Thêm vào giỏ hàng
-//             </Button>
-//           </div>
-//         </div>
-//       </Modal>
-//     </div>
-//   );
-// };
-
-// export default Menu;
 import { Card, Button, Row, Col, Modal, Typography } from "antd";
 import "../style/Menu.css";
 import { useState } from "react";
-import { useGetProductByTypeId } from "../hooks/productsApi";
+import { useGetProductById, useGetProductByTypeId } from "../hooks/productsApi";
 import { type ProductDto } from "../hooks/productsApi";
+import { useProductTypes } from "../hooks/productTypesApi";
+import { type UseQueryResult } from "@tanstack/react-query";
 
 const { Text } = Typography;
 
+const useAddOnProducts = () => {
+  const { data: productTypes } = useProductTypes();
+
+  const query2 = useGetProductByTypeId(2);
+  const query3 = useGetProductByTypeId(3);
+  const query4 = useGetProductByTypeId(4);
+  const query5 = useGetProductByTypeId(5);
+  const query6 = useGetProductByTypeId(6);
+  const query7 = useGetProductByTypeId(7);
+  const query8 = useGetProductByTypeId(8);
+  const query9 = useGetProductByTypeId(9);
+  const query10 = useGetProductByTypeId(10);
+
+  const queries: {
+    typeId: number;
+    query: UseQueryResult<ProductDto[], Error>;
+  }[] = [
+    { typeId: 2, query: query2 },
+    { typeId: 3, query: query3 },
+    { typeId: 4, query: query4 },
+    { typeId: 5, query: query5 },
+    { typeId: 6, query: query6 },
+    { typeId: 7, query: query7 },
+    { typeId: 8, query: query8 },
+    { typeId: 9, query: query9 },
+    { typeId: 10, query: query10 },
+  ];
+
+  const addOnProductQueries: {
+    typeId: number;
+    query: UseQueryResult<ProductDto[], Error>;
+  }[] = [];
+  if (productTypes) {
+    productTypes
+      .filter((type) => type.productTypeId !== 1)
+      .forEach((type) => {
+        const matchingQuery = queries.find(
+          (q) => q.typeId === type.productTypeId
+        );
+        if (matchingQuery) {
+          addOnProductQueries.push(matchingQuery);
+        }
+      });
+  }
+
+  return addOnProductQueries;
+};
+
 const Menu = () => {
   const [productTypeId, setProductTypeId] = useState<number>(1);
-  const {
-    data: products,
-    isLoading,
-    isError,
-  } = useGetProductByTypeId(productTypeId);
-  console.log("Products in Menu:", products); // Debug log
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ProductDto | null>(
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(
     null
   );
+  const {
+    data: mainProducts,
+    isLoading: isProductsLoading,
+    isError: isProductsError,
+  } = useGetProductByTypeId(productTypeId);
+  const {
+    data: productTypes,
+    isLoading: isProductTypesLoading,
+    isError: isProductTypesError,
+  } = useProductTypes();
+  const {
+    data: productDetail,
+    isLoading: isProductDetailLoading,
+    isError: isProductDetailError,
+  } = useGetProductById(String(selectedProductId || 0));
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [sideDishQuantities, setSideDishQuantities] = useState({
-    rongBien: 1,
-    chuaNamBo: 0,
-    biDo: 0,
-  });
-  const [drinkQuantities, setDrinkQuantities] = useState({
-    suoi: 1,
-    cocaCola: 0,
-    pepsi: 0,
-  });
-  const [addOnQuantities, setAddOnQuantities] = useState({
-    comThem: 0,
-    chaTrungHap: 0,
-    suonNuong: 0,
-  });
+
+  const [addOnQuantities, setAddOnQuantities] = useState<
+    Record<string, number>
+  >({});
+
+  const addOnProductQueries = useAddOnProducts();
+
+  const getProductTypeName = (id: number) => {
+    return (
+      productTypes?.find((type) => type.productTypeId === id)?.name || "Unknown"
+    );
+  };
 
   const showModal = (product: ProductDto) => {
-    setSelectedProduct(product);
+    setSelectedProductId(product.productId);
     setIsModalVisible(true);
+    const initialQuantities: Record<string, number> = {};
+    addOnProductQueries.forEach(({ typeId, query }) => {
+      query.data?.forEach((index) => {
+        initialQuantities[`${typeId}-${index}`] = 0;
+      });
+    });
+    setAddOnQuantities(initialQuantities);
   };
 
   const handleModalClose = () => {
     setIsModalVisible(false);
-    setSelectedProduct(null);
+    setSelectedProductId(null);
     setQuantity(1);
-    setSideDishQuantities({ rongBien: 1, chuaNamBo: 0, biDo: 0 });
-    setDrinkQuantities({ suoi: 1, cocaCola: 0, pepsi: 0 });
-    setAddOnQuantities({ comThem: 0, chaTrungHap: 0, suonNuong: 0 });
+    setAddOnQuantities({});
   };
 
   const handleAddToCart = () => {
     setIsModalVisible(false);
-    setSelectedProduct(null);
+    setSelectedProductId(null);
     setQuantity(1);
-    setSideDishQuantities({ rongBien: 1, chuaNamBo: 0, biDo: 0 });
-    setDrinkQuantities({ suoi: 1, cocaCola: 0, pepsi: 0 });
-    setAddOnQuantities({ comThem: 0, chaTrungHap: 0, suonNuong: 0 });
+    setAddOnQuantities({});
   };
 
   const handleQuantityChange = (change: number) => {
@@ -766,32 +124,12 @@ const Menu = () => {
     }
   };
 
-  const handleSideDishQuantityChange = (type: string, change: number) => {
-    setSideDishQuantities((prev) => {
-      const newValue = prev[type as keyof typeof sideDishQuantities] + change;
-      return {
-        ...prev,
-        [type]: newValue >= 0 ? newValue : 0,
-      };
-    });
-  };
-
-  const handleDrinkQuantityChange = (type: string, change: number) => {
-    setDrinkQuantities((prev) => {
-      const newValue = prev[type as keyof typeof drinkQuantities] + change;
-      return {
-        ...prev,
-        [type]: newValue >= 0 ? newValue : 0,
-      };
-    });
-  };
-
-  const handleAddOnQuantityChange = (type: string, change: number) => {
+  const handleAddOnQuantityChange = (key: string, change: number) => {
     setAddOnQuantities((prev) => {
-      const newValue = prev[type as keyof typeof addOnQuantities] + change;
+      const newValue = (prev[key] || 0) + change;
       return {
         ...prev,
-        [type]: newValue >= 0 ? newValue : 0,
+        [key]: newValue >= 0 ? newValue : 0,
       };
     });
   };
@@ -799,6 +137,20 @@ const Menu = () => {
   const handleCategoryClick = (productTypeId: number) => {
     setProductTypeId(productTypeId);
   };
+
+  const totalPrice = productDetail
+    ? Number(productDetail.price) * quantity +
+      addOnProductQueries.reduce((sum, { typeId, query }) => {
+        if (!query.data) return sum;
+        return (
+          sum +
+          query.data.reduce((typeSum, item, index) => {
+            const qty = addOnQuantities[`${typeId}-${index}`] || 0;
+            return typeSum + qty * Number(item.price);
+          }, 0)
+        );
+      }, 0)
+    : 0;
 
   return (
     <div className="menu-container">
@@ -814,33 +166,34 @@ const Menu = () => {
       <div className="menu-sell">
         <div className="menu-categories">
           <div className="category-item father">Thực đơn</div>
-          <div
-            className={`category-item ${productTypeId === 1 ? "active" : ""}`}
-            onClick={() => handleCategoryClick(1)}
-          >
-            . Cơm Tấm
-          </div>
-          <div
-            className={`category-item ${productTypeId === 2 ? "active" : ""}`}
-            onClick={() => handleCategoryClick(2)}
-          >
-            . Món Gọi Thêm
-          </div>
-          <div
-            className={`category-item ${productTypeId === 3 ? "active" : ""}`}
-            onClick={() => handleCategoryClick(3)}
-          >
-            . Nước Giải Khát
-          </div>
+          {isProductTypesLoading ? (
+            <div>Loading categories...</div>
+          ) : isProductTypesError ? (
+            <div>Error loading categories. Please try again later.</div>
+          ) : productTypes && productTypes.length > 0 ? (
+            productTypes.map((type) => (
+              <div
+                key={type.productTypeId}
+                className={`category-item ${
+                  productTypeId === type.productTypeId ? "active" : ""
+                }`}
+                onClick={() => handleCategoryClick(type.productTypeId)}
+              >
+                . {type.name}
+              </div>
+            ))
+          ) : (
+            <div>No categories available.</div>
+          )}
         </div>
         <div className="menu-items">
-          {isLoading ? (
+          {isProductsLoading ? (
             <div>Loading...</div>
-          ) : isError ? (
+          ) : isProductsError ? (
             <div>Error loading products. Please try again later.</div>
-          ) : products && products.length > 0 ? (
+          ) : mainProducts && mainProducts.length > 0 ? (
             <Row gutter={[24, 16]}>
-              {products.map((product) => (
+              {mainProducts.map((product) => (
                 <Col span={11} className="menu-column" key={product.productId}>
                   <Card className="menu-card">
                     <div className="card-image-container">
@@ -876,7 +229,7 @@ const Menu = () => {
               ))}
               <Col className="button-show-more">
                 <Button className="custom-button">
-                  Hiển Thị Thêm {products.length} Sản Phẩm
+                  Hiển Thị Thêm {mainProducts.length} Sản Phẩm
                 </Button>
               </Col>
             </Row>
@@ -892,299 +245,139 @@ const Menu = () => {
         footer={null}
         className="menu-modal"
         centered
-        width={550}
+        width={650}
       >
         <div className="modal-content">
-          <Row>
-            <Col span={8}>
-              <div className="modal-image-container">
-                <img
-                  src={
-                    selectedProduct?.image ||
-                    "https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
-                  }
-                  alt={selectedProduct?.name || "Combo"}
-                  className="modal-image"
-                />
-              </div>
-            </Col>
-            <Col span={16} style={{ paddingLeft: 34 }}>
-              <Text className="modal-title">
-                {selectedProduct?.name.toUpperCase() || "COMBO - SƯỜN BÌ CHẢ"}
-              </Text>
-              <ul className="modal-description-list">
-                <li className="modal-description-item">
-                  {selectedProduct?.description ||
-                    "Cơm: Sườn nướng, bì, chả trứng"}
-                </li>
-                <li className="modal-description-item">Canh rau củ</li>
-                <li className="modal-description-item">Nước ngọt tự chọn</li>
-              </ul>
-            </Col>
-          </Row>
-          <div className="modal-quantity">
-            <Text className="modal-price">
-              {selectedProduct
-                ? Number(selectedProduct.price).toLocaleString("vi-VN") + "đ"
-                : "99.000đ"}
-            </Text>
-            <Text className="modal-price-first">
-              {selectedProduct
-                ? (
-                    Number(selectedProduct.price) +
-                    addOnQuantities.comThem * 2000 +
-                    addOnQuantities.chaTrungHap * 12000 +
-                    addOnQuantities.suonNuong * 20000
-                  ).toLocaleString("vi-VN") + "đ"
-                : "123.000đ"}
-            </Text>
-            <div className="quantity-selector">
-              <Button
-                className="quantity-button minus-button"
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity === 1}
-              >
-                −
-              </Button>
-              <Text className="quantity-number">{quantity}</Text>
-              <Button
-                className="quantity-button plus-button"
-                onClick={() => handleQuantityChange(1)}
-              >
-                +
-              </Button>
-            </div>
-          </div>
-          <div className="modal-add-ons">
-            <Text className="add-ons-title">Canh ăn kèm - chọn 1</Text>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Canh rong biển</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleSideDishQuantityChange("rongBien", -1)}
-                  disabled={sideDishQuantities.rongBien === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {sideDishQuantities.rongBien}
+          {isProductDetailLoading ? (
+            <div>Loading product details...</div>
+          ) : isProductDetailError ? (
+            <div>Error loading product details. Please try again later.</div>
+          ) : productDetail ? (
+            <>
+              <Row>
+                <Col span={8}>
+                  <div className="modal-image-container">
+                    <img
+                      src={
+                        productDetail.image ||
+                        "https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+                      }
+                      alt={productDetail.name || "Combo"}
+                      className="modal-image"
+                    />
+                  </div>
+                </Col>
+                <Col span={16} style={{ paddingLeft: 34 }}>
+                  <Text className="modal-title">
+                    {productDetail.name.toUpperCase()}
+                  </Text>
+                  <ul className="modal-description-list">
+                    <li className="modal-description-item">
+                      {productDetail.description}
+                    </li>
+                  </ul>
+                </Col>
+              </Row>
+              <div className="modal-quantity">
+                <Text className="modal-price">
+                  {Number(productDetail.price).toLocaleString("vi-VN")}đ
                 </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleSideDishQuantityChange("rongBien", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Canh chua Nam Bộ</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleSideDishQuantityChange("chuaNamBo", -1)}
-                  disabled={sideDishQuantities.chuaNamBo === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {sideDishQuantities.chuaNamBo}
+                <Text className="modal-price-first">
+                  {totalPrice.toLocaleString("vi-VN")}đ
                 </Text>
+                <div className="quantity-selector">
+                  <Button
+                    className="quantity-button minus-button"
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity === 1}
+                  >
+                    −
+                  </Button>
+                  <Text className="quantity-number">{quantity}</Text>
+                  <Button
+                    className="quantity-button plus-button"
+                    onClick={() => handleQuantityChange(1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+              <div className="modal-add-ons">
+                {addOnProductQueries.map(({ typeId, query }) => (
+                  <div key={typeId}>
+                    {query.isLoading ? (
+                      <div>Loading {getProductTypeName(typeId)}...</div>
+                    ) : query.isError ? (
+                      <div>
+                        Error loading {getProductTypeName(typeId)}. Please try
+                        again later.
+                      </div>
+                    ) : query.data && query.data.length > 0 ? (
+                      <>
+                        <Text className="add-ons-title">
+                          {getProductTypeName(typeId)} - chọn 1
+                        </Text>
+                        {query.data.map((item, index) => (
+                          <div className="add-on-item" key={item.productId}>
+                            <div className="add-on-text-with-price">
+                              <Text className="add-on-text">{item.name}</Text>
+                              <Text className="add-on-price">
+                                + {Number(item.price).toLocaleString("vi-VN")}đ
+                              </Text>
+                            </div>
+                            <div className="quantity-selector">
+                              <Button
+                                className="quantity-button minus-button"
+                                onClick={() =>
+                                  handleAddOnQuantityChange(
+                                    `${typeId}-${index}`,
+                                    -1
+                                  )
+                                }
+                                disabled={
+                                  addOnQuantities[`${typeId}-${index}`] === 0
+                                }
+                              >
+                                −
+                              </Button>
+                              <Text className="quantity-number">
+                                {addOnQuantities[`${typeId}-${index}`] || 0}
+                              </Text>
+                              <Button
+                                className="quantity-button plus-button"
+                                onClick={() =>
+                                  handleAddOnQuantityChange(
+                                    `${typeId}-${index}`,
+                                    1
+                                  )
+                                }
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div>
+                        No items available for {getProductTypeName(typeId)}.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="modal-buttons">
                 <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleSideDishQuantityChange("chuaNamBo", 1)}
+                  className="add-to-cart-button"
+                  onClick={handleAddToCart}
                 >
-                  +
+                  {totalPrice.toLocaleString("vi-VN")}đ - Thêm vào giỏ hàng
                 </Button>
               </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Canh bí đỏ</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleSideDishQuantityChange("biDo", -1)}
-                  disabled={sideDishQuantities.biDo === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {sideDishQuantities.biDo}
-                </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleSideDishQuantityChange("biDo", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <Text className="add-ons-title">Nước ngọt - chọn 1</Text>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Nước suối</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleDrinkQuantityChange("suoi", -1)}
-                  disabled={drinkQuantities.suoi === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">{drinkQuantities.suoi}</Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleDrinkQuantityChange("suoi", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Coca Cola</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleDrinkQuantityChange("cocaCola", -1)}
-                  disabled={drinkQuantities.cocaCola === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {drinkQuantities.cocaCola}
-                </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleDrinkQuantityChange("cocaCola", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Pepsi</Text>
-                <Text className="add-on-price">+ 0đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleDrinkQuantityChange("pepsi", -1)}
-                  disabled={drinkQuantities.pepsi === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">{drinkQuantities.pepsi}</Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleDrinkQuantityChange("pepsi", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <Text className="add-ons-title">Thức ăn dùng thêm</Text>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Cơm thêm</Text>
-                <Text className="add-on-price">+ 2.000đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleAddOnQuantityChange("comThem", -1)}
-                  disabled={addOnQuantities.comThem === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {addOnQuantities.comThem}
-                </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleAddOnQuantityChange("comThem", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Chả trứng hấp</Text>
-                <Text className="add-on-price">+ 12.000đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleAddOnQuantityChange("chaTrungHap", -1)}
-                  disabled={addOnQuantities.chaTrungHap === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {addOnQuantities.chaTrungHap}
-                </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleAddOnQuantityChange("chaTrungHap", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-            <div className="add-on-item">
-              <div className="add-on-text-with-price">
-                <Text className="add-on-text">Sườn nướng</Text>
-                <Text className="add-on-price">+ 20.000đ</Text>
-              </div>
-              <div className="quantity-selector">
-                <Button
-                  className="quantity-button minus-button"
-                  onClick={() => handleAddOnQuantityChange("suonNuong", -1)}
-                  disabled={addOnQuantities.suonNuong === 0}
-                >
-                  −
-                </Button>
-                <Text className="quantity-number">
-                  {addOnQuantities.suonNuong}
-                </Text>
-                <Button
-                  className="quantity-button plus-button"
-                  onClick={() => handleAddOnQuantityChange("suonNuong", 1)}
-                >
-                  +
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className="modal-buttons">
-            <Button className="add-to-cart-button" onClick={handleAddToCart}>
-              {selectedProduct
-                ? (
-                    (Number(selectedProduct.price) +
-                      addOnQuantities.comThem * 2000 +
-                      addOnQuantities.chaTrungHap * 12000 +
-                      addOnQuantities.suonNuong * 20000) *
-                    quantity
-                  ).toLocaleString("vi-VN") + "đ - Thêm vào giỏ hàng"
-                : "103.000đ - Thêm vào giỏ hàng"}
-            </Button>
-          </div>
+            </>
+          ) : (
+            <div>No product details available.</div>
+          )}
         </div>
       </Modal>
     </div>
@@ -1192,3 +385,398 @@ const Menu = () => {
 };
 
 export default Menu;
+
+// import { Card, Button, Row, Col, Modal, Typography } from "antd";
+// import "../style/Menu.css";
+// import { useState, useEffect } from "react";
+// import { useGetProductById, useGetProductByTypeId } from "../hooks/productsApi";
+// import { type ProductDto } from "../hooks/productsApi";
+// import { useProductTypes } from "../hooks/productTypesApi";
+// import { type UseQueryResult } from "@tanstack/react-query";
+
+// const { Text } = Typography;
+
+// // Custom hook to fetch products for all product types except productTypeId === 1
+// const useAddOnProducts = () => {
+//   const { data: productTypes } = useProductTypes();
+
+//   // Predefine hook calls for each productTypeId at the top level
+//   const query2 = useGetProductByTypeId(2); // For productTypeId 2 (e.g., Món Gọi Thêm)
+//   const query3 = useGetProductByTypeId(3); // For productTypeId 3 (e.g., Nước Giải Khát)
+//   // Add more queries if you have more productTypeId values (e.g., 4, 5, etc.)
+//   // For example: const query4 = useGetProductByTypeId(4);
+
+//   // Map the queries to an array, excluding productTypeId === 1
+//   const addOnProductQueries: {
+//     typeId: number;
+//     query: UseQueryResult<ProductDto[], Error>;
+//   }[] = [];
+
+//   // Add each query to the array based on the productTypes data
+//   if (productTypes) {
+//     productTypes
+//       .filter((type) => type.productTypeId !== 1)
+//       .forEach((type) => {
+//         if (type.productTypeId === 2) {
+//           addOnProductQueries.push({ typeId: 2, query: query2 });
+//         } else if (type.productTypeId === 3) {
+//           addOnProductQueries.push({ typeId: 3, query: query3 });
+//         }
+//         // Add more conditions for additional productTypeId values
+//         // Example: else if (type.productTypeId === 4) { addOnProductQueries.push({ typeId: 4, query: query4 }); }
+//       });
+//   }
+
+//   return addOnProductQueries;
+// };
+
+// const Menu = () => {
+//   const [productTypeId, setProductTypeId] = useState<number>(1);
+//   const [selectedProductId, setSelectedProductId] = useState<number | null>(
+//     null
+//   );
+//   const {
+//     data: mainProducts,
+//     isLoading: isProductsLoading,
+//     isError: isProductsError,
+//   } = useGetProductByTypeId(productTypeId);
+//   const {
+//     data: productTypes,
+//     isLoading: isProductTypesLoading,
+//     isError: isProductTypesError,
+//   } = useProductTypes();
+//   const {
+//     data: productDetail,
+//     isLoading: isProductDetailLoading,
+//     isError: isProductDetailError,
+//   } = useGetProductById(String(selectedProductId || 0));
+//   const [isModalVisible, setIsModalVisible] = useState(false);
+//   const [quantity, setQuantity] = useState(1);
+
+//   // State to hold quantities for all add-on products dynamically
+//   const [addOnQuantities, setAddOnQuantities] = useState<
+//     Record<string, number>
+//   >({});
+
+//   // Use the custom hook to fetch add-on products
+//   const addOnProductQueries = useAddOnProducts();
+
+//   // Get ProductType name for a given productTypeId
+//   const getProductTypeName = (id: number) => {
+//     return (
+//       productTypes?.find((type) => type.productTypeId === id)?.name || "Unknown"
+//     );
+//   };
+
+//   const showModal = (product: ProductDto) => {
+//     setSelectedProductId(product.productId);
+//     setIsModalVisible(true);
+//     // Reset quantities when opening modal
+//     const initialQuantities: Record<string, number> = {};
+//     addOnProductQueries.forEach(({ typeId, query }) => {
+//       query.data?.forEach((item, index) => {
+//         initialQuantities[`${typeId}-${index}`] = 0;
+//       });
+//     });
+//     setAddOnQuantities(initialQuantities);
+//   };
+
+//   const handleModalClose = () => {
+//     setIsModalVisible(false);
+//     setSelectedProductId(null);
+//     setQuantity(1);
+//     setAddOnQuantities({});
+//   };
+
+//   const handleAddToCart = () => {
+//     setIsModalVisible(false);
+//     setSelectedProductId(null);
+//     setQuantity(1);
+//     setAddOnQuantities({});
+//   };
+
+//   const handleQuantityChange = (change: number) => {
+//     const newQuantity = quantity + change;
+//     if (newQuantity >= 1) {
+//       setQuantity(newQuantity);
+//     }
+//   };
+
+//   const handleAddOnQuantityChange = (key: string, change: number) => {
+//     setAddOnQuantities((prev) => {
+//       const newValue = (prev[key] || 0) + change;
+//       return {
+//         ...prev,
+//         [key]: newValue >= 0 ? newValue : 0,
+//       };
+//     });
+//   };
+
+//   const handleCategoryClick = (productTypeId: number) => {
+//     setProductTypeId(productTypeId);
+//   };
+
+//   // Calculate total price including all add-ons
+//   const totalPrice = productDetail
+//     ? Number(productDetail.price) * quantity +
+//       addOnProductQueries.reduce((sum, { typeId, query }) => {
+//         if (!query.data) return sum;
+//         return (
+//           sum +
+//           query.data.reduce((typeSum, item, index) => {
+//             const qty = addOnQuantities[`${typeId}-${index}`] || 0;
+//             return typeSum + qty * Number(item.price);
+//           }, 0)
+//         );
+//       }, 0)
+//     : 0;
+
+//   // Debug log
+//   useEffect(() => {
+//     console.log("productDetail:", productDetail);
+//     console.log("mainProducts for type", productTypeId, ":", mainProducts);
+//     console.log("productTypes:", productTypes);
+//     console.log("addOnProductQueries:", addOnProductQueries);
+//     console.log("addOnQuantities:", addOnQuantities);
+//   }, [
+//     productDetail,
+//     mainProducts,
+//     productTypeId,
+//     productTypes,
+//     addOnQuantities,
+//   ]);
+
+//   return (
+//     <div className="menu-container">
+//       <div className="menu-header">
+//         <h1 className="menu-title">Thực đơn Tấm Tắc</h1>
+//         <div className="menu-subtitle">
+//           <div className="title-orange">Tấm Tắc </div>
+//           là chuỗi hệ thống cửa hàng cơm tấm với mong muốn mang đến cho sinh
+//           viên những bữa cơm tấm chất lượng với giá cả hợp lý, đảm bảo vệ sinh
+//           an toàn thực phẩm
+//         </div>
+//       </div>
+//       <div className="menu-sell">
+//         <div className="menu-categories">
+//           <div className="category-item father">Thực đơn</div>
+//           {isProductTypesLoading ? (
+//             <div>Loading categories...</div>
+//           ) : isProductTypesError ? (
+//             <div>Error loading categories. Please try again later.</div>
+//           ) : productTypes && productTypes.length > 0 ? (
+//             productTypes.map((type) => (
+//               <div
+//                 key={type.productTypeId}
+//                 className={`category-item ${
+//                   productTypeId === type.productTypeId ? "active" : ""
+//                 }`}
+//                 onClick={() => handleCategoryClick(type.productTypeId)}
+//               >
+//                 . {type.name}
+//               </div>
+//             ))
+//           ) : (
+//             <div>No categories available.</div>
+//           )}
+//         </div>
+//         <div className="menu-items">
+//           {isProductsLoading ? (
+//             <div>Loading...</div>
+//           ) : isProductsError ? (
+//             <div>Error loading products. Please try again later.</div>
+//           ) : mainProducts && mainProducts.length > 0 ? (
+//             <Row gutter={[24, 16]}>
+//               {mainProducts.map((product) => (
+//                 <Col span={11} className="menu-column" key={product.productId}>
+//                   <Card className="menu-card">
+//                     <div className="card-image-container">
+//                       <img
+//                         src={product.image}
+//                         alt={product.name}
+//                         className="card-image"
+//                       />
+//                       <div className="card-rating">
+//                         <span className="card-rating-star">★</span>
+//                         <span>1000+</span>
+//                       </div>
+//                     </div>
+//                     <div className="card-content">
+//                       <h3 className="card-title">
+//                         {product.name.toUpperCase()}
+//                       </h3>
+//                       <p className="card-description">{product.description}</p>
+//                       <div className="card-price-container">
+//                         <div className="card-price">
+//                           {Number(product.price).toLocaleString("vi-VN")}đ
+//                         </div>
+//                         <Button
+//                           className="add-button"
+//                           onClick={() => showModal(product)}
+//                         >
+//                           Thêm
+//                         </Button>
+//                       </div>
+//                     </div>
+//                   </Card>
+//                 </Col>
+//               ))}
+//               <Col className="button-show-more">
+//                 <Button className="custom-button">
+//                   Hiển Thị Thêm {mainProducts.length} Sản Phẩm
+//                 </Button>
+//               </Col>
+//             </Row>
+//           ) : (
+//             <div>No products available for this category.</div>
+//           )}
+//         </div>
+//       </div>
+
+//       <Modal
+//         visible={isModalVisible}
+//         onCancel={handleModalClose}
+//         footer={null}
+//         className="menu-modal"
+//         centered
+//         width={650}
+//       >
+//         <div className="modal-content">
+//           {isProductDetailLoading ? (
+//             <div>Loading product details...</div>
+//           ) : isProductDetailError ? (
+//             <div>Error loading product details. Please try again later.</div>
+//           ) : productDetail ? (
+//             <>
+//               <Row>
+//                 <Col span={8}>
+//                   <div className="modal-image-container">
+//                     <img
+//                       src={
+//                         productDetail.image ||
+//                         "https://vnn-imgs-f.vgcloud.vn/2022/01/27/11/nhung-mon-com-ngon-cua-tp-hcm-ai-di-xa-cung-thay-nho.jpg?width=0&s=C2ED8-pomyPWr5vbZiaQ0Q"
+//                       }
+//                       alt={productDetail.name || "Combo"}
+//                       className="modal-image"
+//                     />
+//                   </div>
+//                 </Col>
+//                 <Col span={16} style={{ paddingLeft: 34 }}>
+//                   <Text className="modal-title">
+//                     {productDetail.name.toUpperCase()}
+//                   </Text>
+//                   <ul className="modal-description-list">
+//                     <li className="modal-description-item">
+//                       {productDetail.description}
+//                     </li>
+//                   </ul>
+//                 </Col>
+//               </Row>
+//               <div className="modal-quantity">
+//                 <Text className="modal-price">
+//                   {Number(productDetail.price).toLocaleString("vi-VN")}đ
+//                 </Text>
+//                 <Text className="modal-price-first">
+//                   {totalPrice.toLocaleString("vi-VN")}đ
+//                 </Text>
+//                 <div className="quantity-selector">
+//                   <Button
+//                     className="quantity-button minus-button"
+//                     onClick={() => handleQuantityChange(-1)}
+//                     disabled={quantity === 1}
+//                   >
+//                     −
+//                   </Button>
+//                   <Text className="quantity-number">{quantity}</Text>
+//                   <Button
+//                     className="quantity-button plus-button"
+//                     onClick={() => handleQuantityChange(1)}
+//                   >
+//                     +
+//                   </Button>
+//                 </div>
+//               </div>
+//               <div className="modal-add-ons">
+//                 {/* Dynamically render sections for each product type except productTypeId === 1 */}
+//                 {addOnProductQueries.map(({ typeId, query }) => (
+//                   <div key={typeId}>
+//                     {query.isLoading ? (
+//                       <div>Loading {getProductTypeName(typeId)}...</div>
+//                     ) : query.isError ? (
+//                       <div>
+//                         Error loading {getProductTypeName(typeId)}. Please try
+//                         again later.
+//                       </div>
+//                     ) : query.data && query.data.length > 0 ? (
+//                       <>
+//                         <Text className="add-ons-title">
+//                           {getProductTypeName(typeId)} - chọn 1
+//                         </Text>
+//                         {query.data.map((item, index) => (
+//                           <div className="add-on-item" key={item.productId}>
+//                             <div className="add-on-text-with-price">
+//                               <Text className="add-on-text">{item.name}</Text>
+//                               <Text className="add-on-price">
+//                                 + {Number(item.price).toLocaleString("vi-VN")}đ
+//                               </Text>
+//                             </div>
+//                             <div className="quantity-selector">
+//                               <Button
+//                                 className="quantity-button minus-button"
+//                                 onClick={() =>
+//                                   handleAddOnQuantityChange(
+//                                     `${typeId}-${index}`,
+//                                     -1
+//                                   )
+//                                 }
+//                                 disabled={
+//                                   addOnQuantities[`${typeId}-${index}`] === 0
+//                                 }
+//                               >
+//                                 −
+//                               </Button>
+//                               <Text className="quantity-number">
+//                                 {addOnQuantities[`${typeId}-${index}`] || 0}
+//                               </Text>
+//                               <Button
+//                                 className="quantity-button plus-button"
+//                                 onClick={() =>
+//                                   handleAddOnQuantityChange(
+//                                     `${typeId}-${index}`,
+//                                     1
+//                                   )
+//                                 }
+//                               >
+//                                 +
+//                               </Button>
+//                             </div>
+//                           </div>
+//                         ))}
+//                       </>
+//                     ) : (
+//                       <div>
+//                         No items available for {getProductTypeName(typeId)}.
+//                       </div>
+//                     )}
+//                   </div>
+//                 ))}
+//               </div>
+//               <div className="modal-buttons">
+//                 <Button
+//                   className="add-to-cart-button"
+//                   onClick={handleAddToCart}
+//                 >
+//                   {totalPrice.toLocaleString("vi-VN")}đ - Thêm vào giỏ hàng
+//                 </Button>
+//               </div>
+//             </>
+//           ) : (
+//             <div>No product details available.</div>
+//           )}
+//         </div>
+//       </Modal>
+//     </div>
+//   );
+// };
+
+// export default Menu;

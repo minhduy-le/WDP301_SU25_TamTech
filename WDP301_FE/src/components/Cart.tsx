@@ -16,14 +16,14 @@ const Cart = () => {
   const cartItems = [
     {
       key: "1",
-      name: "COMBO - SÁ BÍ CHỦNG",
+      name: "COMBO - SÀ BÌ CHƯỞNG",
       description: ["Canh chua", "Nước ngọt: Coca Cola", "Cơm thêm"],
       price: "123.000đ",
       quantity: 1,
     },
     {
       key: "2",
-      name: "COMBO - SÁ BÍ CHỦNG",
+      name: "COMBO - SÀ BÌ CHƯỞNG",
       description: [
         "Canh chua",
         "Nước ngọt: Coca Cola",
