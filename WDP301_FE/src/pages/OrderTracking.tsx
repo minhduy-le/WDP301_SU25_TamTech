@@ -93,16 +93,10 @@ const OrderTracking = () => {
               <p className="item-title">Thông tin giao hàng</p>
               <br />
               <Row>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Playfair Display, serif" }}
-                >
+                <Col span={12} style={{ fontFamily: "Montserrat, sans-serif" }}>
                   Tên khách hàng: Lê Minh Duy
                 </Col>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Playfair Display, serif" }}
-                >
+                <Col span={12} style={{ fontFamily: "Montserrat, sans-serif" }}>
                   Số điện thoại: 0911123456
                 </Col>
               </Row>
@@ -117,7 +111,7 @@ const OrderTracking = () => {
                     display: "flex",
                     flexDirection: "column",
                     padding: 0,
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                   }}
                 >
                   <span className="menu-main-item">COMBO - SÀ BÌ CHƯỞNG</span>
@@ -133,7 +127,7 @@ const OrderTracking = () => {
                     display: "flex",
                     flexDirection: "column",
                     padding: 0,
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                   }}
                 >
                   <span className="menu-main-item">COMBO - SÀ BÌ CHƯỞNG</span>
@@ -151,7 +145,7 @@ const OrderTracking = () => {
                     display: "flex",
                     flexDirection: "column",
                     padding: 0,
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                   }}
                 >
                   <span className="menu-main-item">CƠM SƯỜN CỌNG</span>

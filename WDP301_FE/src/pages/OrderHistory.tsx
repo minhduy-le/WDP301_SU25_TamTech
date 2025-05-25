@@ -123,19 +123,19 @@ const OrderHistory = () => {
                 <div className="order-details">
                   <Text
                     className="order-date"
-                    style={{ fontFamily: "Playfair Display, serif" }}
+                    style={{ fontFamily: "Montserrat, sans-serif" }}
                   >
                     {order.date}
                   </Text>
                   <Text
                     className="order-address"
-                    style={{ fontFamily: "Playfair Display, serif" }}
+                    style={{ fontFamily: "Montserrat, sans-serif" }}
                   >
                     {order.address}
                   </Text>
                   <Text
                     className="order-price"
-                    style={{ fontFamily: "Playfair Display, serif" }}
+                    style={{ fontFamily: "Montserrat, sans-serif" }}
                   >
                     {order.price}
                   </Text>
@@ -146,7 +146,7 @@ const OrderHistory = () => {
                 <div
                   className="order-status"
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color:
                       order.status === "Hoàn thành"
                         ? "#78A243"
@@ -204,7 +204,7 @@ const OrderHistory = () => {
           <Title
             level={4}
             style={{
-              fontFamily: "Playfair Display, serif",
+              fontFamily: "Montserrat, sans-serif",
               color: "#2d1e1a",
               textAlign: "center",
             }}
@@ -241,7 +241,7 @@ const OrderHistory = () => {
               >
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#2d1e1a",
                   }}
                 >
@@ -249,7 +249,7 @@ const OrderHistory = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#2d1e1a",
                   }}
                 >
@@ -257,7 +257,7 @@ const OrderHistory = () => {
                 </Text>
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#2d1e1a",
                   }}
                 >
@@ -267,7 +267,7 @@ const OrderHistory = () => {
               <Col span={7} style={{ textAlign: "right" }}>
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#DA7339",
                   }}
                 >
@@ -278,7 +278,7 @@ const OrderHistory = () => {
             <Col span={24}>
               <Text
                 style={{
-                  fontFamily: "Playfair Display, serif",
+                  fontFamily: "Montserrat, sans-serif",
                   color: "#DA7339",
                 }}
               >
@@ -299,7 +299,7 @@ const OrderHistory = () => {
                   value={item.comment}
                   onChange={(e) => console.log(e.target.value)}
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     width: "100%",
                     // marginBottom:
                     //   index === feedbackItems.length - 1 ? "20px" : "10px",

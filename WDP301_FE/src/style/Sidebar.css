@@ -58,7 +58,7 @@ header.header-sidebar {
 }
 
 .search-input input {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .search-input:hover,
@@ -74,7 +74,7 @@ header.header-sidebar {
 }
 
 .header-menu-sidebar li {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .header-menu-sidebar li:has(img) {

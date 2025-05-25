@@ -1,5 +1,5 @@
 .order-history-container {
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   padding: 20px;
   min-height: 100vh;
   border-radius: 10px;
@@ -9,7 +9,7 @@
 .order-history-title {
   text-align: center;
   color: #2d1e1a !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   margin-bottom: 20px !important;
   font-size: 20px !important;
 }
@@ -89,7 +89,7 @@
   background-color: #78a243 !important;
   border-color: #78a243 !important;
   color: white !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   padding: 4px 12px;
   font-size: 14px;
 }
@@ -98,7 +98,7 @@
   background-color: #efe6db !important;
   border-color: #efe6db !important;
   color: #2d1e1a !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   padding: 4px 12px;
   font-size: 14px;
 }

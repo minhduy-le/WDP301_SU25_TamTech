@@ -1,6 +1,6 @@
 .user-info-container {
   background-color: #fff7e6;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   padding: 20px 55px 65px 55px;
 }
 
@@ -12,7 +12,7 @@
 
 .user-details {
   text-align: center;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .user-name {
@@ -42,7 +42,7 @@
   height: auto !important;
   line-height: normal !important;
   margin-bottom: 10px !important;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .menu-item.active {
@@ -65,7 +65,7 @@
 .content-header {
   font-size: 20px;
   color: #2d1e1a;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
   margin-bottom: 20px;
   font-weight: bold;
 }
@@ -86,7 +86,7 @@
   font-size: 15px;
   color: #2d1e1a;
   text-align: left;
-  font-family: "Playfair Display", serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qr-text p {

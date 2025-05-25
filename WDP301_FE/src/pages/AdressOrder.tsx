@@ -59,7 +59,7 @@ const AddressOrder = () => {
                   fontSize: 15,
                   textAlign: "left",
                   color: "#78A243",
-                  fontFamily: "Playfair Display, serif",
+                  fontFamily: "Montserrat, sans-serif",
                 }}
               >
                 Default
@@ -72,7 +72,7 @@ const AddressOrder = () => {
             >
               <Text
                 style={{
-                  fontFamily: "Playfair Display, serif",
+                  fontFamily: "Montserrat, sans-serif",
                   color: "#2D1E1A",
                   fontSize: 17,
                   fontWeight: 600,
@@ -83,7 +83,7 @@ const AddressOrder = () => {
               <div style={{ marginTop: "5px" }}>
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#2d1e1a",
                     fontSize: 15,
                   }}
@@ -97,7 +97,7 @@ const AddressOrder = () => {
               <div style={{ marginTop: "5px" }}>
                 <Text
                   style={{
-                    fontFamily: "Playfair Display, serif",
+                    fontFamily: "Montserrat, sans-serif",
                     color: "#2d1e1a",
                     fontSize: 15,
                   }}
