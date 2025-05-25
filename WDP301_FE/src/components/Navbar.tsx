@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Layout, Menu, Button, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
@@ -16,11 +17,15 @@ const Navbar = () => {
   const [isCartVisible, setIsCartVisible] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  // const { getCartItemsByUserId } = useCartStore();
   const { getCartItemsByUserId, clearCartForUser } = useCartStore();
 
   const handleCartClick = () => {
     setIsCartVisible(!isCartVisible);
+  };
+
+  const handleConfirmOrder = (selectedItems: any[]) => {
+    navigate("/checkout", { state: { selectedItems } });
+    setIsCartVisible(false);
   };
 
   useEffect(() => {
@@ -88,7 +93,7 @@ const Navbar = () => {
         />
         {isCartVisible && (
           <div className="cart-dropdown">
-            <Cart cartItems={cartItems} />
+            <Cart cartItems={cartItems} onConfirmOrder={handleConfirmOrder} />
           </div>
         )}
       </div>
