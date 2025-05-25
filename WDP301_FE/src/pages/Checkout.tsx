@@ -14,15 +14,60 @@ import {
   TimePicker,
 } from "antd";
 import "../style/Checkout.css";
+import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import dayjs from "dayjs";
+import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 
+interface AddOn {
+  productId: number;
+  productTypeName: string;
+  quantity: number;
+}
+
+interface CartItem {
+  userId: string;
+  productId: number;
+  productName: string;
+  addOns: AddOn[];
+  quantity: number;
+  totalPrice: number;
+}
+
 const Checkout = () => {
   const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
+  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
+    null
+  );
   const currentDate = dayjs().format("DD/MM/YYYY");
+
+  const { data: districts = [], isLoading, isError } = useDistricts();
+  const {
+    data: wards = [],
+    isLoading: isWardsLoading,
+    isError: isWardsError,
+  } = useWardByDistrictId(selectedDistrictId);
+
+  const location = useLocation();
+  const { selectedItems = [] } = (location.state || {}) as {
+    selectedItems: CartItem[];
+  };
+
+  const subtotal = selectedItems.reduce(
+    (sum, item) => sum + item.totalPrice,
+    0
+  );
+  const discountOnItems = 0;
+  const promoDiscount = 0;
+  const deliveryFee = 16000;
+  const total = subtotal - discountOnItems - promoDiscount + deliveryFee;
+
+  const handleDistrictChange = (value: number) => {
+    setSelectedDistrictId(value);
+  };
 
   return (
     <Layout className="layout">
@@ -118,30 +163,49 @@ const Checkout = () => {
               <Row style={{ justifyContent: "space-between" }}>
                 <Col span={11}>
                   <Select
-                    defaultValue="tinh"
+                    defaultValue={null}
                     style={{
                       width: "100%",
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
+                    placeholder="Quận huyện"
+                    loading={isLoading}
+                    disabled={isError}
+                    onChange={handleDistrictChange}
+                    value={selectedDistrictId || undefined}
                   >
-                    <Option value="tinh">Tỉnh thành</Option>
+                    {districts.map((district) => (
+                      <Option
+                        key={district.districtId}
+                        value={district.districtId}
+                      >
+                        {district.name}
+                      </Option>
+                    ))}
                   </Select>
                 </Col>
                 <Col span={11}>
                   <Select
-                    defaultValue="huyen"
+                    placeholder="Phường xã"
                     style={{
                       width: "100%",
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
+                    loading={isWardsLoading}
+                    disabled={isWardsError || !selectedDistrictId}
                   >
-                    <Option value="huyen">Quận huyện</Option>
+                    {/* <Option value="huyen">Quận huyện</Option> */}
+                    {wards.map((ward, index) => (
+                      <Option key={index} value={ward.name}>
+                        {ward.name}
+                      </Option>
+                    ))}
                   </Select>
                 </Col>
               </Row>
-              <Row style={{ justifyContent: "space-between" }}>
+              {/* <Row style={{ justifyContent: "space-between" }}>
                 <Col span={11}>
                   <Select
                     defaultValue="xa"
@@ -166,7 +230,7 @@ const Checkout = () => {
                     <Option value="duong">Đường</Option>
                   </Select>
                 </Col>
-              </Row>
+              </Row> */}
               <Input
                 placeholder="Địa chỉ chi tiết"
                 style={{
@@ -218,22 +282,10 @@ const Checkout = () => {
             <Radio.Group defaultValue="cash">
               <Space direction="vertical">
                 <Radio
-                  value="momo"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  Ví MOMO
-                </Radio>
-                <Radio
-                  value="vnpay"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  Ví VNPay
-                </Radio>
-                <Radio
                   value="qr"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
-                  Quét mã QR VNPay
+                  Quét mã QR
                 </Radio>
                 <Radio
                   value="cash"
@@ -257,172 +309,70 @@ const Checkout = () => {
             <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
               Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
             </Text>
-            <div className="order-item" style={{ marginTop: 16 }}>
-              <Row style={{ justifyContent: "space-between" }}>
-                <Col>
-                  <Text
-                    style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: 17,
-                    }}
-                  >
-                    COMBO - SÀ BÌ CHƯỞNG
-                  </Text>
-                  <Text
-                    className="sub-item"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    • Canh chua
-                  </Text>
-                  <Text
-                    className="sub-item"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    • Nước ngọt: Coca Cola
-                  </Text>
-                  <Text
-                    className="sub-item"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    • Cơm thêm
-                  </Text>
-                </Col>
-                <Col>
-                  <div className="order-price">
-                    <Text
-                      style={{
-                        fontFamily: "'Montserrat', sans-serif",
-                        color: "#DA7339",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        marginRight: 13,
-                      }}
-                    >
-                      134,000đ
-                    </Text>
-                    <div className="quantity-controls">
-                      <Button>-</Button>
-                      <span>1</span>
-                      <Button>+</Button>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-            <div className="order-item">
-              <Row style={{ justifyContent: "space-between" }}>
-                <Col>
-                  <Text
-                    style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: 17,
-                    }}
-                  >
-                    CƠM SƯỜN CỌNG
-                  </Text>
-                  <Text
-                    className="sub-item"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    • Canh chua
-                  </Text>
-                  <Text
-                    className="sub-item"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Ghi chú: Lấy thêm cơm
-                  </Text>
-                </Col>
-                <Col>
-                  <div className="order-price">
-                    <Text
-                      style={{
-                        fontFamily: "'Montserrat', sans-serif",
-                        color: "#DA7339",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        marginRight: 13,
-                      }}
-                    >
-                      85,000đ
-                    </Text>
-                    <div className="quantity-controls">
-                      <Button>-</Button>
-                      <span>1</span>
-                      <Button>+</Button>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-            <div className="order-item">
-              <Row style={{ justifyContent: "space-between" }}>
-                <Col>
-                  <Text
-                    style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: 17,
-                    }}
-                  >
-                    Chả Trứng Hấp
-                  </Text>
-                </Col>
-                <Col>
-                  <div className="order-price">
-                    <Text
-                      style={{
-                        fontFamily: "'Montserrat', sans-serif",
-                        color: "#DA7339",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        marginRight: 13,
-                      }}
-                    >
-                      60,000đ
-                    </Text>
-                    <div className="quantity-controls">
-                      <Button>-</Button>
-                      <span>1</span>
-                      <Button>+</Button>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-            <div className="order-item">
-              <Row style={{ justifyContent: "space-between" }}>
-                <Col>
-                  <Text
-                    style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      fontSize: 17,
-                    }}
-                  >
-                    Coca Cola
-                  </Text>
-                </Col>
-                <Col>
-                  <div className="order-price">
-                    <Text
-                      style={{
-                        fontFamily: "'Montserrat', sans-serif",
-                        color: "#DA7339",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        marginRight: 13,
-                      }}
-                    >
-                      12,000đ
-                    </Text>
-                    <div className="quantity-controls">
-                      <Button>-</Button>
-                      <span>1</span>
-                      <Button>+</Button>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
+            {selectedItems.length > 0 ? (
+              selectedItems.map((item) => (
+                <div
+                  className="order-item"
+                  style={{ marginTop: 16 }}
+                  key={item.productId}
+                >
+                  <Row style={{ justifyContent: "space-between" }}>
+                    <Col>
+                      <Text
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontSize: 17,
+                        }}
+                      >
+                        {item.productName}
+                      </Text>
+                      {item.addOns.length > 0 && (
+                        <>
+                          {item.addOns.map((addOn, index) => (
+                            <Text
+                              key={index}
+                              className="sub-item"
+                              style={{ fontFamily: "'Montserrat', sans-serif" }}
+                            >
+                              • {addOn.productTypeName}
+                            </Text>
+                          ))}
+                        </>
+                      )}
+                    </Col>
+                    <Col>
+                      <div className="order-price">
+                        <Text
+                          style={{
+                            fontFamily: "'Montserrat', sans-serif",
+                            color: "#DA7339",
+                            fontSize: 15,
+                            fontWeight: 700,
+                            marginRight: 13,
+                          }}
+                        >
+                          {(item.totalPrice / item.quantity).toLocaleString()}đ
+                        </Text>
+                        <div className="quantity-controls">
+                          <Button>-</Button>
+                          <span>{item.quantity}</span>
+                          <Button>+</Button>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+              ))
+            ) : (
+              <Text
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  marginTop: 16,
+                }}
+              >
+                Không có món nào được chọn.
+              </Text>
+            )}
           </Card>
           <Card className="confirm-card section-card order-details">
             <Row style={{ justifyContent: "space-between" }}>
@@ -477,7 +427,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  442,000đ
+                  {subtotal.toLocaleString()}đ
                 </Text>
               </div>
               <div className="summary-item">
@@ -497,7 +447,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  -21,400đ
+                  -{discountOnItems.toLocaleString()}đ
                 </Text>
               </div>
               <div className="summary-item">
@@ -517,7 +467,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  62,500đ
+                  {promoDiscount.toLocaleString()}đ
                 </Text>
               </div>
               <div className="summary-item">
@@ -537,7 +487,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  16,000đ
+                  {deliveryFee.toLocaleString()}đ
                 </Text>
               </div>
               <Divider style={{ border: "1px solid black" }} />
@@ -551,7 +501,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  372,900đ
+                  {total.toLocaleString()}đ
                 </Text>
               </div>
             </div>

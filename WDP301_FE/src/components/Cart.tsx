@@ -9,68 +9,46 @@ import {
   Divider,
 } from "antd";
 import "../style/Cart.css";
+import { useState } from "react";
 
 const { Text } = Typography;
 
 interface CartItem {
   userId: string;
+  productId: number;
   productName: string;
-  addOns: { productTypeName: string; quantity: number }[];
+  addOns: { productId: number; productTypeName: string; quantity: number }[];
   quantity: number;
   totalPrice: number;
 }
 
 interface CartProps {
   cartItems: CartItem[];
+  onConfirmOrder: (selectedItems: CartItem[]) => void;
 }
 
-const Cart = ({ cartItems }: CartProps) => {
-  // const cartItems = [
-  //   {
-  //     key: "1",
-  //     name: "COMBO - SÀ BÌ CHƯỞNG",
-  //     description: ["Canh chua", "Nước ngọt: Coca Cola", "Cơm thêm"],
-  //     price: "123.000đ",
-  //     quantity: 1,
-  //   },
-  //   {
-  //     key: "2",
-  //     name: "COMBO - SÀ BÌ CHƯỞNG",
-  //     description: [
-  //       "Canh chua",
-  //       "Nước ngọt: Coca Cola",
-  //       "Cơm thêm",
-  //       "Rau chua thêm",
-  //     ],
-  //     price: "138.000đ",
-  //     quantity: 1,
-  //   },
-  //   {
-  //     key: "3",
-  //     name: "CƠM SƯỜN CỌNG",
-  //     description: ["Canh chua"],
-  //     price: "85.000đ",
-  //     quantity: 1,
-  //   },
-  //   {
-  //     key: "4",
-  //     name: "Chả Trứng Hấp",
-  //     description: [],
-  //     price: "12.000đ",
-  //     quantity: 1,
-  //   },
-  //   {
-  //     key: "5",
-  //     name: "Coca Cola",
-  //     description: [],
-  //     price: "12.000đ",
-  //     quantity: 4,
-  //   },
-  // ];
+const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
+  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]); // State to track selected items
 
-  // const total = 419000;
-
+  // Handle checkbox change for each item
+  const handleCheckboxChange = (item: CartItem, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, item]);
+    } else {
+      setSelectedItems((prev) =>
+        prev.filter((i) => i.productId !== item.productId)
+      );
+    }
+  };
   const total = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const handleConfirmOrder = () => {
+    if (selectedItems.length === 0) {
+      alert("Vui lòng chọn ít nhất một món để xác nhận đơn hàng!");
+      return;
+    }
+    onConfirmOrder(selectedItems); // Pass selected items to parent component
+  };
 
   return (
     <div className="cart-container">
@@ -80,45 +58,20 @@ const Cart = ({ cartItems }: CartProps) => {
           Nhà văn hóa sinh viên, Khu đô thị Đại học Quốc gia TP. Hồ Chí Minh
         </Text>
         <Divider style={{ borderTop: "1px solid #2d1e1a", margin: "6px 0" }} />
-        {/* <List
-          dataSource={cartItems}
-          renderItem={(item) => (
-            <List.Item className="cart-item">
-              <Row style={{ width: "100%" }}>
-                <Col span={2}>
-                  <Checkbox />
-                </Col>
-                <Col span={16}>
-                  <Text className="cart-item-name">{item.name}</Text>
-                  {item.description.length > 0 && (
-                    <ul className="item-description-list">
-                      {item.description.map((desc, index) => (
-                        <li key={index} className="item-description">
-                          {desc}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </Col>
-                <Col
-                  span={6}
-                  style={{ textAlign: "right", display: "flex", gap: 5 }}
-                >
-                  <Text className="item-price">{item.price}</Text>
-                  <Text className="item-quantity">x{item.quantity}</Text>
-                </Col>
-              </Row>
-            </List.Item>
-          )}
-          bordered={false}
-        /> */}
         <List
           dataSource={cartItems}
           renderItem={(item) => (
             <List.Item className="cart-item">
               <Row style={{ width: "100%" }}>
                 <Col span={2}>
-                  <Checkbox />
+                  <Checkbox
+                    onChange={(e) =>
+                      handleCheckboxChange(item, e.target.checked)
+                    }
+                    checked={selectedItems.some(
+                      (i) => i.productId === item.productId
+                    )}
+                  />
                 </Col>
                 <Col span={16}>
                   <Text className="cart-item-name">{item.productName}</Text>
@@ -155,7 +108,12 @@ const Cart = ({ cartItems }: CartProps) => {
             <Text className="total-price">{total.toLocaleString()}đ</Text>
           </Col>
         </Row>
-        <Button className="confirm-button" block>
+        <Button
+          className="confirm-button"
+          block
+          onClick={handleConfirmOrder}
+          disabled={selectedItems.length === 0}
+        >
           Xác nhận đơn hàng
         </Button>
       </Card>
