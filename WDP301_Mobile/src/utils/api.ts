@@ -1,38 +1,38 @@
 import axios from "axios";
-import { AxiosResponse } from "axios";
 import { Platform } from "react-native";
 import { API_URL } from "./constant";
 
-export const customerRegisterAPI = async (
+export const customerRegisterAPI = (
   fullName: string,
   phone_number: string,
   email: string,
   password: string,
   date_of_birth: string
-): Promise<AxiosResponse<any>> => {
+) => {
   const url = `${API_URL}/api/auth/register`;
-  const response = await axios.post(url, {
+  return axios.post(url, {
     fullName,
     email,
     phone_number,
     password,
     date_of_birth,
   });
-  return response.data.data;
 };
 
 export const verifyEmailCustomer = (email: string, otp: string) => {
   const url = `${API_URL}/api/auth/verify-otp`;
-  return axios.post(url, { email, otp });
+  return axios.post(url, {
+    email,
+    otp,
+  });
+};
+export const resendCodeAPI = (email: string) => {
+  const url = `${API_URL}/api/auth/resend-otp`;
+  return axios.post(url, { email });
 };
 export const registerAPI = (email: string, password: string, name: string) => {
   const url = `/api/v1/auth/register`;
   return axios.post<IBackendRes<IRegister>>(url, { email, password, name });
-};
-
-export const resendCodeAPI = (email: string) => {
-  const url = `/api/v1/auth/verify-email`;
-  return axios.post<IBackendRes<IRegister>>(url, { email });
 };
 
 export const loginAPI = (email: string, password: string) => {

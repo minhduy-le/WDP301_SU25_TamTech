@@ -5,7 +5,7 @@ import { APP_COLOR } from "@/utils/constant";
 import { CustomerSignUpSchema } from "@/utils/validate.schema";
 import { Link, router } from "expo-router";
 import { Formik } from "formik";
-import { Text, View, StyleSheet, Image } from "react-native";
+import { Text, View, StyleSheet, Image, Keyboard } from "react-native";
 import Toast from "react-native-root-toast";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
@@ -20,7 +20,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-
 const handleSignUp = async (
   fullName: string,
   phoneNumber: string,
@@ -36,9 +35,9 @@ const handleSignUp = async (
       password,
       date_of_birth
     );
-    console.log(signUpResponse);
+    console.log("Lấy data", signUpResponse.config.data);
 
-    if (signUpResponse.status === 200 || signUpResponse.status === 201) {
+    if (signUpResponse) {
       Toast.show("Đăng ký thành công!", {
         duration: Toast.durations.LONG,
         position: Toast.positions.BOTTOM,
