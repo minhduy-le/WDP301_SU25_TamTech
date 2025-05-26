@@ -73,3 +73,138 @@ header {
   border: none;
   outline: none;
 }
+
+.hamburger-menu {
+  display: none;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.header-brand.active {
+  flex-direction: column;
+  position: absolute;
+  top: 48px;
+  left: 0;
+  width: 100%;
+  background: #fff7e6;
+  padding: 10px 24px;
+  z-index: 1000;
+}
+
+.header-brand.active .header-logo {
+  margin-bottom: 10px;
+}
+
+.header-brand.active .header-menu {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-brand.active .header-menu .ant-menu-item {
+  margin: 10px 0;
+  text-align: center;
+  width: 100%;
+}
+
+.header-media {
+  display: none;
+}
+
+.header-media a {
+  color: #da7339 !important;
+  font-family: "Montserrat", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.header-brand.active .header-media {
+  display: flex;
+  flex-direction: column;
+  width: -webkit-fill-available;
+}
+
+.header-brand.active .ant-input-affix-wrapper {
+  width: -webkit-fill-available !important;
+}
+
+.header-brand.active .ant-menu-overflow.ant-menu {
+  display: none;
+}
+/* Responsive Design */
+@media (max-width: 840px) {
+  .hamburger-menu {
+    display: block !important;
+  }
+
+  .header-brand {
+    display: none;
+  }
+
+  header {
+    padding: 8px 20px !important;
+    height: auto !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .ant-input {
+    width: 100% !important;
+    margin: 10px 0 !important;
+    max-width: 300px !important;
+  }
+
+  .header-icon {
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 15px !important ;
+    margin-top: 10px !important;
+  }
+
+  .anticon-shopping-cart svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  /* .header-brand.active .ant-menu-overflow-item {
+    opacity: 1 !important;
+    height: auto !important;
+    position: relative !important;
+  } */
+  /* .header-menu .ant-menu-overflow-item.ant-menu-item {
+    opacity: inherit !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    order: inherit !important;
+    pointer-events: none !important;
+    position: relative !important;
+  } */
+}
+
+@media (max-width: 480px) {
+  .header-brand.active .header-menu .ant-menu-title-content a {
+    font-size: 14px;
+  }
+
+  .ant-input {
+    font-size: 14px;
+    height: 36px;
+  }
+
+  .header-icon {
+    gap: 10px;
+  }
+
+  .anticon-shopping-cart svg {
+    width: 24px;
+    height: 24px;
+  }
+}

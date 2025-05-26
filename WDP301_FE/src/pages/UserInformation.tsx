@@ -1,4 +1,16 @@
-import { Divider, Layout, Menu, Modal, Form, Input, Button } from "antd";
+import {
+  Divider,
+  Layout,
+  Menu,
+  Modal,
+  Form,
+  Input,
+  Button,
+  Typography,
+  Row,
+  Col,
+  Card,
+} from "antd";
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
 import OrderTracking from "./OrderTracking";
@@ -7,14 +19,50 @@ import UserBoldIcon from "../components/icon/UserBoldIcon";
 import { ContainerOutlined, EditOutlined } from "@ant-design/icons";
 import SearchIcon from "../components/icon/SearchIcon";
 import PromotionIcon from "../components/icon/PromotionIcon";
-import HomeSideIcon from "../components/icon/HomeSideIcon";
-import AddressOrder from "./AdressOrder";
+// import HomeSideIcon from "../components/icon/HomeSideIcon";
 import Promotion from "./Promotion";
 import { useLocation, useNavigationType } from "react-router-dom";
 import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser, useUpdateProfile } from "../hooks/profileApi";
+import "../style/AddressOrder.css";
 
 const { Sider, Content } = Layout;
+const { Text } = Typography;
+
+const contacts = [
+  {
+    id: 1,
+    name: "Truong Quang Hieu Trung",
+    phone: "0888777888",
+    address:
+      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    isDefault: false,
+  },
+  {
+    id: 2,
+    name: "Truong Quang Hieu Trung",
+    phone: "0888777888",
+    address:
+      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    isDefault: false,
+  },
+  {
+    id: 3,
+    name: "Truong Quang Hieu Trung",
+    phone: "0888777888",
+    address:
+      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    isDefault: true,
+  },
+  {
+    id: 4,
+    name: "Truong Quang Hieu Trung",
+    phone: "0888777888",
+    address:
+      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    isDefault: false,
+  },
+];
 
 const UserInfomation = () => {
   const [activePage, setActivePage] = useState("1");
@@ -86,7 +134,7 @@ const UserInfomation = () => {
   return (
     <div className="user-info-container">
       <Layout style={{ minHeight: "510px", background: "#fff7e6" }}>
-        <Sider width={300} className="user-sider">
+        <Sider className="user-sider">
           <div className="user-details">
             <p className="user-name">
               {userProfile?.fullName || "Dummy Tester VietNamese"}
@@ -134,17 +182,15 @@ const UserInfomation = () => {
                 </span>
                 Ưu đãi
               </Menu.Item>
-              <Menu.Item key="5" className="menu-item">
-                <span role="img" aria-label="home">
-                  <HomeSideIcon />
-                </span>
-                Địa chỉ giao hàng
-              </Menu.Item>
             </Menu>
           </div>
         </Sider>
         <Layout
-          style={{ padding: "0 20px", background: "#fff7e6", borderRadius: 10 }}
+          style={{
+            padding: "0 20px",
+            background: "#fff7e6",
+            borderRadius: 10,
+          }}
         >
           <Content>
             {activePage === "1" && (
@@ -173,12 +219,85 @@ const UserInfomation = () => {
                     </p>
                   </div>
                 </div>
+
+                <div className="contact-container">
+                  <Row gutter={[16, 16]} justify="center">
+                    {contacts.map((contact) => (
+                      <Col
+                        key={contact.id}
+                        xs={24}
+                        sm={12}
+                        md={12}
+                        lg={12}
+                        xl={12}
+                        span={12}
+                      >
+                        {contact.isDefault && (
+                          <div
+                            style={{
+                              fontWeight: 400,
+                              fontSize: 15,
+                              textAlign: "left",
+                              color: "#78A243",
+                              fontFamily: "Montserrat, sans-serif",
+                            }}
+                          >
+                            Default
+                          </div>
+                        )}
+                        <Card
+                          className={`contact-card ${
+                            contact.isDefault ? "default-card" : ""
+                          }`}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Montserrat, sans-serif",
+                              color: "#2D1E1A",
+                              fontSize: 17,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {contact.name}
+                          </Text>
+                          <div style={{ marginTop: "5px" }}>
+                            <Text
+                              style={{
+                                fontFamily: "Montserrat, sans-serif",
+                                color: "#2d1e1a",
+                                fontSize: 15,
+                              }}
+                            >
+                              <span role="img" aria-label="phone">
+                                📞
+                              </span>{" "}
+                              {contact.phone}
+                            </Text>
+                          </div>
+                          <div style={{ marginTop: "5px" }}>
+                            <Text
+                              style={{
+                                fontFamily: "Montserrat, sans-serif",
+                                color: "#2d1e1a",
+                                fontSize: 15,
+                              }}
+                            >
+                              <span role="img" aria-label="location">
+                                📍
+                              </span>{" "}
+                              {contact.address}
+                            </Text>
+                          </div>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
               </div>
             )}
             {activePage === "2" && <OrderTracking />}
             {activePage === "3" && <OrderHistory />}
             {activePage === "4" && <Promotion />}
-            {activePage === "5" && <AddressOrder />}
           </Content>
         </Layout>
       </Layout>
