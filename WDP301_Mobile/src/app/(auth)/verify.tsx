@@ -4,7 +4,14 @@ import { APP_COLOR } from "@/utils/constant";
 import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Keyboard,
+} from "react-native";
 import OTPTextView from "react-native-otp-textinput";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
@@ -83,88 +90,62 @@ const VerifyPage = () => {
 
   const verifyCustomerEmail = async (email: string, otp: string) => {
     try {
+      console.log(email, otp);
+      Keyboard.dismiss();
+      setIsSubmit(true);
       const verifyRes = await verifyEmailCustomer(email, otp);
       console.log(verifyRes);
+      setIsSubmit(false);
       if (verifyRes) {
-        Toast.show("Kích hoạt tài khoản thành công", {
+        Toast.show("Xác thực tài khoản thành công", {
           duration: Toast.durations.LONG,
           textColor: "white",
           backgroundColor: APP_COLOR.ORANGE,
           opacity: 1,
           position: -35,
         });
+        router.replace("/(auth)/welcome");
+      } else {
+        Toast.show("Xác thực tài khoản thất bại", {
+          duration: Toast.durations.LONG,
+          textColor: "white",
+          backgroundColor: APP_COLOR.CANCEL,
+          opacity: 1,
+        });
       }
     } catch (error) {
-      console.log("Lỗi rồi", error);
+      console.log("Lỗi không thể xác thực được email", error);
     }
   };
-  // const verifyCode = async () => {
-  //   Keyboard.dismiss();
-  //   setIsSubmit(true);
-  //   try {
-  // const res = await axios.post(
-  //   `${BASE_URL}/verify-code/verify?phoneNumber=${phoneNumber}&code=${code}`
-  // );
-  // setIsSubmit(false);
-  // if (res.data) {
-  //   const token = res.data.access_token;
-  //   const refresh_token = res.data.refresh_token;
-  //   otpRef?.current?.clear();
-  //   Toast.show("Kích hoạt tài khoản thành công", {
-  //     duration: Toast.durations.LONG,
-  //     textColor: "white",
-  //     backgroundColor: APP_COLOR.ORANGE,
-  //     opacity: 1,
-  //   });
-  // if (isLogin) {
-  //   router.replace("/(tabs)");
-  // } else {
-  //   router.replace({
-  //     pathname: "/(auth)/customer.changepassword",
-  //     params: { token, refresh_token },
-  //   });
-  // }
-  // } else {
-  //   Toast.show(res.message as string, {
-  //     duration: Toast.durations.LONG,
-  //     textColor: "white",
-  //     backgroundColor: APP_COLOR.ORANGE,
-  //     opacity: 1,
-  //   });
-  // }
-  //   } catch (error) {
-  //     console.log(">>> Error during sign-up: ", error);
-  //   }
-  // };
 
   useEffect(() => {
     if (code && code.length === 6) {
-      verifyCustomerEmail;
+      verifyCustomerEmail(email as string, code);
     }
   }, [code]);
 
   const handleResendCode = async () => {
-    // if (countdown > 0) return;
-    // otpRef?.current?.clear();
-    // setCountdown(60);
-    // try {
-    //   const res = await resendCodeAPI(phoneNumber as string);
-    //   const m = res.data ? "Resend code thành công" : res.message;
-    //   Toast.show(m as string, {
-    //     duration: Toast.durations.LONG,
-    //     textColor: "white",
-    //     backgroundColor: APP_COLOR.ORANGE,
-    //     opacity: 1,
-    //   });
-    // } catch (error) {
-    //   console.error("Error resending code:", error);
-    //   Toast.show("Không thể gửi lại mã. Vui lòng thử lại sau.", {
-    //     duration: Toast.durations.LONG,
-    //     textColor: "white",
-    //     backgroundColor: APP_COLOR.ORANGE,
-    //     opacity: 1,
-    //   });
-    // }
+    if (countdown > 0) return;
+    otpRef?.current?.clear();
+    setCountdown(60);
+    try {
+      const res = await resendCodeAPI(email as string);
+      const m = res.data ? "Resend code thành công" : res.message;
+      Toast.show(m as string, {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.ORANGE,
+        opacity: 1,
+      });
+    } catch (error) {
+      console.error("Error resending code:", error);
+      Toast.show("Không thể gửi lại mã. Vui lòng thử lại sau.", {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.ORANGE,
+        opacity: 1,
+      });
+    }
   };
 
   return (
