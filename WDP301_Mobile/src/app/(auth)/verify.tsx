@@ -4,17 +4,9 @@ import { APP_COLOR } from "@/utils/constant";
 import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Keyboard,
-  Image,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import OTPTextView from "react-native-otp-textinput";
 import Toast from "react-native-root-toast";
-import { BASE_URL } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import footerFrame from "@/assets/frame_footer.png";
@@ -61,24 +53,33 @@ const styles = StyleSheet.create({
   },
 });
 
+const formatCountdown = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+};
+
 const VerifyPage = () => {
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(0);
   const otpRef = useRef<OTPTextView>(null);
   const [code, setCode] = useState<string>("");
   const { email } = useLocalSearchParams();
-
+  const [coundownEmail, setCoundownEmail] = useState<number>(600);
   useEffect(() => {
     let timer: number | null;
-    if (countdown > 0) {
+    if (countdown > 0 || coundownEmail > 0) {
       timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
+        setCoundownEmail((prev) => prev - 1);
       }, 1000);
     }
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [countdown]);
+  }, [countdown, coundownEmail]);
 
   const verifyCustomerEmail = async (email: string, otp: string) => {
     try {
@@ -167,11 +168,23 @@ const VerifyPage = () => {
   };
 
   return (
-    <>
-      <View style={styles.container}>
-        <View style={styles.welcomeText}>
-          <Image style={styles.imgLogo} source={logo} />
-          <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+    <View style={styles.container}>
+      <View style={styles.welcomeText}>
+        <Image style={styles.imgLogo} source={logo} />
+        <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+        {coundownEmail == 0 ? (
+          <Text
+            style={{
+              marginVertical: 10,
+              fontFamily: FONTS.regular,
+              color: APP_COLOR.CANCEL,
+              marginHorizontal: 10,
+              textAlign: "center",
+            }}
+          >
+            OTP đã hết hạn, vui lòng gửi lại mã
+          </Text>
+        ) : (
           <Text
             style={{
               marginVertical: 10,
@@ -181,65 +194,62 @@ const VerifyPage = () => {
               textAlign: "center",
             }}
           >
-            Một mã OTP đã được gửi về email {email}, OTP có hiệu lực trong 3
-            phút
+            Mã OTP đã được gửi về {email}, OTP có hiệu lực trong{" "}
+            {formatCountdown(coundownEmail)}
           </Text>
-          <View style={{ marginVertical: 20 }}>
-            <OTPTextView
-              ref={otpRef}
-              handleTextChange={setCode}
-              autoFocus
-              inputCount={6}
-              inputCellLength={1}
-              tintColor={APP_COLOR.ORANGE}
-              offTintColor={APP_COLOR.BROWN}
-              textInputStyle={{
-                height: 45,
-                width: 45,
-                borderWidth: 1,
-                borderColor: APP_COLOR.BROWN,
-                borderBottomWidth: 1,
-                borderRadius: 5,
-              }}
-            />
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              marginVertical: 10,
-              alignItems: "center",
+        )}
+        <View style={{ marginVertical: 20 }}>
+          <OTPTextView
+            ref={otpRef}
+            handleTextChange={setCode}
+            autoFocus
+            inputCount={6}
+            inputCellLength={1}
+            tintColor={APP_COLOR.ORANGE}
+            offTintColor={APP_COLOR.BROWN}
+            textInputStyle={{
+              height: 45,
+              width: 45,
+              borderWidth: 1,
+              borderColor: APP_COLOR.BROWN,
+              borderBottomWidth: 1,
+              borderRadius: 5,
             }}
-          >
-            <Text style={styles.resendText}>Không nhận được mã xác nhận, </Text>
-            <TouchableOpacity
-              onPress={handleResendCode}
-              disabled={countdown > 0}
-            >
-              <Text
-                style={[
-                  countdown > 0 ? styles.resendTextDisabled : styles.resendText,
-                  { textDecorationLine: "underline" },
-                ]}
-              >
-                {countdown > 0 ? `Gửi lại (${countdown}s)` : "Gửi lại"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          />
         </View>
-        <Image
-          source={footerFrame}
+        <View
           style={{
-            position: "absolute",
-            bottom: 0,
-            right: 0,
-            width: 250,
-            height: 250,
-            resizeMode: "contain",
+            flexDirection: "row",
+            marginVertical: 10,
+            alignItems: "center",
           }}
-        />
+        >
+          <Text style={styles.resendText}>Không nhận được mã xác nhận, </Text>
+          <TouchableOpacity onPress={handleResendCode} disabled={countdown > 0}>
+            <Text
+              style={[
+                countdown > 0 ? styles.resendTextDisabled : styles.resendText,
+                { textDecorationLine: "underline" },
+              ]}
+            >
+              {countdown > 0 ? `Gửi lại (${countdown}s)` : "Gửi lại"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
+      <Image
+        source={footerFrame}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 0,
+          width: 250,
+          height: 250,
+          resizeMode: "contain",
+        }}
+      />
       {isSubmit && <LoadingOverlay />}
-    </>
+    </View>
   );
 };
 

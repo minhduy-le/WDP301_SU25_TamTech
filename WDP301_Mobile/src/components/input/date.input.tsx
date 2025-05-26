@@ -10,7 +10,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { APP_COLOR } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
-
+import AntDesign from "@expo/vector-icons/AntDesign";
 interface DateInputProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -64,6 +64,7 @@ const DateInput = ({
         <Text style={[styles.text, !value && styles.placeholder]}>
           {value || placeholder}
         </Text>
+        <AntDesign name="calendar" size={24} color={APP_COLOR.BROWN} />
       </TouchableOpacity>
 
       {error && touched && <Text style={styles.errorText}>{error}</Text>}
@@ -133,24 +134,26 @@ const DateInput = ({
 
 const styles = StyleSheet.create({
   input: {
-    height: 50,
+    height: 45,
     borderWidth: 1,
     borderColor: APP_COLOR.BROWN,
     borderRadius: 8,
     paddingHorizontal: 15,
-    justifyContent: "center",
+    justifyContent: "space-between",
     backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    flexDirection: "row",
+    alignItems: "center",
   },
   inputError: {
     borderColor: "red",
   },
   text: {
     fontFamily: FONTS.regular,
-    fontSize: 16,
+    fontSize: 15,
     color: APP_COLOR.BROWN,
   },
   placeholder: {
-    color: "#999",
+    color: APP_COLOR.BROWN,
   },
   errorText: {
     color: "red",

@@ -47,6 +47,8 @@ const RestaurantsPage = () => {
     const res = await axios.get(
       `${BASE_URL}/products?page=0&size=10&keyword=${text}&typeId=0`
     );
+    console.log(res);
+
     if (res.data.data.content) {
       setRestaurants(res.data.results);
     }

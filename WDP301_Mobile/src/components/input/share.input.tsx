@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
   },
   eye: {
     position: "absolute",
-    right: 10,
-    top: 13,
+    right: 15,
+    top: 11,
   },
 });
 
@@ -161,7 +161,7 @@ const ShareInput = (props: IProps) => {
           <FontAwesome5
             style={styles.eye}
             name={isShowPassword ? "eye" : "eye-slash"}
-            size={15}
+            size={20}
             color={APP_COLOR.BROWN}
             onPress={() => setIsShowPassword(!isShowPassword)}
           />
