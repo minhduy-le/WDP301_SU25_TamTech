@@ -1,16 +1,27 @@
 import axios from "@/utils/axios.customize";
+import { AxiosResponse } from "axios";
 import { Platform } from "react-native";
 import { API_URL } from "./constant";
 
-export const customerRegisterAPI = (
+export const customerRegisterAPI = async (
   fullName: string,
-  phoneNumber: string,
+  phone_number: string,
   email: string,
-  password: string
-) => {
-  const url = `${API_URL}/api/auth/register`;
-  return axios.post(url, { fullName, email, phoneNumber, password });
+  password: string,
+  date_of_birth: string
+): Promise<AxiosResponse<any>> => {
+  const url = `https://wdp-301-0fd32c261026.herokuapp.com/api/auth/register`;
+  const response = await axios.post(url, {
+    fullName,
+    email,
+    phone_number,
+    password,
+    date_of_birth,
+  });
+  console.log(response);
+  return response;
 };
+
 export const verifyEmailCustomer = (email: string, otp: string) => {
   const url = `${API_URL}/api/auth/verify-otp`;
   return axios.post(url, { email, otp });

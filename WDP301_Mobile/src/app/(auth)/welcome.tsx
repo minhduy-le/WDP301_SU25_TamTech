@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
   const [loading, setLoading] = useState<boolean>(false);
+  const [fogotPasword, setFogotPassword] = useState(false);
   const handleLogin = async (
     phoneNumber: string,
     password: string,
@@ -134,6 +135,7 @@ const WelcomePage = () => {
           params: { access_token: res.data.data.access_token, isLogin: 1 },
         });
       } else {
+        setFogotPassword(true);
         Toast.show("Đăng nhập không thành công", {
           duration: Toast.durations.LONG,
           textColor: "white",
@@ -229,15 +231,7 @@ const WelcomePage = () => {
                     handleLogin(values.email, values.password, resetForm)
                   }
                 >
-                  {({
-                    handleChange,
-                    handleBlur,
-                    handleSubmit,
-                    resetForm,
-                    values,
-                    errors,
-                    touched,
-                  }) => (
+                  {({ handleChange, handleBlur, values, errors, touched }) => (
                     <View>
                       <ShareInput
                         placeholder="Đăng nhập bằng email"
@@ -258,6 +252,7 @@ const WelcomePage = () => {
                         error={errors.password}
                         touched={touched.password}
                       />
+                      {fogotPasword && <Text>Quên mật khẩu?</Text>}
                     </View>
                   )}
                 </Formik>
