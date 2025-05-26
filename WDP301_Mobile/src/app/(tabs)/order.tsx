@@ -318,7 +318,9 @@ const OrderPage = () => {
                     marginHorizontal: "auto",
                   }}
                 >
-                  <View style={{ gap: 10, width: 320 }}>
+                  <View
+                    style={{ gap: 10, width: 320, marginHorizontal: "auto" }}
+                  >
                     <View
                       style={{
                         flexDirection: "row",
@@ -338,14 +340,16 @@ const OrderPage = () => {
                         {formatDateToDDMMYYYY(item.createdAt)}
                       </Text>
                     </View>
-                    <View style={{ flexDirection: "row" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <View>
                         <Text style={styles.text}>{item.address}</Text>
                         <Text style={styles.text}>
-                          {currencyFormatter(item.amount)} {" | "}
-                          <Text style={styles.earnPoint}>
-                            (+ {item.pointEarned} điểm)
-                          </Text>
+                          {currencyFormatter(item.amount)}
                         </Text>
                       </View>
                       <View style={{ marginLeft: 15 }}>

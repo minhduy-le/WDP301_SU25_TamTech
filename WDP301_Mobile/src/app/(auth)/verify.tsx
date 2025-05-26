@@ -1,5 +1,5 @@
 import LoadingOverlay from "@/components/loading/overlay";
-import { resendCodeAPI } from "@/utils/api";
+import { resendCodeAPI, verifyEmailCustomer } from "@/utils/api";
 import { APP_COLOR } from "@/utils/constant";
 import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
@@ -66,7 +66,7 @@ const VerifyPage = () => {
   const [countdown, setCountdown] = useState<number>(0);
   const otpRef = useRef<OTPTextView>(null);
   const [code, setCode] = useState<string>("");
-  const { phoneNumber, isLogin } = useLocalSearchParams();
+  const { email } = useLocalSearchParams();
 
   useEffect(() => {
     let timer: number | null;
@@ -80,76 +80,90 @@ const VerifyPage = () => {
     };
   }, [countdown]);
 
-  const verifyCode = async () => {
-    Keyboard.dismiss();
-    setIsSubmit(true);
+  const verifyCustomerEmail = async (email: string, otp: string) => {
     try {
-      const res = await axios.post(
-        `${BASE_URL}/verify-code/verify?phoneNumber=${phoneNumber}&code=${code}`
-      );
-      setIsSubmit(false);
-      if (res.data) {
-        const token = res.data.access_token;
-        const refresh_token = res.data.refresh_token;
-        otpRef?.current?.clear();
+      const verifyRes = await verifyEmailCustomer(email, otp);
+      console.log(verifyRes);
+      if (verifyRes) {
         Toast.show("Kích hoạt tài khoản thành công", {
           duration: Toast.durations.LONG,
           textColor: "white",
           backgroundColor: APP_COLOR.ORANGE,
           opacity: 1,
-        });
-
-        if (isLogin) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace({
-            pathname: "/(auth)/customer.changepassword",
-            params: { token, refresh_token },
-          });
-        }
-      } else {
-        Toast.show(res.message as string, {
-          duration: Toast.durations.LONG,
-          textColor: "white",
-          backgroundColor: APP_COLOR.ORANGE,
-          opacity: 1,
+          position: -35,
         });
       }
     } catch (error) {
-      console.log(">>> Error during sign-up: ", error);
+      console.log("Lỗi rồi", error);
     }
   };
+  // const verifyCode = async () => {
+  //   Keyboard.dismiss();
+  //   setIsSubmit(true);
+  //   try {
+  // const res = await axios.post(
+  //   `${BASE_URL}/verify-code/verify?phoneNumber=${phoneNumber}&code=${code}`
+  // );
+  // setIsSubmit(false);
+  // if (res.data) {
+  //   const token = res.data.access_token;
+  //   const refresh_token = res.data.refresh_token;
+  //   otpRef?.current?.clear();
+  //   Toast.show("Kích hoạt tài khoản thành công", {
+  //     duration: Toast.durations.LONG,
+  //     textColor: "white",
+  //     backgroundColor: APP_COLOR.ORANGE,
+  //     opacity: 1,
+  //   });
+  // if (isLogin) {
+  //   router.replace("/(tabs)");
+  // } else {
+  //   router.replace({
+  //     pathname: "/(auth)/customer.changepassword",
+  //     params: { token, refresh_token },
+  //   });
+  // }
+  // } else {
+  //   Toast.show(res.message as string, {
+  //     duration: Toast.durations.LONG,
+  //     textColor: "white",
+  //     backgroundColor: APP_COLOR.ORANGE,
+  //     opacity: 1,
+  //   });
+  // }
+  //   } catch (error) {
+  //     console.log(">>> Error during sign-up: ", error);
+  //   }
+  // };
 
   useEffect(() => {
     if (code && code.length === 6) {
-      verifyCode();
+      verifyCustomerEmail;
     }
   }, [code]);
 
   const handleResendCode = async () => {
-    if (countdown > 0) return;
-
-    otpRef?.current?.clear();
-    setCountdown(60);
-
-    try {
-      const res = await resendCodeAPI(phoneNumber as string);
-      const m = res.data ? "Resend code thành công" : res.message;
-      Toast.show(m as string, {
-        duration: Toast.durations.LONG,
-        textColor: "white",
-        backgroundColor: APP_COLOR.ORANGE,
-        opacity: 1,
-      });
-    } catch (error) {
-      console.error("Error resending code:", error);
-      Toast.show("Không thể gửi lại mã. Vui lòng thử lại sau.", {
-        duration: Toast.durations.LONG,
-        textColor: "white",
-        backgroundColor: APP_COLOR.ORANGE,
-        opacity: 1,
-      });
-    }
+    // if (countdown > 0) return;
+    // otpRef?.current?.clear();
+    // setCountdown(60);
+    // try {
+    //   const res = await resendCodeAPI(phoneNumber as string);
+    //   const m = res.data ? "Resend code thành công" : res.message;
+    //   Toast.show(m as string, {
+    //     duration: Toast.durations.LONG,
+    //     textColor: "white",
+    //     backgroundColor: APP_COLOR.ORANGE,
+    //     opacity: 1,
+    //   });
+    // } catch (error) {
+    //   console.error("Error resending code:", error);
+    //   Toast.show("Không thể gửi lại mã. Vui lòng thử lại sau.", {
+    //     duration: Toast.durations.LONG,
+    //     textColor: "white",
+    //     backgroundColor: APP_COLOR.ORANGE,
+    //     opacity: 1,
+    //   });
+    // }
   };
 
   return (
@@ -167,8 +181,8 @@ const VerifyPage = () => {
               textAlign: "center",
             }}
           >
-            Một mã OTP đã được gửi về số điện thoại của bạn, OTP có hiệu lực
-            trong 3 phút {phoneNumber}
+            Một mã OTP đã được gửi về email {email}, OTP có hiệu lực trong 3
+            phút
           </Text>
           <View style={{ marginVertical: 20 }}>
             <OTPTextView
@@ -180,8 +194,8 @@ const VerifyPage = () => {
               tintColor={APP_COLOR.ORANGE}
               offTintColor={APP_COLOR.BROWN}
               textInputStyle={{
-                height: 40,
-                width: 40,
+                height: 45,
+                width: 45,
                 borderWidth: 1,
                 borderColor: APP_COLOR.BROWN,
                 borderBottomWidth: 1,

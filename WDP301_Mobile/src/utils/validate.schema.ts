@@ -47,7 +47,7 @@ export const CustomerSignUpSchema = Yup.object().shape({
     .oneOf([Yup.ref("password")], "Không trùng với mật khẩu"),
 });
 export const CustomerSignInSchema = Yup.object().shape({
-  phoneNumber: Yup.string().required("Số điện thoại không được để trống"),
+  email: Yup.string().required("Email không được để trống"),
   password: Yup.string().required("Password không được để trống"),
 });
 export const UpdateUserSchema = Yup.object().shape({
