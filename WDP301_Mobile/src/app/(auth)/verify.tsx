@@ -11,6 +11,8 @@ import {
   Image,
   TouchableOpacity,
   Keyboard,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import OTPTextView from "react-native-otp-textinput";
 import Toast from "react-native-root-toast";
@@ -120,7 +122,7 @@ const VerifyPage = () => {
 
   useEffect(() => {
     if (code && code.length === 6) {
-      verifyCustomerEmail(email as string, code);
+      verifyCustomerEmail;
     }
   }, [code]);
 
@@ -149,7 +151,10 @@ const VerifyPage = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <View style={styles.welcomeText}>
         <Image style={styles.imgLogo} source={logo} />
         <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
@@ -230,7 +235,7 @@ const VerifyPage = () => {
         }}
       />
       {isSubmit && <LoadingOverlay />}
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

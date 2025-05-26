@@ -35,9 +35,7 @@ const handleSignUp = async (
       password,
       date_of_birth
     );
-    console.log("Lấy data", signUpResponse.config.data);
-
-    if (signUpResponse) {
+    if (signUpResponse.config.data) {
       Toast.show("Đăng ký thành công!", {
         duration: Toast.durations.LONG,
         position: Toast.positions.BOTTOM,
