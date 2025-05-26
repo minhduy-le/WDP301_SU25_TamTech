@@ -1,89 +1,97 @@
 import React, { useEffect } from 'react';
 import { Row, Col, Typography } from 'antd';
-import './WhyChooseUs.css';
+import './WhyChooseUs.css'; // Import file CSS mới
 
-const { Title, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
-interface Feature {
+interface ArtisticFeature {
   id: number;
   image: string;
   title: string;
   subtitle: string;
+  accentColor: string;
 }
 
-const features: Feature[] = [
+const artisticLayerFeaturesData: ArtisticFeature[] = [
   {
     id: 1,
     image: "https://i-giadinh.vnecdn.net/2024/03/07/7Honthinthnhphm1-1709800144-8583-1709800424.jpg",
-    title: "NGUYÊN LIỆU TƯƠI NGON ĐẬM VỊ",
-    subtitle: "Cơm tấm Tắc sử dụng nguyên liệu tươi mỗi ngày, đảm bảo an toàn và chất lượng cao.",
+    title: "NGUYÊN LIỆU TRỌN LÀNH",
+    subtitle: "Từ đồng quê đến bàn ăn, mỗi nguyên liệu là một lời cam kết về sự tươi mới và chất lượng.",
+    accentColor: "#78a243",
   },
   {
     id: 2,
     image: "https://static.vinwonders.com/production/Com-tam-Nha-Trang-23-1.jpeg",
-    title: "CÔNG THỨC ƯỚP ĐỘC QUYỀN",
-    subtitle: "Khám phá bí quyết ướp gia vị độc quyền mang đến hương vị chuẩn cơm tấm.",
+    title: "HƯƠNG VỊ KÝ ỨC",
+    subtitle: "Bí quyết gia truyền được gìn giữ, đánh thức hương vị cơm tấm thân quen, đậm đà khó phai.",
+    accentColor: "#da7339",
   },
   {
     id: 3,
-    image: "https://expleo.co.nz/cdn/shop/products/100600147.jpg?v=1584848322",
-    title: "GIÁ CẢ PHẢI CHĂNG",
-    subtitle: "Chất lượng đỉnh cao với mức giá hợp lý, phù hợp cho mọi bữa ăn gia đình.",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80",
+    title: "NIỀM VUI TRỌN VẸN",
+    subtitle: "Chất lượng xứng tầm, giá cả sẻ chia. Để mỗi bữa cơm không chỉ no bụng mà còn ấm lòng.",
+    accentColor: "#f39c12",
   },
 ];
 
 const WhyChooseUs: React.FC = () => {
   useEffect(() => {
-    const blocks = document.querySelectorAll('.feature-block');
+    const featureElements = document.querySelectorAll('.artistic-layer-feature');
+    if (featureElements.length === 0) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('animate-slide-in');
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.25 }
     );
 
-    blocks.forEach((block) => observer.observe(block));
-    return () => blocks.forEach((block) => observer.unobserve(block));
+    featureElements.forEach((item) => observer.observe(item));
+    return () => featureElements.forEach((item) => observer.unobserve(item));
   }, []);
 
   return (
-    <section className="why-choose-us-section">
-      <div className="why-choose-us-container">
-        <Title level={2} style={{ textAlign: 'center', fontWeight: '700', fontSize: '2.5rem', paddingBottom: '2rem' }}>
-          TẠI SAO CHỌN CƠM <span style={{ color: '#da7339' }}>TẤM</span> <span style={{ color: '#78a243' }}>TẮC</span>?
+    <section className="artistic-layer-wcu-section">
+      <div className="artistic-layer-wcu-container">
+        <Title level={2} className="artistic-layer-main-title">
+          Điều Gì Tạo Nên <span className="brand-tam">Cơm Tấm Tắc</span> <span className="brand-tac">Đặc Sắc</span>?
         </Title>
-        {features.map((feature, index) => (
-          <Row
-            key={feature.id}
-            className={`feature-block ${index % 2 !== 0 ? 'reverse' : ''}`}
-            gutter={[24, 24]}
-            justify="center"
-            align="middle"
-            style={{ flexDirection: index % 2 !== 0 ? 'row-reverse' : 'row' }}
-          >
-            <Col xs={24} md={10}>
-              <div className="image-wrapper">
-                <img
-                  alt={feature.title}
-                  src={feature.image}
-                  className="feature-image"
-                />
+        
+        <Row gutter={[48, 64]} justify="center"> 
+          {artisticLayerFeaturesData.map((feature, _index) => (
+            <Col xs={24} md={8} key={feature.id} className="artistic-layer-feature-col">
+              <div className="artistic-layer-feature">
+                <div className="artistic-feature-number-bg" style={{ color: feature.accentColor }}>
+                  0{feature.id}
+                </div>
+                <div className="artistic-image-holder">
+                  <div className="artistic-image-shape" style={{ borderColor: feature.accentColor }}>
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      className="artistic-feature-img"
+                    />
+                  </div>
+                </div>
+                <div className="artistic-content-holder">
+                  <Title level={3} className="artistic-feature-title" style={{ color: feature.accentColor }}>
+                    {feature.title}
+                  </Title>
+                  <Paragraph className="artistic-feature-subtitle">
+                    {feature.subtitle}
+                  </Paragraph>
+                </div>
               </div>
             </Col>
-            <Col xs={24} md={14}>
-              <div className="content-wrapper">
-                <Title level={3} className="feature-title">
-                  {feature.title}
-                </Title>
-                <Text className="feature-subtitle">{feature.subtitle}</Text>
-              </div>
-            </Col>
-          </Row>
-        ))}
+          ))}
+        </Row>
       </div>
     </section>
   );
