@@ -1,5 +1,6 @@
 import ShareButton from "@/components/button/share.button";
 import ShareInput from "@/components/input/share.input";
+import DateInput from "@/components/input/date.input";
 import { APP_COLOR } from "@/utils/constant";
 import { CustomerSignUpSchema } from "@/utils/validate.schema";
 import { Link, router } from "expo-router";
@@ -24,30 +25,43 @@ const handleSignUp = async (
   fullName: string,
   phoneNumber: string,
   email: string,
-  password: string
+  password: string,
+  date_of_birth: string
 ) => {
   try {
     const signUpResponse = await customerRegisterAPI(
       fullName,
       phoneNumber,
       email,
-      password
+      password,
+      date_of_birth
     );
-    console.log(signUpResponse);
-    if (signUpResponse) {
+    if (signUpResponse.status === 200 || signUpResponse.status === 201) {
+      Toast.show("Đăng ký thành công!", {
+        duration: Toast.durations.LONG,
+        position: Toast.positions.BOTTOM,
+        backgroundColor: APP_COLOR.ORANGE,
+      });
       router.replace({
         pathname: "/(auth)/verify",
         params: { email: email },
       });
+    } else {
+      throw new Error("Đăng ký thất bại. Vui lòng thử lại.");
     }
   } catch (error: any) {
-    console.log("Lỗi khi tạo mới người dùng", error);
-    Toast.show("Đăng ký thất bại. Vui lòng thử lại.", {
-      duration: Toast.durations.LONG,
-      position: Toast.positions.BOTTOM,
-      backgroundColor: APP_COLOR.CANCEL,
-      textColor: APP_COLOR.WHITE,
-    });
+    console.log(
+      "Lỗi khi tạo mới người dùng:",
+      error.response?.data || error.message
+    );
+    Toast.show(
+      error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.",
+      {
+        duration: Toast.durations.LONG,
+        position: Toast.positions.BOTTOM,
+        backgroundColor: APP_COLOR.CANCEL,
+      }
+    );
   }
 };
 const CustomerSignUpPage = () => {
@@ -61,6 +75,7 @@ const CustomerSignUpPage = () => {
           fullName: "",
           phoneNumber: "",
           email: "",
+          date_of_birth: "",
           password: "",
           confirmPassword: "",
         }}
@@ -69,7 +84,8 @@ const CustomerSignUpPage = () => {
             values.fullName,
             values.phoneNumber,
             values.email,
-            values.password
+            values.password,
+            values.date_of_birth
           );
         }}
       >
@@ -124,6 +140,14 @@ const CustomerSignUpPage = () => {
                   value={values.email}
                   error={errors.email}
                   touched={touched.email}
+                />
+                <DateInput
+                  placeholder="Nhập ngày sinh của bạn"
+                  onChangeText={handleChange("date_of_birth")}
+                  onBlur={handleBlur("date_of_birth")}
+                  value={values.date_of_birth}
+                  error={errors.date_of_birth}
+                  touched={touched.date_of_birth}
                 />
                 <ShareInput
                   placeholder="Nhập mật khẩu"
