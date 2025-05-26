@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createOrder, handlePaymentSuccess } = require("../services/orderService");
+const { createOrder, handlePaymentSuccess, getUserOrders } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
 const Information = require("../models/information");
@@ -106,6 +106,82 @@ const standardizeProvince = (province) => {
  *         description: Server error
  */
 router.post("/", verifyToken, createOrder);
+
+/**
+ * @swagger
+ * /api/orders/user:
+ *   get:
+ *     summary: Retrieve orders for the authenticated user
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of orders for the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   orderId:
+ *                     type: integer
+ *                   payment_time:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                   order_create_at:
+ *                     type: string
+ *                     format: date-time
+ *                   order_address:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                     description: Order status (e.g., Pending, Paid)
+ *                   fullName:
+ *                     type: string
+ *                     description: User's full name
+ *                   phone_number:
+ *                     type: string
+ *                     nullable: true
+ *                   orderItems:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         productId:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                           description: Product name
+ *                         quantity:
+ *                           type: integer
+ *                         price:
+ *                           type: number
+ *                   order_shipping_fee:
+ *                     type: number
+ *                   order_discount_value:
+ *                     type: number
+ *                   order_amount:
+ *                     type: number
+ *                   invoiceUrl:
+ *                     type: string
+ *                     nullable: true
+ *                   order_point_earn:
+ *                     type: integer
+ *                   note:
+ *                     type: string
+ *                     nullable: true
+ *                   payment_method:
+ *                     type: string
+ *                     description: Payment method name (e.g., Vnpay, PayOS)
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/user", verifyToken, getUserOrders);
 
 /**
  * @swagger

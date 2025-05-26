@@ -6,9 +6,9 @@ import OurMenu from "../components/home/OurMenu";
 const HomePage = () => (
   <>
     <HeroSection />
-    <WhyChooseUs />
-    <BestSellers />
     <OurMenu/>
+    <BestSellers />
+    <WhyChooseUs />
     <AboutUs/>
   </>
 

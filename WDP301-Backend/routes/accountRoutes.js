@@ -93,6 +93,11 @@ const accountService = require("../services/accountService");
  *                       type: string
  *       400:
  *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Full name cannot be blank
  *       401:
  *         description: Unauthorized
  *       500:
@@ -118,10 +123,14 @@ router.post("/", verifyToken, async (req, res, next) => {
       data: newUser,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    if (typeof error === "string") {
+      res.status(400).send(error); // Send the plain error string
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
   }
 });
 
@@ -371,6 +380,11 @@ router.get("/:id", verifyToken, async (req, res, next) => {
  *                       type: string
  *       400:
  *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid email format
  *       404:
  *         description: User not found
  *       401:
@@ -401,10 +415,14 @@ router.put("/:id", verifyToken, async (req, res, next) => {
       data: updatedUser,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    if (typeof error === "string") {
+      res.status(400).send(error); // Send the plain error string
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
   }
 });
 
@@ -437,6 +455,11 @@ router.put("/:id", verifyToken, async (req, res, next) => {
  *                   type: string
  *       400:
  *         description: Invalid user ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid user ID
  *       404:
  *         description: User not found
  *       401:
@@ -453,10 +476,14 @@ router.delete("/:id", verifyToken, async (req, res, next) => {
       message: "User deactivated successfully",
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    if (typeof error === "string") {
+      res.status(400).send(error); // Send the plain error string
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
   }
 });
 

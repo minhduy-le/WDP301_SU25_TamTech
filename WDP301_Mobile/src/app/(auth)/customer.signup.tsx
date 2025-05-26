@@ -1,15 +1,12 @@
 import ShareButton from "@/components/button/share.button";
-import SocialButton from "@/components/button/social.button";
 import ShareInput from "@/components/input/share.input";
+import DateInput from "@/components/input/date.input";
 import { APP_COLOR } from "@/utils/constant";
 import { CustomerSignUpSchema } from "@/utils/validate.schema";
-import axios from "axios";
 import { Link, router } from "expo-router";
 import { Formik } from "formik";
-import { Text, View, StyleSheet, Image, ScrollView } from "react-native";
+import { Text, View, StyleSheet, Image } from "react-native";
 import Toast from "react-native-root-toast";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BASE_URL } from "@/utils/constant";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
 import { customerRegisterAPI } from "@/utils/api";
@@ -20,7 +17,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     marginHorizontal: 30,
-    marginTop: 70,
+    marginTop: 20,
   },
 });
 
@@ -28,97 +25,57 @@ const handleSignUp = async (
   fullName: string,
   phoneNumber: string,
   email: string,
-  password: string
+  password: string,
+  date_of_birth: string
 ) => {
-  // try {
-  //   const res = await customerRegisterAPI(
-  //     fullName,
-  //     phoneNumber,
-  //     email,
-  //     password
-  //   );
-  //   console.log(res.data.data);
-  // } catch {}
-
   try {
-    const signUpResponse = await axios.post(
-      `https://wdp-301-0fd32c261026.herokuapp.com/api/auth/register`,
+    const signUpResponse = await customerRegisterAPI(
+      fullName,
+      phoneNumber,
+      email,
+      password,
+      date_of_birth
+    );
+    console.log(signUpResponse);
+
+    if (signUpResponse.status === 200 || signUpResponse.status === 201) {
+      Toast.show("Đăng ký thành công!", {
+        duration: Toast.durations.LONG,
+        position: Toast.positions.BOTTOM,
+        backgroundColor: APP_COLOR.ORANGE,
+      });
+      router.replace({
+        pathname: "/(auth)/verify",
+        params: { email: email },
+      });
+    } else {
+      throw new Error("Đăng ký thất bại. Vui lòng thử lại.");
+    }
+  } catch (error: any) {
+    console.log(
+      "Lỗi khi tạo mới người dùng:",
+      error.response?.data || error.message
+    );
+    Toast.show(
+      error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.",
       {
-        fullName: fullName,
-        email: email,
-        phone_number: phoneNumber,
-        password: password,
+        duration: Toast.durations.LONG,
+        position: Toast.positions.BOTTOM,
+        backgroundColor: APP_COLOR.CANCEL,
       }
     );
-    console.log(signUpResponse.data);
-    if (signUpResponse.data) {
-      Toast.show("Đã đăng ký thành công", {
-        duration: Toast.durations.LONG,
-        textColor: APP_COLOR.BROWN,
-        backgroundColor: APP_COLOR.ORANGE,
-        opacity: 1,
-        position: -30,
-      });
-      router.replace("/(auth)/welcome");
-    }
-    // if (signUpResponse.data) {
-    //   const generateCodeResponse = await axios.post(
-    //     `${BASE_URL}/verify-code/send?mode=${phoneNumber}`,
-    //     {
-    //       phoneNumber: phoneNumber,
-    //     }
-    //   );
-    //   if (generateCodeResponse.data) {
-    //     router.replace({
-    //       pathname: "/(auth)/verify",
-    //       params: { phoneNumber: phoneNumber },
-    //     });
-    //   } else {
-    //     Toast.show("Không thể tạo mã xác thực", {
-    //       duration: Toast.durations.LONG,
-    //       textColor: "white",
-    //       backgroundColor: APP_COLOR.ORANGE,
-    //       opacity: 1,
-    //     });
-    //   }
-    // } else {
-    //   const message = Array.isArray(signUpResponse.message)
-    //     ? signUpResponse.message[0]
-    //     : signUpResponse.message;
-    //   Toast.show(message, {
-    //     duration: Toast.durations.LONG,
-    //     textColor: "white",
-    //     backgroundColor: APP_COLOR.ORANGE,
-    //     opacity: 1,
-    //   });
-    // }
-  } catch (error: any) {
-    console.log(error);
-    // console.log(
-    //   ">>> Error during sign-up: ",
-    //   error.response.data.errors[0].message
-    // );
-    // const errorMessage =
-    //   error.response.data.errors[0].message || "Có lỗi xảy ra khi đăng ký";
-    // Toast.show(errorMessage, {
-    //   duration: Toast.durations.LONG,
-    //   textColor: "white",
-    //   backgroundColor: APP_COLOR.ORANGE,
-    //   opacity: 1,
-    // });
   }
 };
 const CustomerSignUpPage = () => {
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
-    >
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
       <Formik
         validationSchema={CustomerSignUpSchema}
         initialValues={{
           fullName: "",
           phoneNumber: "",
           email: "",
+          date_of_birth: "",
           password: "",
           confirmPassword: "",
         }}
@@ -127,7 +84,8 @@ const CustomerSignUpPage = () => {
             values.fullName,
             values.phoneNumber,
             values.email,
-            values.password
+            values.password,
+            values.date_of_birth
           );
         }}
       >
@@ -182,6 +140,14 @@ const CustomerSignUpPage = () => {
                   value={values.email}
                   error={errors.email}
                   touched={touched.email}
+                />
+                <DateInput
+                  placeholder="Nhập ngày sinh của bạn"
+                  onChangeText={handleChange("date_of_birth")}
+                  onBlur={handleBlur("date_of_birth")}
+                  value={values.date_of_birth}
+                  error={errors.date_of_birth}
+                  touched={touched.date_of_birth}
                 />
                 <ShareInput
                   placeholder="Nhập mật khẩu"
@@ -261,7 +227,7 @@ const CustomerSignUpPage = () => {
           </View>
         )}
       </Formik>
-    </ScrollView>
+    </View>
   );
 };
 

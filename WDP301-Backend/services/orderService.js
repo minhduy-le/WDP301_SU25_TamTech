@@ -3,6 +3,9 @@ require("dotenv").config();
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
 const User = require("../models/user");
+const Product = require("../models/product");
+const OrderStatus = require("../models/orderStatus");
+const PaymentMethod = require("../models/paymentMethod");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
@@ -18,8 +21,8 @@ const payos = new PayOS(
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
 
-// const YOUR_DOMAIN = "http://localhost:3000";
-const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
+const YOUR_DOMAIN = "http://localhost:3000";
+// const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
 
 const createOrder = async (req, res) => {
   console.log("Request body:", JSON.stringify(req.body, null, 2));
@@ -485,4 +488,85 @@ const handlePaymentSuccess = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, handlePaymentSuccess };
+const getUserOrders = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const orders = await Order.findAll({
+      where: { userId },
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User", // Match the alias defined in associations.js
+          attributes: ["fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems", // Match the alias defined in associations.js
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product", // Match the alias defined in associations.js
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus", // Match the alias defined in associations.js
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod", // Match the alias defined in associations.js
+          attributes: ["name"],
+        },
+      ],
+    });
+
+    const formattedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    }));
+
+    res.status(200).json(formattedOrders);
+  } catch (error) {
+    console.error("Error retrieving user orders:", error.message);
+    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+  }
+};
+
+module.exports = { createOrder, handlePaymentSuccess, getUserOrders };
