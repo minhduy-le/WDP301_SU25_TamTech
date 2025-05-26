@@ -59,6 +59,11 @@ const materialService = require("../services/materialService");
  *                       description: Hardcoded to 1
  *       400:
  *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Quantity must be greater than 0 and less than 10000
  *       401:
  *         description: Unauthorized
  *       500:
@@ -71,6 +76,9 @@ router.post("/", verifyToken, async (req, res, next) => {
       quantity: parseInt(req.body.quantity),
     };
 
+    console.log("Parsed quantity:", materialData.quantity);
+    console.log("Material data:", materialData);
+
     const newMaterial = await materialService.createMaterial(materialData);
     res.status(201).json({
       status: 201,
@@ -78,10 +86,14 @@ router.post("/", verifyToken, async (req, res, next) => {
       data: newMaterial,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    console.error("Caught error:", error, "Type:", typeof error, "Stack:", error.stack);
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else if (error.message && typeof error.message === "string") {
+      res.status(400).send(error.message);
+    } else {
+      res.status(500).send("Internal server error");
+    }
   }
 });
 
@@ -141,10 +153,7 @@ router.get("/", async (req, res, next) => {
       data: materials,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    res.status(500).send("Internal server error");
   }
 });
 
