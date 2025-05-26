@@ -1,15 +1,11 @@
 import ShareButton from "@/components/button/share.button";
-import SocialButton from "@/components/button/social.button";
 import ShareInput from "@/components/input/share.input";
 import { APP_COLOR } from "@/utils/constant";
 import { CustomerSignUpSchema } from "@/utils/validate.schema";
-import axios from "axios";
 import { Link, router } from "expo-router";
 import { Formik } from "formik";
 import { Text, View, StyleSheet, Image, ScrollView } from "react-native";
 import Toast from "react-native-root-toast";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BASE_URL } from "@/utils/constant";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
 import { customerRegisterAPI } from "@/utils/api";
@@ -30,82 +26,28 @@ const handleSignUp = async (
   email: string,
   password: string
 ) => {
-  // try {
-  //   const res = await customerRegisterAPI(
-  //     fullName,
-  //     phoneNumber,
-  //     email,
-  //     password
-  //   );
-  //   console.log(res.data.data);
-  // } catch {}
-
   try {
-    const signUpResponse = await axios.post(
-      `https://wdp-301-0fd32c261026.herokuapp.com/api/auth/register`,
-      {
-        fullName: fullName,
-        email: email,
-        phone_number: phoneNumber,
-        password: password,
-      }
+    const signUpResponse = await customerRegisterAPI(
+      fullName,
+      phoneNumber,
+      email,
+      password
     );
-    console.log(signUpResponse.data);
-    if (signUpResponse.data) {
-      Toast.show("Đã đăng ký thành công", {
-        duration: Toast.durations.LONG,
-        textColor: APP_COLOR.BROWN,
-        backgroundColor: APP_COLOR.ORANGE,
-        opacity: 1,
-        position: -30,
+    console.log(signUpResponse);
+    if (signUpResponse) {
+      router.replace({
+        pathname: "/(auth)/verify",
+        params: { email: email },
       });
-      router.replace("/(auth)/welcome");
     }
-    // if (signUpResponse.data) {
-    //   const generateCodeResponse = await axios.post(
-    //     `${BASE_URL}/verify-code/send?mode=${phoneNumber}`,
-    //     {
-    //       phoneNumber: phoneNumber,
-    //     }
-    //   );
-    //   if (generateCodeResponse.data) {
-    //     router.replace({
-    //       pathname: "/(auth)/verify",
-    //       params: { phoneNumber: phoneNumber },
-    //     });
-    //   } else {
-    //     Toast.show("Không thể tạo mã xác thực", {
-    //       duration: Toast.durations.LONG,
-    //       textColor: "white",
-    //       backgroundColor: APP_COLOR.ORANGE,
-    //       opacity: 1,
-    //     });
-    //   }
-    // } else {
-    //   const message = Array.isArray(signUpResponse.message)
-    //     ? signUpResponse.message[0]
-    //     : signUpResponse.message;
-    //   Toast.show(message, {
-    //     duration: Toast.durations.LONG,
-    //     textColor: "white",
-    //     backgroundColor: APP_COLOR.ORANGE,
-    //     opacity: 1,
-    //   });
-    // }
   } catch (error: any) {
-    console.log(error);
-    // console.log(
-    //   ">>> Error during sign-up: ",
-    //   error.response.data.errors[0].message
-    // );
-    // const errorMessage =
-    //   error.response.data.errors[0].message || "Có lỗi xảy ra khi đăng ký";
-    // Toast.show(errorMessage, {
-    //   duration: Toast.durations.LONG,
-    //   textColor: "white",
-    //   backgroundColor: APP_COLOR.ORANGE,
-    //   opacity: 1,
-    // });
+    console.log("Lỗi khi tạo mới người dùng", error);
+    Toast.show("Đăng ký thất bại. Vui lòng thử lại.", {
+      duration: Toast.durations.LONG,
+      position: Toast.positions.BOTTOM,
+      backgroundColor: APP_COLOR.CANCEL,
+      textColor: APP_COLOR.WHITE,
+    });
   }
 };
 const CustomerSignUpPage = () => {

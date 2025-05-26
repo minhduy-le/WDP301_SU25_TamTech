@@ -224,9 +224,9 @@ const WelcomePage = () => {
               <View>
                 <Formik
                   validationSchema={CustomerSignInSchema}
-                  initialValues={{ phoneNumber: "", password: "" }}
+                  initialValues={{ email: "", password: "" }}
                   onSubmit={(values, { resetForm }) =>
-                    handleLogin(values.phoneNumber, values.password, resetForm)
+                    handleLogin(values.email, values.password, resetForm)
                   }
                 >
                   {({
@@ -242,11 +242,21 @@ const WelcomePage = () => {
                       <ShareInput
                         placeholder="Đăng nhập bằng email"
                         keyboardType="ascii-capable"
-                        onChangeText={handleChange("phoneNumber")}
-                        onBlur={handleBlur("phoneNumber")}
-                        value={values.phoneNumber}
-                        error={errors.phoneNumber}
-                        touched={touched.phoneNumber}
+                        onChangeText={handleChange("email")}
+                        onBlur={handleBlur("email")}
+                        value={values.email}
+                        error={errors.email}
+                        touched={touched.email}
+                      />
+                      <View style={{ height: 10 }}></View>
+                      <ShareInput
+                        placeholder="Mật khẩu"
+                        keyboardType="ascii-capable"
+                        onChangeText={handleChange("password")}
+                        onBlur={handleBlur("password")}
+                        value={values.password}
+                        error={errors.password}
+                        touched={touched.password}
                       />
                     </View>
                   )}

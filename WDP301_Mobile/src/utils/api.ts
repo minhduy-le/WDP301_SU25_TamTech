@@ -1,6 +1,6 @@
 import axios from "@/utils/axios.customize";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { API_URL } from "./constant";
 
 export const customerRegisterAPI = (
   fullName: string,
@@ -8,17 +8,16 @@ export const customerRegisterAPI = (
   email: string,
   password: string
 ) => {
-  const url = `https://wdp-301-0fd32c261026.herokuapp.com/api/auth/register`;
+  const url = `${API_URL}/api/auth/register`;
   return axios.post(url, { fullName, email, phoneNumber, password });
+};
+export const verifyEmailCustomer = (email: string, otp: string) => {
+  const url = `${API_URL}/api/auth/verify-otp`;
+  return axios.post(url, { email, otp });
 };
 export const registerAPI = (email: string, password: string, name: string) => {
   const url = `/api/v1/auth/register`;
   return axios.post<IBackendRes<IRegister>>(url, { email, password, name });
-};
-
-export const verifyCodeAPI = (email: string, code: string) => {
-  const url = `/api/v1/auth/verify-code`;
-  return axios.post<IBackendRes<IRegister>>(url, { email, code });
 };
 
 export const resendCodeAPI = (email: string) => {
@@ -50,18 +49,6 @@ export const getTopRestaurant = (ref: string) => {
       },
     }
   );
-};
-
-export const printAsyncStorage = () => {
-  AsyncStorage.getAllKeys((err, keys) => {
-    AsyncStorage.multiGet(keys!, (error, stores) => {
-      let asyncStorage: any = {};
-      stores?.map((result, i, store) => {
-        asyncStorage[store[i][0]] = store[i][1];
-      });
-      console.log(JSON.stringify(asyncStorage, null, 2));
-    });
-  });
 };
 
 export const getURLBaseBackend = () => {
@@ -110,21 +97,6 @@ export const currencyFormatter = (value: any) => {
   )} ${options.symbol}`;
 };
 
-export const placeOrderAPI = (data: any) => {
-  const url = `/api/v1/orders`;
-  return axios.post<IBackendRes<IUserLogin>>(url, { ...data });
-};
-
-export const getOrderHistoryAPI = () => {
-  const url = `/api/v1/orders`;
-  return axios.get<IBackendRes<IOrderHistory[]>>(url);
-};
-
-export const updateUserAPI = (_id: string, name: string, phone: string) => {
-  const url = `/api/v1/users`;
-  return axios.patch<IBackendRes<IUserLogin>>(url, { _id, name, phone });
-};
-
 export const updateUserPasswordAPI = (
   currentPassword: string,
   newPassword: string
@@ -141,31 +113,7 @@ export const requestPasswordAPI = (email: string) => {
   return axios.post<IBackendRes<IUserLogin>>(url, { email });
 };
 
-export const forgotPasswordAPI = (
-  code: string,
-  email: string,
-  password: string
-) => {
-  const url = `/api/v1/auth/forgot-password`;
-  return axios.post<IBackendRes<IUserLogin>>(url, { code, email, password });
-};
-
 export const likeRestaurantAPI = (restaurant: string, quantity: number) => {
   const url = `/api/v1/likes`;
   return axios.post<IBackendRes<IUserLogin>>(url, { restaurant, quantity });
-};
-
-export const getFavoriteRestaurantAPI = () => {
-  const url = `/api/v1/likes?current=1&pageSize=10`;
-  return axios.get<IBackendRes<IRestaurant[]>>(url);
-};
-
-export const getRestaurantByNameAPI = (name: string) => {
-  const url = `/api/v1/restaurants?current=1&pageSize=10&name=/${name}/i`;
-  return axios.get<IBackendRes<IModelPaginate<IRestaurant>>>(url);
-};
-
-export const filterRestaurantAPI = (query: string) => {
-  const url = `/api/v1/restaurants?${query}`;
-  return axios.get<IBackendRes<IModelPaginate<IRestaurant>>>(url);
 };
