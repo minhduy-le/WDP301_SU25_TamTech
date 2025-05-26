@@ -1,4 +1,4 @@
-import axios from "@/utils/axios.customize";
+import axios from "axios";
 import { AxiosResponse } from "axios";
 import { Platform } from "react-native";
 import { API_URL } from "./constant";
@@ -10,7 +10,7 @@ export const customerRegisterAPI = async (
   password: string,
   date_of_birth: string
 ): Promise<AxiosResponse<any>> => {
-  const url = `https://wdp-301-0fd32c261026.herokuapp.com/api/auth/register`;
+  const url = `${API_URL}/api/auth/register`;
   const response = await axios.post(url, {
     fullName,
     email,
@@ -18,8 +18,7 @@ export const customerRegisterAPI = async (
     password,
     date_of_birth,
   });
-  console.log(response);
-  return response;
+  return response.data.data;
 };
 
 export const verifyEmailCustomer = (email: string, otp: string) => {

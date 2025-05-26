@@ -5,7 +5,7 @@ import { APP_COLOR } from "@/utils/constant";
 import { CustomerSignUpSchema } from "@/utils/validate.schema";
 import { Link, router } from "expo-router";
 import { Formik } from "formik";
-import { Text, View, StyleSheet, Image, ScrollView } from "react-native";
+import { Text, View, StyleSheet, Image } from "react-native";
 import Toast from "react-native-root-toast";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     marginHorizontal: 30,
-    marginTop: 70,
+    marginTop: 20,
   },
 });
 
@@ -36,6 +36,8 @@ const handleSignUp = async (
       password,
       date_of_birth
     );
+    console.log(signUpResponse);
+
     if (signUpResponse.status === 200 || signUpResponse.status === 201) {
       Toast.show("Đăng ký thành công!", {
         duration: Toast.durations.LONG,
@@ -66,9 +68,7 @@ const handleSignUp = async (
 };
 const CustomerSignUpPage = () => {
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
-    >
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
       <Formik
         validationSchema={CustomerSignUpSchema}
         initialValues={{
@@ -227,7 +227,7 @@ const CustomerSignUpPage = () => {
           </View>
         )}
       </Formik>
-    </ScrollView>
+    </View>
   );
 };
 
