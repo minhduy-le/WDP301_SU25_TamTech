@@ -18,7 +18,6 @@ export const customerRegisterAPI = (
     date_of_birth,
   });
 };
-
 export const verifyEmailCustomer = (email: string, otp: string) => {
   const url = `${API_URL}/api/auth/verify-otp`;
   return axios.post(url, {
@@ -30,11 +29,18 @@ export const resendCodeAPI = (email: string) => {
   const url = `${API_URL}/api/auth/resend-otp`;
   return axios.post(url, { email });
 };
+export const customerLoginAPI = (email: string, password: string) => {
+  const url = `${API_URL}/api/auth/login`;
+  return axios.post(url, { email, password });
+};
 export const registerAPI = (email: string, password: string, name: string) => {
   const url = `/api/v1/auth/register`;
   return axios.post<IBackendRes<IRegister>>(url, { email, password, name });
 };
-
+export const forgotPasswordAPI = (email: string) => {
+  const url = `${API_URL}/api/auth/forgot-password`;
+  return axios.post(url, { email });
+};
 export const loginAPI = (email: string, password: string) => {
   const url = `/api/v1/auth/login`;
   return axios.post<IBackendRes<IUserLogin>>(url, {

@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Pressable,
 } from "react-native";
 import ShareButton from "components/button/share.button";
 import { APP_COLOR, BASE_URL } from "utils/constant";
@@ -27,6 +28,7 @@ import { Formik } from "formik";
 import ShareInput from "@/components/input/share.input";
 import { CustomerSignInSchema } from "@/utils/validate.schema";
 import Toast from "react-native-root-toast";
+import { customerLoginAPI, forgotPasswordAPI } from "@/utils/api";
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -112,27 +114,21 @@ const WelcomePage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [fogotPasword, setFogotPassword] = useState(false);
   const handleLogin = async (
-    phoneNumber: string,
+    email: string,
     password: string,
     resetForm: any
   ) => {
     try {
       setLoading(true);
-      const res = await axios.post(`${BASE_URL}/customer/sign-in`, {
-        phoneNumber: phoneNumber,
-        password: password,
-      });
+      const res = await customerLoginAPI(email, password);
       setLoading(false);
-      if (res.data.data) {
-        await AsyncStorage.setItem("access_token", res.data.data.access_token);
-        await AsyncStorage.setItem(
-          "refresh_token",
-          res.data.data.refresh_token
-        );
-        setAppState(res.data.data);
+      console.log(res.data.token);
+      if (res.data) {
+        await AsyncStorage.setItem("access_token", res.data.token);
+        setAppState(res.data);
         router.replace({
           pathname: "/(tabs)",
-          params: { access_token: res.data.data.access_token, isLogin: 1 },
+          params: { access_token: res.data.token, isLogin: 1 },
         });
       } else {
         setFogotPassword(true);
@@ -142,23 +138,18 @@ const WelcomePage = () => {
           backgroundColor: APP_COLOR.ORANGE,
           opacity: 1,
         });
-
-        if (res.statusCode === 400) {
-          router.replace({
-            pathname: "/(tabs)",
-            params: { token: res.data, isLogin: 1 },
-          });
-        }
       }
     } catch (error) {
-      console.log(">>> check error login: ", error);
+      console.log("Lỗi khi đăng nhập", error);
       Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {
         duration: Toast.durations.LONG,
         textColor: "white",
         backgroundColor: APP_COLOR.ORANGE,
         opacity: 1,
+        position: -50,
       });
-      resetForm();
+      setFogotPassword(true);
+      //resetForm();
       setLoading(false);
     }
   };
@@ -207,12 +198,31 @@ const WelcomePage = () => {
       console.error("Lỗi đăng nhập vân tay:", error);
     }
   };
+  const handleForgotPassword = async (email: string) => {
+    try {
+      const res = await forgotPasswordAPI(email);
+      if (res.data) {
+        Toast.show("Đã gửi email khôi phục mật khẩu", {
+          duration: Toast.durations.LONG,
+          textColor: "white",
+          backgroundColor: APP_COLOR.ORANGE,
+          opacity: 1,
+          position: -50,
+        });
+      }
+    } catch (error) {
+      Toast.show("Người dùng không tồn tại!!!", {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.CANCEL,
+        opacity: 1,
+        position: -50,
+      });
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
-    >
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
           <View style={styles.welcomeText}>
@@ -231,7 +241,14 @@ const WelcomePage = () => {
                     handleLogin(values.email, values.password, resetForm)
                   }
                 >
-                  {({ handleChange, handleBlur, values, errors, touched }) => (
+                  {({
+                    handleChange,
+                    handleBlur,
+                    values,
+                    errors,
+                    touched,
+                    handleSubmit,
+                  }) => (
                     <View>
                       <ShareInput
                         placeholder="Đăng nhập bằng email"
@@ -252,29 +269,43 @@ const WelcomePage = () => {
                         error={errors.password}
                         touched={touched.password}
                       />
-                      {fogotPasword && <Text>Quên mật khẩu?</Text>}
+                      {fogotPasword && (
+                        <Pressable
+                          style={{ alignItems: "center", marginTop: 10 }}
+                          onPress={() => handleForgotPassword(values.email)}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: FONTS.semiBold,
+                              color: APP_COLOR.CANCEL,
+                              fontSize: 16,
+                              textDecorationLine: "underline",
+                            }}
+                          >
+                            Quên mật khẩu?
+                          </Text>
+                        </Pressable>
+                      )}
+                      <View style={{ height: 10 }}></View>
+                      <View style={{ flexDirection: "row" }}>
+                        <ShareButton
+                          title="Đăng nhập"
+                          onPress={handleSubmit}
+                          textStyle={styles.loginBtnText}
+                          btnStyle={styles.loginBtn}
+                          pressStyle={{ alignSelf: "stretch" }}
+                        />
+                        <ShareButton
+                          title=" "
+                          onPress={handleQuickLogin}
+                          textStyle={styles.loginBtnText}
+                          btnStyle={styles.loginBtnFast}
+                          pressStyle={{ alignSelf: "stretch" }}
+                        />
+                      </View>
                     </View>
                   )}
                 </Formik>
-              </View>
-              <View style={{ flexDirection: "row" }}>
-                <ShareButton
-                  title="Đăng nhập"
-                  onPress={() => {
-                    // router.navigate("/(auth)/verify");
-                    router.navigate("/(tabs)");
-                  }}
-                  textStyle={styles.loginBtnText}
-                  btnStyle={styles.loginBtn}
-                  pressStyle={{ alignSelf: "stretch" }}
-                />
-                <ShareButton
-                  title=" "
-                  onPress={handleQuickLogin}
-                  textStyle={styles.loginBtnText}
-                  btnStyle={styles.loginBtnFast}
-                  pressStyle={{ alignSelf: "stretch" }}
-                />
               </View>
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
@@ -297,7 +328,7 @@ const WelcomePage = () => {
           }}
         />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
