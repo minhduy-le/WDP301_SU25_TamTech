@@ -2,29 +2,65 @@ const User = require("../models/user");
 const httpErrors = require("http-errors");
 const bcrypt = require("bcrypt");
 
+// Current date for date_of_birth validation
+const currentDate = new Date("2025-05-26T10:28:00+07:00");
+
 const createUser = async (userData) => {
   try {
-    // Validate required fields
-    if (!userData.fullName || !userData.email || !userData.password || !userData.role) {
-      throw httpErrors.BadRequest("Full name, email, password, and role are required");
+    // Validate each required field individually
+    if (!userData.fullName || userData.fullName.trim() === "") {
+      throw "Full name cannot be blank";
+    }
+    if (!userData.email || userData.email.trim() === "") {
+      throw "Email cannot be blank";
+    }
+    if (!userData.password || userData.password.trim() === "") {
+      throw "Password cannot be blank";
+    }
+    if (!userData.role || userData.role.trim() === "") {
+      throw "Role cannot be blank";
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userData.email)) {
-      throw httpErrors.BadRequest("Invalid email format");
+      throw "Invalid email format";
     }
 
     // Validate role
     const validRoles = ["Admin", "User", "Staff", "Shipper"];
     if (!validRoles.includes(userData.role)) {
-      throw httpErrors.BadRequest("Invalid role");
+      throw "Invalid role";
     }
 
     // Check if email already exists
-    const existingUser = await User.findOne({ where: { email: userData.email } });
-    if (existingUser) {
-      throw httpErrors.BadRequest("Email already exists");
+    const existingUserByEmail = await User.findOne({ where: { email: userData.email } });
+    if (existingUserByEmail) {
+      throw "Email already exists";
+    }
+
+    // Validate phone_number
+    if (userData.phone_number) {
+      const phoneStr = userData.phone_number.toString().replace(/\D/g, ""); // Remove non-digits
+      if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
+        throw "Phone number must be 10 or 11 digits";
+      }
+    }
+
+    // Validate date_of_birth
+    if (userData.date_of_birth) {
+      const dob = new Date(userData.date_of_birth);
+      if (isNaN(dob) || dob > currentDate) {
+        throw "Date of birth must not be in the future";
+      }
+    }
+
+    // Check if phone number already exists
+    if (userData.phone_number) {
+      const existingUserByPhone = await User.findOne({ where: { phone_number: userData.phone_number } });
+      if (existingUserByPhone) {
+        throw "Phone number is already exist";
+      }
     }
 
     // Hash password
@@ -37,11 +73,8 @@ const createUser = async (userData) => {
     const user = await User.create(userData);
     return user;
   } catch (error) {
-    if (error.name === "SequelizeValidationError") {
-      throw httpErrors.BadRequest(error.message);
-    }
-    console.error("Error in createUser:", error);
-    throw httpErrors.InternalServerError("Failed to create user: " + error.message);
+    console.error("Error in createUser:", error); // Log the full error for debugging
+    throw error; // Rethrow the original error
   }
 };
 
@@ -68,14 +101,14 @@ const getAllUsers = async () => {
     return users;
   } catch (error) {
     console.error("Error in getAllUsers:", error);
-    throw httpErrors.InternalServerError("Failed to retrieve users: " + error.message);
+    throw "Internal server error";
   }
 };
 
 const getUserById = async (userId) => {
   try {
     if (!Number.isInteger(userId) || userId <= 0) {
-      throw httpErrors.BadRequest("Invalid user ID");
+      throw "Invalid user ID";
     }
 
     const user = await User.findByPk(userId, {
@@ -95,55 +128,82 @@ const getUserById = async (userId) => {
     });
 
     if (!user) {
-      throw httpErrors.NotFound("User not found");
+      throw "User not found";
     }
 
     return user;
   } catch (error) {
     console.error("Error in getUserById:", error);
-    if (error.status === 400 || error.status === 404) {
-      throw error;
-    }
-    throw httpErrors.InternalServerError("Failed to retrieve user: " + error.message);
+    throw error; // Rethrow the original error
   }
 };
 
 const updateUser = async (userId, userData) => {
   try {
     if (!Number.isInteger(userId) || userId <= 0) {
-      throw httpErrors.BadRequest("Invalid user ID");
+      throw "Invalid user ID";
     }
 
     const user = await User.findByPk(userId);
     if (!user) {
-      throw httpErrors.NotFound("User not found");
+      throw "User not found";
     }
 
     // Validate email format if provided
     if (userData.email) {
+      if (userData.email.trim() === "") {
+        throw "Email cannot be blank";
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userData.email)) {
-        throw httpErrors.BadRequest("Invalid email format");
+        throw "Invalid email format";
       }
-      // Check if new email is already used by another user
       const existingUser = await User.findOne({
         where: { email: userData.email, id: { [User.sequelize.Op.ne]: userId } },
       });
       if (existingUser) {
-        throw httpErrors.BadRequest("Email already exists");
+        throw "Email already exists";
       }
     }
 
     // Validate role if provided
     if (userData.role) {
+      if (userData.role.trim() === "") {
+        throw "Role cannot be blank";
+      }
       const validRoles = ["Admin", "User", "Staff", "Shipper"];
       if (!validRoles.includes(userData.role)) {
-        throw httpErrors.BadRequest("Invalid role");
+        throw "Invalid role";
+      }
+    }
+
+    // Validate phone_number if provided
+    if (userData.phone_number) {
+      const phoneStr = userData.phone_number.toString().replace(/\D/g, ""); // Remove non-digits
+      if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
+        throw "Phone number must be 10 or 11 digits";
+      }
+      const existingUserByPhone = await User.findOne({
+        where: { phone_number: userData.phone_number, id: { [User.sequelize.Op.ne]: userId } },
+      });
+      if (existingUserByPhone) {
+        throw "Phone number is already exist";
+      }
+    }
+
+    // Validate date_of_birth if provided
+    if (userData.date_of_birth) {
+      const dob = new Date(userData.date_of_birth);
+      if (isNaN(dob) || dob > currentDate) {
+        throw "Date of birth must not be in the future";
       }
     }
 
     // Hash password if provided
     if (userData.password) {
+      if (userData.password.trim() === "") {
+        throw "Password cannot be blank";
+      }
       userData.password = await bcrypt.hash(userData.password, 10);
     }
 
@@ -152,32 +212,25 @@ const updateUser = async (userId, userData) => {
     return user;
   } catch (error) {
     console.error("Error in updateUser:", error);
-    if (error.status === 400 || error.status === 404) {
-      throw error;
-    }
-    throw httpErrors.InternalServerError("Failed to update user: " + error.message);
+    throw error; // Rethrow the original error
   }
 };
 
 const deactivateUser = async (userId) => {
   try {
     if (!Number.isInteger(userId) || userId <= 0) {
-      throw httpErrors.BadRequest("Invalid user ID");
+      throw "Invalid user ID";
     }
 
     const user = await User.findByPk(userId);
     if (!user) {
-      throw httpErrors.NotFound("User not found");
+      throw "User not found";
     }
 
-    // Set isActive to false
     await user.update({ isActive: false });
   } catch (error) {
     console.error("Error in deactivateUser:", error);
-    if (error.status === 400 || error.status === 404) {
-      throw error;
-    }
-    throw httpErrors.InternalServerError("Failed to deactivate user: " + error.message);
+    throw error; // Rethrow the original error
   }
 };
 

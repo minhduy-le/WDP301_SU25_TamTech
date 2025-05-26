@@ -10,6 +10,9 @@ const fs = require("fs");
 const path = require("path");
 const { auth } = require("../config/firebase");
 
+// Current date for date_of_birth validation
+const currentDate = new Date("2025-05-26T10:53:00+07:00");
+
 const redisClient = redis.createClient({
   url: process.env.REDIS_URL || process.env.REDISCLOUD_URL || "redis://localhost:6379",
 });
@@ -29,27 +32,76 @@ const emailTemplate = fs.readFileSync(path.join(__dirname, "../templates/otpEmai
 const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../templates/forgotPasswordEmail.html"), "utf-8");
 
 const userService = {
-  async registerUser({ fullName, email, phone_number, password }) {
-    if (
-      !fullName ||
-      !email ||
-      !phone_number ||
-      !password ||
-      fullName.length > 20 ||
-      email.length > 100 ||
-      phone_number.length > 12 ||
-      password.length < 6 ||
-      password.length > 250 ||
-      !validator.isEmail(email)
-    ) {
-      throw new Error("Invalid input");
+  async registerUser({ fullName, email, phone_number, password, date_of_birth }) {
+    // Validate fullName
+    if (!fullName) {
+      throw "Full name cannot be blank";
+    }
+    if (fullName.trim() === "") {
+      throw "Full name cannot be blank";
+    }
+    if (fullName.length < 2) {
+      throw "Full name must be at least 2 characters";
+    }
+    if (fullName.length > 20) {
+      throw "Full name cannot exceed 20 characters";
+    }
+
+    // Validate email
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (email.length > 100) {
+      throw "Email cannot exceed 100 characters";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+
+    // Validate phone_number
+    if (!phone_number) {
+      throw "Phone number cannot be blank";
+    }
+    if (phone_number.length > 12) {
+      throw "Phone number cannot exceed 12 characters";
+    }
+    const phoneStr = phone_number.toString().replace(/\D/g, "");
+    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
+      throw "Phone number must be 10 or 11 digits";
+    }
+
+    // Validate password
+    if (!password) {
+      throw "Password cannot be blank";
+    }
+    if (password.length < 6) {
+      throw "Password must be at least 6 characters";
+    }
+    if (password.length > 250) {
+      throw "Password cannot exceed 250 characters";
+    }
+
+    // Validate date_of_birth if provided
+    if (date_of_birth) {
+      const dob = new Date(date_of_birth);
+      if (isNaN(dob)) {
+        throw "Date of birth format is invalid";
+      }
+      if (dob > currentDate) {
+        throw "Date of birth must not be in the future";
+      }
     }
 
     const existingUser = await User.findOne({
       where: { [Op.or]: [{ email }, { phone_number }] },
     });
     if (existingUser) {
-      throw new Error("Email or phone number already exists");
+      if (existingUser.email === email) {
+        throw "Email already exists";
+      }
+      if (existingUser.phone_number === phone_number) {
+        throw "Phone number already exists";
+      }
     }
 
     const transaction = await User.sequelize.transaction();
@@ -59,7 +111,7 @@ const userService = {
       const hashedPassword = await bcrypt.hash(password, 10);
       console.log("Hashed password:", hashedPassword);
       user = await User.create(
-        { fullName, email, phone_number, password: hashedPassword, isActive: false },
+        { fullName, email, phone_number, password: hashedPassword, isActive: false, date_of_birth },
         { transaction }
       );
       console.log("User created with ID:", user.id);
@@ -68,10 +120,10 @@ const userService = {
       await transaction.commit();
       console.log("Transaction committed successfully");
     } catch (error) {
-      console.error("Transaction error in registerUser:", error.message);
+      console.error("Transaction error in registerUser:", error.message, error.stack);
       await transaction.rollback();
       console.log("Transaction rolled back successfully");
-      throw error;
+      throw "Server error";
     }
 
     // Handle OTP and email sending separately
@@ -99,28 +151,38 @@ const userService = {
       });
       console.log("Email sent to:", email);
     } catch (error) {
-      console.error("Error in OTP or email sending:", error.message);
-      // Log the error, but don't roll back the database transaction
-      // The user can resend the OTP using /api/auth/resend-otp
+      console.error("Error in OTP or email sending:", error.message, error.stack);
       console.log("Proceeding despite OTP/email failure; user can resend OTP later");
     }
 
-    return user;
+    return {
+      status: 201,
+      message: "Registration successful, please check your email for OTP",
+    };
   },
 
   async verifyOtp(email, otp) {
-    if (!email || !otp || !validator.isEmail(email) || otp.length !== 6) {
-      throw new Error("Invalid input");
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!otp) {
+      throw "OTP cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+    if (otp.length !== 6) {
+      throw "OTP must be 6 digits";
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     const storedOtp = await redisClient.get(`otp:${email}`);
     if (storedOtp !== otp) {
-      throw new Error("Invalid or expired OTP");
+      throw "Invalid or expired OTP";
     }
 
     await user.update({ isActive: true });
@@ -128,25 +190,37 @@ const userService = {
   },
 
   async loginUser(email, password) {
-    if (!email || !password || !validator.isEmail(email) || password.length < 6 || password.length > 250) {
-      throw new Error("Invalid input");
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!password) {
+      throw "Password cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+    if (password.length < 6) {
+      throw "Password must be at least 6 characters";
+    }
+    if (password.length > 250) {
+      throw "Password cannot exceed 250 characters";
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     if (!user.isActive) {
-      throw new Error("Account not activated");
+      throw "Account not activated";
     }
     if (user.isBan) {
-      throw new Error("Account is banned");
+      throw "Account is banned";
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
+      throw "Invalid credentials";
     }
 
     const token = jwt.sign({ id: user.id, role: user.role || "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
@@ -163,22 +237,21 @@ const userService = {
 
   async googleLogin(idToken) {
     try {
-      console.log("Full idToken received:", idToken); // Log toàn bộ idToken
+      console.log("Full idToken received:", idToken);
       const decodedToken = await auth.verifyIdToken(idToken);
       console.log("Decoded token:", decodedToken);
       const email = decodedToken.email;
-      const name = decodedToken.name || email.split("@")[0]; // Lấy name từ idToken, nếu không có thì dùng email prefix
+      const name = decodedToken.name || email.split("@")[0];
 
       if (!email || !validator.isEmail(email)) {
-        throw new Error("Invalid email from Google token");
+        throw "Invalid email from Google token";
       }
 
       let user = await User.findOne({ where: { email } });
 
       if (user) {
-        // Nếu email đã tồn tại, trả về thông tin tài khoản trong database
         if (user.isBan) {
-          throw new Error("Account is banned");
+          throw "Account is banned";
         }
 
         const token = jwt.sign({ id: user.id, role: user.role || "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
@@ -191,7 +264,6 @@ const userService = {
           token,
         };
       } else {
-        // Nếu email chưa tồn tại, tạo tài khoản mới với fullName từ name trong idToken
         const transaction = await User.sequelize.transaction();
         try {
           const hashedPassword = await bcrypt.hash("String@123", 10);
@@ -228,7 +300,7 @@ const userService = {
           };
         } catch (error) {
           await transaction.rollback();
-          throw error;
+          throw "Server error";
         }
       }
     } catch (error) {
@@ -239,30 +311,36 @@ const userService = {
         idTokenLength: idToken ? idToken.length : "undefined",
       });
       if (error.code === "auth/argument-error" || error.code === "auth/invalid-credential") {
-        throw new Error("Invalid Google token");
+        throw "Invalid Google token";
       }
       if (error.code === "auth/network-request-failed") {
-        throw new Error("Network error: Unable to connect to Firebase");
+        throw "Network error: Unable to connect to Firebase";
       }
       if (error.code === "auth/invalid-api-key") {
-        throw new Error("Invalid Firebase API key");
+        throw "Invalid Firebase API key";
       }
-      throw new Error("Failed to verify Google token: " + error.message);
+      throw "Failed to verify Google token: " + error.message;
     }
   },
 
   async resendOtp(email) {
-    if (!email || !validator.isEmail(email) || email.length > 100) {
-      throw new Error("Invalid input");
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+    if (email.length > 100) {
+      throw "Email cannot exceed 100 characters";
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     if (user.isActive) {
-      throw new Error("Account already activated");
+      throw "Account already activated";
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -287,13 +365,16 @@ const userService = {
   },
 
   async forgotPassword(email) {
-    if (!email || !validator.isEmail(email)) {
-      throw new Error("Invalid input");
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
     }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "10m" });
@@ -312,18 +393,24 @@ const userService = {
   },
 
   async resetPassword(password, userId) {
-    if (!password || password.length < 6 || password.length > 250) {
-      throw new Error("Invalid input");
+    if (!password) {
+      throw "Password cannot be blank";
+    }
+    if (password.length < 6) {
+      throw "Password must be at least 6 characters";
+    }
+    if (password.length > 250) {
+      throw "Password cannot exceed 250 characters";
     }
 
     const user = await User.findOne({ where: { id: userId } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     const storedToken = await redisClient.get(`reset:${user.email}`);
     if (!storedToken) {
-      throw new Error("Token mismatch");
+      throw "Token mismatch";
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -332,25 +419,33 @@ const userService = {
   },
 
   async changePassword(oldPassword, newPassword, userId) {
-    if (
-      !oldPassword ||
-      !newPassword ||
-      oldPassword.length < 6 ||
-      oldPassword.length > 250 ||
-      newPassword.length < 6 ||
-      newPassword.length > 250
-    ) {
-      throw new Error("Invalid input");
+    if (!oldPassword) {
+      throw "Old password cannot be blank";
+    }
+    if (!newPassword) {
+      throw "New password cannot be blank";
+    }
+    if (oldPassword.length < 6) {
+      throw "Old password must be at least 6 characters";
+    }
+    if (oldPassword.length > 250) {
+      throw "Old password cannot exceed 250 characters";
+    }
+    if (newPassword.length < 6) {
+      throw "New password must be at least 6 characters";
+    }
+    if (newPassword.length > 250) {
+      throw "New password cannot exceed 250 characters";
     }
 
     const user = await User.findOne({ where: { id: userId } });
     if (!user) {
-      throw new Error("User not found");
+      throw "User not found";
     }
 
     const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
     if (!isPasswordValid) {
-      throw new Error("Incorrect old password");
+      throw "Incorrect old password";
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);

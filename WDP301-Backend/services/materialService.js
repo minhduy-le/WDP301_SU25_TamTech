@@ -1,12 +1,22 @@
 const Material = require("../models/material");
 const Store = require("../models/store");
-const httpErrors = require("http-errors");
 
 const createMaterial = async (materialData) => {
   try {
     // Validate required fields
     if (!materialData.name || materialData.quantity === undefined) {
-      throw httpErrors.BadRequest("Name and quantity are required");
+      throw "Name and quantity are required";
+    }
+
+    // Validate name is not blank
+    if (materialData.name.trim() === "") {
+      throw "Name cannot be blank";
+    }
+
+    // Validate quantity
+    const quantity = parseInt(materialData.quantity);
+    if (isNaN(quantity) || quantity <= 0 || quantity >= 10000) {
+      throw "Quantity must be greater than 0 and less than 10000";
     }
 
     // Hardcode storeId to 1
@@ -15,12 +25,13 @@ const createMaterial = async (materialData) => {
     // Check if storeId exists
     const store = await Store.findByPk(storeId);
     if (!store) {
-      throw httpErrors.BadRequest("Invalid storeId: Store with ID 1 does not exist");
+      throw "Invalid storeId: Store with ID 1 does not exist";
     }
 
     // Create material with hardcoded storeId
     const finalMaterialData = {
       ...materialData,
+      quantity: quantity,
       storeId: storeId,
     };
 
@@ -28,13 +39,7 @@ const createMaterial = async (materialData) => {
     const material = await Material.create(finalMaterialData);
     return material;
   } catch (error) {
-    if (error.name === "SequelizeValidationError") {
-      throw httpErrors.BadRequest(error.message);
-    }
-    if (error.name === "SequelizeForeignKeyConstraintError") {
-      throw httpErrors.BadRequest("Invalid storeId");
-    }
-    throw httpErrors.InternalServerError("Failed to create material");
+    throw error.message || error; // Ensure a plain string is thrown
   }
 };
 
@@ -51,7 +56,7 @@ const getAllMaterials = async () => {
     });
     return materials;
   } catch (error) {
-    throw httpErrors.InternalServerError("Failed to retrieve materials");
+    throw "Internal server error";
   }
 };
 
