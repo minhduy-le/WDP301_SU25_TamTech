@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Button, Card, Tag, Modal, Typography, Divider, Spin, message } from 'antd';
 import axios from 'axios';
-import { PlusOutlined, MinusOutlined, CloseOutlined, ShoppingCartOutlined } from '@ant-design/icons'; // Thêm ShoppingCartOutlined
-
+import { PlusOutlined, MinusOutlined, CloseOutlined } from '@ant-design/icons';
 const { Title, Text } = Typography;
 
 interface Product {
@@ -29,7 +28,6 @@ interface AddOnCategory {
   loading: boolean;
 }
 
-// --- COMPONENT ---
 const OurMenu: React.FC = () => {
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
   const [drinks, setDrinks] = useState<Product[]>([]);
@@ -38,10 +36,7 @@ const OurMenu: React.FC = () => {
   const [loadingDrinks, setLoadingDrinks] = useState(true);
   const [loadingSide, setLoadingSide] = useState(true);
   const [activeTab, setActiveTab] = useState('mainDishes');
-  // Bỏ state hover cho tab buttons vì style mới sẽ không cần
-  // const [hoverMain, setHoverMain] = useState(false);
-  // const [hoverSide, setHoverSide] = useState(false);
-  // const [hoverDrink, setHoverDrink] = useState(false);
+ 
 
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -93,10 +88,8 @@ const OurMenu: React.FC = () => {
   const fetchModalCategoryItems = useCallback(async (categoryIndex: number) => {
     const categoryToFetch = modalAddonCategories[categoryIndex];
     if (!categoryToFetch || !categoryToFetch.apiType) {
-      // ... (xử lý category không hợp lệ)
       return;
     }
-    // ... (logic fetch như cũ)
     let dataToUse: Product[] = [];
     if (categoryToFetch.apiType === 2 && drinks.length > 0) {
         dataToUse = drinks;
@@ -188,7 +181,6 @@ const OurMenu: React.FC = () => {
   };
 
   const handleAddToCartFromModal = () => {
-    // ... (logic như cũ)
     if (!selectedMainProductForModal) return;
     const selectedAddonsForCart = modalAddonCategories.flatMap(cat => cat.items.filter(item => item.selectedQuantity > 0));
     console.log('Adding to cart from modal:', { mainProduct: selectedMainProductForModal, addons: selectedAddonsForCart, totalPrice: modalTotalPrice });
@@ -216,10 +208,9 @@ const OurMenu: React.FC = () => {
   return (
     <div style={{ padding: '20px 0 50px 0', background: '#fff7e6' }}>
       <Title level={2} style={{ color: '#f97316', textAlign: 'center', marginBottom: '40px', fontWeight: '700', fontSize: '40px' }}>
-        THỰC ĐƠN CỦA CHÚNG TÔI
+      ------------------------------THỰC ĐƠN CỦA CHÚNG TÔI------------------------------
       </Title>
 
-      {/* Tab Buttons - Redesigned */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <Button style={tabButtonStyle('mainDishes')} onClick={() => setActiveTab('mainDishes')}>MÓN CHÍNH</Button>
         <Button style={tabButtonStyle('sideDishes')} onClick={() => setActiveTab('sideDishes')}>MÓN ĂN KÈM</Button>
@@ -289,12 +280,12 @@ const OurMenu: React.FC = () => {
                     <Title
                       level={5}
                       style={{
-                        fontSize: '1.1rem', 
+                        fontSize: '1.2rem', 
                         fontWeight: 600,
                         color: '#2c3e50',
                         marginBottom: '4px',
                         lineHeight: 1.35,
-                        height: 'calc(1.35em * 2)',
+                        height: 'calc(1.35em * 1.5)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         display: '-webkit-box',
@@ -361,7 +352,6 @@ const OurMenu: React.FC = () => {
         )}
       </Row>
 
-      {/* --- ADD-ONS MODAL --- */}
       {selectedMainProductForModal && (
         <Modal centered open={isModalVisible} onCancel={handleCloseModal} footer={null} width={600} bodyStyle={{ padding: 0, backgroundColor: '#F8F0E5' }} closable={false} destroyOnClose >
           <div style={{ padding: '20px' }}>

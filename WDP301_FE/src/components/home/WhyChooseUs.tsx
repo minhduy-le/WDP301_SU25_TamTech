@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Row, Col, Typography } from 'antd';
-import './WhyChooseUs.css'; // Import file CSS mới
+import './WhyChooseUs.css'; 
 
 const { Title, Paragraph } = Typography;
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Layout, Menu, Button, Input } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
