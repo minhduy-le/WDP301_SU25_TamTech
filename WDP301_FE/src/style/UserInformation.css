@@ -127,7 +127,8 @@
   cursor: pointer;
 }
 
-.modal-edit-profile .ant-modal-content {
+.modal-edit-profile .ant-modal-content,
+.modal-edit-contact .ant-modal-content {
   background-color: #efe6db;
 }
 
@@ -140,23 +141,34 @@
 }
 
 .modal-edit-profile .ant-form-item-required,
-.modal-edit-profile .ant-form-item-label {
+.modal-edit-profile .ant-form-item-label,
+.modal-edit-contact .ant-form-item-required,
+.modal-edit-contact .ant-form-item-label {
   font-family: "Montserrat", sans-serif;
 }
 
-.modal-edit-profile .ant-form-item-required::before {
+.modal-edit-profile .ant-form-item-required::before,
+.modal-edit-contact .ant-form-item-required::before {
   display: none !important;
 }
 
-.modal-edit-profile .ant-input {
+.modal-edit-profile .ant-input,
+.modal-edit-contact .ant-input {
   background: #ebd187;
   font-family: "Montserrat", sans-serif;
 }
-.update-profile-btn {
+.update-profile-btn,
+.update-contact-btn {
   background-color: #78a243 !important;
   color: white !important;
   border: none !important;
   outline: none !important;
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
+}
+
+.contact-card .edit-contact-icon {
+  position: absolute;
+  right: 20px;
+  top: 14px;
 }
