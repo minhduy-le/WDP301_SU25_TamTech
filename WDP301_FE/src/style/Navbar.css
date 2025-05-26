@@ -86,6 +86,7 @@ header {
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
+  width: -webkit-fill-available;
 }
 
 .header-brand.active {

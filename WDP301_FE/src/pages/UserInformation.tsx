@@ -29,45 +29,91 @@ import "../style/AddressOrder.css";
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
-const contacts = [
-  {
-    id: 1,
-    name: "Truong Quang Hieu Trung",
-    phone: "0888777888",
-    address:
-      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-    isDefault: false,
-  },
-  {
-    id: 2,
-    name: "Truong Quang Hieu Trung",
-    phone: "0888777888",
-    address:
-      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-    isDefault: false,
-  },
-  {
-    id: 3,
-    name: "Truong Quang Hieu Trung",
-    phone: "0888777888",
-    address:
-      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-    isDefault: true,
-  },
-  {
-    id: 4,
-    name: "Truong Quang Hieu Trung",
-    phone: "0888777888",
-    address:
-      "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-    isDefault: false,
-  },
-];
+interface Contact {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  isDefault: boolean;
+}
+
+// const contacts = [
+//   {
+//     id: 1,
+//     name: "Truong Quang Hieu Trung",
+//     phone: "0888777888",
+//     address:
+//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+//     isDefault: false,
+//   },
+//   {
+//     id: 2,
+//     name: "Truong Quang Hieu Trung",
+//     phone: "0888777888",
+//     address:
+//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+//     isDefault: false,
+//   },
+//   {
+//     id: 3,
+//     name: "Truong Quang Hieu Trung",
+//     phone: "0888777888",
+//     address:
+//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+//     isDefault: true,
+//   },
+//   {
+//     id: 4,
+//     name: "Truong Quang Hieu Trung",
+//     phone: "0888777888",
+//     address:
+//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+//     isDefault: false,
+//   },
+// ];
 
 const UserInfomation = () => {
   const [activePage, setActivePage] = useState("1");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditContactModalVisible, setIsEditContactModalVisible] =
+    useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([
+    {
+      id: 1,
+      name: "Truong Quang Hieu Trung",
+      phone: "0888777888",
+      address:
+        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+      isDefault: false,
+    },
+    {
+      id: 2,
+      name: "Truong Quang Hieu Trung",
+      phone: "0888777888",
+      address:
+        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+      isDefault: false,
+    },
+    {
+      id: 3,
+      name: "Truong Quang Hieu Trung",
+      phone: "0888777888",
+      address:
+        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+      isDefault: true,
+    },
+    {
+      id: 4,
+      name: "Truong Quang Hieu Trung",
+      phone: "0888777888",
+      address:
+        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+      isDefault: false,
+    },
+  ]);
   const [form] = Form.useForm();
+  const [editContactForm] = Form.useForm();
   const location = useLocation();
   const navigationType = useNavigationType();
   const { user } = useAuthStore();
@@ -129,6 +175,38 @@ const UserInfomation = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+  };
+
+  const showEditContactModal = (contact: Contact) => {
+    setSelectedContact(contact);
+    editContactForm.setFieldsValue({
+      name: contact.name,
+      phone: contact.phone,
+      address: contact.address,
+    });
+    setIsEditContactModalVisible(true);
+  };
+
+  const handleEditContactOk = () => {
+    editContactForm.validateFields().then((values) => {
+      if (selectedContact) {
+        const updatedContacts = contacts.map((contact) =>
+          contact.id === selectedContact.id
+            ? { ...contact, ...values }
+            : contact
+        );
+        setContacts(updatedContacts);
+        setIsEditContactModalVisible(false);
+        setSelectedContact(null);
+        editContactForm.resetFields();
+      }
+    });
+  };
+
+  const handleEditContactCancel = () => {
+    setIsEditContactModalVisible(false);
+    setSelectedContact(null);
+    editContactForm.resetFields();
   };
 
   return (
@@ -250,6 +328,12 @@ const UserInfomation = () => {
                             contact.isDefault ? "default-card" : ""
                           }`}
                         >
+                          <div className="edit-contact-icon">
+                            <EditOutlined
+                              style={{ fontSize: 18 }}
+                              onClick={() => showEditContactModal(contact)}
+                            />
+                          </div>
                           <Text
                             style={{
                               fontFamily: "Montserrat, sans-serif",
@@ -361,6 +445,64 @@ const UserInfomation = () => {
               type="primary"
               onClick={handleOk}
               className="update-profile-btn"
+            >
+              Cập nhật
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      <Modal
+        visible={isEditContactModalVisible}
+        onOk={handleEditContactOk}
+        onCancel={handleEditContactCancel}
+        okText="Cập nhật"
+        cancelText="Hủy"
+        footer={null}
+        className="modal-edit-contact"
+      >
+        <Form
+          form={editContactForm}
+          layout="vertical"
+          name="editContact"
+          initialValues={{
+            name: selectedContact?.name || "",
+            phone: selectedContact?.phone || "",
+            address: selectedContact?.address || "",
+          }}
+        >
+          <div className="edit-title">Chỉnh sửa địa chỉ</div>
+          <Divider
+            style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }}
+          />
+          <Form.Item
+            name="name"
+            label="Họ và tên*"
+            rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="Số điện thoại*"
+            rules={[
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ*"
+            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+          >
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <Button
+              type="primary"
+              onClick={handleEditContactOk}
+              className="update-contact-btn"
             >
               Cập nhật
             </Button>
