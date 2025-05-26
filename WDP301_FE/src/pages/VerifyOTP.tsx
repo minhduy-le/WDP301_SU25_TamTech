@@ -13,8 +13,9 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const { mutate: verifyOTP } = useVerifyOTP();
   const location = useLocation();
-  const storedEmail = localStorage.getItem("email");
-  const email = location.state?.email || storedEmail;
+  // const storedEmail = localStorage.getItem("email");
+  // const email = location.state?.email || storedEmail;
+  const email = location.state?.email;
 
   const handleFinish = (values: { otp: string }) => {
     if (!email) {
@@ -24,7 +25,7 @@ const VerifyOTP = () => {
 
     const payload = { email, otp: values.otp };
 
-    localStorage.setItem("otp", values.otp);
+    // localStorage.setItem("otp", values.otp);
 
     verifyOTP(payload, {
       onSuccess: () => {
@@ -66,7 +67,12 @@ const VerifyOTP = () => {
             <span className="login-brown">nhớ!</span>
           </h1>
           <p className="subtitle">Nhập OTP để kích hoạt tài khoản.</p>
-          <Form form={form} name="control-hooks" onFinish={handleFinish}>
+          <Form
+            form={form}
+            name="control-hooks"
+            onFinish={handleFinish}
+            className="otp"
+          >
             <Form.Item
               name="otp"
               rules={[{ required: true, message: "Nhập OTP" }]}
@@ -76,7 +82,6 @@ const VerifyOTP = () => {
                 style={{
                   width: "-webkit-fill-available",
                   marginBottom: 30,
-                  justifyContent: "center",
                 }}
                 formatter={(str) => str.replace(/\D/g, "")}
                 {...sharedProps}

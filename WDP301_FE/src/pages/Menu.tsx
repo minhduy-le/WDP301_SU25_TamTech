@@ -241,9 +241,9 @@ const Menu = () => {
           ) : isProductsError ? (
             <div>Error loading products. Please try again later.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
-            <Row gutter={[24, 16]}>
+            <Row gutter={[24, 16]} className="menu-card-row">
               {mainProducts.map((product) => (
-                <Col span={11} className="menu-column" key={product.productId}>
+                <Col span={8} className="menu-column" key={product.productId}>
                   <Card className="menu-card">
                     <div className="card-image-container">
                       <img

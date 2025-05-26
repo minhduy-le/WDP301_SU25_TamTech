@@ -7,26 +7,6 @@ interface GenericApiResponse<T> {
   data?: T;
 }
 
-// export const useGetProductById = (productId: string) => {
-//   return useQuery<ProductDto, Error>({
-//     queryKey: ["products", productId],
-//     queryFn: async () => {
-//       const response = await axiosInstance.get(`products/${productId}`);
-//       const {
-//         status,
-//         message: responseMessage,
-//         product,
-//       } = response.data as ProductDetailApiResponse;
-
-//       if (status >= 200 && status < 300 && product && product.length > 0) {
-//         return product[0];
-//       }
-//       throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
-//     },
-//     enabled: !!productId,
-//   });
-// };
-
 interface ProductApiResponse {
   status: number;
   message: string;

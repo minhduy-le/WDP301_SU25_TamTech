@@ -128,3 +128,16 @@
   height: auto;
   font-family: "Montserrat", sans-serif;
 }
+
+.ant-form-item-additional {
+  margin-top: -14px;
+  margin-bottom: 7px;
+}
+
+.ant-form-item-additional .ant-form-item-explain-error {
+  font-family: "Montserrat", sans-serif;
+}
+
+.form-content:has(.otp) {
+  padding: 0px 155px;
+}

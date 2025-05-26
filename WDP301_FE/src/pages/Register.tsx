@@ -16,9 +16,11 @@ const Register = () => {
       .then((values) => {
         createAccount(values, {
           onSuccess: () => {
-            message.success("Tạo tài khoản thành công! Hãy đăng nhập.");
+            message.success("Tạo tài khoản thành công! Hãy xác thực OTP.");
+            const email = values.email;
             setTimeout(() => {
-              navigate("/login");
+              // navigate("/login");
+              navigate("/verify-otp", { state: { email } });
               registerForm.resetFields();
             }, 100);
           },
@@ -64,7 +66,19 @@ const Register = () => {
             <Form.Item
               name="fullName"
               style={{ marginBottom: 0 }}
-              rules={[{ required: true, message: "Nhập tên đầy đủ" }]}
+              rules={[
+                { required: true, message: "Nhập tên đầy đủ" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const wordCount = value.trim().split(/\s+/).length;
+                    if (wordCount > 20) {
+                      return Promise.reject("Tên không được vượt quá 20 từ");
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
             >
               <Input placeholder="Họ tên" className="input-field" />
             </Form.Item>
@@ -80,6 +94,7 @@ const Register = () => {
                   required: true,
                   message: "Nhập email",
                 },
+                { max: 100, message: "Email không được vượt quá 100 ký tự" },
               ]}
             >
               <Input placeholder="Email" className="input-field" />
@@ -87,14 +102,37 @@ const Register = () => {
             <Form.Item
               name="phone_number"
               style={{ marginBottom: 0 }}
-              rules={[{ required: true, message: "Nhập số điện thoại" }]}
+              rules={[
+                { required: true, message: "Nhập số điện thoại" },
+                {
+                  pattern: /^\d+$/,
+                  message: "Số điện thoại chỉ được chứa chữ số",
+                },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (value.length > 12) {
+                      return Promise.reject(
+                        "Số điện thoại không được vượt quá 12 chữ số"
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
             >
               <Input placeholder="Số điện thoại" className="input-field" />
             </Form.Item>
             <Form.Item
               name="password"
               style={{ marginBottom: 0 }}
-              rules={[{ required: true, message: "Nhập mật khẩu" }]}
+              rules={[
+                { required: true, message: "Nhập mật khẩu" },
+                {
+                  min: 6,
+                  message: "Mật khẩu phải dài hơn 6 ký tự",
+                },
+              ]}
             >
               <Input.Password placeholder="Mật khẩu" className="input-field" />
             </Form.Item>
