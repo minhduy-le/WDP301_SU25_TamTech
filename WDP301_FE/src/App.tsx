@@ -23,11 +23,14 @@ import ConfirmOrders from "./pages/manager/orders/ConfirmOrders";
 import ProductManagement from "./pages/manager/products/ProductManagement";
 import PromotionManagement from "./pages/manager/promotions/PromotionManagement";
 import EmployeeManagement from "./pages/manager/staffs/EmployeeManagement";
+import ProductDetail from "./pages/ProductDetail";
 
 const LayoutWithNavFooter = () => (
   <>
     <Navbar />
-    <Outlet />
+    <div style={{ paddingTop: '70px' }}>
+      <Outlet />
+    </div>
     <Footer />
   </>
 );
@@ -57,6 +60,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/user-information" element={<UserInfomation />} />
+          <Route path="/product/:productId" element={<ProductDetail />} />
         </Route>
         {/* <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
