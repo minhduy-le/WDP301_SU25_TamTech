@@ -21,7 +21,8 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
-import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../hooks/usersApi";
+import { useGetProfileUser } from "../hooks/profileApi";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -60,7 +61,10 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<number>(0);
   const [note, setNote] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
-  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  const { data: userProfile } = useGetProfileUser(userId || 0);
 
   const { data: districts = [], isLoading, isError } = useDistricts();
   const {
@@ -140,18 +144,15 @@ const Checkout = () => {
   };
 
   const handleOrderSubmit = () => {
-    // Tạo orderItems bằng cách flat hóa sản phẩm chính và add-ons
     const orderItems: OrderItem[] = [];
 
     selectedItems.forEach((item) => {
-      // Thêm sản phẩm chính
       orderItems.push({
         productId: item.productId,
         quantity: item.quantity,
         price: item.price,
       });
 
-      // Thêm các add-on vào orderItems
       if (item.addOns && item.addOns.length > 0) {
         item.addOns.forEach((addOn) => {
           if (addOn.quantity > 0) {
@@ -184,7 +185,7 @@ const Checkout = () => {
     createOrder(orderData, {
       onSuccess: (data: any) => {
         message.success("Đặt hàng thành công!");
-        navigate(data.checkoutUrl);
+        window.location.href = data.checkoutUrl;
       },
       onError: (error: any) => {
         console.error("Error creating order:", error);
@@ -240,21 +241,30 @@ const Checkout = () => {
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.fullName}
+                disabled
               />
               <Input
                 placeholder="Số điện thoại"
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.phone_number}
+                disabled
               />
               <Input
                 placeholder="Email"
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.email}
+                disabled
               />
               <Input
                 placeholder="Địa chỉ chi tiết"

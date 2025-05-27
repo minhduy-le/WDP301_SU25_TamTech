@@ -106,6 +106,7 @@
 .divider-text a {
   color: #78a243;
   font-size: 14px;
+  text-decoration: underline;
 }
 
 .login-brown {

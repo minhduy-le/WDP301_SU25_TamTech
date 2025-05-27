@@ -143,6 +143,12 @@ header {
 .header-brand.active .ant-menu-overflow.ant-menu {
   display: none;
 }
+
+.ant-menu-item-selected::after,
+.ant-menu-item::after {
+  display: none !important;
+}
+
 /* Responsive Design */
 @media screen and (max-width: 1010px) {
   .hamburger-menu {
