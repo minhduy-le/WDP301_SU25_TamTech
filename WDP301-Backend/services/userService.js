@@ -223,16 +223,19 @@ const userService = {
       throw "Invalid credentials";
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role || "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(
+      {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone_number: user.phone_number,
+        role: user.role || "user",
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    return {
-      id: user.id,
-      fullName: user.fullName,
-      email,
-      phone_number: user.phone_number,
-      role: user.role || "user",
-      token,
-    };
+    return { token };
   },
 
   async googleLogin(idToken) {
