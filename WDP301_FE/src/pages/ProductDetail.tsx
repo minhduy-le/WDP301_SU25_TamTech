@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Row,
   Col,
@@ -10,48 +10,108 @@ import {
   Tabs,
   List,
   Avatar,
-  Card
+  Card,
+  Spin
 } from "antd";
-import { HeartOutlined} from "@ant-design/icons";
+import { HeartOutlined } from "@ant-design/icons";
 import "./ProductDetail.css";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 
 const { Title, Text, Paragraph } = Typography;
 
-const product = {
-  name: "COMBO - SƯỜN CHUNG",
-  price: 100000,
-  image: "https://sakos.vn/wp-content/uploads/2024/09/bia.jpg",
-  rating: 5,
-  description:
-    "Catahoula cher hot sauce make a roux Acadiana Mardi Gras fried chicken. Turducken fais do do cajun interstate andouille remoulade hunting Mardi Gras Thibideaux sac a lait. Mardi Gras viens ci trail ride levee food fishing red beans & rice. Yams sauce piquante pirogue boiled crawfish boiled crawfish lagniappe ca c'est bon. Bbq pecan pie canaille Acadiana cher cher. Boucherie gumbo cayenne andouille trail ride viens ci barbed wire sa fait chaud pecan pie.",
-  categories: ["Fruits", "Vegetables"],
-  reviews: [
-    {
-      id: 1,
-      user: "Admin",
-      date: "April 03, 2016",
-      rating: 4,
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      content:
-        "Sed eget turpis a pede tempor malesuada. Vivamus quis mi at leo pulvinar hendrerit. Cum sociis natoque penatibus et magnis dis",
-    },
-    {
-      id: 2,
-      user: "Jane",
-      date: "May 10, 2017",
-      rating: 5,
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      content:
-        "Aliquam erat volutpat. Etiam feugiat, sem ac scelerisque placerat, enim urna cursus erat, nec dictum erat elit eu sapien.",
-    },
-  ],
-};
+// Keep the reviews data hardcoded
+const reviews = [
+  {
+    id: 1,
+    user: "Admin",
+    date: "April 03, 2016",
+    rating: 4,
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    content:
+      "Sed eget turpis a pede tempor malesuada. Vivamus quis mi at leo pulvinar hendrerit. Cum sociis natoque penatibus et magnis dis",
+  },
+  {
+    id: 2,
+    user: "Jane",
+    date: "May 10, 2017",
+    rating: 5,
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    content:
+      "Aliquam erat volutpat. Etiam feugiat, sem ac scelerisque placerat, enim urna cursus erat, nec dictum erat elit eu sapien.",
+  },
+];
+
+interface Product {
+  productId: number;
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+  createAt: string;
+  productTypeId: number;
+  createBy: string;
+  storeId: number;
+  isActive: boolean;
+  ProductRecipes: Array<{
+    productRecipeId: number;
+    productId: number;
+    materialId: number;
+    quantity: number;
+    Material: {
+      materialId: number;
+      name: string;
+      quantity: number;
+      storeId: number;
+    };
+  }>;
+  ProductType: {
+    productTypeId: number;
+    name: string;
+  };
+  Store: {
+    storeId: number;
+    name: string;
+    address: string;
+  };
+}
 
 const ProductDetail: React.FC = () => {
-  const [quantity, setQuantity] = useState(4);
+  const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { productId } = useParams();
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`);
+        setProduct(response.data.product);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+    window.scrollTo(0, 0);
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div>Product not found</div>;
+  }
 
   return (
-    <div style={{ position: "relative", background: "#fff", minHeight: "100vh", backgroundColor: "#efe6db" }}>
+    <div style={{ position: "relative", background: "#fff", minHeight: "100vh", backgroundColor: "#fff7e6" }}>
       <img
         src={"https://cdn.tgdd.vn/2022/09/CookDish/cach-nuong-thit-khong-bi-kho-mem-ngon-don-gian-avt-1200x676-1.jpg"}
         alt={"Detail"}
@@ -77,8 +137,8 @@ const ProductDetail: React.FC = () => {
             style={{
               borderRadius: 10,
               background: "#fafafa",
-              width: "100%",
-              height: "100%",
+              width: "520px",
+              height: "350px",
             }}
             preview={false}
           />
@@ -88,14 +148,54 @@ const ProductDetail: React.FC = () => {
             {product.name}
           </Title>
           <Text strong style={{ fontSize: 22, color: "#ff7a45" }}>
-            {product.price.toLocaleString()}đ
+            {parseFloat(product.price).toLocaleString()}đ
           </Text>
           <div style={{ margin: "12px 0" }}>
-            <Rate disabled defaultValue={product.rating} style={{ color: '#fadb14' }} />
+            <Rate disabled defaultValue={4.5} style={{ color: '#fadb14' }} />
           </div>
           <Paragraph style={{ color: "#7c4a03", marginBottom: 24 }}>
             {product.description}
           </Paragraph>
+          <div style={{ 
+            display: 'flex', 
+            gap: 16, 
+            marginBottom: 24,
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              background: '#fffbe6',
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: '1px solid #ffecd2'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 8 }}>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ff7a45"/>
+              </svg>
+              <div>
+                <Text strong style={{ color: '#7c4a03', fontSize: 14, display: 'block' }}>Store</Text>
+                <Text style={{ color: '#666', fontSize: 13 }}>{product.Store.name}</Text>
+              </div>
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              background: '#fffbe6',
+              padding: '8px 12px',
+              borderRadius: 6,
+              border: '1px solid #ffecd2'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 8 }}>
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ff7a45"/>
+              </svg>
+              <div>
+                <Text strong style={{ color: '#7c4a03', fontSize: 14, display: 'block' }}>Address</Text>
+                <Text style={{ color: '#666', fontSize: 13 }}>{product.Store.address}</Text>
+              </div>
+            </div>
+          </div>
           <div
             style={{
               display: "flex",
@@ -108,7 +208,7 @@ const ProductDetail: React.FC = () => {
               min={1}
               value={quantity}
               onChange={(v) => setQuantity(Number(v))}
-              style={{ width: 70, height: 40, borderColor: '#ff7a45', background: '#fffbe6', color: '#7c4a03' }}
+              style={{ width: 70, height: 40, borderColor: '#ff7a45', background: '#fffbe6', color: '#7c4a03', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               controls={{
                 upIcon: <span style={{ color: '#ff7a45' }}>+</span>,
                 downIcon: <span style={{ color: '#ff7a45' }}>-</span>,
@@ -122,6 +222,8 @@ const ProductDetail: React.FC = () => {
                 fontWeight: 600,
                 color: '#fff',
                 boxShadow: '0 2px 8px #ffecd2',
+                outline: 'none',
+                border: 'none',
               }}
               size="large"
             >
@@ -135,6 +237,7 @@ const ProductDetail: React.FC = () => {
                 fontWeight: 600,
                 border: "1px solid #ff7a45",
                 boxShadow: '0 2px 8px #ffecd2',
+                outline: 'none',
               }}
               size="large"
             >
@@ -143,7 +246,7 @@ const ProductDetail: React.FC = () => {
             <Button
               icon={<HeartOutlined style={{ color: '#ff7a45' }} />}
               size="large"
-              style={{ background: '#fffbe6', border: '1px solid #ff7a45' }}
+              style={{ background: '#fffbe6', border: '1px solid #ff7a45', outline: 'none', boxShadow: '0 2px 8px #ffecd2' }}
             />
           </div>
         </Col>
@@ -157,28 +260,41 @@ const ProductDetail: React.FC = () => {
               key: "1",
               label: "Description",
               children: (
-                <Paragraph style={{ maxWidth: 800 }}>
-                  {product.description}
-                </Paragraph>
+                <div>
+                  <Paragraph style={{ maxWidth: 800 }}>
+                    {product.description}
+                  </Paragraph>
+                  <div style={{ marginTop: 24 }}>
+                    <Title level={4} style={{ color: '#7c4a03' }}>Ingredients:</Title>
+                    <List
+                      dataSource={product.ProductRecipes}
+                      renderItem={(item) => (
+                        <List.Item>
+                          <Text>{item.Material.name} - {item.quantity}g</Text>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                </div>
               ),
             },
             {
               key: "2",
-              label: `Reviews (${product.reviews.length})`,
+              label: `Reviews (${reviews.length})`,
               children: (
                 <div>
                   <Text strong style={{ fontSize: 16 }}>
-                    {product.reviews.length} REVIEWS FOUND
+                    {reviews.length} REVIEWS FOUND
                   </Text>
                   <List
                     itemLayout="horizontal"
-                    dataSource={product.reviews}
+                    dataSource={reviews}
                     style={{ marginTop: 16 }}
                     renderItem={(item) => (
                       <Card
                         style={{
                           marginBottom: 16,
-                          background: "#efe6db",
+                          background: "#fff",
                           border: "none",
                           borderRadius: 10,
                           boxShadow: "0 2px 8px #ffecd2"
@@ -271,14 +387,14 @@ const ProductDetail: React.FC = () => {
             },
           ].map((item) => (
             <Col xs={24} sm={12} md={6} key={item.id}>
-              <Card className="menu-card" hoverable style={{ minHeight: 380 }}>
+              <Card className="menu-card" hoverable style={{ minHeight: 380, border: 'none', boxShadow: '0 2px 8px #ffecd2', background: '#fff' }}>
                 <div className="card-image-container">
-                  <img src={item.image} alt={item.name} className="card-image" />
+                  <img src={item.image} alt={item.name} className="card-image" style={{border: 'none'}} />
                   <div style={{ fontSize: 16, top: 10, left: 10, right: 'unset', bottom: 'unset', background: '#fff7e6', color: '#da7339', padding: '2px 10px', borderRadius: 8, position: 'absolute' }}>
                     ★ {item.rating}
                   </div>
                 </div>
-                <div className="card-content" style={{ height: 'auto', minHeight: 180, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div className="card-content" style={{ height: 'auto', minHeight: 180, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderTop: 'none' }}>
                   <h3 className="card-title" style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{item.name}</h3>
                   <div className="card-description" style={{ fontSize: 15, color: '#222' }}>
                     {item.desc.map((line, idx) => (
@@ -290,7 +406,7 @@ const ProductDetail: React.FC = () => {
                       <span style={{ color: '#da7339', fontWeight: 700, fontSize: 18 }}>{item.price.toLocaleString()}đ</span>
                       <span style={{ color: '#aaa', textDecoration: 'line-through', fontSize: 15 }}>{item.oldPrice ? item.oldPrice.toLocaleString() + 'đ' : ''}</span>
                     </div>
-                    <Button style={{background: '#da7339', fontWeight: 600, borderRadius: 6, fontSize: 16, padding: '0 22px', height: 38, color: '#fff', border: 'none' }}>
+                    <Button style={{background: '#ff7a45', fontWeight: 600, borderRadius: 6, fontSize: 16, padding: '0 22px', height: 38, color: '#fff', border: 'none' }}>
                       Thêm
                     </Button>
                   </div>

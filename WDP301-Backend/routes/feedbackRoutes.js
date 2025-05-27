@@ -5,13 +5,20 @@ const verifyToken = require("../middlewares/verifyToken");
 
 /**
  * @swagger
- * /api/feedback:
+ * /api/feedback/{productId}:
  *   post:
- *     summary: Create a new feedback
- *     description: Allows authenticated users to submit feedback for a product
+ *     summary: Create feedback for a product
  *     tags: [Feedback]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Product ID
  *     requestBody:
  *       required: true
  *       content:
@@ -19,19 +26,19 @@ const verifyToken = require("../middlewares/verifyToken");
  *           schema:
  *             type: object
  *             required:
- *               - productId
  *               - comment
  *               - rating
  *             properties:
- *               productId:
- *                 type: integer
- *                 description: ID of the product being reviewed
  *               comment:
  *                 type: string
- *                 description: Feedback comment (max 255 characters)
+ *                 minLength: 1
+ *                 maxLength: 255
+ *                 example: Great product, really enjoyed it!
  *               rating:
  *                 type: integer
- *                 description: Rating from 1 to 5
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
  *     responses:
  *       201:
  *         description: Feedback created successfully
@@ -40,21 +47,21 @@ const verifyToken = require("../middlewares/verifyToken");
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
  *                 feedback:
  *                   type: object
  *                   properties:
  *                     id:
  *                       type: integer
- *                     userId:
- *                       type: integer
  *                     productId:
+ *                       type: integer
+ *                     userId:
  *                       type: integer
  *                     comment:
  *                       type: string
  *                     rating:
  *                       type: integer
+ *                     isFeedback:
+ *                       type: boolean
  *                     createdAt:
  *                       type: string
  *                       format: date-time
@@ -62,34 +69,67 @@ const verifyToken = require("../middlewares/verifyToken");
  *                       type: string
  *                       format: date-time
  *       400:
- *         description: Invalid input
+ *         description: Invalid input or feedback already exists
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 invalidProductId: { value: "Product ID must be a positive integer" }
+ *                 invalidComment: { value: "Comment cannot be empty" }
+ *                 commentTooLong: { value: "Comment cannot exceed 255 characters" }
+ *                 invalidRating: { value: "Rating must be an integer between 1 and 5" }
+ *                 alreadyFeedback: { value: "You have already provided feedback for this product" }
+ *                 notPurchased: { value: "You can only provide feedback for products you have purchased" }
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
  */
-router.post("/", verifyToken, async (req, res, next) => {
+router.post("/:productId", verifyToken, async (req, res) => {
   try {
-    const { productId, comment, rating } = req.body;
-    const userId = req.userId; // Obtained from verifyToken
+    const productId = parseInt(req.params.productId);
+    const { comment, rating } = req.body;
+    const userId = req.userId;
+
     const feedback = await feedbackService.createFeedback({
-      userId,
       productId,
+      userId,
       comment,
       rating,
     });
-    res.status(201).json({ message: "Feedback created successfully", feedback });
+
+    res.status(201).json({ feedback });
   } catch (error) {
-    next(error);
+    console.error("Error creating feedback:", error);
+    if (
+      error.message.includes("Product ID") ||
+      error.message.includes("Comment") ||
+      error.message.includes("Rating") ||
+      error.message.includes("already provided") ||
+      error.message.includes("purchased")
+    ) {
+      res.status(400).send(error.message);
+    } else if (error.message.includes("Product not found")) {
+      res.status(404).send(error.message);
+    } else {
+      res.status(500).send(error.message);
+    }
   }
 });
 
 /**
  * @swagger
- * /api/feedback/product/{productId}:
+ * /api/feedback/{productId}:
  *   get:
- *     summary: Get feedback for a product
- *     description: Retrieve all feedback for a specific product
+ *     summary: Get all feedback for a product
  *     tags: [Feedback]
  *     parameters:
  *       - in: path
@@ -97,50 +137,79 @@ router.post("/", verifyToken, async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID of the product to fetch feedback for
+ *           minimum: 1
+ *         description: Product ID
  *     responses:
  *       200:
- *         description: List of feedback for the product
+ *         description: Feedback retrieved successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                   userId:
- *                     type: integer
- *                   productId:
- *                     type: integer
- *                   comment:
- *                     type: string
- *                   rating:
- *                     type: integer
- *                   createdAt:
- *                     type: string
- *                     format: date-time
- *                   updatedAt:
- *                     type: string
- *                     format: date-time
- *                   User:
+ *               type: object
+ *               properties:
+ *                 feedbacks:
+ *                   type: array
+ *                   items:
  *                     type: object
  *                     properties:
- *                       fullName:
+ *                       id:
+ *                         type: integer
+ *                       productId:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       comment:
  *                         type: string
+ *                       rating:
+ *                         type: integer
+ *                       isFeedback:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       User:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           fullName:
+ *                             type: string
  *       400:
  *         description: Invalid product ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product ID must be a positive integer
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
  */
-router.get("/product/:productId", async (req, res, next) => {
+router.get("/:productId", async (req, res) => {
   try {
-    const { productId } = req.params;
-    const feedback = await feedbackService.getFeedbackByProductId(productId);
-    res.status(200).json(feedback);
+    const productId = parseInt(req.params.productId);
+
+    const feedbacks = await feedbackService.getFeedbackByProductId(productId);
+
+    res.status(200).json({ feedbacks });
   } catch (error) {
-    next(error);
+    console.error("Error retrieving feedback:", error);
+    if (error.message.includes("Product ID")) {
+      res.status(400).send(error.message);
+    } else if (error.message.includes("Product not found")) {
+      res.status(404).send(error.message);
+    } else {
+      res.status(500).send(error.message);
+    }
   }
 });
 

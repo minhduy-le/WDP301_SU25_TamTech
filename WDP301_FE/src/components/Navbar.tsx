@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Layout, Menu, Button, Input, Dropdown } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
@@ -64,7 +63,14 @@ const Navbar = () => {
   };
 
   return (
-    <Header>
+    <Header style={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+    }}
+    >
       <Button
         type="text"
         icon={<MenuOutlined />}
