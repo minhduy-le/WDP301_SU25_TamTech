@@ -33,7 +33,7 @@ const Navbar = () => {
         key="2"
         onClick={() => {
           logout();
-          navigate("/");
+          navigate("/login");
         }}
       >
         Đăng xuất

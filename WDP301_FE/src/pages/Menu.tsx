@@ -143,21 +143,23 @@ const Menu = () => {
         0
       );
 
-      const totalPrice =
-        Number(productDetail.price) * quantity + totalAddOnPrice;
+      const basePrice = Number(productDetail.price); // Price of the main product
+      const totalPrice = basePrice * quantity + totalAddOnPrice;
 
       const cartItem = {
         userId: user.id,
         productId: productDetail.productId,
         productName: productDetail.name,
         addOns: addOnsWithPrices.map(
-          ({ productId, productTypeName, quantity }) => ({
+          ({ productId, productTypeName, quantity, price }) => ({
             productId,
             productTypeName,
             quantity,
+            price,
           })
         ),
         quantity,
+        price: basePrice,
         totalPrice,
       };
 
