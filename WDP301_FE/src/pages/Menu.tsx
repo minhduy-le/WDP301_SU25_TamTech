@@ -17,11 +17,11 @@ const useAddOnProducts = () => {
   const query3 = useGetProductByTypeId(3);
   const query4 = useGetProductByTypeId(4);
   const query5 = useGetProductByTypeId(5);
-  const query6 = useGetProductByTypeId(6);
-  const query7 = useGetProductByTypeId(7);
-  const query8 = useGetProductByTypeId(8);
-  const query9 = useGetProductByTypeId(9);
-  const query10 = useGetProductByTypeId(10);
+  // const query6 = useGetProductByTypeId(6);
+  // const query7 = useGetProductByTypeId(7);
+  // const query8 = useGetProductByTypeId(8);
+  // const query9 = useGetProductByTypeId(9);
+  // const query10 = useGetProductByTypeId(10);
 
   const queries: {
     typeId: number;
@@ -31,11 +31,11 @@ const useAddOnProducts = () => {
     { typeId: 3, query: query3 },
     { typeId: 4, query: query4 },
     { typeId: 5, query: query5 },
-    { typeId: 6, query: query6 },
-    { typeId: 7, query: query7 },
-    { typeId: 8, query: query8 },
-    { typeId: 9, query: query9 },
-    { typeId: 10, query: query10 },
+    // { typeId: 6, query: query6 },
+    // { typeId: 7, query: query7 },
+    // { typeId: 8, query: query8 },
+    // { typeId: 9, query: query9 },
+    // { typeId: 10, query: query10 },
   ];
 
   const addOnProductQueries: {
@@ -143,21 +143,23 @@ const Menu = () => {
         0
       );
 
-      const totalPrice =
-        Number(productDetail.price) * quantity + totalAddOnPrice;
+      const basePrice = Number(productDetail.price); // Price of the main product
+      const totalPrice = basePrice * quantity + totalAddOnPrice;
 
       const cartItem = {
         userId: user.id,
         productId: productDetail.productId,
         productName: productDetail.name,
         addOns: addOnsWithPrices.map(
-          ({ productId, productTypeName, quantity }) => ({
+          ({ productId, productTypeName, quantity, price }) => ({
             productId,
             productTypeName,
             quantity,
+            price,
           })
         ),
         quantity,
+        price: basePrice,
         totalPrice,
       };
 

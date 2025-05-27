@@ -47,7 +47,7 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
       alert("Vui lòng chọn ít nhất một món để xác nhận đơn hàng!");
       return;
     }
-    onConfirmOrder(selectedItems); // Pass selected items to parent component
+    onConfirmOrder(selectedItems);
   };
 
   return (
