@@ -19,10 +19,6 @@ const axios = require("axios");
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 products:
  *                   type: array
  *                   items:
@@ -47,22 +43,18 @@ const axios = require("axios");
  *                             type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.get("/best-seller", async (req, res, next) => {
+router.get("/best-seller", async (req, res) => {
   try {
     const products = await productService.getBestSellerProducts();
-
-    res.status(200).json({
-      status: 200,
-      message: "Best seller products retrieved successfully",
-      products,
-    });
+    res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving best seller products:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res.status(500).send(error.message);
   }
 });
 
@@ -78,6 +70,7 @@ router.get("/best-seller", async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: string
+ *           minLength: 1
  *         description: Name or part of the name to search for
  *     responses:
  *       200:
@@ -87,10 +80,6 @@ router.get("/best-seller", async (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 products:
  *                   type: array
  *                   items:
@@ -139,33 +128,26 @@ router.get("/best-seller", async (req, res, next) => {
  *                                   type: integer
  *       400:
  *         description: Missing or invalid search term
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Search term must be a non-empty string
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.get("/search", async (req, res, next) => {
+router.get("/search", async (req, res) => {
   try {
     const { name } = req.query;
-
-    if (!name || typeof name !== "string" || name.trim() === "") {
-      return res.status(400).json({
-        status: 400,
-        message: "Search term 'name' is required and must be a non-empty string",
-      });
-    }
-
-    const products = await productService.searchProductsByName(name.trim());
-
-    res.status(200).json({
-      status: 200,
-      message: "Products retrieved successfully",
-      products,
-    });
+    const products = await productService.searchProductsByName(name);
+    res.status(200).json({ products });
   } catch (error) {
     console.error("Error searching products:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res.status(error.message.includes("Search term") ? 400 : 500).send(error.message);
   }
 });
 
@@ -191,21 +173,28 @@ router.get("/search", async (req, res, next) => {
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
  *                 example: Chocolate Cake
  *               description:
  *                 type: string
+ *                 maxLength: 1000
  *                 example: Delicious chocolate cake
  *               price:
  *                 type: number
+ *                 minimum: 0.01
+ *                 maximum: 999999.99
  *                 example: 29.99
  *               image:
  *                 type: string
  *                 example: https://example.com/image.jpg
  *               productTypeId:
  *                 type: integer
+ *                 minimum: 1
  *                 example: 1
  *               recipes:
  *                 type: array
+ *                 minItems: 1
  *                 items:
  *                   type: object
  *                   required:
@@ -214,9 +203,11 @@ router.get("/search", async (req, res, next) => {
  *                   properties:
  *                     materialId:
  *                       type: integer
+ *                       minimum: 1
  *                       example: 1
  *                     quantity:
  *                       type: integer
+ *                       minimum: 1
  *                       example: 100
  *     responses:
  *       201:
@@ -226,10 +217,6 @@ router.get("/search", async (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 product:
  *                   type: object
  *                   properties:
@@ -286,33 +273,50 @@ router.get("/search", async (req, res, next) => {
  *                               storeId:
  *                                 type: integer
  *       400:
- *         description: Bad request or insufficient material quantity
+ *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 missingFields: { value: "Name is required and must be a non-empty string" }
+ *                 invalidPrice: { value: "Price must be a number greater than 0 and 1,000,000" }
+ *                 invalidRecipes: { value: "Recipes must be a non-empty array" }
+ *                 materialNotFound: { value: "Material with ID 5 not found" }
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.post("/", verifyToken, async (req, res, next) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
     const { name, description, price, image, productTypeId, recipes } = req.body;
-
-    if (!name || !price || !productTypeId || !recipes || !Array.isArray(recipes)) {
-      return res.status(400).json({
-        status: 400,
-        message: "Missing required fields or invalid recipes format",
-      });
-    }
+    const userId = req.userId;
 
     let imageUrl = null;
     if (image) {
+      if (!image.match(/^(https:\/\/|data:image\/)/)) {
+        throw new Error("Image must be a valid URL or base64 string");
+      }
       let imageBuffer;
       const fileName = `product_${Date.now()}.jpg`;
 
       if (image.startsWith("http")) {
         const response = await axios.get(image, { responseType: "arraybuffer" });
+        if (response.status !== 200) {
+          throw new Error("Failed to fetch image from URL");
+        }
         imageBuffer = Buffer.from(response.data, "binary");
       } else {
-        imageBuffer = Buffer.from(image, "base64");
+        imageBuffer = Buffer.from(image.split(",")[1], "base64");
       }
 
       imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
@@ -324,24 +328,31 @@ router.post("/", verifyToken, async (req, res, next) => {
       price,
       image: imageUrl,
       productTypeId,
-      createBy: req.userId,
-      storeId: 1,
+      createBy: userId,
+      storeId: 1, // Adjust if dynamic storeId is needed
       recipes,
     };
 
-    const result = await productService.createProduct(productData);
+    const product = await productService.createProduct(productData);
 
-    res.status(201).json({
-      status: 201,
-      message: "Product created successfully",
-      product: result,
-    });
+    res.status(201).json({ product });
   } catch (error) {
     console.error("Error creating product:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res
+      .status(
+        error.message.includes("Name") ||
+          error.message.includes("Price") ||
+          error.message.includes("ProductTypeId") ||
+          error.message.includes("Recipes") ||
+          error.message.includes("materialId") ||
+          error.message.includes("quantity") ||
+          error.message.includes("Description") ||
+          error.message.includes("Image") ||
+          error.message.includes("Material")
+          ? 400
+          : 500
+      )
+      .send(error.message);
   }
 });
 
@@ -356,20 +367,17 @@ router.post("/", verifyToken, async (req, res, next) => {
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
  *         description: Page number
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of products retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 products:
  *                   type: array
  *                   items:
@@ -433,37 +441,35 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                   type: integer
  *       400:
  *         description: Invalid page number
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Page must be a positive integer
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.get("/", async (req, res, next) => {
+router.get("/", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    if (page < 1) {
-      return res.status(400).json({
-        status: 400,
-        message: "Page number must be greater than 0",
-      });
-    }
-
     const limit = 5;
     const offset = (page - 1) * limit;
 
     const result = await productService.getProducts({ page, limit, offset });
-
-    res.status(200).json({
-      status: 200,
-      message: "Products retrieved successfully",
-      products: result.products,
-      totalPages: result.totalPages,
-      currentPage: page,
-    });
+    res.status(200).json({ products: result.products, totalPages: result.totalPages, currentPage: page });
   } catch (error) {
     console.error("Error retrieving products:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res
+      .status(
+        error.message.includes("Page") || error.message.includes("Limit") || error.message.includes("Offset")
+          ? 400
+          : 500
+      )
+      .send(error.message);
   }
 });
 
@@ -471,7 +477,7 @@ router.get("/", async (req, res, next) => {
  * @swagger
  * /api/products/type/{productTypeId}:
  *   get:
- *     summary: Get products by product type ID
+ *     summary: Get all products by product type ID
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -479,19 +485,16 @@ router.get("/", async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: Product type ID
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of products retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 products:
  *                   type: array
  *                   items:
@@ -551,32 +554,26 @@ router.get("/", async (req, res, next) => {
  *                                   type: integer
  *       400:
  *         description: Invalid product type ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductTypeId must be a positive integer
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.get("/type/:productTypeId", async (req, res, next) => {
+router.get("/type/:productTypeId", async (req, res) => {
   try {
     const productTypeId = parseInt(req.params.productTypeId);
-    if (isNaN(productTypeId) || productTypeId < 1) {
-      return res.status(400).json({
-        status: 400,
-        message: "Invalid product type ID",
-      });
-    }
-
     const products = await productService.getProductsByType(productTypeId);
-
-    res.status(200).json({
-      status: 200,
-      message: "Products retrieved successfully",
-      products,
-    });
+    res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving products by type:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res.status(error.message.includes("ProductTypeId") ? 400 : 500).send(error.message);
   }
 });
 
@@ -584,7 +581,7 @@ router.get("/type/:productTypeId", async (req, res, next) => {
  * @swagger
  * /api/products/{productId}:
  *   get:
- *     summary: Get a product by product ID
+ *     summary: Get a product by ID
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -592,19 +589,16 @@ router.get("/type/:productTypeId", async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: Product ID
  *     responses:
  *       200:
- *         description: Product details retrieved successfully
+ *         description: Product retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 product:
  *                   type: object
  *                   properties:
@@ -662,41 +656,35 @@ router.get("/type/:productTypeId", async (req, res, next) => {
  *                                 type: integer
  *       400:
  *         description: Invalid product ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductId must be a positive integer
  *       404:
- *         description: Product not found or inactive
+ *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.get("/:productId", async (req, res, next) => {
+router.get("/:id", async (req, res) => {
   try {
-    const productId = parseInt(req.params.productId);
-    if (isNaN(productId) || productId < 1) {
-      return res.status(400).json({
-        status: 400,
-        message: "Invalid product ID",
-      });
-    }
-
+    const productId = parseInt(req.params.id);
     const product = await productService.getProductById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        status: 404,
-        message: "Product not found or inactive",
-      });
-    }
-
-    res.status(200).json({
-      status: 200,
-      message: "Product retrieved successfully",
-      product,
-    });
+    res.status(200).json({ product });
   } catch (error) {
     console.error("Error retrieving product:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res
+      .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
+      .send(error.message);
   }
 });
 
@@ -714,6 +702,7 @@ router.get("/:productId", async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: Product ID
  *     requestBody:
  *       required: true
@@ -724,18 +713,24 @@ router.get("/:productId", async (req, res, next) => {
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
  *                 example: Updated Chocolate Cake
  *               description:
  *                 type: string
+ *                 maxLength: 1000
  *                 example: Updated description
  *               price:
  *                 type: number
+ *                 minimum: 0.01
+ *                 maximum: 999999.99
  *                 example: 39.99
  *               image:
  *                 type: string
  *                 example: https://example.com/updated-image.jpg
  *               productTypeId:
  *                 type: integer
+ *                 minimum: 1
  *                 example: 1
  *     responses:
  *       200:
@@ -745,10 +740,6 @@ router.get("/:productId", async (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
  *                 product:
  *                   type: object
  *                   properties:
@@ -806,35 +797,55 @@ router.get("/:productId", async (req, res, next) => {
  *                                 type: integer
  *       400:
  *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 invalidId: { value: "ProductId must be a positive integer" }
+ *                 invalidName: { value: "Name must be a non-empty string and cannot exceed 100 characters" }
+ *                 invalidPrice: { value: "Price must be a number greater than 0 and less than 1,000,000" }
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  *       404:
  *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.put("/:id", verifyToken, async (req, res, next) => {
+router.put("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    if (isNaN(productId) || productId < 1) {
-      return res.status(400).json({
-        status: 400,
-        message: "Invalid product ID",
-      });
-    }
-
     const { name, description, price, image, productTypeId } = req.body;
 
     let imageUrl = null;
     if (image) {
+      if (!image.match(/^(https:\/\/|data:image\/)/)) {
+        throw new Error("Image must be a valid URL or base64 string");
+      }
       let imageBuffer;
       const fileName = `product_${Date.now()}.jpg`;
 
       if (image.startsWith("http")) {
         const response = await axios.get(image, { responseType: "arraybuffer" });
+        if (response.status !== 200) {
+          throw new Error("Failed to fetch image from URL");
+        }
         imageBuffer = Buffer.from(response.data, "binary");
       } else {
-        imageBuffer = Buffer.from(image, "base64");
+        imageBuffer = Buffer.from(image.split(",")[1], "base64");
       }
 
       imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
@@ -849,25 +860,23 @@ router.put("/:id", verifyToken, async (req, res, next) => {
     };
 
     const updatedProduct = await productService.updateProduct(productId, updateData);
-
-    if (!updatedProduct) {
-      return res.status(404).json({
-        status: 404,
-        message: "Product not found",
-      });
-    }
-
-    res.status(200).json({
-      status: 200,
-      message: "Product updated successfully",
-      product: updatedProduct,
-    });
+    res.status(200).json({ product: updatedProduct });
   } catch (error) {
     console.error("Error updating product:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res
+      .status(
+        error.message.includes("ProductId") ||
+          error.message.includes("Name") ||
+          error.message.includes("Price") ||
+          error.message.includes("ProductTypeId") ||
+          error.message.includes("Description") ||
+          error.message.includes("Image")
+          ? 400
+          : error.message.includes("not found")
+          ? 404
+          : 500
+      )
+      .send(error.message);
   }
 });
 
@@ -885,6 +894,7 @@ router.put("/:id", verifyToken, async (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: Product ID
  *     responses:
  *       200:
@@ -894,48 +904,46 @@ router.put("/:id", verifyToken, async (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
- *                 status:
- *                   type: integer
  *                 message:
  *                   type: string
+ *                   example: Product soft deleted successfully
  *       400:
  *         description: Invalid product ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductId must be a positive integer
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  *       404:
  *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
  */
-router.delete("/:id", verifyToken, async (req, res, next) => {
+router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    if (isNaN(productId) || productId < 1) {
-      return res.status(400).json({
-        status: 400,
-        message: "Invalid product ID",
-      });
-    }
-
-    const deleted = await productService.softDeleteProduct(productId);
-
-    if (!deleted) {
-      return res.status(404).json({
-        status: 404,
-        message: "Product not found",
-      });
-    }
-
-    res.status(200).json({
-      status: 200,
-      message: "Product soft deleted successfully",
-    });
+    await productService.softDeleteProduct(productId);
+    res.status(200).json({ message: "Product soft deleted successfully" });
   } catch (error) {
     console.error("Error soft deleting product:", error);
-    res.status(500).json({
-      status: 500,
-      message: error.message || "Internal Server Error",
-    });
+    res
+      .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
+      .send(error.message);
   }
 });
 
