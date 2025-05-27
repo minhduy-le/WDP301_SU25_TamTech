@@ -1,71 +1,88 @@
 const Feedback = require("../models/feedback");
-const User = require("../models/user");
 const Product = require("../models/product");
-const httpErrors = require("http-errors");
+const Order = require("../models/order");
+const OrderItem = require("../models/orderItem");
 
-const createFeedback = async ({ userId, productId, comment, rating }) => {
-  // Validate input
-  if (!userId || !productId || !comment || !rating) {
-    throw httpErrors.BadRequest("Missing required fields");
-  }
+const feedbackService = {
+  async createFeedback({ productId, userId, comment, rating }) {
+    if (!Number.isInteger(productId) || productId < 1) {
+      throw new Error("Product ID must be a positive integer");
+    }
+    if (!Number.isInteger(userId) || userId < 1) {
+      throw new Error("User ID must be a positive integer");
+    }
+    if (!comment || typeof comment !== "string" || comment.trim() === "") {
+      throw new Error("Comment cannot be empty");
+    }
+    if (comment.length > 255) {
+      throw new Error("Comment cannot exceed 255 characters");
+    }
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new Error("Rating must be an integer between 1 and 5");
+    }
 
-  // Check if rating is between 1 and 5
-  if (rating < 1 || rating > 5) {
-    throw httpErrors.BadRequest("Rating must be between 1 and 5");
-  }
+    const product = await Product.findByPk(productId);
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or inactive");
+    }
 
-  // Check if user exists
-  const user = await User.findByPk(userId);
-  if (!user) {
-    throw httpErrors.NotFound("User not found");
-  }
+    const order = await Order.findOne({
+      where: { userId },
+      include: [
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          where: { productId },
+          required: true,
+        },
+      ],
+    });
+    if (!order) {
+      throw new Error("You can only provide feedback for products you have purchased");
+    }
 
-  // Check if product exists
-  const product = await Product.findByPk(productId);
-  if (!product) {
-    throw httpErrors.NotFound("Product not found");
-  }
+    const existingFeedback = await Feedback.findOne({
+      where: { productId, userId },
+    });
+    if (existingFeedback) {
+      throw new Error("You have already provided feedback for this product");
+    }
 
-  // Create feedback
-  const feedback = await Feedback.create({
-    userId,
-    productId,
-    comment,
-    rating,
-  });
+    const feedback = await Feedback.create({
+      productId,
+      userId,
+      comment: comment.trim(),
+      rating,
+      isFeedback: true,
+    });
 
-  return feedback;
+    return feedback;
+  },
+
+  async getFeedbackByProductId(productId) {
+    if (!Number.isInteger(productId) || productId < 1) {
+      throw new Error("Product ID must be a positive integer");
+    }
+
+    const product = await Product.findByPk(productId);
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or inactive");
+    }
+
+    const feedbacks = await Feedback.findAll({
+      where: { productId, isFeedback: true },
+      include: [
+        {
+          model: require("../models/user"),
+          as: "User",
+          attributes: ["id", "fullName"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return feedbacks;
+  },
 };
 
-const getFeedbackByProductId = async (productId) => {
-  // Validate productId
-  if (!productId) {
-    throw httpErrors.BadRequest("Product ID is required");
-  }
-
-  // Check if product exists
-  const product = await Product.findByPk(productId);
-  if (!product) {
-    throw httpErrors.NotFound("Product not found");
-  }
-
-  // Fetch feedback with associated user data
-  const feedback = await Feedback.findAll({
-    where: { productId },
-    include: [
-      {
-        model: User,
-        as: "User",
-        attributes: ["fullName"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
-
-  return feedback;
-};
-
-module.exports = {
-  createFeedback,
-  getFeedbackByProductId,
-};
+module.exports = feedbackService;

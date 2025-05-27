@@ -21,8 +21,8 @@ const payos = new PayOS(
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
 
-const YOUR_DOMAIN = "http://localhost:3000";
-// const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
+// const YOUR_DOMAIN = "http://localhost:3000";
+const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
 
 const createOrder = async (req, res) => {
   console.log("Request body:", JSON.stringify(req.body, null, 2));

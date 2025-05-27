@@ -29,8 +29,8 @@ ProductRecipe.belongsTo(Material, { foreignKey: "materialId", as: "Material" });
 
 // Define relationships for new models
 Order.belongsTo(User, { foreignKey: "userId", as: "User" });
-Order.belongsTo(PaymentMethod, { foreignKey: "paymentMethodId", as: "PaymentMethod" });
-Order.belongsTo(OrderStatus, { foreignKey: "orderStatusId", as: "OrderStatus" });
+Order.belongsTo(PaymentMethod, { foreignKey: "payment_method_id", as: "PaymentMethod" });
+Order.belongsTo(OrderStatus, { foreignKey: "status_id", as: "OrderStatus" });
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "OrderItems" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "Orders" });
@@ -40,10 +40,10 @@ OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 
 Product.hasMany(OrderItem, { foreignKey: "productId", as: "OrderItems" });
 
-Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
 Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
-User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
 Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
+User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
 
 // Define relationships for chat-related models
 ChatRoom.hasMany(ChatRoomUser, { foreignKey: "chatRoomId", as: "ChatRoomUsers" });
