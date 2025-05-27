@@ -14,14 +14,13 @@ import {
 import {
   UserOutlined,
   DollarOutlined,
-  ShoppingCartOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   DownloadOutlined,
-  ProductFilled,
   ShoppingOutlined,
 } from '@ant-design/icons';
 import { Line, Bar, Pie } from '@ant-design/plots';
+import moment from 'moment';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -69,17 +68,23 @@ const ReportManagement: React.FC = () => {
   const topProducts = generateTopProducts();
   const storePerformance = generateStorePerformance();
 
-  // Calculate total statistics
+  const filteredChartData = chartData.filter(item => {
+    if (!timeRange[0] || !timeRange[1]) return true;
+    const itemDate = new Date(item.date);
+    const startDate = new Date(timeRange[0]);
+    const endDate = new Date(timeRange[1]);
+    return itemDate >= startDate && itemDate <= endDate;
+  });
+
   const totalStats = {
-    revenue: chartData.reduce((sum, item) => sum + item.revenue, 0),
-    orders: chartData.reduce((sum, item) => sum + item.orders, 0),
-    users: chartData.reduce((sum, item) => sum + item.users, 0),
-    growth: 15.3, // Fake growth rate
+    revenue: filteredChartData.reduce((sum, item) => sum + item.revenue, 0),
+    orders: filteredChartData.reduce((sum, item) => sum + item.orders, 0),
+    users: filteredChartData.reduce((sum, item) => sum + item.users, 0),
+    growth: 15.3,
   };
 
-  // Line chart config
   const lineConfig = {
-    data: chartData,
+    data: filteredChartData,
     xField: 'date',
     yField: 'revenue',
     seriesField: 'type',
@@ -93,9 +98,9 @@ const ReportManagement: React.FC = () => {
     color: ['#2E7D32'],
   };
 
-  // Bar chart config
+  // Bar chart config with filtered data
   const barConfig = {
-    data: chartData,
+    data: filteredChartData,
     xField: 'date',
     yField: 'orders',
     color: '#4CAF50',
@@ -215,11 +220,14 @@ const ReportManagement: React.FC = () => {
                         dates[0]?.toISOString() || '',
                         dates[1]?.toISOString() || '',
                       ]);
+                    } else {
+                      setTimeRange(['', '']); // Reset when cleared
                     }
                   }}
+                  value={timeRange[0] && timeRange[1] ? [moment(timeRange[0]), moment(timeRange[1])] : null}
                 />
                 <Select
-                  defaultValue="daily"
+                  value={reportType}
                   style={{ width: 120 }}
                   onChange={setReportType}
                 >
@@ -233,6 +241,17 @@ const ReportManagement: React.FC = () => {
                   style={{
                     background: '#2E7D32',
                     borderColor: '#2E7D32',
+                  }}
+                  onClick={() => {
+                    // Export data based on current filters
+                    const exportData = {
+                      timeRange,
+                      reportType,
+                      data: filteredChartData,
+                      totals: totalStats
+                    };
+                    console.log('Exporting data:', exportData);
+                    // Add your export logic here
                   }}
                 >
                   Xuất báo cáo
