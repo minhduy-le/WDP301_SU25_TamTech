@@ -20,7 +20,7 @@ import {
   ShoppingOutlined,
 } from '@ant-design/icons';
 import { Line, Bar, Pie } from '@ant-design/plots';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -224,7 +224,7 @@ const ReportManagement: React.FC = () => {
                       setTimeRange(['', '']); // Reset when cleared
                     }
                   }}
-                  value={timeRange[0] && timeRange[1] ? [moment(timeRange[0]), moment(timeRange[1])] : null}
+                  value={timeRange[0] && timeRange[1] ? [dayjs(timeRange[0]), dayjs(timeRange[1])] : null}
                 />
                 <Select
                   value={reportType}
@@ -243,7 +243,6 @@ const ReportManagement: React.FC = () => {
                     borderColor: '#2E7D32',
                   }}
                   onClick={() => {
-                    // Export data based on current filters
                     const exportData = {
                       timeRange,
                       reportType,
