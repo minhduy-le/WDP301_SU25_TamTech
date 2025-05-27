@@ -4,28 +4,57 @@ const ProductRecipe = require("../models/ProductRecipe");
 const Material = require("../models/material");
 const { Op } = require("sequelize");
 
+const validateProductData = (data) => {
+  const { name, price, productTypeId, recipes, description } = data;
+
+  if (!name || typeof name !== "string" || name.trim() === "") {
+    throw new Error("Name is required and must be a non-empty string");
+  }
+  if (name.trim().length > 100) {
+    throw new Error("Name cannot exceed 100 characters");
+  }
+  if (description && (typeof description !== "string" || description.length > 1000)) {
+    throw new Error("Description must be a string and cannot exceed 1000 characters");
+  }
+  if (typeof price !== "number" || price <= 0 || price >= 1000000) {
+    throw new Error("Price must be a number greater than 0 and less than 1,000,000");
+  }
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+  if (!Array.isArray(recipes) || recipes.length === 0) {
+    throw new Error("Recipes must be a non-empty array");
+  }
+  for (const recipe of recipes) {
+    if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+      throw new Error("Each recipe must have a valid materialId (positive integer)");
+    }
+    if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+      throw new Error("Each recipe must have a valid quantity (positive integer)");
+    }
+  }
+};
+
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes } = productData;
+
+  validateProductData({ name, price, productTypeId, recipes, description });
 
   const transaction = await sequelize.transaction();
 
   try {
+    // Check if materials exist
     for (const recipe of recipes) {
       const material = await Material.findByPk(recipe.materialId, { transaction });
       if (!material) {
         throw new Error(`Material with ID ${recipe.materialId} not found`);
       }
-      if (material.quantity < recipe.quantity) {
-        throw new Error(
-          `Insufficient quantity for material ${material.name}. Available: ${material.quantity}, Required: ${recipe.quantity}`
-        );
-      }
     }
 
     const product = await Product.create(
       {
-        name,
-        description,
+        name: name.trim(),
+        description: description ? description.trim() : null,
         price,
         image,
         productTypeId,
@@ -44,20 +73,16 @@ const createProduct = async (productData) => {
         },
         { transaction }
       );
-
-      await Material.update(
-        { quantity: sequelize.literal(`quantity - ${recipe.quantity}`) },
-        { where: { materialId: recipe.materialId }, transaction }
-      );
     }
 
     await transaction.commit();
 
-    const createdProduct = await Product.findByPk(product.productId, {
-      include: [{ model: require("../models/ProductRecipe"), as: "ProductRecipes" }],
+    return await Product.findByPk(product.productId, {
+      include: [
+        { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+        { model: require("../models/productType"), as: "ProductType" },
+      ],
     });
-
-    return createdProduct;
   } catch (error) {
     await transaction.rollback();
     throw error;
@@ -65,13 +90,23 @@ const createProduct = async (productData) => {
 };
 
 const getProducts = async ({ page, limit, offset }) => {
+  if (!Number.isInteger(page) || page < 1) {
+    throw new Error("Page must be a positive integer");
+  }
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new Error("Limit must be a positive integer");
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error("Offset must be a non-negative integer");
+  }
+
   const { count, rows } = await Product.findAndCountAll({
     where: { isActive: true },
     limit,
     offset,
     order: [["price", "DESC"]],
     include: [
-      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
     ],
@@ -84,10 +119,14 @@ const getProducts = async ({ page, limit, offset }) => {
 };
 
 const getProductsByType = async (productTypeId) => {
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
   const products = await Product.findAll({
     where: { productTypeId, isActive: true },
     include: [
-      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
     ],
@@ -97,24 +136,40 @@ const getProductsByType = async (productTypeId) => {
 };
 
 const updateProduct = async (productId, updateData) => {
-  const product = await Product.findByPk(productId);
-  if (!product || !product.isActive) {
-    return null;
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
   }
 
   const { name, description, price, image, productTypeId } = updateData;
+  if (name !== undefined && (typeof name !== "string" || name.trim() === "" || name.trim().length > 100)) {
+    throw new Error("Name must be a non-empty string and cannot exceed 100 characters");
+  }
+  if (description !== undefined && (typeof description !== "string" || description.length > 1000)) {
+    throw new Error("Description must be a string and cannot exceed 1000 characters");
+  }
+  if (price !== undefined && (typeof price !== "number" || price <= 0 || price >= 1000000)) {
+    throw new Error("Price must be a number greater than 0 and less than 1,000,000");
+  }
+  if (productTypeId !== undefined && (!Number.isInteger(productTypeId) || productTypeId < 1)) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const product = await Product.findByPk(productId);
+  if (!product || !product.isActive) {
+    throw new Error("Product not found or inactive");
+  }
 
   await product.update({
-    name: name || product.name,
-    description: description !== undefined ? description : product.description,
-    price: price || product.price,
+    name: name ? name.trim() : product.name,
+    description: description !== undefined ? (description ? description.trim() : null) : product.description,
+    price: price !== undefined ? price : product.price,
     image: image || product.image,
     productTypeId: productTypeId || product.productTypeId,
   });
 
   return await Product.findByPk(productId, {
     include: [
-      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
     ],
@@ -122,9 +177,13 @@ const updateProduct = async (productId, updateData) => {
 };
 
 const softDeleteProduct = async (productId) => {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
+  }
+
   const product = await Product.findByPk(productId);
   if (!product || !product.isActive) {
-    return false;
+    throw new Error("Product not found or inactive");
   }
 
   await product.update({ isActive: false });
@@ -132,18 +191,22 @@ const softDeleteProduct = async (productId) => {
 };
 
 const getProductById = async (productId) => {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
+  }
+
   const product = await Product.findByPk(productId, {
     where: { isActive: true },
     include: [
-      {
-        model: require("../models/ProductRecipe"),
-        as: "ProductRecipes",
-        include: [{ model: Material, as: "Material" }],
-      },
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
     ],
   });
+
+  if (!product) {
+    throw new Error("Product not found or inactive");
+  }
 
   return product;
 };
@@ -151,45 +214,47 @@ const getProductById = async (productId) => {
 const getBestSellerProducts = async () => {
   const products = await Product.findAll({
     where: {
-      productTypeId: [1, 3], // Chỉ lấy productTypeId 1 hoặc 3
-      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+      productTypeId: [1, 3],
+      isActive: true,
     },
     include: [
       {
         model: require("../models/orderItem"),
-        as: "OrderItems", // Liên kết với OrderItem để kiểm tra sản phẩm có trong đơn hàng
-        attributes: [], // Không cần lấy thuộc tính của OrderItem
-        required: true, // Chỉ lấy sản phẩm có trong order_items
+        as: "OrderItems",
+        attributes: [],
+        required: true,
       },
       {
         model: require("../models/productType"),
         as: "ProductType",
-        attributes: ["productTypeId", "name"], // Lấy thông tin productType
+        attributes: ["productTypeId", "name"],
       },
     ],
-    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường yêu cầu
-    group: ["Product.productId"], // Tránh trùng lặp sản phẩm
-    order: [["productTypeId", "ASC"]], // Sắp xếp theo productTypeId tăng dần
+    attributes: ["productId", "name", "description", "price", "image"],
+    group: ["Product.productId"],
+    order: [["productTypeId", "ASC"]],
   });
 
   return products;
 };
 
 const searchProductsByName = async (searchTerm) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+
   const products = await Product.findAll({
     where: {
-      name: {
-        [Op.like]: `%${searchTerm}%`, // Tìm kiếm chuỗi con trong name, không phân biệt hoa thường
-      },
-      isActive: true, // Chỉ lấy sản phẩm đang hoạt động
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      isActive: true,
     },
-    attributes: ["productId", "name", "description", "price", "image"], // Chỉ lấy các trường cần thiết
+    attributes: ["productId", "name", "description", "price", "image"],
     include: [
-      { model: require("../models/ProductRecipe"), as: "ProductRecipes" },
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
     ],
-    order: [["name", "ASC"]], // Sắp xếp theo tên tăng dần
+    order: [["name", "ASC"]],
   });
 
   return products;

@@ -1,11 +1,15 @@
 const PayOS = require("@payos/node");
 require("dotenv").config();
-const Order = require("../models/order");
-const OrderItem = require("../models/orderItem");
-const User = require("../models/user");
-const Product = require("../models/product");
-const OrderStatus = require("../models/orderStatus");
-const PaymentMethod = require("../models/paymentMethod");
+const {
+  Order,
+  OrderItem,
+  User,
+  Product,
+  OrderStatus,
+  PaymentMethod,
+  ProductRecipe,
+  Material,
+} = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
@@ -13,7 +17,7 @@ const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 
 // Unique identifier to confirm this file is loaded
-console.log("Loading orderService.js version 2025-05-24-supermarket-receipt-style");
+console.log("Loading orderService.js version 2025-05-27-association-fix");
 
 const payos = new PayOS(
   "1c2c9333-3b87-4c3d-9058-2a47c4731355",
@@ -21,15 +25,15 @@ const payos = new PayOS(
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
 
-// const YOUR_DOMAIN = "http://localhost:3000";
 const YOUR_DOMAIN = "https://wdp-301-0fd32c261026.herokuapp.com";
 
 const createOrder = async (req, res) => {
   console.log("Request body:", JSON.stringify(req.body, null, 2));
+  console.log("Request timestamp:", new Date().toISOString());
 
   if (!req.body || typeof req.body !== "object") {
     console.log("Invalid req.body:", req.body);
-    return res.status(400).json({ message: "Request body is missing or invalid" });
+    return res.status(400).json("Request body is missing or invalid");
   }
 
   const { orderItems, order_discount_value, order_shipping_fee, payment_method_id, order_address, note } = req.body;
@@ -40,47 +44,46 @@ const createOrder = async (req, res) => {
   console.log("Destructured userId:", userId);
   console.log("Destructured note:", note);
 
-  console.log("Before orderItems validation:", orderItems);
-
+  // Validate order items
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
-    return res.status(400).json({ message: "Order items are required" });
+    return res.status(400).json("Order items are required");
   }
   if (!Array.isArray(orderItems)) {
     console.log("orderItems is not an array:", orderItems);
-    return res.status(400).json({ message: "Order items must be an array" });
+    return res.status(400).json("Order items must be an array");
   }
   if (orderItems.length === 0) {
     console.log("orderItems is empty");
-    return res.status(400).json({ message: "Order items array cannot be empty" });
+    return res.status(400).json("Order items array cannot be empty");
   }
   console.log("orderItems validation passed:", orderItems);
 
   if (!order_address) {
     console.log("order_address is missing");
-    return res.status(400).json({ message: "Order address is required" });
+    return res.status(400).json("Order address is required");
   }
   if (!payment_method_id || ![1, 2, 3, 4].includes(payment_method_id)) {
     console.log("Invalid payment_method_id:", payment_method_id);
-    return res.status(400).json({ message: "Valid payment method ID is required (1-4)" });
+    return res.status(400).json("Valid payment method ID is required (1-4)");
   }
 
   for (const item of orderItems) {
     if (!item.productId || !item.quantity || !item.price) {
       console.log("Invalid order item:", item);
-      return res.status(400).json({ message: "Each order item must have productId, quantity, and price" });
+      return res.status(400).json("Each order item must have productId, quantity, and price");
     }
     if (typeof item.productId !== "number" || typeof item.quantity !== "number" || typeof item.price !== "number") {
       console.log("Invalid order item types:", item);
-      return res.status(400).json({ message: "productId, quantity, and price must be numbers" });
+      return res.status(400).json("productId, quantity, and price must be numbers");
     }
     if (item.quantity < 1) {
       console.log("Invalid quantity:", item.quantity);
-      return res.status(400).json({ message: "Quantity must be at least 1" });
+      return res.status(400).json("Quantity must be at least 1");
     }
     if (item.price < 0) {
       console.log("Invalid price:", item.price);
-      return res.status(400).json({ message: "Price cannot be negative" });
+      return res.status(400).json("Price cannot be negative");
     }
   }
 
@@ -89,8 +92,70 @@ const createOrder = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    console.log("orderItems before calculations:", orderItems);
+    // Validate products and check prices
+    for (const item of orderItems) {
+      const product = await Product.findOne({
+        where: { productId: item.productId, isActive: true },
+        transaction,
+      });
+      if (!product) {
+        console.log(`Product not found or inactive for productId: ${item.productId}`);
+        await transaction.rollback();
+        return res.status(400).json(`Product with ID ${item.productId} not found or inactive`);
+      }
+      // Normalize prices to floats for comparison
+      const productPrice = parseFloat(product.price);
+      const itemPrice = parseFloat(item.price);
+      console.log(
+        `Price check for productId: ${
+          item.productId
+        }. Expected: ${productPrice} (type: ${typeof productPrice}), Got: ${itemPrice} (type: ${typeof itemPrice})`
+      );
+      if (productPrice !== itemPrice) {
+        console.log(`Price mismatch for productId: ${item.productId}. Expected: ${productPrice}, Got: ${itemPrice}`);
+        await transaction.rollback();
+        return res.status(400).json(`Price for product ID ${item.productId} does not match`);
+      }
+    }
 
+    // Validate and deduct material quantities
+    for (const item of orderItems) {
+      const recipes = await ProductRecipe.findAll({
+        where: { productId: item.productId },
+        include: [{ model: Material, as: "Material" }],
+        transaction,
+      });
+      if (!recipes || recipes.length === 0) {
+        console.log(`No recipes found for productId: ${item.productId}`);
+        await transaction.rollback();
+        return res.status(400).json(`No recipes found for product ID ${item.productId}`);
+      }
+
+      for (const recipe of recipes) {
+        const material = recipe.Material;
+        const requiredQuantity = recipe.quantity * item.quantity;
+        if (material.quantity < requiredQuantity) {
+          console.log(
+            `Insufficient material quantity for materialId: ${material.materialId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
+          );
+          await transaction.rollback();
+          return res
+            .status(400)
+            .json(
+              `Insufficient material ${material.name} for product ID ${item.productId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
+            );
+        }
+
+        // Deduct material quantity
+        material.quantity -= requiredQuantity;
+        await material.save({ transaction });
+        console.log(
+          `Deducted ${requiredQuantity} from materialId: ${material.materialId}. New quantity: ${material.quantity}`
+        );
+      }
+    }
+
+    // Calculate order totals
     const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     console.log("Calculated order_amount:", order_amount);
 
@@ -120,6 +185,7 @@ const createOrder = async (req, res) => {
       note: note || null,
     });
 
+    // Create order
     const order = await Order.create(
       {
         storeId,
@@ -139,6 +205,7 @@ const createOrder = async (req, res) => {
       { transaction }
     );
 
+    // Create order items
     const orderItemData = orderItems.map((item) => ({
       orderId: order.orderId,
       productId: item.productId,
@@ -152,9 +219,11 @@ const createOrder = async (req, res) => {
       console.log("Order items created successfully");
     } catch (bulkCreateError) {
       console.log("Error in OrderItem.bulkCreate:", bulkCreateError.message);
-      throw bulkCreateError;
+      await transaction.rollback();
+      return res.status(500).json("Failed to create order items");
     }
 
+    // Create PayOS payment link
     const paymentLinkData = {
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
@@ -175,11 +244,13 @@ const createOrder = async (req, res) => {
       console.log("PayOS payment link created:", paymentLink.checkoutUrl);
     } catch (payosError) {
       console.log("Error in payos.createPaymentLink:", payosError.message);
-      throw payosError;
+      await transaction.rollback();
+      return res.status(500).json("Failed to create payment link");
     }
 
     await transaction.commit();
 
+    // Verify order creation
     const savedOrder = await Order.findOne({
       where: { orderId: order.orderId },
     });
@@ -190,7 +261,7 @@ const createOrder = async (req, res) => {
         where: { orderId: order.orderId },
       });
       if (!recheckOrder) {
-        return res.status(500).json({ message: "Order was not saved correctly after commit" });
+        return res.status(500).json("Order was not saved correctly after commit");
       }
     }
 
@@ -206,10 +277,9 @@ const createOrder = async (req, res) => {
       checkoutUrl: paymentLink.checkoutUrl,
     });
   } catch (error) {
-    console.log("Error in transaction block:", error.message);
-    console.log("Error stack:", error.stack);
+    console.error("Error in createOrder:", error.message);
     await transaction.rollback();
-    res.status(500).json({ message: "Failed to create order", error: error.message });
+    return res.status(500).json("Failed to create order");
   }
 };
 
@@ -511,29 +581,29 @@ const getUserOrders = async (req, res) => {
       include: [
         {
           model: User,
-          as: "User", // Match the alias defined in associations.js
+          as: "User",
           attributes: ["fullName", "phone_number"],
         },
         {
           model: OrderItem,
-          as: "OrderItems", // Match the alias defined in associations.js
+          as: "OrderItems",
           attributes: ["productId", "quantity", "price"],
           include: [
             {
               model: Product,
-              as: "Product", // Match the alias defined in associations.js
+              as: "Product",
               attributes: ["name"],
             },
           ],
         },
         {
           model: OrderStatus,
-          as: "OrderStatus", // Match the alias defined in associations.js
+          as: "OrderStatus",
           attributes: ["status"],
         },
         {
           model: PaymentMethod,
-          as: "PaymentMethod", // Match the alias defined in associations.js
+          as: "PaymentMethod",
           attributes: ["name"],
         },
       ],
