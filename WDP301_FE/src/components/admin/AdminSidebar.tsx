@@ -12,11 +12,7 @@ import {
   BellOutlined,
   DownOutlined,
   TeamOutlined,
-  ShopOutlined,
-  FileTextOutlined,
   AuditOutlined,
-  EyeOutlined,
-  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
