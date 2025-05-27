@@ -25,6 +25,7 @@ export interface RegisterDto {
   fullName: string;
   email: string;
   phone_number: string;
+  date_of_birth: string;
   password: string;
 }
 

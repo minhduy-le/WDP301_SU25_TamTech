@@ -1,20 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Input, Button, Form, message } from "antd";
+import { Input, Button, Form, message, DatePicker } from "antd";
 import "../style/Login.css";
 import APP_LOGIN from "../assets/login.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../hooks/usersApi";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 
 const Register = () => {
   const [registerForm] = Form.useForm();
   const { mutate: createAccount } = useRegister();
   const navigate = useNavigate();
 
+  const currentDate = dayjs().endOf("day");
+
   const handleCreateAccount = () => {
     registerForm
       .validateFields()
       .then((values) => {
-        createAccount(values, {
+        const formattedValues = {
+          ...values,
+          date_of_birth: values.date_of_birth.format("YYYY-MM-DD"),
+        };
+        createAccount(formattedValues, {
           onSuccess: () => {
             message.success("Tạo tài khoản thành công! Hãy xác thực OTP.");
             const email = values.email;
@@ -32,6 +42,15 @@ const Register = () => {
       .catch((info) => {
         console.error("Validate Failed:", info);
       });
+  };
+
+  const handlePhoneNumberKeyPress = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    const charCode = e.charCode;
+    if (charCode < 48 || charCode > 57) {
+      e.preventDefault(); // Block non-numeric characters
+    }
   };
 
   return (
@@ -121,7 +140,27 @@ const Register = () => {
                 },
               ]}
             >
-              <Input placeholder="Số điện thoại" className="input-field" />
+              <Input
+                placeholder="Số điện thoại"
+                className="input-field"
+                onKeyPress={handlePhoneNumberKeyPress}
+              />
+            </Form.Item>
+            <Form.Item
+              name="date_of_birth"
+              style={{ marginBottom: 0 }}
+              rules={[{ required: true, message: "Nhập ngày sinh" }]}
+            >
+              <DatePicker
+                format="DD/MM/YYYY"
+                style={{
+                  width: "100%",
+                  height: "40px",
+                }}
+                placeholder="Chọn ngày sinh"
+                className="input-field"
+                disabledDate={(d) => !d || d.isAfter(currentDate)}
+              />
             </Form.Item>
             <Form.Item
               name="password"
@@ -129,8 +168,16 @@ const Register = () => {
               rules={[
                 { required: true, message: "Nhập mật khẩu" },
                 {
-                  min: 6,
-                  message: "Mật khẩu phải dài hơn 6 ký tự",
+                  min: 8,
+                  message: "Mật khẩu phải dài ít nhất 8 ký tự",
+                },
+                {
+                  pattern: /[A-Z]/,
+                  message: "Mật khẩu phải chứa ít nhất một chữ cái in hoa",
+                },
+                {
+                  pattern: /[!@#$%^&*(),.?":{}|<>]/,
+                  message: "Mật khẩu phải chứa ít nhất một ký tự đặc biệt",
                 },
               ]}
             >

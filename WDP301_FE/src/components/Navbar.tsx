@@ -75,7 +75,7 @@ const Navbar = () => {
       <div
         className={`header-brand ${isMenuVisible ? "active" : ""}`}
         style={{
-          display: isMenuVisible || window.innerWidth >= 840 ? "flex" : "none",
+          display: isMenuVisible || window.innerWidth >= 840 ? "" : "none",
         }}
       >
         <div className="header-logo">

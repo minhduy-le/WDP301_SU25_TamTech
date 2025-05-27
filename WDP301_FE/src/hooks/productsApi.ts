@@ -8,8 +8,8 @@ interface GenericApiResponse<T> {
 }
 
 interface ProductApiResponse {
-  status: number;
-  message: string;
+  // status: number;
+  // message: string;
   products?: ProductDto[];
 }
 
@@ -157,23 +157,23 @@ export const useGetProductByTypeId = (productTypeId: number) => {
         `products/type/${productTypeId}`
       );
       const {
-        status,
-        message: responseMessage,
+        // status,
+        // message: responseMessage,
         products,
       } = response.data as ProductApiResponse;
-      if (status >= 200 && status < 300 && products) {
-        const processedProducts = Array.isArray(products)
-          ? products.map((product) => ({
-              ...product,
-              price:
-                typeof product.price === "string"
-                  ? parseFloat(product.price)
-                  : product.price,
-            }))
-          : [];
-        return processedProducts;
-      }
-      throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+      // if (status >= 200 && status < 300 && products) {
+      const processedProducts = Array.isArray(products)
+        ? products.map((product) => ({
+            ...product,
+            price:
+              typeof product.price === "string"
+                ? parseFloat(product.price)
+                : product.price,
+          }))
+        : [];
+      return processedProducts;
+      // }
+      // throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
     },
     enabled: !!productTypeId,
   });
