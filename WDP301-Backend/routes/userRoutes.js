@@ -200,14 +200,6 @@ router.post("/verify-otp", async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
- *                 fullName:
- *                   type: string
- *                 email:
- *                   type: string
- *                 phone_number:
- *                   type: string
- *                 role:
- *                   type: string
  *                 token:
  *                   type: string
  *       400:
@@ -238,7 +230,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await userService.loginUser(email, password);
-    res.status(200).json(result);
+    res.status(200).json({ token: result.token });
   } catch (error) {
     console.error("Error in /login route:", error, error.stack);
     if (typeof error === "string") {
