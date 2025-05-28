@@ -49,6 +49,10 @@
   font-family: "Montserrat", sans-serif;
   width: 100%;
   text-decoration: underline;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  outline: none !important;
 }
 
 .track-link:hover {
