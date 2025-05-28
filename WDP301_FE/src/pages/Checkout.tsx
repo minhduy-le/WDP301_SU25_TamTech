@@ -23,6 +23,7 @@ import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
 import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser } from "../hooks/profileApi";
+import { useCartStore } from "../store/cart.store";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -61,6 +62,7 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<number>(0);
   const [note, setNote] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
+  const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -186,6 +188,12 @@ const Checkout = () => {
       onSuccess: (data: any) => {
         message.success("Đặt hàng thành công!");
         window.location.href = data.checkoutUrl;
+        const updatedCartItems = cartItems.filter((cartItem) => {
+          return !selectedItems.some(
+            (selectedItem) => selectedItem.productId === cartItem.productId
+          );
+        });
+        updateCartItems(updatedCartItems);
       },
       onError: (error: any) => {
         console.error("Error creating order:", error);

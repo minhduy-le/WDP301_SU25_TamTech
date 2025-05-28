@@ -1,9 +1,13 @@
 import { Col } from "antd";
 import "../style/PaymentSuccess.css";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import SHIP from "../assets/ship.png";
 
 const PaymentSuccess = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const orderCode = queryParams.get("orderCode") || "N/A";
+
   return (
     <div className="payment-success-container">
       <Col>
@@ -15,7 +19,7 @@ const PaymentSuccess = () => {
           <p className="order-information">
             Đơn hàng được tạo lúc 13:46, 27/01/2025
             <br />
-            Mã đơn hàng: 2501270005
+            Mã đơn hàng: {orderCode}
           </p>
           <p className="contact-text">
             Hãy chú ý điện thoại của bạn trong suốt quá trình giao hàng nhé!
