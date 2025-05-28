@@ -10,22 +10,32 @@ import {
   Row,
   Col,
   Card,
+  DatePicker,
 } from "antd";
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
 import OrderTracking from "./OrderTracking";
 import OrderHistory from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
-import { ContainerOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  ContainerOutlined,
+  EditOutlined,
+  PhoneOutlined,
+} from "@ant-design/icons";
 import PromotionIcon from "../components/icon/PromotionIcon";
 import Promotion from "./Promotion";
 import { useLocation, useNavigationType } from "react-router-dom";
 import { useAuthStore } from "../hooks/usersApi";
+import LocationBoldIcon from "../components/icon/LocationBoldIcon";
 import { useGetProfileUser, useUpdateProfile } from "../hooks/profileApi";
 import "../style/AddressOrder.css";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
+
+dayjs.extend(customParseFormat);
 
 interface Contact {
   id: number;
@@ -182,7 +192,9 @@ const UserInfomation = () => {
   const showModal = () => {
     form.setFieldsValue({
       fullName: userProfile?.fullName || "",
-      dateOfBirth: userProfile?.date_of_birth || "",
+      dateOfBirth: userProfile?.date_of_birth
+        ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+        : null,
       phoneNumber: userProfile?.phone_number || "",
       email: userProfile?.email || "",
     });
@@ -396,7 +408,7 @@ const UserInfomation = () => {
                               }}
                             >
                               <span role="img" aria-label="phone">
-                                📞
+                                <PhoneOutlined style={{ color: "#da7339" }} />
                               </span>{" "}
                               {contact.phone}
                             </Text>
@@ -410,7 +422,7 @@ const UserInfomation = () => {
                               }}
                             >
                               <span role="img" aria-label="location">
-                                📍
+                                <LocationBoldIcon />
                               </span>{" "}
                               {contact.address}
                             </Text>
@@ -451,7 +463,9 @@ const UserInfomation = () => {
           name="updateProfile"
           initialValues={{
             fullName: userProfile?.fullName || "",
-            dateOfBirth: userProfile?.date_of_birth || "",
+            dateOfBirth: userProfile?.date_of_birth
+              ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+              : null,
             phoneNumber: userProfile?.phone_number || "",
             email: userProfile?.email || "",
           }}
@@ -472,7 +486,7 @@ const UserInfomation = () => {
             label="Ngày sinh*"
             rules={[{ required: true, message: "Vui lòng nhập ngày sinh!" }]}
           >
-            <Input type="date" />
+            <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="phoneNumber"

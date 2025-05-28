@@ -1,12 +1,26 @@
 import { Col } from "antd";
 import "../style/PaymentSuccess.css";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import SHIP from "../assets/ship.png";
 
 const PaymentSuccess = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
-  const orderCode = queryParams.get("orderCode") || "N/A";
+  const orderId = queryParams.get("orderId") || "N/A";
+
+  console.log("location.search:", location.search); // Kiểm tra query string
+  console.log("orderId:", orderId); // Kiểm tra giá trị orderId
+
+  const handleTrackOrder = () => {
+    navigate("/user-information", {
+      state: {
+        activeTab: "3",
+        showOrderTracking: true,
+        orderId: orderId,
+      },
+    });
+  };
 
   return (
     <div className="payment-success-container">
@@ -19,14 +33,14 @@ const PaymentSuccess = () => {
           <p className="order-information">
             Đơn hàng được tạo lúc 13:46, 27/01/2025
             <br />
-            Mã đơn hàng: {orderCode}
+            Mã đơn hàng: {orderId}
           </p>
           <p className="contact-text">
             Hãy chú ý điện thoại của bạn trong suốt quá trình giao hàng nhé!
           </p>
-          <Link to="/history" className="track-link">
+          <button onClick={handleTrackOrder} className="track-link">
             Theo dõi đơn hàng
-          </Link>
+          </button>
         </div>
       </Col>
     </div>
