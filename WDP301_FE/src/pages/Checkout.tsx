@@ -20,7 +20,10 @@ import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import dayjs from "dayjs";
 import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
-import { useCalculateShipping } from "../hooks/ordersApi";
+import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
+import { useAuthStore } from "../hooks/usersApi";
+import { useGetProfileUser } from "../hooks/profileApi";
+import { useCartStore } from "../store/cart.store";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -29,6 +32,7 @@ interface AddOn {
   productId: number;
   productTypeName: string;
   quantity: number;
+  price: number;
 }
 
 interface CartItem {
@@ -37,7 +41,14 @@ interface CartItem {
   productName: string;
   addOns: AddOn[];
   quantity: number;
+  price: number;
   totalPrice: number;
+}
+
+interface OrderItem {
+  productId: number;
+  quantity: number;
+  price: number;
 }
 
 const Checkout = () => {
@@ -46,7 +57,16 @@ const Checkout = () => {
     null
   );
   const [detailedAddress, setDetailedAddress] = useState("");
+  const [isProxyOrder, setIsProxyOrder] = useState(false);
   const currentDate = dayjs().format("DD/MM/YYYY");
+  const [paymentMethod, setPaymentMethod] = useState<number>(0);
+  const [note, setNote] = useState("");
+  const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
+  const { cartItems, updateCartItems } = useCartStore();
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  const { data: userProfile } = useGetProfileUser(userId || 0);
 
   const { data: districts = [], isLoading, isError } = useDistricts();
   const {
@@ -74,15 +94,11 @@ const Checkout = () => {
   };
 
   const { mutate: calculateShipping } = useCalculateShipping();
+  const { mutate: createOrder } = useCreateOrder();
 
-  const handleAddressBlur = () => {
-    if (detailedAddress && selectedDistrictId && wards.length > 0) {
-      const selectedWard = wards.find((ward) => ward.name === wards[0].name);
-      const selectedDistrict = districts.find(
-        (district) => district.districtId === selectedDistrictId
-      );
-      const deliverAddress =
-        `${detailedAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, TPHCM`.trim();
+  const handleAddressBlurUser = () => {
+    if (detailedAddress) {
+      const deliverAddress = detailedAddress.trim();
       calculateShipping(
         { deliver_address: deliverAddress },
         {
@@ -100,6 +116,90 @@ const Checkout = () => {
         }
       );
     }
+  };
+
+  const handleAddressBlur = () => {
+    if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
+      const selectedWard = wards.find((ward) => ward.name === wards[0].name);
+      const selectedDistrict = districts.find(
+        (district) => district.districtId === selectedDistrictId
+      );
+      const deliverAddress =
+        `${detailedAddressProxy}, ${selectedWard?.name}, ${selectedDistrict?.name}, TPHCM`.trim();
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
+          },
+          onError: (error: any) => {
+            console.error("Error calculating shipping:", error);
+            message.error(
+              "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+            );
+            setDeliveryFee(16000);
+          },
+        }
+      );
+    }
+  };
+
+  const handleOrderSubmit = () => {
+    const orderItems: OrderItem[] = [];
+
+    selectedItems.forEach((item) => {
+      orderItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      });
+
+      if (item.addOns && item.addOns.length > 0) {
+        item.addOns.forEach((addOn) => {
+          if (addOn.quantity > 0) {
+            orderItems.push({
+              productId: addOn.productId,
+              quantity: addOn.quantity,
+              price: addOn.price,
+            });
+          }
+        });
+      }
+    });
+
+    const paymentMethodId = paymentMethod ?? 0;
+
+    let orderAddress = detailedAddress.trim();
+    if (isProxyOrder && detailedAddressProxy) {
+      orderAddress = detailedAddressProxy.trim();
+    }
+
+    const orderData = {
+      orderItems,
+      order_discount_value: 0,
+      order_shipping_fee: deliveryFee,
+      payment_method_id: paymentMethodId,
+      order_address: orderAddress,
+      note: note || "",
+    };
+
+    createOrder(orderData, {
+      onSuccess: (data: any) => {
+        message.success("Đặt hàng thành công!");
+        window.location.href = data.checkoutUrl;
+        const updatedCartItems = cartItems.filter((cartItem) => {
+          return !selectedItems.some(
+            (selectedItem) => selectedItem.productId === cartItem.productId
+          );
+        });
+        updateCartItems(updatedCartItems);
+      },
+      onError: (error: any) => {
+        console.error("Error creating order:", error);
+        message.error("Đặt hàng thất bại. Vui lòng thử lại.");
+      },
+    });
   };
 
   return (
@@ -149,21 +249,40 @@ const Checkout = () => {
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.fullName}
+                disabled
               />
               <Input
                 placeholder="Số điện thoại"
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.phone_number}
+                disabled
               />
               <Input
                 placeholder="Email"
                 style={{
                   background: "transparent",
                   fontFamily: "'Montserrat', sans-serif",
+                  color: "#da7339",
                 }}
+                value={userProfile?.email}
+                disabled
+              />
+              <Input
+                placeholder="Địa chỉ chi tiết"
+                style={{
+                  background: "transparent",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+                value={detailedAddress}
+                onChange={(e) => setDetailedAddress(e.target.value)}
+                onBlur={handleAddressBlurUser}
               />
               <Row>
                 <Title
@@ -173,136 +292,117 @@ const Checkout = () => {
                   Thông tin giao hàng
                 </Title>
                 <div className="checkbox-label">
-                  <Checkbox defaultChecked />
+                  <Checkbox
+                    checked={isProxyOrder}
+                    onChange={(e) => setIsProxyOrder(e.target.checked)}
+                  />
                   <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
                     Đặt hộ
                   </Text>
                 </div>
               </Row>
-              <Input
-                placeholder="Tên người nhận"
-                style={{
-                  background: "transparent",
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-              />
-              <Input
-                placeholder="Số điện thoại người nhận"
-                style={{
-                  background: "transparent",
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-              />
-              <Row style={{ justifyContent: "space-between" }}>
-                <Col span={11}>
-                  <Select
-                    defaultValue={null}
+              {isProxyOrder && (
+                <>
+                  <Input
+                    placeholder="Tên người nhận"
                     style={{
-                      width: "100%",
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
-                    placeholder="Quận huyện"
-                    loading={isLoading}
-                    disabled={isError}
-                    onChange={handleDistrictChange}
-                    value={selectedDistrictId || undefined}
-                  >
-                    {districts.map((district) => (
-                      <Option
-                        key={district.districtId}
-                        value={district.districtId}
+                  />
+                  <Input
+                    placeholder="Số điện thoại người nhận"
+                    style={{
+                      background: "transparent",
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                  />
+                  <Row style={{ justifyContent: "space-between" }}>
+                    <Col span={11}>
+                      <Select
+                        defaultValue={null}
+                        style={{
+                          width: "100%",
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        placeholder="Quận huyện"
+                        loading={isLoading}
+                        disabled={isError}
+                        onChange={handleDistrictChange}
+                        value={selectedDistrictId || undefined}
                       >
-                        {district.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-                <Col span={11}>
-                  <Select
-                    placeholder="Phường xã"
+                        {districts.map((district) => (
+                          <Option
+                            key={district.districtId}
+                            value={district.districtId}
+                          >
+                            {district.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Col>
+                    <Col span={11}>
+                      <Select
+                        placeholder="Phường xã"
+                        style={{
+                          width: "100%",
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        loading={isWardsLoading}
+                        disabled={isWardsError || !selectedDistrictId}
+                      >
+                        {/* <Option value="huyen">Quận huyện</Option> */}
+                        {wards.map((ward, index) => (
+                          <Option key={index} value={ward.name}>
+                            {ward.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Col>
+                  </Row>
+                  <Input
+                    placeholder="Địa chỉ chi tiết"
                     style={{
-                      width: "100%",
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
-                    loading={isWardsLoading}
-                    disabled={isWardsError || !selectedDistrictId}
-                  >
-                    {/* <Option value="huyen">Quận huyện</Option> */}
-                    {wards.map((ward, index) => (
-                      <Option key={index} value={ward.name}>
-                        {ward.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-              </Row>
-              {/* <Row style={{ justifyContent: "space-between" }}>
-                <Col span={11}>
-                  <Select
-                    defaultValue="xa"
-                    style={{
-                      width: "100%",
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                  >
-                    <Option value="xa">Phường xã</Option>
-                  </Select>
-                </Col>
-                <Col span={11}>
-                  <Select
-                    defaultValue="duong"
-                    style={{
-                      width: "100%",
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                  >
-                    <Option value="duong">Đường</Option>
-                  </Select>
-                </Col>
-              </Row> */}
-              <Input
-                placeholder="Địa chỉ chi tiết"
-                style={{
-                  background: "transparent",
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-                value={detailedAddress}
-                onChange={(e) => setDetailedAddress(e.target.value)}
-                onBlur={handleAddressBlur}
-              />
-              <div className="delivery-info">
-                <Radio.Group
-                  value={deliveryTimeOption}
-                  onChange={(e) => setDeliveryTimeOption(e.target.value)}
-                >
-                  <Radio
-                    value="now"
-                    style={{
-                      fontFamily: "'Montserrat', sans-serif",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Giao ngay
-                  </Radio>
-                  <Radio
-                    value="later"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Hẹn lịch giao lúc{" "}
-                    <TimePicker
-                      format="HH:mm"
-                      placeholder="Chọn thời gian ngay tại đây luôn"
-                      // minuteStep={5}
-                      style={{ width: 112 }}
-                    />{" "}
-                    ngày <span>{currentDate}</span>
-                  </Radio>
-                </Radio.Group>
-              </div>
+                    value={detailedAddressProxy}
+                    onChange={(e) => setDetailedAddressProxy(e.target.value)}
+                    onBlur={handleAddressBlur}
+                  />
+                  <div className="delivery-info">
+                    <Radio.Group
+                      value={deliveryTimeOption}
+                      onChange={(e) => setDeliveryTimeOption(e.target.value)}
+                    >
+                      <Radio
+                        value="now"
+                        style={{
+                          fontFamily: "'Montserrat', sans-serif",
+                          marginBottom: 6,
+                        }}
+                      >
+                        Giao ngay
+                      </Radio>
+                      <Radio
+                        value="later"
+                        style={{ fontFamily: "'Montserrat', sans-serif" }}
+                      >
+                        Hẹn lịch giao lúc{" "}
+                        <TimePicker
+                          format="HH:mm"
+                          placeholder="Chọn thời gian ngay tại đây luôn"
+                          // minuteStep={5}
+                          style={{ width: 112 }}
+                        />{" "}
+                        ngày <span>{currentDate}</span>
+                      </Radio>
+                    </Radio.Group>
+                  </div>
+                </>
+              )}
             </Space>
           </Card>
 
@@ -315,16 +415,19 @@ const Checkout = () => {
             >
               Phương thức thanh toán
             </Title>
-            <Radio.Group defaultValue="cash">
+            <Radio.Group
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
               <Space direction="vertical">
                 <Radio
-                  value="4"
+                  value={4}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Quét mã QR
                 </Radio>
                 <Radio
-                  value="cash"
+                  value={1}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
                   Tiền mặt (COD)
@@ -442,6 +545,8 @@ const Checkout = () => {
                 background: "#efe6db",
                 fontFamily: "'Montserrat', sans-serif",
               }}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
             />
           </Card>
           <Card className="confirm-card section-card order-details">
@@ -546,6 +651,7 @@ const Checkout = () => {
               block
               className="submit-button"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
+              onClick={handleOrderSubmit}
             >
               Đặt hàng
             </Button>

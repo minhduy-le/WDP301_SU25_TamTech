@@ -7,6 +7,9 @@ header {
   width: -webkit-fill-available;
   height: 71px !important;
   justify-content: space-between;
+  z-index: 1000;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .menu-item a {
@@ -140,8 +143,14 @@ header {
 .header-brand.active .ant-menu-overflow.ant-menu {
   display: none;
 }
+
+.ant-menu-item-selected::after,
+.ant-menu-item::after {
+  display: none !important;
+}
+
 /* Responsive Design */
-@media (max-width: 840px) {
+@media screen and (max-width: 1010px) {
   .hamburger-menu {
     display: block !important;
   }
@@ -190,7 +199,7 @@ header {
   } */
 }
 
-@media (max-width: 480px) {
+@media screen and (max-width: 480px) {
   .header-brand.active .header-menu .ant-menu-title-content a {
     font-size: 14px;
   }

@@ -10,10 +10,6 @@ export interface LoginDto {
 }
 
 export interface LoginResponseDto {
-  fullName: string;
-  role: string;
-  email: string;
-  phone_number: string;
   token: string;
 }
 
@@ -25,6 +21,7 @@ export interface RegisterDto {
   fullName: string;
   email: string;
   phone_number: string;
+  date_of_birth: string;
   password: string;
 }
 
@@ -39,6 +36,9 @@ export interface VerifyOTPDto {
 
 interface User {
   id: number;
+  fullName: string;
+  email: string;
+  phone_number: string;
   role: string;
 }
 
@@ -81,11 +81,17 @@ export const useAuthStore = create<AuthState>((set) => {
           const decoded = jwtDecode<{
             id: number;
             role: string;
+            fullName: string;
+            email: string;
+            phone_number: string;
           }>(data.token);
 
           const user = {
             id: decoded.id,
             role: decoded.role,
+            fullName: decoded.fullName,
+            email: decoded.email,
+            phone_number: decoded.phone_number,
           };
 
           localStorage.setItem("user", JSON.stringify(user));

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 
 interface CreateOrder {
@@ -32,6 +32,31 @@ export interface ShippingResponseDto {
   fee: number;
 }
 
+export interface OrderHistory {
+  orderId: number;
+  payment_time: Date;
+  order_create_at: Date;
+  order_address: string;
+  status: string;
+  fullName: string;
+  phone_number: string;
+  orderItems: [
+    {
+      productId: number;
+      name: string;
+      quantity: number;
+      price: number;
+    }
+  ];
+  order_shipping_fee: number;
+  order_discount_value: number;
+  order_amount: number;
+  invoiceUrl: string;
+  order_point_earn: number;
+  note: string;
+  payment_method: string;
+}
+
 export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (newOrder: CreateOrder) => {
@@ -50,5 +75,17 @@ export const useCalculateShipping = () => {
       );
       return response.data as ShippingResponseDto;
     },
+  });
+};
+
+const fetchOrderHistory = async (): Promise<OrderHistory[]> => {
+  const response = await axiosInstance.get<OrderHistory[]>("orders/user");
+  return response.data;
+};
+
+export const useGetOrderHistory = () => {
+  return useQuery<OrderHistory[], Error>({
+    queryKey: ["user"],
+    queryFn: fetchOrderHistory,
   });
 };

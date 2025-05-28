@@ -30,6 +30,7 @@
   white-space: nowrap;
   width: 440px;
   max-width: 236px;
+  min-width: 174px;
   font-weight: 700;
   margin-right: 37px;
   padding-bottom: 10px;
@@ -405,5 +406,17 @@
 @media screen and (max-width: 1400px) {
   .menu-column {
     min-width: 323px;
+  }
+}
+
+@media screen and (max-width: 1050px) {
+  .menu-container {
+    padding: 20px;
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .menu-container .menu-sell {
+    flex-direction: column;
   }
 }

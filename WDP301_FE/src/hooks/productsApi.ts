@@ -8,14 +8,14 @@ interface GenericApiResponse<T> {
 }
 
 interface ProductApiResponse {
-  status: number;
-  message: string;
+  // status: number;
+  // message: string;
   products?: ProductDto[];
 }
 
 interface ProductDetailApiResponse {
-  status: number;
-  message: string;
+  // status: number;
+  // message: string;
   product?: ProductDto;
 }
 // interface ApiResponse<T> {
@@ -94,15 +94,19 @@ export const useGetProductById = (productId: string) => {
     queryFn: async () => {
       const response = await axiosInstance.get(`products/${productId}`);
       const {
-        status,
-        message: responseMessage,
+        // status,
+        // message: responseMessage,
         product,
       } = response.data as ProductDetailApiResponse;
 
-      if (status >= 200 && status < 300 && product) {
-        return product;
+      // if (status >= 200 && status < 300 && product) {
+      //   return product;
+      // }
+      // throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+      if (!product) {
+        throw new Error("Không thể tải chi tiết sản phẩm");
       }
-      throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+      return product;
     },
     enabled: !!productId,
   });
@@ -157,23 +161,23 @@ export const useGetProductByTypeId = (productTypeId: number) => {
         `products/type/${productTypeId}`
       );
       const {
-        status,
-        message: responseMessage,
+        // status,
+        // message: responseMessage,
         products,
       } = response.data as ProductApiResponse;
-      if (status >= 200 && status < 300 && products) {
-        const processedProducts = Array.isArray(products)
-          ? products.map((product) => ({
-              ...product,
-              price:
-                typeof product.price === "string"
-                  ? parseFloat(product.price)
-                  : product.price,
-            }))
-          : [];
-        return processedProducts;
-      }
-      throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
+      // if (status >= 200 && status < 300 && products) {
+      const processedProducts = Array.isArray(products)
+        ? products.map((product) => ({
+            ...product,
+            price:
+              typeof product.price === "string"
+                ? parseFloat(product.price)
+                : product.price,
+          }))
+        : [];
+      return processedProducts;
+      // }
+      // throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
     },
     enabled: !!productTypeId,
   });

@@ -32,7 +32,7 @@ import SystemIssuesReport from "./pages/admin/SystemIssuesReport";
 const LayoutWithNavFooter = () => (
   <>
     <Navbar />
-    <div style={{ paddingTop: '70px' }}>
+    <div style={{ paddingTop: "80px" }}>
       <Outlet />
     </div>
     <Footer />
@@ -66,7 +66,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/api/orders/success" element={<PaymentSuccess />} />
           <Route path="/user-information" element={<UserInfomation />} />
           <Route path="/product/:productId" element={<ProductDetail />} />
         </Route>
@@ -76,10 +76,13 @@ function App() {
         <Route element={<LayoutWithSidebarManager />}>
           <Route path="/manager/dashboard" element={<Dashboard />} />
           <Route path="/manager/orders" element={<OrderManagement />} />
-          <Route path="/manager/orders/confirm-orders" element={<ConfirmOrders />} />
+          <Route
+            path="/manager/orders/confirm-orders"
+            element={<ConfirmOrders />}
+          />
           <Route path="/manager/products" element={<ProductManagement />} />
           <Route path="/manager/promotions" element={<PromotionManagement />} />
-          <Route path="/manager/staffs" element={<EmployeeManagement/>} />
+          <Route path="/manager/staffs" element={<EmployeeManagement />} />
         </Route>
         <Route element={<LayoutWithSidebarAdmin />}>
           <Route path="/admin/users" element={<UserManagement />} />

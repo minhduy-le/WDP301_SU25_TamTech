@@ -2,10 +2,15 @@ import { Row, Col, Card, Button, Typography, Modal, Rate, Input } from "antd";
 import "../style/OrderHistory.css";
 import IMAGE from "../assets/login.png";
 import { useState } from "react";
+// import { useGetOrderHistory } from "../hooks/ordersApi";
 
 const { Title, Text } = Typography;
 
-const OrderHistory = () => {
+interface OrderHistoryProps {
+  onDetailClick?: (orderId: string) => void;
+}
+
+const OrderHistory = ({ onDetailClick }: OrderHistoryProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [, setSelectedOrder] = useState<{
     id: string;
@@ -29,6 +34,9 @@ const OrderHistory = () => {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
+
+  // const { data: orderHistory, isLoading: isOrderHistoryLoading } =
+  //   useGetOrderHistory();
 
   const orders = [
     {
@@ -158,18 +166,12 @@ const OrderHistory = () => {
                   {order.status}
                 </div>
                 <div className="order-actions">
-                  {/* {order.actions.map((action, index) => (
-                    <Button
-                      key={index}
-                      className={
-                        action === "Đặt tiếp" || action === "Đặt lại"
-                          ? "green-button"
-                          : "gray-button"
-                      }
-                    >
-                      {action}
-                    </Button>
-                  ))} */}
+                  <Button
+                    className="gray-button"
+                    onClick={() => onDetailClick && onDetailClick(order.id)}
+                  >
+                    Chi tiết
+                  </Button>
                   {order.actions.map((action, index) =>
                     action === "Đánh giá" ? (
                       <Button
