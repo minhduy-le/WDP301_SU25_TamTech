@@ -57,7 +57,7 @@ const AdminSidebar: React.FC = () => {
       label: "Quản lý người dùng",
     },
     {
-      key: "/admin/system-issues",
+      key: "/admin/report",
       icon: <AuditOutlined />,
       label: "Kiểm tra hệ thống",
     },

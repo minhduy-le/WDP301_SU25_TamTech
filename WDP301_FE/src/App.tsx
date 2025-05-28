@@ -24,6 +24,10 @@ import ProductManagement from "./pages/manager/products/ProductManagement";
 import PromotionManagement from "./pages/manager/promotions/PromotionManagement";
 import EmployeeManagement from "./pages/manager/staffs/EmployeeManagement";
 import ProductDetail from "./pages/ProductDetail";
+import AdminSidebar from "./components/admin/AdminSidebar";
+import UserManagement from "./pages/admin/UserManagement";
+import ReportManagement from "./pages/admin/ReportManagement";
+import SystemIssuesReport from "./pages/admin/SystemIssuesReport";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -45,7 +49,11 @@ const LayoutWithSidebarManager = () => (
     <ManagerSidebar />
   </>
 );
-
+const LayoutWithSidebarAdmin = () => (
+  <>
+    <AdminSidebar />
+  </>
+);
 function App() {
   return (
     <Router>
@@ -72,6 +80,11 @@ function App() {
           <Route path="/manager/products" element={<ProductManagement />} />
           <Route path="/manager/promotions" element={<PromotionManagement />} />
           <Route path="/manager/staffs" element={<EmployeeManagement/>} />
+        </Route>
+        <Route element={<LayoutWithSidebarAdmin />}>
+          <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/admin/dashboard" element={<ReportManagement />} />
+          <Route path="/admin/system-issues" element={<SystemIssuesReport />} />
         </Route>
       </Routes>
     </Router>
