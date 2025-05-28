@@ -27,7 +27,11 @@ const items = [
   },
 ];
 
-const OrderTracking = () => {
+interface OrderTrackingProps {
+  orderId?: string;
+}
+
+const OrderTracking = ({ orderId }: OrderTrackingProps) => {
   useEffect(() => {
     const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
     const icons = [
@@ -52,24 +56,6 @@ const OrderTracking = () => {
       }
     });
   }, []);
-  // useEffect(() => {
-  //   const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
-  //   const icons = ["✓", "●", "🚚", "📝", "💰"]; // Array of icons in order
-
-  //   stepIcons.forEach((icon, index) => {
-  //     if (!icon.parentElement?.querySelector(".menu-icon")) {
-  //       const menuIconDiv = document.createElement("div");
-  //       menuIconDiv.className = "menu-icon";
-  //       menuIconDiv.textContent = icons[index]; // Assign the corresponding icon
-  //       icon.parentElement?.insertBefore(menuIconDiv, icon);
-  //     } else {
-  //       const existingIcon = icon.parentElement?.querySelector(".menu-icon");
-  //       if (existingIcon && !existingIcon.textContent) {
-  //         existingIcon.textContent = icons[index];
-  //       }
-  //     }
-  //   });
-  // }, []);
 
   return (
     <div className="order-tracking-container">
@@ -78,7 +64,7 @@ const OrderTracking = () => {
           <div className="order-header">Tra cứu đơn hàng</div>
           <div className="order-details">
             <p className="order-info">
-              Mã đơn hàng: 2501230025
+              Mã đơn hàng: {orderId}
               <br />
               Thời gian đặt hàng: 16:49, 20/05/2025
             </p>

@@ -1,6 +1,7 @@
 .order-tracking-container {
   background-color: #fff7e6;
   font-family: "Montserrat", sans-serif;
+  padding: 0 8px;
 }
 
 .ant-steps-item-content {

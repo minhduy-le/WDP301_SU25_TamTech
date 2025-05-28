@@ -17,9 +17,7 @@ import OrderTracking from "./OrderTracking";
 import OrderHistory from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
 import { ContainerOutlined, EditOutlined } from "@ant-design/icons";
-import SearchIcon from "../components/icon/SearchIcon";
 import PromotionIcon from "../components/icon/PromotionIcon";
-// import HomeSideIcon from "../components/icon/HomeSideIcon";
 import Promotion from "./Promotion";
 import { useLocation, useNavigationType } from "react-router-dom";
 import { useAuthStore } from "../hooks/usersApi";
@@ -122,9 +120,28 @@ const UserInfomation = () => {
   const { data: userProfile, refetch } = useGetProfileUser(userId || 0);
   const { mutate: updateProfile } = useUpdateProfile();
 
+  const [showOrderTracking, setShowOrderTracking] = useState<boolean>(() => {
+    const savedState = localStorage.getItem("showOrderTracking");
+    return savedState ? JSON.parse(savedState) : false;
+  });
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => {
+    return localStorage.getItem("selectedOrderId") || null;
+  });
+
   const handleMenuClick = (e: { key: string }) => {
     setActivePage(e.key);
     localStorage.setItem("userInfoActiveTab", e.key);
+    if (e.key === "3") {
+      const savedState = localStorage.getItem("showOrderTracking");
+      const savedOrderId = localStorage.getItem("selectedOrderId");
+      setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
+      setSelectedOrderId(savedOrderId || null);
+    } else {
+      setShowOrderTracking(false);
+      setSelectedOrderId(null);
+      localStorage.setItem("showOrderTracking", JSON.stringify(false));
+      localStorage.setItem("selectedOrderId", "");
+    }
   };
 
   useEffect(() => {
@@ -134,11 +151,30 @@ const UserInfomation = () => {
       if (navigationType === "PUSH") {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
+        setShowOrderTracking(false);
+        setSelectedOrderId(null);
+        localStorage.setItem("showOrderTracking", JSON.stringify(false));
+        localStorage.setItem("selectedOrderId", "");
       } else if (savedTab) {
         setActivePage(savedTab);
+        if (savedTab === "3") {
+          const savedState = localStorage.getItem("showOrderTracking");
+          const savedOrderId = localStorage.getItem("selectedOrderId");
+          setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
+          setSelectedOrderId(savedOrderId || null);
+        } else {
+          setShowOrderTracking(false);
+          setSelectedOrderId(null);
+          localStorage.setItem("showOrderTracking", JSON.stringify(false));
+          localStorage.setItem("selectedOrderId", "");
+        }
       } else {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
+        setShowOrderTracking(false);
+        setSelectedOrderId(null);
+        localStorage.setItem("showOrderTracking", JSON.stringify(false));
+        localStorage.setItem("selectedOrderId", "");
       }
     }
   }, [location.pathname, navigationType]);
@@ -209,6 +245,13 @@ const UserInfomation = () => {
     editContactForm.resetFields();
   };
 
+  const showOrderTrackingDetails = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setShowOrderTracking(true);
+    localStorage.setItem("showOrderTracking", JSON.stringify(true));
+    localStorage.setItem("selectedOrderId", orderId);
+  };
+
   return (
     <div className="user-info-container">
       <Layout style={{ minHeight: "510px", background: "#fff7e6" }}>
@@ -240,12 +283,12 @@ const UserInfomation = () => {
                 </span>
                 Thông tin thành viên
               </Menu.Item>
-              <Menu.Item key="2" className="menu-item">
+              {/* <Menu.Item key="2" className="menu-item">
                 <span role="img" aria-label="order">
                   <SearchIcon />
                 </span>
                 Tra cứu đơn hàng
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item key="3" className="menu-item">
                 <span role="img" aria-label="history">
                   <ContainerOutlined
@@ -379,8 +422,15 @@ const UserInfomation = () => {
                 </div>
               </div>
             )}
-            {activePage === "2" && <OrderTracking />}
-            {activePage === "3" && <OrderHistory />}
+            {activePage === "3" && (
+              <>
+                {!showOrderTracking ? (
+                  <OrderHistory onDetailClick={showOrderTrackingDetails} />
+                ) : (
+                  <OrderTracking orderId={selectedOrderId || undefined} />
+                )}
+              </>
+            )}
             {activePage === "4" && <Promotion />}
           </Content>
         </Layout>

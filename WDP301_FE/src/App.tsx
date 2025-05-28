@@ -28,7 +28,7 @@ import ProductDetail from "./pages/ProductDetail";
 const LayoutWithNavFooter = () => (
   <>
     <Navbar />
-    <div style={{ paddingTop: '70px' }}>
+    <div style={{ paddingTop: "80px" }}>
       <Outlet />
     </div>
     <Footer />
@@ -68,10 +68,13 @@ function App() {
         <Route element={<LayoutWithSidebarManager />}>
           <Route path="/manager/dashboard" element={<Dashboard />} />
           <Route path="/manager/orders" element={<OrderManagement />} />
-          <Route path="/manager/orders/confirm-orders" element={<ConfirmOrders />} />
+          <Route
+            path="/manager/orders/confirm-orders"
+            element={<ConfirmOrders />}
+          />
           <Route path="/manager/products" element={<ProductManagement />} />
           <Route path="/manager/promotions" element={<PromotionManagement />} />
-          <Route path="/manager/staffs" element={<EmployeeManagement/>} />
+          <Route path="/manager/staffs" element={<EmployeeManagement />} />
         </Route>
       </Routes>
     </Router>

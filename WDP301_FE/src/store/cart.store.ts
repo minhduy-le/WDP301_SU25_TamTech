@@ -23,7 +23,8 @@ interface CartState {
   addToCart: (item: CartItem) => void;
   getCartItemsByUserId: (userId: number) => CartItem[];
   clearCart: () => void;
-  clearCartForUser: (userId: number) => void; // Optional: Clear cart for a specific user
+  clearCartForUser: (userId: number) => void;
+  updateCartItems: (items: CartItem[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -63,6 +64,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           cartItems: state.cartItems.filter((item) => item.userId !== userId),
         })),
+      updateCartItems: (items: CartItem[]) => set({ cartItems: items }),
     }),
     {
       name: "cart-storage", // Name of the storage key in localStorage
