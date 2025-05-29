@@ -1,4 +1,5 @@
-import { Layout, Menu, Button, Input, Dropdown } from "antd";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Layout, Menu, Button, Input, Dropdown, Badge } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
 import {
@@ -9,7 +10,7 @@ import {
 import APP_LOGO from "../assets/logo.png";
 import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Cart from "./Cart";
 import { useAuthStore } from "../hooks/usersApi";
 import { useCartStore } from "../store/cart.store";
@@ -22,6 +23,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { getCartItemsByUserId, clearCartForUser } = useCartStore();
+  const cartRef = useRef<HTMLDivElement>(null);
 
   const userMenu = (
     <Menu>
@@ -50,6 +52,24 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isCartVisible &&
+        cartRef.current &&
+        !cartRef.current.contains(event.target as Node)
+      ) {
+        setIsCartVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCartVisible]);
+
+  useEffect(() => {
     if (!user?.id) {
       // Optionally clear the cart if no user is logged in
       // clearCartForUser(user?.id || ""); // Uncomment if you want to clear on logout
@@ -58,18 +78,26 @@ const Navbar = () => {
 
   const cartItems = user?.id ? getCartItemsByUserId(user.id) : [];
 
+  // const uniqueProductCount = new Set(cartItems.map((item) => item.productId))
+  //   .size;
+  const totalItemCount = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
   const handleMenuToggle = () => {
     setIsMenuVisible(!isMenuVisible);
   };
 
   return (
-    <Header style={{ 
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1000,
-    }}
+    <Header
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+      }}
     >
       <Button
         type="text"
@@ -130,12 +158,6 @@ const Navbar = () => {
             icon={<BellIcon />}
             style={{ color: "#d97706", marginRight: "10px" }}
           />
-          {/* <Button
-          type="text"
-          icon={<AccountIcon />}
-          style={{ color: "#d97706", marginRight: "10px" }}
-          onClick={() => navigate("/user-information")}
-        /> */}
           <Dropdown overlay={userMenu} trigger={["hover"]}>
             <Button
               type="text"
@@ -143,14 +165,16 @@ const Navbar = () => {
               style={{ color: "#d97706", marginRight: "10px" }}
             />
           </Dropdown>
-          <Button
-            type="text"
-            icon={<ShoppingCartOutlined />}
-            onClick={handleCartClick}
-            style={{ color: "#d97706" }}
-          />
+          <Badge count={totalItemCount} style={{ background: "#da7339" }}>
+            <Button
+              type="text"
+              icon={<ShoppingCartOutlined />}
+              onClick={handleCartClick}
+              style={{ color: "#d97706" }}
+            />
+          </Badge>
           {isCartVisible && (
-            <div className="cart-dropdown">
+            <div className="cart-dropdown" ref={cartRef}>
               <Cart cartItems={cartItems} onConfirmOrder={handleConfirmOrder} />
             </div>
           )}

@@ -104,5 +104,5 @@
   top: 82px; /* Position right below the button */
   right: 0; /* Align with the right edge of the header-icon */
   z-index: 1000; /* Ensure it appears above other content */
-  width: 400px; /* Match the width of your Cart component */
+  width: 450px; /* Match the width of your Cart component */
 }

@@ -28,7 +28,7 @@ const items = [
 ];
 
 interface OrderTrackingProps {
-  orderId?: string;
+  orderId?: number;
 }
 
 const OrderTracking = ({ orderId }: OrderTrackingProps) => {

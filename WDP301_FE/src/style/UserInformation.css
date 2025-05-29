@@ -172,3 +172,10 @@
   right: 20px;
   top: 14px;
 }
+
+.select-date-of-birth {
+  width: 100%;
+  background: #ebd187;
+  height: 40px;
+  font-family: "Montserrat", sans-serif;
+}

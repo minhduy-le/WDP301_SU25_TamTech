@@ -86,13 +86,19 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                   )}
                 </Col>
                 <Col
-                  span={6}
+                  span={5}
                   style={{ textAlign: "right", display: "flex", gap: 5 }}
                 >
                   <Text className="item-price">
                     {(item.totalPrice / item.quantity).toLocaleString()}đ
                   </Text>
                   <Text className="item-quantity">x{item.quantity}</Text>
+                </Col>
+                <Col
+                  span={1}
+                  style={{ textAlign: "right", display: "flex", gap: 5 }}
+                >
+                  <Text className="item-quantity">-</Text>
                 </Col>
               </Row>
             </List.Item>
