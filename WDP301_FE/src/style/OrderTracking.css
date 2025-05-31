@@ -77,6 +77,7 @@
   font-size: 15px;
   color: #2d1e1a;
   margin-bottom: 5px;
+  font-family: Montserrat, sans-serif;
 }
 
 .item-row.total {
@@ -147,4 +148,13 @@
 
 .ant-steps-icon {
   display: none;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active {
+  border-bottom: 3px solid #da7339 !important;
+  z-index: 2;
+}
+
+:where(.css-dev-only-do-not-override-1m2bkf9).ant-tabs .ant-tabs-tab:hover {
+  color: #da7339;
 }

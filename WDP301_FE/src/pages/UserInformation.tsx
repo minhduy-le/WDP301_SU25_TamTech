@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Divider,
   Layout,
@@ -135,12 +136,9 @@ const UserInfomation = () => {
     const savedState = localStorage.getItem("showOrderTracking");
     return savedState ? JSON.parse(savedState) : false;
   });
-  // const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => {
-  //   return localStorage.getItem("selectedOrderId") || null;
-  // });
-  const [selectedOrderId, setSelectedOrderId] = useState<number | 0>(() => {
-    const savedOrderId = localStorage.getItem("selectedOrderId");
-    return savedOrderId ? Number(savedOrderId) : 0;
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(() => {
+    const savedOrder = localStorage.getItem("selectedOrder");
+    return savedOrder ? JSON.parse(savedOrder) : null;
   });
 
   const handleMenuClick = (e: { key: string }) => {
@@ -148,14 +146,14 @@ const UserInfomation = () => {
     localStorage.setItem("userInfoActiveTab", e.key);
     if (e.key === "3") {
       const savedState = localStorage.getItem("showOrderTracking");
-      const savedOrderId = localStorage.getItem("selectedOrderId");
+      const savedOrder = localStorage.getItem("selectedOrder");
       setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-      setSelectedOrderId(savedOrderId ? Number(savedOrderId) : 0);
+      setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
     } else {
       setShowOrderTracking(false);
-      setSelectedOrderId(0);
+      setSelectedOrder(null);
       localStorage.setItem("showOrderTracking", JSON.stringify(false));
-      localStorage.setItem("selectedOrderId", "0");
+      localStorage.setItem("selectedOrder", JSON.stringify(null));
     }
   };
 
@@ -167,29 +165,29 @@ const UserInfomation = () => {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrderId(0);
+        setSelectedOrder(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
-        localStorage.setItem("selectedOrderId", "0");
+        localStorage.setItem("selectedOrder", JSON.stringify(null));
       } else if (savedTab) {
         setActivePage(savedTab);
         if (savedTab === "3") {
           const savedState = localStorage.getItem("showOrderTracking");
-          const savedOrderId = localStorage.getItem("selectedOrderId");
+          const savedOrder = localStorage.getItem("selectedOrder");
           setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-          setSelectedOrderId(savedOrderId ? Number(savedOrderId) : 0);
+          setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
         } else {
           setShowOrderTracking(false);
-          setSelectedOrderId(0);
+          setSelectedOrder(null);
           localStorage.setItem("showOrderTracking", JSON.stringify(false));
-          localStorage.setItem("selectedOrderId", "0");
+          localStorage.setItem("selectedOrder", JSON.stringify(null));
         }
       } else {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrderId(0);
+        setSelectedOrder(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
-        localStorage.setItem("selectedOrderId", "0");
+        localStorage.setItem("selectedOrder", JSON.stringify(null));
       }
     }
   }, [location.pathname, navigationType]);
@@ -270,11 +268,18 @@ const UserInfomation = () => {
     editContactForm.resetFields();
   };
 
-  const showOrderTrackingDetails = (orderId: number) => {
-    setSelectedOrderId(orderId);
+  // const showOrderTrackingDetails = (orderId: number) => {
+  //   setSelectedOrderId(orderId);
+  //   setShowOrderTracking(true);
+  //   localStorage.setItem("showOrderTracking", JSON.stringify(true));
+  //   localStorage.setItem("selectedOrderId", String(orderId));
+  // };
+
+  const showOrderTrackingDetails = (order: any) => {
+    setSelectedOrder(order);
     setShowOrderTracking(true);
     localStorage.setItem("showOrderTracking", JSON.stringify(true));
-    localStorage.setItem("selectedOrderId", String(orderId));
+    localStorage.setItem("selectedOrder", JSON.stringify(order));
   };
 
   return (
@@ -452,7 +457,7 @@ const UserInfomation = () => {
                 {!showOrderTracking ? (
                   <OrderHistory onDetailClick={showOrderTrackingDetails} />
                 ) : (
-                  <OrderTracking orderId={selectedOrderId || 0} />
+                  <OrderTracking order={selectedOrder} />
                 )}
               </>
             )}

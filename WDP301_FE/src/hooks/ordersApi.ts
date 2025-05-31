@@ -50,7 +50,7 @@ export interface OrderHistory {
   ];
   order_shipping_fee: number;
   order_discount_value: number;
-  order_amount: number;
+  order_amount: string;
   invoiceUrl: string;
   order_point_earn: number;
   note: string;
