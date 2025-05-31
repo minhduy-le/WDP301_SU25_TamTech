@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Button, Card, Tag, Modal, Typography, Divider, Spin, message } from 'antd';
 import axios from 'axios';
 import { PlusOutlined, MinusOutlined, CloseOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 const { Title, Text } = Typography;
 
 interface Product {
@@ -29,6 +30,7 @@ interface AddOnCategory {
 }
 
 const OurMenu: React.FC = () => {
+  const navigate = useNavigate();
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
   const [drinks, setDrinks] = useState<Product[]>([]);
   const [sideDishes, setSideDishes] = useState<Product[]>([]);
@@ -240,8 +242,10 @@ const OurMenu: React.FC = () => {
                     background: '#fff',
                     display: 'flex',
                     flexDirection: 'column',
-                    height: '100%', 
+                    height: '100%',
+                    cursor: 'pointer',
                   }}
+                  onClick={() => navigate(`/product/${item.productId}`)}
                   bodyStyle={{
                     padding: '0', 
                     flexGrow: 1,

@@ -98,7 +98,6 @@ const ReportManagement: React.FC = () => {
     color: ['#2E7D32'],
   };
 
-  // Bar chart config with filtered data
   const barConfig = {
     data: filteredChartData,
     xField: 'date',
