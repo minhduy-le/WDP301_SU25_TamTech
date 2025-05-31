@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Row, Col, Button, Steps, Divider } from "antd";
 import "../style/OrderTracking.css";
 import { useEffect } from "react";
@@ -8,6 +9,7 @@ import {
   CarOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 const items = [
   {
@@ -27,11 +29,45 @@ const items = [
   },
 ];
 
+const getStepIndex = (status: string) => {
+  switch (status) {
+    case "Pending":
+      return 0;
+    case "Paid":
+    case "Preparing":
+      return 1;
+    case "Delivering":
+      return 2;
+    case "Delivered":
+      return 3;
+    case "Canceled":
+      return 4;
+    default:
+      return 0;
+  }
+};
+
 interface OrderTrackingProps {
-  orderId?: string;
+  order?: any;
 }
 
-const OrderTracking = ({ orderId }: OrderTrackingProps) => {
+const getFormattedPrice = (price: string) => {
+  const integerPart = parseFloat(price.split(".")[0]).toLocaleString();
+  return `${integerPart}đ`;
+};
+
+const OrderTracking = ({ order }: OrderTrackingProps) => {
+  console.log("OrderTracking received order:", order);
+  const originalPrice = order?.orderItems
+    ? order.orderItems.reduce(
+        (sum: number, item: { price: string; quantity: number }) =>
+          sum + parseFloat(item.price) * item.quantity,
+        0
+      )
+    : 0;
+
+  const currentStep = order ? getStepIndex(order.status) : 0;
+
   useEffect(() => {
     const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
     const icons = [
@@ -57,6 +93,10 @@ const OrderTracking = ({ orderId }: OrderTrackingProps) => {
     });
   }, []);
 
+  if (!order) {
+    return <div>Không tìm thấy thông tin đơn hàng.</div>;
+  }
+
   return (
     <div className="order-tracking-container">
       <Row gutter={[16, 16]}>
@@ -64,120 +104,117 @@ const OrderTracking = ({ orderId }: OrderTrackingProps) => {
           <div className="order-header">Tra cứu đơn hàng</div>
           <div className="order-details">
             <p className="order-info">
-              Mã đơn hàng: {orderId}
+              Mã đơn hàng: {order.orderId}
               <br />
-              Thời gian đặt hàng: 16:49, 20/05/2025
+              Thời gian đặt hàng:{" "}
+              {dayjs(order.order_create_at).format("HH:mm, DD/MM/YYYY")}
             </p>
             <div className="tracking-timeline">
-              <Steps current={1} labelPlacement="vertical" items={items} />
+              <Steps
+                current={currentStep}
+                labelPlacement="vertical"
+                items={items}
+              />
             </div>
             <div className="ship-status">
               Tình trạng đơn hàng:{" "}
-              <div className="ship-status-bold"> Đang chuẩn bị</div>
+              <div className="ship-status-bold"> {order.status}</div>
             </div>
             <p className="shipping-info">
               <p className="item-title">Thông tin giao hàng</p>
               <br />
               <Row>
-                <Col span={12} style={{ fontFamily: "Montserrat, sans-serif" }}>
-                  Tên khách hàng: Lê Minh Duy
+                <Col
+                  span={12}
+                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
+                >
+                  Tên khách hàng: {order.fullName}
                 </Col>
-                <Col span={12} style={{ fontFamily: "Montserrat, sans-serif" }}>
-                  Số điện thoại: 0911123456
+                <Col
+                  span={12}
+                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
+                >
+                  Số điện thoại: {order.phone_number}
                 </Col>
               </Row>
-              Địa chỉ giao hàng: 138 Hồ Văn Huế, Phường 9, Quận Phú Nhuận,
-              TP.HCM
+              <Row
+                style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
+              >
+                Địa chỉ giao hàng: 138 Hồ Văn Huế, Phường 9, Quận Phú Nhuận,
+                TP.HCM
+              </Row>
             </p>
             <div className="order-items">
               <p className="item-title">Thông tin đơn hàng</p>
-              <div className="item-row">
-                <Col
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: 0,
-                    fontFamily: "Montserrat, sans-serif",
-                  }}
-                >
-                  <span className="menu-main-item">COMBO - SÀ BÌ CHƯỞNG</span>
-                  <span>Canh chua, nước ngọt: Coca Cola, cơm thêm</span>
-                </Col>
-                <span>
-                  <strong style={{ color: "#DA7339" }}>134.000đ</strong> x1
-                </span>
-              </div>
-              <div className="item-row">
-                <Col
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: 0,
-                    fontFamily: "Montserrat, sans-serif",
-                  }}
-                >
-                  <span className="menu-main-item">COMBO - SÀ BÌ CHƯỞNG</span>
-                  <span>
-                    Canh chua, nước ngọt: Coca Cola, cơm thêm, rau chua thêm
-                  </span>
-                </Col>
-                <span>
-                  <strong style={{ color: "#DA7339" }}>138.000đ</strong> x1
-                </span>
-              </div>
-              <div className="item-row">
-                <Col
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: 0,
-                    fontFamily: "Montserrat, sans-serif",
-                  }}
-                >
-                  <span className="menu-main-item">CƠM SƯỜN CỌNG</span>
-                  <span>Canh chua</span>
-                  <span>Ghi chú: Lấy ít cơm</span>
-                </Col>
-                <span>
-                  <strong style={{ color: "#DA7339" }}>85.000đ</strong> x2
-                </span>
-              </div>
-              <div className="item-row">
-                <span className="menu-main-item">Chả Trứng Hấp</span>
-                <span>
-                  <strong style={{ color: "#DA7339" }}>12.000đ</strong> x1
-                </span>
-              </div>
-              <div className="item-row">
-                <span className="menu-main-item">Coca Cola</span>
-                <span>
-                  <strong style={{ color: "#DA7339" }}>12.000đ</strong> x4
-                </span>
-              </div>
+              {order.orderItems && order.orderItems.length > 0 ? (
+                order.orderItems.map(
+                  (
+                    item: {
+                      productId: number;
+                      name: string;
+                      quantity: number;
+                      price: string;
+                    },
+                    index: number
+                  ) => (
+                    <div key={index} className="item-row">
+                      <Col
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: 0,
+                          fontFamily: "Montserrat, sans-serif",
+                        }}
+                      >
+                        <span className="menu-main-item">{item.name}</span>
+                      </Col>
+                      <span style={{ fontFamily: "Montserrat, sans-serif" }}>
+                        <strong style={{ color: "#DA7339" }}>
+                          {getFormattedPrice(item.price)}
+                        </strong>{" "}
+                        x{item.quantity}
+                      </span>
+                    </div>
+                  )
+                )
+              ) : (
+                <div>Không có sản phẩm trong đơn hàng.</div>
+              )}
               <Divider
                 style={{ border: "1px solid #2d1e1a", margin: "12px 0" }}
               />
+              {order.note && (
+                <div className="item-row">
+                  <span>Ghi chú: {order.note}</span>
+                </div>
+              )}
               <div className="item-row">
                 <span>Giá gốc</span>
                 <span>
-                  <strong style={{ color: "#DA7339" }}>442.400đ</strong>
+                  <strong style={{ color: "#DA7339" }}>
+                    {originalPrice.toLocaleString()}đ
+                  </strong>
                 </span>
               </div>
               <div className="item-row">
                 <span>Giảm giá</span>
                 <span>
-                  <strong style={{ color: "#DA7339" }}>86.250đ</strong>
+                  <strong style={{ color: "#DA7339" }}>
+                    {parseFloat(order.order_discount_value).toLocaleString()}đ
+                  </strong>
                 </span>
               </div>
               <div className="item-row">
                 <span>Phí giao hàng</span>
                 <span>
-                  <strong style={{ color: "#DA7339" }}>16.000đ</strong>
+                  <strong style={{ color: "#DA7339" }}>
+                    {parseFloat(order.order_shipping_fee).toLocaleString()}đ
+                  </strong>
                 </span>
               </div>
               <div className="item-row total">
                 <span>TỔNG CỘNG</span>
-                <span>372.150đ</span>
+                <span>{parseFloat(order.order_amount).toLocaleString()}đ</span>
               </div>
             </div>
             <div className="button-group">

@@ -19,6 +19,8 @@ header {
 
 .header-icon button {
   color: #d97706;
+  outline: none !important;
+  border: none !important;
 }
 
 .header-icon button span,

@@ -128,3 +128,16 @@
   outline: none !important;
   width: -webkit-fill-available;
 }
+
+/* .ant-tabs-tab-active {
+  background-color: white !important;
+} */
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #da7339 !important;
+}
+
+:where(.css-dev-only-do-not-override-1m2bkf9).ant-tabs-top
+  > .ant-tabs-nav::before {
+  display: none;
+}

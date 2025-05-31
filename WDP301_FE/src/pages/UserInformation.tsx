@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Divider,
   Layout,
@@ -11,6 +12,7 @@ import {
   Col,
   Card,
   DatePicker,
+  message,
 } from "antd";
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
@@ -134,8 +136,9 @@ const UserInfomation = () => {
     const savedState = localStorage.getItem("showOrderTracking");
     return savedState ? JSON.parse(savedState) : false;
   });
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => {
-    return localStorage.getItem("selectedOrderId") || null;
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(() => {
+    const savedOrder = localStorage.getItem("selectedOrder");
+    return savedOrder ? JSON.parse(savedOrder) : null;
   });
 
   const handleMenuClick = (e: { key: string }) => {
@@ -143,14 +146,14 @@ const UserInfomation = () => {
     localStorage.setItem("userInfoActiveTab", e.key);
     if (e.key === "3") {
       const savedState = localStorage.getItem("showOrderTracking");
-      const savedOrderId = localStorage.getItem("selectedOrderId");
+      const savedOrder = localStorage.getItem("selectedOrder");
       setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-      setSelectedOrderId(savedOrderId || null);
+      setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
     } else {
       setShowOrderTracking(false);
-      setSelectedOrderId(null);
+      setSelectedOrder(null);
       localStorage.setItem("showOrderTracking", JSON.stringify(false));
-      localStorage.setItem("selectedOrderId", "");
+      localStorage.setItem("selectedOrder", JSON.stringify(null));
     }
   };
 
@@ -162,29 +165,29 @@ const UserInfomation = () => {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrderId(null);
+        setSelectedOrder(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
-        localStorage.setItem("selectedOrderId", "");
+        localStorage.setItem("selectedOrder", JSON.stringify(null));
       } else if (savedTab) {
         setActivePage(savedTab);
         if (savedTab === "3") {
           const savedState = localStorage.getItem("showOrderTracking");
-          const savedOrderId = localStorage.getItem("selectedOrderId");
+          const savedOrder = localStorage.getItem("selectedOrder");
           setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-          setSelectedOrderId(savedOrderId || null);
+          setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
         } else {
           setShowOrderTracking(false);
-          setSelectedOrderId(null);
+          setSelectedOrder(null);
           localStorage.setItem("showOrderTracking", JSON.stringify(false));
-          localStorage.setItem("selectedOrderId", "");
+          localStorage.setItem("selectedOrder", JSON.stringify(null));
         }
       } else {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrderId(null);
+        setSelectedOrder(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
-        localStorage.setItem("selectedOrderId", "");
+        localStorage.setItem("selectedOrder", JSON.stringify(null));
       }
     }
   }, [location.pathname, navigationType]);
@@ -192,10 +195,10 @@ const UserInfomation = () => {
   const showModal = () => {
     form.setFieldsValue({
       fullName: userProfile?.fullName || "",
-      dateOfBirth: userProfile?.date_of_birth
+      date_of_birth: userProfile?.date_of_birth
         ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
         : null,
-      phoneNumber: userProfile?.phone_number || "",
+      phone_number: userProfile?.phone_number || "",
       email: userProfile?.email || "",
     });
     setIsModalVisible(true);
@@ -203,17 +206,25 @@ const UserInfomation = () => {
 
   const handleOk = () => {
     form.validateFields().then((values) => {
+      const formattedValues = {
+        ...values,
+        date_of_birth: values.date_of_birth
+          ? dayjs(values.date_of_birth).format("YYYY-MM-DD")
+          : "",
+      };
       updateProfile(
         {
           id: userId || 0,
-          data: values,
+          data: formattedValues,
         },
         {
           onSuccess: () => {
             refetch();
+            message.success("Cập nhật thông tin cá nhân thành công");
             setIsModalVisible(false);
           },
           onError: (error) => {
+            message.success("Cập nhật thông tin cá nhân thất bại");
             console.error("Update failed:", error);
           },
         }
@@ -257,11 +268,18 @@ const UserInfomation = () => {
     editContactForm.resetFields();
   };
 
-  const showOrderTrackingDetails = (orderId: string) => {
-    setSelectedOrderId(orderId);
+  // const showOrderTrackingDetails = (orderId: number) => {
+  //   setSelectedOrderId(orderId);
+  //   setShowOrderTracking(true);
+  //   localStorage.setItem("showOrderTracking", JSON.stringify(true));
+  //   localStorage.setItem("selectedOrderId", String(orderId));
+  // };
+
+  const showOrderTrackingDetails = (order: any) => {
+    setSelectedOrder(order);
     setShowOrderTracking(true);
     localStorage.setItem("showOrderTracking", JSON.stringify(true));
-    localStorage.setItem("selectedOrderId", orderId);
+    localStorage.setItem("selectedOrder", JSON.stringify(order));
   };
 
   return (
@@ -439,7 +457,7 @@ const UserInfomation = () => {
                 {!showOrderTracking ? (
                   <OrderHistory onDetailClick={showOrderTrackingDetails} />
                 ) : (
-                  <OrderTracking orderId={selectedOrderId || undefined} />
+                  <OrderTracking order={selectedOrder} />
                 )}
               </>
             )}
@@ -463,10 +481,10 @@ const UserInfomation = () => {
           name="updateProfile"
           initialValues={{
             fullName: userProfile?.fullName || "",
-            dateOfBirth: userProfile?.date_of_birth
+            date_of_birth: userProfile?.date_of_birth
               ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
               : null,
-            phoneNumber: userProfile?.phone_number || "",
+            phone_number: userProfile?.phone_number || "",
             email: userProfile?.email || "",
           }}
         >
@@ -482,14 +500,14 @@ const UserInfomation = () => {
             <Input />
           </Form.Item>
           <Form.Item
-            name="dateOfBirth"
+            name="date_of_birth"
             label="Ngày sinh*"
             rules={[{ required: true, message: "Vui lòng nhập ngày sinh!" }]}
           >
-            <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+            <DatePicker format="DD/MM/YYYY" className="select-date-of-birth" />
           </Form.Item>
           <Form.Item
-            name="phoneNumber"
+            name="phone_number"
             label="Số điện thoại*"
             rules={[
               { required: true, message: "Vui lòng nhập số điện thoại!" },
