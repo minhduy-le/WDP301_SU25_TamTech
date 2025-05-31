@@ -24,6 +24,8 @@ import ProductManagement from "./pages/manager/products/ProductManagement";
 import PromotionManagement from "./pages/manager/promotions/PromotionManagement";
 import EmployeeManagement from "./pages/manager/staffs/EmployeeManagement";
 import ProductDetail from "./pages/ProductDetail";
+import Forbidden from "./pages/Forbidden";
+import { AuthGuardProvider } from "./contexts/AuthGuardContext";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -49,34 +51,40 @@ const LayoutWithSidebarManager = () => (
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route element={<LayoutWithNavFooter />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/api/orders/success" element={<PaymentSuccess />} />
-          <Route path="/user-information" element={<UserInfomation />} />
-          <Route path="/product/:productId" element={<ProductDetail />} />
-        </Route>
-        {/* <Route element={<LayoutWithSidebar />}>
+      <AuthGuardProvider>
+        <Routes>
+          <Route path="/forbidden" element={<Forbidden />} />
+          <Route element={<LayoutWithNavFooter />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/api/orders/success" element={<PaymentSuccess />} />
+            <Route path="/user-information" element={<UserInfomation />} />
+            <Route path="/product/:productId" element={<ProductDetail />} />
+          </Route>
+          {/* <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route> */}
-        <Route element={<LayoutWithSidebarManager />}>
-          <Route path="/manager/dashboard" element={<Dashboard />} />
-          <Route path="/manager/orders" element={<OrderManagement />} />
-          <Route
-            path="/manager/orders/confirm-orders"
-            element={<ConfirmOrders />}
-          />
-          <Route path="/manager/products" element={<ProductManagement />} />
-          <Route path="/manager/promotions" element={<PromotionManagement />} />
-          <Route path="/manager/staffs" element={<EmployeeManagement />} />
-        </Route>
-      </Routes>
+          <Route element={<LayoutWithSidebarManager />}>
+            <Route path="/manager/dashboard" element={<Dashboard />} />
+            <Route path="/manager/orders" element={<OrderManagement />} />
+            <Route
+              path="/manager/orders/confirm-orders"
+              element={<ConfirmOrders />}
+            />
+            <Route path="/manager/products" element={<ProductManagement />} />
+            <Route
+              path="/manager/promotions"
+              element={<PromotionManagement />}
+            />
+            <Route path="/manager/staffs" element={<EmployeeManagement />} />
+          </Route>
+        </Routes>
+      </AuthGuardProvider>
     </Router>
   );
 }
