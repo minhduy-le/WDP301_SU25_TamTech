@@ -17,7 +17,7 @@ import {
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
 import OrderTracking from "./OrderTracking";
-import OrderHistory from "./OrderHistory";
+import OrderHistorys from "./OrderHistory";
 import UserBoldIcon from "../components/icon/UserBoldIcon";
 import {
   ContainerOutlined,
@@ -282,6 +282,13 @@ const UserInfomation = () => {
     localStorage.setItem("selectedOrder", JSON.stringify(order));
   };
 
+  const handleBackToOrderHistory = () => {
+    setShowOrderTracking(false);
+    setSelectedOrder(null);
+    localStorage.setItem("showOrderTracking", JSON.stringify(false));
+    localStorage.setItem("selectedOrder", JSON.stringify(null));
+  };
+
   return (
     <div className="user-info-container">
       <Layout style={{ minHeight: "510px", background: "#fff7e6" }}>
@@ -455,9 +462,12 @@ const UserInfomation = () => {
             {activePage === "3" && (
               <>
                 {!showOrderTracking ? (
-                  <OrderHistory onDetailClick={showOrderTrackingDetails} />
+                  <OrderHistorys onDetailClick={showOrderTrackingDetails} />
                 ) : (
-                  <OrderTracking order={selectedOrder} />
+                  <OrderTracking
+                    order={selectedOrder}
+                    onBackClick={handleBackToOrderHistory}
+                  />
                 )}
               </>
             )}
