@@ -8,6 +8,7 @@ import {
   BookOutlined,
   CarOutlined,
   DeleteOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -49,6 +50,7 @@ const getStepIndex = (status: string) => {
 
 interface OrderTrackingProps {
   order?: any;
+  onBackClick?: () => void;
 }
 
 const getFormattedPrice = (price: string) => {
@@ -56,7 +58,7 @@ const getFormattedPrice = (price: string) => {
   return `${integerPart}đ`;
 };
 
-const OrderTracking = ({ order }: OrderTrackingProps) => {
+const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
   console.log("OrderTracking received order:", order);
   const originalPrice = order?.orderItems
     ? order.orderItems.reduce(
@@ -101,6 +103,11 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
     <div className="order-tracking-container">
       <Row gutter={[16, 16]}>
         <Col span={24} className="content-col">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={onBackClick}
+            className="btn-back"
+          />
           <div className="order-header">Tra cứu đơn hàng</div>
           <div className="order-details">
             <p className="order-info">
@@ -118,7 +125,22 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
             </div>
             <div className="ship-status">
               Tình trạng đơn hàng:{" "}
-              <div className="ship-status-bold"> {order.status}</div>
+              <div
+                className="ship-status-bold"
+                style={{
+                  color:
+                    order.status === "Paid"
+                      ? "#78A243"
+                      : order.status === "Canceled"
+                      ? "#DA7339"
+                      : order.status === "Pending"
+                      ? "yellow"
+                      : "#2d1e1a",
+                }}
+              >
+                {" "}
+                {order.status}
+              </div>
             </div>
             <p className="shipping-info">
               <p className="item-title">Thông tin giao hàng</p>
@@ -140,8 +162,7 @@ const OrderTracking = ({ order }: OrderTrackingProps) => {
               <Row
                 style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
               >
-                Địa chỉ giao hàng: 138 Hồ Văn Huế, Phường 9, Quận Phú Nhuận,
-                TP.HCM
+                Địa chỉ giao hàng: {order.order_address}
               </Row>
             </p>
             <div className="order-items">

@@ -123,3 +123,12 @@
   background-color: #da7339 !important;
   border-color: #da7339 !important;
 }
+
+.ant-dropdown-menu-vertical {
+  background-color: #efe6db;
+}
+
+.ant-dropdown-placement-bottomLeft .ant-dropdown-menu-title-content {
+  color: #d97706;
+  font-family: "Montserrat", sans-serif;
+}

@@ -1,7 +1,7 @@
 .contact-container {
   font-family: "Montserrat", sans-serif;
   background-color: #ebd187;
-  padding: 20px;
+  /* padding: 20px; */
   display: flex;
   justify-content: center;
   border-radius: 10px;
