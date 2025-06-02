@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const httpErrors = require("http-errors");
 const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
 
 // Current date for date_of_birth validation
 const currentDate = new Date("2025-05-26T10:28:00+07:00");
@@ -17,9 +18,6 @@ const createUser = async (userData) => {
     if (!userData.password || userData.password.trim() === "") {
       throw "Password cannot be blank";
     }
-    if (!userData.role || userData.role.trim() === "") {
-      throw "Role cannot be blank";
-    }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,10 +25,15 @@ const createUser = async (userData) => {
       throw "Invalid email format";
     }
 
-    // Validate role
-    const validRoles = ["Admin", "User", "Staff", "Shipper"];
-    if (!validRoles.includes(userData.role)) {
-      throw "Invalid role";
+    // Validate role if provided
+    if (userData.role) {
+      if (userData.role.trim() === "") {
+        throw "Role cannot be blank";
+      }
+      const validRoles = ["Admin", "User", "Staff", "Shipper"];
+      if (!validRoles.includes(userData.role)) {
+        throw "Invalid role";
+      }
     }
 
     // Check if email already exists
@@ -66,36 +69,35 @@ const createUser = async (userData) => {
     // Hash password
     userData.password = await bcrypt.hash(userData.password, 10);
 
-    // Ensure isActive is true
+    // Set default values for fields not provided by frontend
     userData.isActive = true;
+    userData.isBan = false;
+    userData.member_point = 0;
+    userData.member_rank = 0;
+    if (!userData.role) {
+      userData.role = "User"; // Default role if not provided
+    }
 
     // Create user in database
     const user = await User.create(userData);
     return user;
   } catch (error) {
-    console.error("Error in createUser:", error); // Log the full error for debugging
-    throw error; // Rethrow the original error
+    console.error("Error in createUser:", error);
+    throw error;
   }
 };
 
 const getAllUsers = async () => {
   try {
     const users = await User.findAll({
-      where: {
-        role: ["User", "Shipper", "Staff"],
-      },
       attributes: [
         "id",
         "fullName",
         "email",
         "phone_number",
-        "isActive",
         "date_of_birth",
         "note",
-        "isBan",
-        "member_point",
-        "member_rank",
-        "role",
+        "role", // Thêm role vào danh sách trả về
       ],
     });
     return users;
@@ -117,13 +119,9 @@ const getUserById = async (userId) => {
         "fullName",
         "email",
         "phone_number",
-        "isActive",
         "date_of_birth",
         "note",
-        "isBan",
-        "member_point",
-        "member_rank",
-        "role",
+        "role", // Thêm role vào danh sách trả về
       ],
     });
 
@@ -134,7 +132,7 @@ const getUserById = async (userId) => {
     return user;
   } catch (error) {
     console.error("Error in getUserById:", error);
-    throw error; // Rethrow the original error
+    throw error;
   }
 };
 
@@ -159,21 +157,10 @@ const updateUser = async (userId, userData) => {
         throw "Invalid email format";
       }
       const existingUser = await User.findOne({
-        where: { email: userData.email, id: { [User.sequelize.Op.ne]: userId } },
+        where: { email: userData.email, id: { [Op.ne]: userId } },
       });
       if (existingUser) {
         throw "Email already exists";
-      }
-    }
-
-    // Validate role if provided
-    if (userData.role) {
-      if (userData.role.trim() === "") {
-        throw "Role cannot be blank";
-      }
-      const validRoles = ["Admin", "User", "Staff", "Shipper"];
-      if (!validRoles.includes(userData.role)) {
-        throw "Invalid role";
       }
     }
 
@@ -184,7 +171,7 @@ const updateUser = async (userId, userData) => {
         throw "Phone number must be 10 or 11 digits";
       }
       const existingUserByPhone = await User.findOne({
-        where: { phone_number: userData.phone_number, id: { [User.sequelize.Op.ne]: userId } },
+        where: { phone_number: userData.phone_number, id: { [Op.ne]: userId } },
       });
       if (existingUserByPhone) {
         throw "Phone number is already exist";
@@ -212,7 +199,7 @@ const updateUser = async (userId, userData) => {
     return user;
   } catch (error) {
     console.error("Error in updateUser:", error);
-    throw error; // Rethrow the original error
+    throw error;
   }
 };
 
@@ -230,7 +217,7 @@ const deactivateUser = async (userId) => {
     await user.update({ isActive: false });
   } catch (error) {
     console.error("Error in deactivateUser:", error);
-    throw error; // Rethrow the original error
+    throw error;
   }
 };
 

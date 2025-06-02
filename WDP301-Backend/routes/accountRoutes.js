@@ -27,7 +27,6 @@ const accountService = require("../services/accountService");
  *               - fullName
  *               - email
  *               - password
- *               - role
  *             properties:
  *               fullName:
  *                 type: string
@@ -54,7 +53,7 @@ const accountService = require("../services/accountService");
  *                 description: Role of the user
  *     responses:
  *       201:
- *         description: User created successfully with isActive set to true
+ *         description: User created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -75,20 +74,11 @@ const accountService = require("../services/accountService");
  *                       type: string
  *                     phone_number:
  *                       type: string
- *                     isActive:
- *                       type: boolean
- *                       description: Set to true by default
  *                     date_of_birth:
  *                       type: string
  *                       format: date
  *                     note:
  *                       type: string
- *                     isBan:
- *                       type: boolean
- *                     member_point:
- *                       type: integer
- *                     member_rank:
- *                       type: integer
  *                     role:
  *                       type: string
  *       400:
@@ -112,8 +102,7 @@ router.post("/", verifyToken, async (req, res, next) => {
       phone_number: req.body.phone_number,
       date_of_birth: req.body.date_of_birth,
       note: req.body.note,
-      role: req.body.role,
-      isActive: true, // Ensure isActive is set to true
+      role: req.body.role, // Thêm lại role
     };
 
     const newUser = await accountService.createUser(userData);
@@ -124,7 +113,7 @@ router.post("/", verifyToken, async (req, res, next) => {
     });
   } catch (error) {
     if (typeof error === "string") {
-      res.status(400).send(error); // Send the plain error string
+      res.status(400).send(error);
     } else {
       res.status(error.status || 500).json({
         status: error.status || 500,
@@ -138,13 +127,13 @@ router.post("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts:
  *   get:
- *     summary: Get all user accounts with role User, Shipper, or Staff
+ *     summary: Get all user accounts
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of users with role User, Shipper, or Staff
+ *         description: List of users
  *         content:
  *           application/json:
  *             schema:
@@ -167,22 +156,11 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: string
  *                       phone_number:
  *                         type: string
- *                       isActive:
- *                         type: boolean
  *                       date_of_birth:
  *                         type: string
  *                         format: date
  *                       note:
- *                         type: string
- *                       isBan:
- *                         type: boolean
- *                       member_point:
- *                         type: integer
- *                       member_rank:
- *                         type: integer
- *                       role:
- *                         type: string
- *                         enum: [User, Shipper, Staff]
+ *                       type: string
  *       401:
  *         description: Unauthorized
  *       500:
@@ -242,20 +220,10 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     phone_number:
  *                       type: string
- *                     isActive:
- *                       type: boolean
  *                     date_of_birth:
  *                       type: string
  *                       format: date
  *                     note:
- *                       type: string
- *                     isBan:
- *                       type: boolean
- *                     member_point:
- *                       type: integer
- *                     member_rank:
- *                       type: integer
- *                     role:
  *                       type: string
  *       400:
  *         description: Invalid user ID
@@ -324,22 +292,6 @@ router.get("/:id", verifyToken, async (req, res, next) => {
  *               note:
  *                 type: string
  *                 description: Additional notes about the user
- *               isActive:
- *                 type: boolean
- *                 description: Whether the user is active
- *               isBan:
- *                 type: boolean
- *                 description: Whether the user is banned
- *               member_point:
- *                 type: integer
- *                 description: Member points of the user
- *               member_rank:
- *                 type: integer
- *                 description: Member rank of the user
- *               role:
- *                 type: string
- *                 enum: [Admin, User, Staff, Shipper]
- *                 description: Role of the user
  *     responses:
  *       200:
  *         description: User updated successfully
@@ -363,20 +315,10 @@ router.get("/:id", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     phone_number:
  *                       type: string
- *                     isActive:
- *                       type: boolean
  *                     date_of_birth:
  *                       type: string
  *                       format: date
  *                     note:
- *                       type: string
- *                     isBan:
- *                       type: boolean
- *                     member_point:
- *                       type: integer
- *                     member_rank:
- *                       type: integer
- *                     role:
  *                       type: string
  *       400:
  *         description: Invalid input
@@ -402,11 +344,6 @@ router.put("/:id", verifyToken, async (req, res, next) => {
       phone_number: req.body.phone_number,
       date_of_birth: req.body.date_of_birth,
       note: req.body.note,
-      isActive: req.body.isActive,
-      isBan: req.body.isBan,
-      member_point: req.body.member_point,
-      member_rank: req.body.member_rank,
-      role: req.body.role,
     };
     const updatedUser = await accountService.updateUser(userId, userData);
     res.status(200).json({
@@ -416,7 +353,7 @@ router.put("/:id", verifyToken, async (req, res, next) => {
     });
   } catch (error) {
     if (typeof error === "string") {
-      res.status(400).send(error); // Send the plain error string
+      res.status(400).send(error);
     } else {
       res.status(error.status || 500).json({
         status: error.status || 500,
@@ -477,7 +414,7 @@ router.delete("/:id", verifyToken, async (req, res, next) => {
     });
   } catch (error) {
     if (typeof error === "string") {
-      res.status(400).send(error); // Send the plain error string
+      res.status(400).send(error);
     } else {
       res.status(error.status || 500).json({
         status: error.status || 500,
