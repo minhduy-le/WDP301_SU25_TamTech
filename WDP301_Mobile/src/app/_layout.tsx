@@ -9,6 +9,7 @@ import { APP_COLOR } from "@/utils/constant";
 import { useCallback } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
+import { ModalProvider } from "@/components/home/collection.home";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -65,141 +66,143 @@ const RootLayout = () => {
     <GestureHandlerRootView onLayout={onLayoutRootView}>
       <RootSiblingParent>
         <AppProvider>
-          <ThemeProvider value={navTheme}>
-            <Stack
-              screenOptions={{
-                headerTintColor: APP_COLOR.ORANGE,
-                headerTitleStyle: {
-                  color: "black",
-                  fontFamily: "Montserrat-SemiBold",
-                },
-              }}
-            >
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="(auth)/login"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/signup"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/verify"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/welcome"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/request.password"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/employee.login"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/search"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/restaurants"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/qrcode"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/popup.sale"
-                options={{
-                  headerShown: false,
-                  animation: "fade",
-                  presentation: "transparentModal",
-                }}
-              />
-              <Stack.Screen
-                name="(auth)/role.signup"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(auth)/customer.signup"
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="(auth)/customer.changepassword"
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="(auth)/customer.login"
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen
-                name="(auth)/order.success"
-                options={{ headerShown: false }}
-              ></Stack.Screen>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="(user)/product/create.modal"
-                options={{
-                  headerShown: false,
-                  animation: "fade",
-                  presentation: "transparentModal",
-                }}
-              />
-              <Stack.Screen
-                name="(user)/product/update.modal"
-                options={{
-                  headerShown: false,
-                  animation: "fade",
-                  presentation: "transparentModal",
-                }}
-              />
-              <Stack.Screen
-                name="(user)/order/[id]"
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Tabs.Screen
-                name="chat/[id]"
-                options={{
-                  headerBackButtonDisplayMode: "minimal",
-                  headerTintColor: APP_COLOR.WHITE,
-                  headerStyle: {
-                    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+          <ModalProvider>
+            <ThemeProvider value={navTheme}>
+              <Stack
+                screenOptions={{
+                  headerTintColor: APP_COLOR.ORANGE,
+                  headerTitleStyle: {
+                    color: "black",
+                    fontFamily: "Montserrat-SemiBold",
                   },
                 }}
-              />
-              <Stack.Screen
-                name="(user)/product/place.order"
-                options={{ headerShown: false }}
-              />
-              <Tabs.Screen
-                name="(user)/account/info"
-                options={{ headerShown: false }}
-              />
+              >
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="(auth)/login"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/signup"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/verify"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/welcome"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/request.password"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/employee.login"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/search"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/restaurants"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/qrcode"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/popup.sale"
+                  options={{
+                    headerShown: false,
+                    animation: "fade",
+                    presentation: "transparentModal",
+                  }}
+                />
+                <Stack.Screen
+                  name="(auth)/role.signup"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/customer.signup"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="(auth)/customer.changepassword"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="(auth)/customer.login"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen
+                  name="(auth)/order.success"
+                  options={{ headerShown: false }}
+                ></Stack.Screen>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="(user)/product/create.modal"
+                  options={{
+                    headerShown: false,
+                    animation: "fade",
+                    presentation: "transparentModal",
+                  }}
+                />
+                <Stack.Screen
+                  name="(user)/product/update.modal"
+                  options={{
+                    headerShown: false,
+                    animation: "fade",
+                    presentation: "transparentModal",
+                  }}
+                />
+                <Stack.Screen
+                  name="(user)/order/[id]"
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Tabs.Screen
+                  name="chat/[id]"
+                  options={{
+                    headerBackButtonDisplayMode: "minimal",
+                    headerTintColor: APP_COLOR.WHITE,
+                    headerStyle: {
+                      backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="(user)/product/place.order"
+                  options={{ headerShown: false }}
+                />
+                <Tabs.Screen
+                  name="(user)/account/info"
+                  options={{ headerShown: false }}
+                />
 
-              <Tabs.Screen
-                name="(user)/account/password"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="(user)/account/customer.info"
-                options={{ headerTitle: "Nhập thông tin người dùng" }}
-              />
-              <Tabs.Screen
-                name="(user)/like/[id]"
-                options={{ headerShown: false }}
-              />
-              <Tabs.Screen
-                name="(user)/like/feedback.success"
-                options={{ headerShown: false }}
-              />
-            </Stack>
-          </ThemeProvider>
+                <Tabs.Screen
+                  name="(user)/account/password"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(user)/account/customer.info"
+                  options={{ headerTitle: "Nhập thông tin người dùng" }}
+                />
+                <Tabs.Screen
+                  name="(user)/like/[id]"
+                  options={{ headerShown: false }}
+                />
+                <Tabs.Screen
+                  name="(user)/like/feedback.success"
+                  options={{ headerShown: false }}
+                />
+              </Stack>
+            </ThemeProvider>
+          </ModalProvider>
         </AppProvider>
       </RootSiblingParent>
     </GestureHandlerRootView>

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "9.0.1",
+    "@gorhom/bottom-sheet": "^5.1.5",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/geolocation": "^3.4.0",
     "@react-navigation/native": "7.1.7",

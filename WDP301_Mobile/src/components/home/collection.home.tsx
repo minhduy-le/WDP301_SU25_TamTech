@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import { router } from "expo-router";
 import ContentLoader, { Rect } from "react-content-loader/native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -16,7 +16,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { useCurrentApp } from "@/context/app.context";
 import { currencyFormatter } from "@/utils/api";
 import React from "react";
-import Popup from "./popup.home";
+import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
 import { FONTS } from "@/theme/typography";
 import axios from "axios";
 
@@ -45,10 +45,135 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     alignSelf: "flex-start",
   },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "flex-end",
+    zIndex: 1000,
+  },
+  modalBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: 700,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    padding: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
+  },
 });
+interface ModalContextType {
+  showProductModal: (item: IPropsProduct) => void;
+  hideProductModal: () => void;
+}
+
+const ModalContext = createContext<ModalContextType | null>(null);
+
+export const useModal = () => {
+  const context = useContext(ModalContext);
+  if (!context) {
+    throw new Error("useModal must be used within a ModalProvider");
+  }
+  return context;
+};
+
+export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<IPropsProduct | null>(null);
+
+  const showProductModal = (item: IPropsProduct) => {
+    setSelectedItem(item);
+    setModalVisible(true);
+  };
+
+  const hideProductModal = () => {
+    setModalVisible(false);
+    setSelectedItem(null);
+  };
+
+  return (
+    <ModalContext.Provider value={{ showProductModal, hideProductModal }}>
+      {children}
+      {modalVisible && (
+        <Animated.View entering={FadeIn} style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackground}
+            onPress={hideProductModal}
+          />
+          <Animated.View entering={SlideInDown} style={styles.modalContent}>
+            <AntDesign
+              name="close"
+              size={24}
+              color={APP_COLOR.WHITE}
+              onPress={hideProductModal}
+              style={{ position: "absolute", right: 10, top: 10, zIndex: 1000 }}
+            />
+            <Image
+              source={{ uri: selectedItem?.productImage }}
+              style={{
+                width: "100%",
+                height: 400,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                borderBottomLeftRadius: 150,
+                borderBottomRightRadius: 150,
+              }}
+              resizeMode="cover"
+            />
+            <View style={{ padding: 15 }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: FONTS.bold,
+                  color: APP_COLOR.BROWN,
+                  marginTop: 15,
+                  textAlign: "center",
+                }}
+              >
+                {selectedItem?.productName}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontFamily: FONTS.bold,
+                  color: APP_COLOR.ORANGE,
+                  marginTop: 10,
+                  textAlign: "center",
+                }}
+              >
+                {currencyFormatter(selectedItem?.productPrice || 0)}
+              </Text>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      )}
+    </ModalContext.Provider>
+  );
+};
+
 const CollectionHome = (props: IProps) => {
   const { name, id, branchId } = props;
   const { cart, setCart, restaurant, setRestaurant } = useCurrentApp();
+  const { showProductModal } = useModal();
   const mockRestaurant = {
     _id: "mock_restaurant_1",
     name: "Số món đã đặt",
@@ -78,17 +203,9 @@ const CollectionHome = (props: IProps) => {
 
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
 
-  const handlePressItem = (item: any) => {
-    setSelectedItem(item);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedItem(null);
+  const handlePressItem = (item: IPropsProduct) => {
+    showProductModal(item);
   };
 
   const handleQuantityChange = (item: any, action: "MINUS" | "PLUS") => {
@@ -357,11 +474,6 @@ const CollectionHome = (props: IProps) => {
                 </Pressable>
               );
             }}
-          />
-          <Popup
-            visible={modalVisible}
-            onClose={closeModal}
-            item={selectedItem}
           />
         </View>
       ) : (
