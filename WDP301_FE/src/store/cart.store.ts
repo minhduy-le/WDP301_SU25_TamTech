@@ -25,6 +25,7 @@ interface CartState {
   clearCart: () => void;
   clearCartForUser: (userId: number) => void;
   updateCartItems: (items: CartItem[]) => void;
+  removeFromCart: (userId: number, productId: number, addOns: AddOn[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -64,7 +65,20 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           cartItems: state.cartItems.filter((item) => item.userId !== userId),
         })),
+
       updateCartItems: (items: CartItem[]) => set({ cartItems: items }),
+
+      removeFromCart: (userId: number, productId: number, addOns: AddOn[]) =>
+        set((state) => ({
+          cartItems: state.cartItems.filter(
+            (item) =>
+              !(
+                item.userId === userId &&
+                item.productId === productId &&
+                JSON.stringify(item.addOns) === JSON.stringify(addOns)
+              )
+          ),
+        })),
     }),
     {
       name: "cart-storage", // Name of the storage key in localStorage

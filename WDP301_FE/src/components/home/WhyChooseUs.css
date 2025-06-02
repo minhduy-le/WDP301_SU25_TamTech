@@ -1,6 +1,6 @@
 .artistic-layer-wcu-section {
   padding: 0px 20px;
-  background-color: #fff7e6; 
+  background-color: #fff7e6;
   overflow: hidden;
 }
 
@@ -13,7 +13,7 @@
   text-align: center;
   font-size: 2.7rem !important;
   font-weight: 700 !important;
-  color: #3a332d; 
+  color: #3a332d;
   margin-bottom: 60px !important;
   letter-spacing: -0.5px;
   position: relative;
@@ -28,8 +28,8 @@
 }
 
 .artistic-layer-feature-col {
-  display: flex; 
-  justify-content: center; 
+  display: flex;
+  justify-content: center;
 }
 
 .artistic-layer-feature {
@@ -45,14 +45,20 @@
   /* Animation */
   opacity: 0;
   transform: translateY(60px);
-  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1),
+    transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 /* Staggered animation cho từng item */
-.artistic-layer-feature-col:nth-child(1) .artistic-layer-feature.is-visible { transition-delay: 0s; }
-.artistic-layer-feature-col:nth-child(2) .artistic-layer-feature.is-visible { transition-delay: 0.2s; }
-.artistic-layer-feature-col:nth-child(3) .artistic-layer-feature.is-visible { transition-delay: 0.4s; }
-
+.artistic-layer-feature-col:nth-child(1) .artistic-layer-feature.is-visible {
+  transition-delay: 0s;
+}
+.artistic-layer-feature-col:nth-child(2) .artistic-layer-feature.is-visible {
+  transition-delay: 0.2s;
+}
+.artistic-layer-feature-col:nth-child(3) .artistic-layer-feature.is-visible {
+  transition-delay: 0.4s;
+}
 
 .artistic-layer-feature.is-visible {
   opacity: 1;
@@ -60,11 +66,11 @@
 }
 
 .artistic-feature-number-bg {
-  font-size: 6rem; 
+  font-size: 6rem;
   font-weight: 800;
-  opacity: 0.08; 
+  opacity: 0.08;
   position: absolute;
-  top: -50px; 
+  top: -50px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 0;
@@ -74,9 +80,9 @@
 
 .artistic-image-holder {
   position: relative;
-  z-index: 1; 
+  z-index: 1;
   margin-bottom: 25px;
-  width: 260px; 
+  width: 260px;
   height: 260px;
 }
 
@@ -123,7 +129,8 @@
 }
 
 /* Responsive */
-@media (max-width: 991px) { /* Tablet */
+@media (max-width: 991px) {
+  /* Tablet */
   .artistic-layer-main-title {
     font-size: 2.3rem !important;
   }
@@ -139,7 +146,8 @@
   }
 }
 
-@media (max-width: 767px) { /* Mobile */
+@media (max-width: 767px) {
+  /* Mobile */
   .artistic-layer-wcu-section {
     padding: 60px 15px;
   }

@@ -176,7 +176,7 @@
 
 .select-date-of-birth {
   width: 100%;
-  background: #ebd187;
+  background: #ebd187 !important;
   height: 40px;
   font-family: "Montserrat", sans-serif;
 }

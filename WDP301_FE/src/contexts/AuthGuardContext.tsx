@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { message } from "antd";
 import { jwtDecode } from "jwt-decode";
 
-type UserRole = "User" | "Shipper" | "Staff";
+type UserRole = "User" | "Shipper" | "Staff" | "Admin";
 
 type AuthGuardContextType = Record<string, unknown>;
 
@@ -66,6 +66,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       User: "/",
       Staff: "/manager/dashboard",
       Shipper: "/",
+      Admin: "/admin/dashboard",
     };
 
     if (location.pathname === "/") {
@@ -91,6 +92,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/product/:productId",
       ],
       Shipper: [],
+      Admin: ["/admin/dashboard", "/admin/users", "/admin/system-issues"],
     };
 
     // const currentPage = location.pathname;
