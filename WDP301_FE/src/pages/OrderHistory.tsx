@@ -305,7 +305,7 @@ const OrderHistory = ({ onDetailClick }: OrderHistoryProps) => {
                                 className="order-price"
                                 style={{ fontFamily: "Montserrat, sans-serif" }}
                               >
-                                {order.order_amount.toLocaleString()}đ (
+                                {getFormattedPrice(order.order_amount)} (
                                 {itemCount} món)
                               </Text>
                             </div>

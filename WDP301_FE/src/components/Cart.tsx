@@ -7,9 +7,12 @@ import {
   Row,
   Col,
   Divider,
+  message,
 } from "antd";
 import "../style/Cart.css";
 import { useState } from "react";
+import { useCartStore } from "../store/cart.store";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -17,7 +20,12 @@ interface CartItem {
   userId: number;
   productId: number;
   productName: string;
-  addOns: { productId: number; productTypeName: string; quantity: number }[];
+  addOns: {
+    productId: number;
+    productTypeName: string;
+    quantity: number;
+    price: number;
+  }[];
   quantity: number;
   totalPrice: number;
 }
@@ -28,9 +36,9 @@ interface CartProps {
 }
 
 const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
-  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]); // State to track selected items
+  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+  const { removeFromCart } = useCartStore();
 
-  // Handle checkbox change for each item
   const handleCheckboxChange = (item: CartItem, checked: boolean) => {
     if (checked) {
       setSelectedItems((prev) => [...prev, item]);
@@ -40,7 +48,17 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
       );
     }
   };
-  const total = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  // const total = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const total = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const handleRemoveItem = (item: CartItem) => {
+    removeFromCart(item.userId, item.productId, item.addOns);
+    setSelectedItems((prev) =>
+      prev.filter((i) => i.productId !== item.productId)
+    );
+    message.success("Đã xóa sản phẩm khỏi giỏ hàng");
+  };
 
   const handleConfirmOrder = () => {
     if (selectedItems.length === 0) {
@@ -63,7 +81,7 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
           renderItem={(item) => (
             <List.Item className="cart-item">
               <Row style={{ width: "100%" }}>
-                <Col span={2}>
+                <Col span={1} style={{ paddingTop: 1 }}>
                   <Checkbox
                     onChange={(e) =>
                       handleCheckboxChange(item, e.target.checked)
@@ -71,9 +89,10 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                     checked={selectedItems.some(
                       (i) => i.productId === item.productId
                     )}
+                    className="checkbox-cart"
                   />
                 </Col>
-                <Col span={16}>
+                <Col span={16} style={{ paddingLeft: 9 }}>
                   <Text className="cart-item-name">{item.productName}</Text>
                   {item.addOns.length > 0 && (
                     <ul className="item-description-list">
@@ -95,10 +114,21 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                   <Text className="item-quantity">x{item.quantity}</Text>
                 </Col>
                 <Col
-                  span={1}
-                  style={{ textAlign: "right", display: "flex", gap: 5 }}
+                  span={2}
+                  style={{
+                    textAlign: "right",
+                    display: "flex",
+                    gap: 5,
+                    paddingLeft: 12,
+                  }}
                 >
-                  <Text className="item-quantity">-</Text>
+                  <Button
+                    type="text"
+                    onClick={() => handleRemoveItem(item)}
+                    className="btn-remove-cart"
+                  >
+                    <DeleteOutlined />
+                  </Button>
                 </Col>
               </Row>
             </List.Item>

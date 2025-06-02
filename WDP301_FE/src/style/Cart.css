@@ -106,3 +106,20 @@
   z-index: 1000; /* Ensure it appears above other content */
   width: 450px; /* Match the width of your Cart component */
 }
+
+.btn-remove-cart {
+  color: #da7339 !important;
+  padding: 0;
+  height: fit-content;
+  padding-top: 1px;
+}
+
+.btn-remove-cart svg {
+  width: 20px;
+  height: 20px;
+}
+
+.checkbox-cart .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #da7339 !important;
+  border-color: #da7339 !important;
+}
