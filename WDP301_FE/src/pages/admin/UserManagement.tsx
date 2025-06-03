@@ -26,6 +26,8 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType, TableProps } from "antd/es/table";
 import type { SorterResult, FilterValue } from "antd/es/table/interface";
+import spinTamTac from "../../assets/spinTamTac.json";
+import Lottie from "lottie-react";
 
 const { Option } = Select;
 
@@ -189,7 +191,7 @@ const UserManagement: React.FC = () => {
       dataIndex: "email",
       key: "email",
       width: 220,
-      align: "center", 
+      align: "center",
       sorter: (a, b) => a.email.localeCompare(b.email),
       sortOrder: sortedInfo.columnKey === "email" ? sortedInfo.order : null,
       ellipsis: true,
@@ -199,7 +201,7 @@ const UserManagement: React.FC = () => {
       dataIndex: "fullName",
       key: "fullName",
       width: 200,
-      align: "center", 
+      align: "center",
       sorter: (a, b) => a.fullName.localeCompare(b.fullName),
       sortOrder: sortedInfo.columnKey === "fullName" ? sortedInfo.order : null,
       ellipsis: true,
@@ -209,7 +211,7 @@ const UserManagement: React.FC = () => {
       dataIndex: "role",
       key: "role",
       width: 120,
-      align: "center", 
+      align: "center",
       render: (role: User["role"]) => {
         const color =
           role === "admin" ? "red" : role === "manager" ? "blue" : "green";
@@ -229,7 +231,7 @@ const UserManagement: React.FC = () => {
       dataIndex: "phone_number",
       key: "phone_number",
       width: 180,
-      align: "center", 
+      align: "center",
       ellipsis: true,
     },
     {
@@ -255,7 +257,7 @@ const UserManagement: React.FC = () => {
       dataIndex: "date_of_birth",
       key: "date_of_birth",
       width: 180,
-      align: "center", 
+      align: "center",
       render: (dateStr: string) => {
         if (!dateStr) return "N/A";
         const date = new Date(dateStr);
@@ -273,7 +275,7 @@ const UserManagement: React.FC = () => {
     {
       title: "Thao tác",
       key: "action",
-      width: 160,
+      width: 190,
       fixed: "right",
       align: "center",
       render: (_, record) => (
@@ -287,6 +289,7 @@ const UserManagement: React.FC = () => {
               borderColor: "#2E7D32",
               borderRadius: "6px",
               boxShadow: "0 2px 4px rgba(46, 125, 50, 0.2)",
+              outline: "none",
             }}
           />
           <Popconfirm
@@ -301,10 +304,11 @@ const UserManagement: React.FC = () => {
                 background: record.status === "active" ? "#d32f2f" : "#2E7D32",
                 borderColor: record.status === "active" ? "#d32f2f" : "#2E7D32",
                 borderRadius: "6px",
+                outline: "none",
               },
             }}
             cancelButtonProps={{
-              style: { borderRadius: "6px" },
+              style: { borderRadius: "6px", outline: "none" },
             }}
           >
             <Button
@@ -324,10 +328,12 @@ const UserManagement: React.FC = () => {
                       background: "#d32f2f",
                       borderColor: "#d32f2f",
                       boxShadow: "0 2px 4px rgba(211, 47, 47, 0.2)",
+                      outline: "none",
                     }
                   : {
                       borderColor: "#4CAF50",
                       color: "#2E7D32",
+                      outline: "none",
                     }),
               }}
             >
@@ -358,7 +364,7 @@ const UserManagement: React.FC = () => {
   };
 
   const handleBlock = (userToToggle: User) => {
-        const newStatus = userToToggle.status === "active" ? "inactive" : "active";
+    const newStatus = userToToggle.status === "active" ? "inactive" : "active";
     setUsers((prevUsers) =>
       prevUsers.map((u) =>
         u.id === userToToggle.id ? { ...u, status: newStatus } : u
@@ -379,7 +385,7 @@ const UserManagement: React.FC = () => {
           setUsers((prevUsers) =>
             prevUsers.map((user) =>
               user.id === editingUser.id
-                ? { ...editingUser, ...values, username: editingUser.username } 
+                ? { ...editingUser, ...values, username: editingUser.username }
                 : user
             )
           );
@@ -422,7 +428,29 @@ const UserManagement: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "24px" }}>
+    <div style={{ padding: "24px", position: "relative", minHeight: 600 }}>
+      {loading && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(255,255,255,0.85)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Lottie
+            animationData={spinTamTac}
+            loop={true}
+            style={{ width: 200, height: 200 }}
+          />
+        </div>
+      )}
       <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
         <Col xs={24} sm={12} md={8}>
           <Card bordered={false}>
@@ -485,6 +513,7 @@ const UserManagement: React.FC = () => {
                 borderColor: "#2E7D32",
                 borderRadius: "6px",
                 boxShadow: "0 2px 4px rgba(46, 125, 50, 0.2)",
+                outline: "none",
               }}
             >
               Thêm người dùng
@@ -527,6 +556,7 @@ const UserManagement: React.FC = () => {
             background: "#2E7D32",
             borderColor: "#2E7D32",
             borderRadius: "6px",
+            outline: "none",
           },
         }}
         cancelButtonProps={{
@@ -534,6 +564,7 @@ const UserManagement: React.FC = () => {
             borderRadius: "6px",
             borderColor: "#4CAF50",
             color: "#2E7D32",
+            outline: "none",
           },
         }}
         bodyStyle={{ padding: "24px", background: "#F5F5F5" }}

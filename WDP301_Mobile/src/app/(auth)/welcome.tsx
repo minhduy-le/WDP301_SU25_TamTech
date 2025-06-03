@@ -149,7 +149,7 @@ const WelcomePage = () => {
         position: -50,
       });
       setFogotPassword(true);
-      //resetForm();
+      resetForm();
       setLoading(false);
     }
   };
