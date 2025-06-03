@@ -30,6 +30,7 @@ import ReportManagement from "./pages/admin/ReportManagement";
 import SystemIssuesReport from "./pages/admin/SystemIssuesReport";
 import Forbidden from "./pages/Forbidden";
 import { AuthGuardProvider } from "./contexts/AuthGuardContext";
+import Blog from "./pages/Blog";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -73,6 +74,7 @@ function App() {
             <Route path="/api/orders/success" element={<PaymentSuccess />} />
             <Route path="/user-information" element={<UserInfomation />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
+            <Route path="/blog" element={<Blog />} />
           </Route>
           {/* <Route element={<LayoutWithSidebar />}>
           <Route path="/dashboard" element={<Dashboard />} />
