@@ -54,6 +54,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/verify-email",
       "/verify-otp",
       "/menu",
+      "/blog",
     ];
 
     if (!user || !user.role) {
