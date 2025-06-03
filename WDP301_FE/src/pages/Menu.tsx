@@ -1,4 +1,4 @@
-import { Card, Button, Row, Col, Modal, Typography } from "antd";
+import { Card, Button, Row, Col, Modal, Typography, message } from "antd";
 import "../style/Menu.css";
 import { useState } from "react";
 import { useGetProductById, useGetProductByTypeId } from "../hooks/productsApi";
@@ -115,6 +115,11 @@ const Menu = () => {
   };
 
   const handleAddToCart = () => {
+    if (!user?.id) {
+      message.error("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng");
+      return;
+    }
+
     if (productDetail && user?.id) {
       // Create addOns array with proper type
       const addOnsWithPrices = addOnProductQueries
@@ -123,7 +128,7 @@ const Menu = () => {
             productId: item.productId,
             productTypeName: item.name,
             quantity: addOnQuantities[`${typeId}-${index}`] || 0,
-            price: Number(item.price), // Include the price for each add-on
+            price: Number(item.price),
           }))
         )
         .filter(
