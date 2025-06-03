@@ -4,10 +4,17 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-const TopHeader = () => {
+
+interface TopHeaderProps {
+  onMenuPress?: () => void;
+}
+
+const TopHeader = ({ onMenuPress }: TopHeaderProps) => {
   return (
     <View style={styles.container}>
-      <FontAwesome6 name="bars" size={24} color={APP_COLOR.BROWN} />
+      <Pressable onPress={onMenuPress}>
+        <FontAwesome6 name="bars" size={29} color={APP_COLOR.BROWN} />
+      </Pressable>
       <Pressable
         style={styles.locationContent}
         onPress={() => console.log("Địa chỉ nè")}
@@ -16,10 +23,11 @@ const TopHeader = () => {
         <Text style={styles.locationText}>Ho Chi Minh City</Text>
         <Octicons name="chevron-down" size={20} color={APP_COLOR.BROWN} />
       </Pressable>
-      <MaterialIcons name="settings" size={24} color={APP_COLOR.BROWN} />
+      <MaterialIcons name="settings" size={29} color={APP_COLOR.BROWN} />
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
@@ -39,4 +47,5 @@ const styles = StyleSheet.create({
     top: 3,
   },
 });
+
 export default TopHeader;
