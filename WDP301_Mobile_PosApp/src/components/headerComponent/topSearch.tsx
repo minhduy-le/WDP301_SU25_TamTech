@@ -50,11 +50,23 @@ const styles = StyleSheet.create({
     borderColor: APP_COLOR.BROWN,
     marginHorizontal: 17,
     marginTop: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: APP_COLOR.BLACK,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 1.5,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   safeArea: {
     flex: 1,
     flexDirection: "row",
     paddingTop: Platform.OS === "android" ? 10 : 0,
+    marginTop: 10,
   },
   filterBtn: {
     height: 50,

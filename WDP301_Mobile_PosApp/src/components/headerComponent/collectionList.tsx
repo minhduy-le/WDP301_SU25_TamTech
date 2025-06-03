@@ -56,7 +56,11 @@ const dataSample = [
     productPrice: 150000,
   },
 ];
-const CollectionList = () => {
+const CollectionList = ({
+  onProductPress,
+}: {
+  onProductPress: (product: any) => void;
+}) => {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       {dataSample.map((item, index) => (
@@ -66,6 +70,7 @@ const CollectionList = () => {
           productName={item.productName}
           productPrice={item.productPrice}
           productDes={item.productDes}
+          onPress={() => onProductPress(item)}
         />
       ))}
     </ScrollView>
