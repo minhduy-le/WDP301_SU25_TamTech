@@ -1,10 +1,10 @@
 import CollectionList from "@/components/headerComponent/collectionList";
+import Sidebar from "@/components/headerComponent/sideBar";
 import TopHeader from "@/components/headerComponent/topHeader";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { currencyFormatter } from "@/constants/Function";
-import { FontAwesome6 } from "@expo/vector-icons";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
+
 interface IProduct {
   id: string;
   productImg: any;
@@ -27,6 +28,7 @@ interface IProduct {
   productPrice: number;
   productDes: string;
 }
+
 const HomePage = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct>();
   const [showDetail, setShowDetail] = useState(false);
@@ -57,21 +59,10 @@ const HomePage = () => {
         />
       </ScrollView>
 
-      <Animated.View
-        style={[
-          styles.sidebar,
-          {
-            transform: [{ translateX: sidebarAnimation }],
-          },
-        ]}
-      >
-        <View style={styles.sidebarContent}>
-          <Text style={styles.sidebarTitle}>Menu</Text>
-          <Pressable onPress={toggleSidebar}>
-            <FontAwesome6 name="bars" size={29} color={APP_COLOR.BROWN} />
-          </Pressable>
-        </View>
-      </Animated.View>
+      <Sidebar
+        sidebarAnimation={sidebarAnimation}
+        toggleSidebar={toggleSidebar}
+      />
 
       {showDetail && selectedProduct && (
         <View style={modalStyles.overlay}>
@@ -111,37 +102,6 @@ const HomePage = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  sidebar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: screenWidth * 0.5,
-    height: screenHeight,
-    backgroundColor: APP_COLOR.WHITE,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  sidebarContent: {
-    padding: 20,
-    paddingTop: 60,
-    flexDirection: "row",
-    gap: 30,
-  },
-  sidebarTitle: {
-    fontSize: 24,
-    fontFamily: APP_FONT.BOLD,
-    color: APP_COLOR.BROWN,
-    marginBottom: 20,
-  },
-});
 
 const modalStyles = StyleSheet.create({
   overlay: {
