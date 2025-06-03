@@ -30,7 +30,7 @@ import ReportManagement from "./pages/admin/ReportManagement";
 import SystemIssuesReport from "./pages/admin/SystemIssuesReport";
 import Forbidden from "./pages/Forbidden";
 import { AuthGuardProvider } from "./contexts/AuthGuardContext";
-import Blog from "./pages/blog";
+import Blog from "./pages/Blog";
 
 const LayoutWithNavFooter = () => (
   <>
