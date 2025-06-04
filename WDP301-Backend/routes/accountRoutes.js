@@ -160,7 +160,12 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: string
  *                         format: date
  *                       note:
- *                       type: string
+ *                         type: string
+ *                       role:
+ *                         type: string
+ *                       isActive:
+ *                         type: boolean
+ *                         description: Indicates whether the user account is active
  *       401:
  *         description: Unauthorized
  *       500:
@@ -225,6 +230,11 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       format: date
  *                     note:
  *                       type: string
+ *                     role:
+ *                       type: string
+ *                     isActive:
+ *                       type: boolean
+ *                       description: Indicates whether the user account is active
  *       400:
  *         description: Invalid user ID
  *       404:
