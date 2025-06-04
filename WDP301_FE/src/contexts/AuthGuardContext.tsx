@@ -53,11 +53,14 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/register",
       "/verify-email",
       "/verify-otp",
+      "/menu",
+      "/blog",
     ];
 
     if (!user || !user.role) {
       if (!publicPages.includes(location.pathname)) {
         navigate("/login", { replace: true });
+        message.error("Bạn phải đăng nhập để chuyển tới trang này");
       }
       return;
     }
@@ -85,7 +88,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/feedbacks",
       ],
       User: [
-        "/menu",
         "/checkout",
         "/api/orders/success",
         "/user-information",
