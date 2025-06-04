@@ -46,10 +46,12 @@ interface AuthState {
   user: User | null;
   token: string | null;
   error: string | null;
-  login: (values: {
-    email: string;
-    password: string;
-  }) => Promise<{ success: boolean; message: string; role: string }>;
+  login: (
+    values: LoginDto
+  ) => Promise<{ success: boolean; message: string; role: string }>;
+  googleLogin: (
+    values: GoogleLoginDto
+  ) => Promise<{ success: boolean; message: string; role: string }>;
   logout: () => void;
   setUser: (user: User) => void;
   setToken: (token: string) => void;
@@ -102,6 +104,46 @@ export const useAuthStore = create<AuthState>((set) => {
         } else {
           set({ error: "Login failed" });
           return { success: false, message: "Login failed", role: "" };
+        }
+      } catch (error) {
+        const errorMessage =
+          axios.isAxiosError(error) && error.response?.data?.message
+            ? error.response.data.message
+            : (error as Error).message;
+
+        set({ error: errorMessage });
+        return { success: false, message: errorMessage, role: "" };
+      }
+    },
+
+    googleLogin: async (values: GoogleLoginDto) => {
+      try {
+        const response = await axiosInstance.post("auth/google-login", values, {
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = response.data;
+        if (data.token) {
+          const user = {
+            id: data.id,
+            role: data.role,
+            fullName: data.fullName,
+            email: data.email,
+            phone_number: data.phone_number,
+          };
+
+          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("token", data.token);
+
+          set({ user, token: data.token, error: null });
+          return {
+            success: true,
+            message: data.message || "Login successful",
+            role: data.role,
+          };
+        } else {
+          set({ error: "Google login failed" });
+          return { success: false, message: "Google login failed", role: "" };
         }
       } catch (error) {
         const errorMessage =
