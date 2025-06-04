@@ -10,6 +10,7 @@ import {
 import { Drawer } from "expo-router/drawer";
 import { StatusBar } from "expo-status-bar";
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -17,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
 const HeaderRight = () => {
   return (
     <View style={styles.headerContainer}>
@@ -55,22 +55,32 @@ export default function DrawerLayout() {
           <Drawer.Screen
             name="index"
             options={{
-              drawerLabel: "Trang chủ",
-              title: "Trang chủ",
+              drawerItemStyle: { display: "none" },
             }}
           />
           <Drawer.Screen
-            name="homepage"
+            name="(tabs)/homepage"
             options={{
-              drawerLabel: "Homepage",
+              drawerLabel: "Trang chủ",
+              title: "",
+              drawerActiveTintColor: APP_COLOR.BROWN,
+              drawerIcon: ({ color, size }) => (
+                <MaterialIcons name="home" color={color} size={size} />
+              ),
+            }}
+          />
+          <Drawer.Screen
+            name="(tabs)/orderHistory"
+            options={{
+              drawerLabel: "Lịch sử giao dịch",
               title: "",
             }}
           />
           <Drawer.Screen
-            name="+not-found"
+            name="(tabs)/reports"
             options={{
-              drawerLabel: "Không tìm thấy",
-              title: "Không tìm thấy",
+              drawerLabel: "Báo cáo doanh thu",
+              title: "",
             }}
           />
         </Drawer>
@@ -86,8 +96,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 70,
     marginRight: 10,
-    position: "absolute",
-    left: 40,
+    ...Platform.select({
+      android: {
+        position: "absolute",
+        left: 40,
+      },
+    }),
   },
   locationContent: {
     flexDirection: "row",
