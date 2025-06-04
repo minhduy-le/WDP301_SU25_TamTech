@@ -37,7 +37,8 @@ const Login = () => {
       }
     },
     onError: (error) => {
-      message.error("Login failed: " + (error as Error).message);
+      const errorMessage = (error as { responseValue: string }).responseValue;
+      message.error(errorMessage);
     },
   });
 

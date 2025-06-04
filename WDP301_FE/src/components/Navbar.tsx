@@ -158,13 +158,21 @@ const Navbar = () => {
             icon={<BellIcon />}
             style={{ color: "#d97706", marginRight: "10px" }}
           />
-          <Dropdown overlay={userMenu} trigger={["hover"]}>
+          {user?.id ? (
+            <Dropdown overlay={userMenu} trigger={["hover"]}>
+              <Button
+                type="text"
+                icon={<AccountIcon />}
+                style={{ color: "#d97706", marginRight: "10px" }}
+              />
+            </Dropdown>
+          ) : (
             <Button
               type="text"
               icon={<AccountIcon />}
               style={{ color: "#d97706", marginRight: "10px" }}
             />
-          </Dropdown>
+          )}
           <Badge count={totalItemCount} style={{ background: "#da7339" }}>
             <Button
               type="text"

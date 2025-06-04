@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -72,7 +73,7 @@ export const useAuthStore = create<AuthState>((set) => {
   return {
     ...loadStoredAuth(),
 
-    login: async (values) => {
+    login: async (values: LoginDto) => {
       try {
         const response = await axiosInstance.post("auth/login", values, {
           headers: { "Content-Type": "application/json" },
@@ -100,19 +101,28 @@ export const useAuthStore = create<AuthState>((set) => {
           localStorage.setItem("token", data.token);
 
           set({ user, token: data.token, error: null });
-          return { success: true, message: data.message, role: decoded.role };
+          return {
+            success: true,
+            message: data.message,
+            role: decoded.role,
+          };
         } else {
-          set({ error: "Login failed" });
-          return { success: false, message: "Login failed", role: "" };
+          const errorMessage = data.message;
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage, role: "" };
         }
       } catch (error) {
-        const errorMessage =
-          axios.isAxiosError(error) && error.response?.data?.message
-            ? error.response.data.message
-            : (error as Error).message;
-
-        set({ error: errorMessage });
-        return { success: false, message: errorMessage, role: "" };
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          set({ error: errorMessage });
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          set({ error: errorMessage });
+          throw new Error(errorMessage);
+        }
       }
     },
 

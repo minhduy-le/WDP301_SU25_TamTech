@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import axios from "axios";
 
 interface CreateOrder {
   orderItems: ProductItemDto[];
@@ -63,6 +65,14 @@ export const useCreateOrder = () => {
       const response = await axiosInstance.post(`orders`, newOrder);
       return response.data as OrderReponseDto;
     },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
+    },
   });
 };
 
@@ -74,6 +84,15 @@ export const useCalculateShipping = () => {
         calculateShip
       );
       return response.data as ShippingResponseDto;
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage =
+          error.response.data?.message || error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };
