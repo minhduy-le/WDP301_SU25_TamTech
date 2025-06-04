@@ -16,16 +16,15 @@ const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 
-console.log("Loading orderService.js version 2025-05-27-association-fix-v5");
+console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
 const payos = new PayOS(
   "1c2c9333-3b87-4c3d-9058-2a47c4731355",
   "f638f7e1-6366-4198-b17b-5c09139f1be3",
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
-
-// FIXED: Use your actual server URL, not MockAPI
-const YOUR_DOMAIN = process.env.SERVER_URL || "https://wdp-301-0fd32c261026.herokuapp.com"; // Change this to your actual domain
+const YOUR_DOMAIN = process.env.SERVER_URL || "https://wdp-301-0fd32c261026.herokuapp.com";
+const FRONTEND_DOMAIN = "https://wdp-301-su-25-tam-tech.vercel.app";
 
 const createOrder = async (req, res) => {
   console.log("createOrder called at:", new Date().toISOString());
@@ -86,8 +85,8 @@ const createOrder = async (req, res) => {
   }
 
   console.log("Starting database transaction");
-
   const transaction = await sequelize.transaction();
+  console.log("Transaction started");
 
   try {
     for (const item of orderItems) {
@@ -98,6 +97,7 @@ const createOrder = async (req, res) => {
       if (!product) {
         console.log(`Product not found or inactive for productId: ${item.productId}`);
         await transaction.rollback();
+        console.log("Transaction rolled back due to product not found");
         return res.status(400).json(`Product with ID ${item.productId} not found or inactive`);
       }
       const productPrice = parseFloat(product.price);
@@ -110,6 +110,7 @@ const createOrder = async (req, res) => {
       if (productPrice !== itemPrice) {
         console.log(`Price mismatch for productId: ${item.productId}. Expected: ${productPrice}, Got: ${itemPrice}`);
         await transaction.rollback();
+        console.log("Transaction rolled back due to price mismatch");
         return res.status(400).json(`Price for product ID ${item.productId} does not match`);
       }
     }
@@ -123,6 +124,7 @@ const createOrder = async (req, res) => {
       if (!recipes || recipes.length === 0) {
         console.log(`No recipes found for productId: ${item.productId}`);
         await transaction.rollback();
+        console.log("Transaction rolled back due to no recipes found");
         return res.status(400).json(`No recipes found for product ID ${item.productId}`);
       }
 
@@ -134,6 +136,7 @@ const createOrder = async (req, res) => {
             `Insufficient material quantity for materialId: ${material.materialId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
           );
           await transaction.rollback();
+          console.log("Transaction rolled back due to insufficient material");
           return res
             .status(400)
             .json(
@@ -211,19 +214,16 @@ const createOrder = async (req, res) => {
     } catch (bulkCreateError) {
       console.log("Error in OrderItem.bulkCreate:", bulkCreateError.message);
       await transaction.rollback();
+      console.log("Transaction rolled back due to order items creation failure");
       return res.status(500).json("Failed to create order items");
     }
 
-    // FIXED: Correct the PayOS payment link data structure
     const paymentLinkData = {
-      orderCode: order.orderId, // PayOS requires this
+      orderCode: order.orderId,
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
-      // FIXED: Use correct URLs pointing to your server
-      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
+      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}&code={code}&status={status}`,
       cancelUrl: `${YOUR_DOMAIN}/api/orders/cancel?orderId=${order.orderId}`,
-      // FIXED: Remove items array if it's causing issues, or fix the structure
-      // PayOS might have different requirements for items
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
 
@@ -235,10 +235,12 @@ const createOrder = async (req, res) => {
       console.error("Error in payos.createPaymentLink:", payosError.message);
       console.error("PayOS Error details:", payosError);
       await transaction.rollback();
+      console.log("Transaction rolled back due to payment link creation failure");
       return res.status(500).json("Failed to create payment link");
     }
 
     await transaction.commit();
+    console.log("Transaction committed successfully");
 
     const savedOrder = await Order.findOne({
       where: { orderId: order.orderId },
@@ -269,137 +271,8 @@ const createOrder = async (req, res) => {
   } catch (error) {
     console.error("Error in createOrder:", error.message, error.stack);
     await transaction.rollback();
+    console.log("Transaction rolled back due to error");
     return res.status(500).json("Failed to create order");
-  }
-};
-
-const handlePaymentSuccess = async (req, res) => {
-  console.log("handlePaymentSuccess called at:", new Date().toISOString());
-  console.log("Request method:", req.method);
-  console.log("Raw URL:", req.originalUrl);
-  console.log("Request headers:", JSON.stringify(req.headers, null, 2));
-  console.log("Request query:", JSON.stringify(req.query, null, 2));
-  console.log("Request body:", JSON.stringify(req.body, null, 2));
-
-  const { orderId, code, id: paymentId, status, cancel, orderCode } = req.method === "GET" ? req.query : req.body;
-  console.log("Extracted parameters:", { orderId, code, paymentId, status, cancel, orderCode });
-
-  if (!orderId) {
-    console.log("Missing orderId in request");
-    return res.status(400).json({ message: "Order ID is required" });
-  }
-
-  // Additional validation for code and status
-  if (!code && !status) {
-    console.log("Both code and status are missing", { code, status });
-    return res.status(400).json({ message: "Payment code or status is required" });
-  }
-
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).json({ message: "Order ID must be a valid number" });
-  }
-
-  const transaction = await sequelize.transaction();
-
-  try {
-    let order = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      console.log(`Attempt ${attempt} to find order with orderId: ${parsedOrderId}`);
-      order = await Order.findOne({
-        where: { orderId: parsedOrderId },
-        transaction,
-      });
-      if (order) break;
-      console.log(`Order not found, retrying after 1s for orderId: ${parsedOrderId}`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-
-    if (!order) {
-      console.log("Order not found after retries for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).json({
-        message: "Order not found",
-        details: "The order may not have been created successfully. Please check your order history.",
-      });
-    }
-
-    console.log("Current order details:", {
-      orderId: order.orderId,
-      status_id: order.status_id,
-      payment_time: order.payment_time,
-      created_at: order.order_create_at,
-    });
-
-    if (order.status_id === 2) {
-      console.log(`Order ${parsedOrderId} already processed with status_id: 2`);
-      let invoiceUrl = order.invoiceUrl;
-      if (!invoiceUrl) {
-        console.log("No invoiceUrl, generating PDF for orderId:", parsedOrderId);
-        invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
-      }
-      await transaction.commit();
-      console.log("Returning response for already processed order:", {
-        message: "Order already processed",
-        invoiceUrl: invoiceUrl || "Invoice not yet generated",
-      });
-      return res.status(200).json({
-        message: "Order already processed",
-        invoiceUrl: invoiceUrl || "Invoice not yet generated",
-      });
-    }
-
-    const user = await User.findOne({
-      where: { id: order.userId },
-      attributes: ["id", "fullName", "email", "phone_number", "member_point"],
-      transaction,
-    });
-    if (!user) {
-      console.log("User not found for userId:", order.userId);
-      await transaction.rollback();
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // FIXED: Better success condition checking
-    const isPaymentSuccessful = code === "00" || status === "PAID" || status === "success";
-
-    if (isPaymentSuccessful) {
-      console.log("Payment successful for orderId:", parsedOrderId);
-      order.status_id = 2;
-      order.payment_time = new Date();
-
-      const currentMemberPoint = user.member_point || 0;
-      const orderPointEarn = order.order_point_earn || 0;
-      user.member_point = currentMemberPoint + orderPointEarn;
-      console.log(
-        `Updating user ${user.id} member_point from ${currentMemberPoint} to ${user.member_point} by adding ${orderPointEarn}`
-      );
-      await user.save({ transaction });
-
-      // Save the order first
-      await order.save({ transaction });
-
-      const invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
-
-      await transaction.commit();
-      console.log("Payment processed successfully, responding with:", {
-        message: "Payment processed successfully",
-        invoiceUrl: invoiceUrl || "Invoice generation failed",
-      });
-      res.status(200).json({
-        message: "Payment processed, receipt generated",
-        invoiceUrl: invoiceUrl || "Receipt generation failed",
-      });
-    } else {
-      console.log("Payment failed for orderId:", parsedOrderId, { code, status });
-      await transaction.rollback();
-      return res.status(400).json({ message: "Payment failed or invalid code/status" });
-    }
-  } catch (error) {
-    console.error("Error in handlePaymentSuccess:", error.message, error.stack);
-    await transaction.rollback();
-    return res.status(500).json({ message: "Failed to process payment", error: error.message });
   }
 };
 
@@ -420,7 +293,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     });
     console.log("Fetched user:", user ? user.fullName : "Guest user");
 
-    const qrCodeUrl = await QRCode.toDataURL(`${YOUR_DOMAIN}/order/${order.orderId}`);
+    const qrCodeUrl = await QRCode.toDataURL(`${FRONTEND_DOMAIN}/order/${order.orderId}`);
     console.log("Generated QR code for URL:", qrCodeUrl.slice(0, 50) + "...");
 
     console.log("Starting PDF generation for orderId:", orderId);
@@ -562,6 +435,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       doc.on("data", buffers.push.bind(buffers));
       doc.on("end", () => resolve(Buffer.concat(buffers)));
     });
+    console.log("PDF buffer size:", pdfBuffer.length);
 
     console.log("Uploading PDF to Firebase for orderId:", orderId);
     const invoiceUrl = await uploadFileToFirebase(pdfBuffer, `receipt_${orderId}.pdf`, "application/pdf");
@@ -574,9 +448,132 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     return invoiceUrl;
   } catch (error) {
     console.error("Error in generateAndUploadInvoice for orderId:", orderId, error.message, error.stack);
-    return null;
+    throw error;
   }
 }
+
+const handlePaymentSuccess = async (req, res) => {
+  console.log("handlePaymentSuccess called at:", new Date().toISOString());
+  console.log("Request method:", req.method);
+  console.log("Raw URL:", req.originalUrl);
+  console.log("Request headers:", JSON.stringify(req.headers, null, 2));
+  console.log("Request query:", JSON.stringify(req.query, null, 2));
+  console.log("Request body:", JSON.stringify(req.body, null, 2));
+
+  const { orderId, code, id: paymentId, status, cancel, orderCode } = req.method === "GET" ? req.query : req.body;
+  console.log("Extracted parameters:", { orderId, code, paymentId, status, cancel, orderCode });
+
+  if (!orderId) {
+    console.log("Missing orderId in request");
+    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?error=missing_order_id`);
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?error=invalid_order_id`);
+  }
+
+  const transaction = await sequelize.transaction();
+  console.log("Transaction started for orderId:", parsedOrderId);
+
+  try {
+    let order = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      console.log(`Attempt ${attempt} to find order with orderId: ${parsedOrderId}`);
+      order = await Order.findOne({
+        where: { orderId: parsedOrderId },
+        transaction,
+      });
+      if (order) break;
+      console.log(`Order not found, retrying after 1s for orderId: ${parsedOrderId}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (!order) {
+      console.log("Order not found after retries for orderId:", parsedOrderId);
+      await transaction.rollback();
+      console.log("Transaction rolled back due to order not found");
+      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=order_not_found`);
+    }
+
+    console.log("Current order details:", {
+      orderId: order.orderId,
+      status_id: order.status_id,
+      payment_time: order.payment_time,
+      created_at: order.order_create_at,
+    });
+
+    if (order.status_id === 2) {
+      console.log(`Order ${parsedOrderId} already processed with status_id: 2`);
+      let invoiceUrl = order.invoiceUrl;
+      if (!invoiceUrl) {
+        console.log("No invoiceUrl, generating PDF for orderId:", parsedOrderId);
+        invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
+        console.log("Generated invoiceUrl:", invoiceUrl || "Failed to generate invoice");
+      } else {
+        console.log("Invoice already exists for orderId:", parsedOrderId, "URL:", invoiceUrl);
+      }
+      await transaction.commit();
+      console.log("Transaction committed successfully for already processed order");
+      return res.redirect(
+        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${status || ""}&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
+      );
+    }
+
+    const user = await User.findOne({
+      where: { id: order.userId },
+      attributes: ["id", "fullName", "email", "phone_number", "member_point"],
+      transaction,
+    });
+    if (!user) {
+      console.log("User not found for userId:", order.userId);
+      await transaction.rollback();
+      console.log("Transaction rolled back due to user not found");
+      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=user_not_found`);
+    }
+
+    const isPaymentSuccessful = code === "00" || status === "PAID" || status === "success";
+    console.log("Payment success check:", { isPaymentSuccessful, code, status });
+
+    if (isPaymentSuccessful) {
+      console.log("Payment successful for orderId:", parsedOrderId);
+      order.status_id = 2;
+      order.payment_time = new Date();
+
+      const currentMemberPoint = user.member_point || 0;
+      const orderPointEarn = order.order_point_earn || 0;
+      user.member_point = currentMemberPoint + orderPointEarn;
+      console.log(
+        `Updating user ${user.id} member_point from ${currentMemberPoint} to ${user.member_point} by adding ${orderPointEarn}`
+      );
+      await user.save({ transaction });
+
+      await order.save({ transaction });
+      console.log("Order saved with updated status and payment_time");
+
+      const invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
+      console.log("Generated invoiceUrl:", invoiceUrl || "Failed to generate invoice");
+
+      await transaction.commit();
+      console.log("Transaction committed successfully for orderId:", parsedOrderId);
+      console.log("Payment processed, redirecting to frontend with invoiceUrl:", invoiceUrl);
+      return res.redirect(
+        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${status || ""}&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
+      );
+    } else {
+      console.log("Payment failed for orderId:", parsedOrderId, { code, status });
+      await transaction.rollback();
+      console.log("Transaction rolled back due to payment failure");
+      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=payment_failed`);
+    }
+  } catch (error) {
+    console.error("Error in handlePaymentSuccess:", error.message, error.stack);
+    await transaction.rollback();
+    console.log("Transaction rolled back due to error");
+    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=server_error`);
+  }
+};
 
 const getUserOrders = async (req, res) => {
   console.log("getUserOrders called at:", new Date().toISOString());

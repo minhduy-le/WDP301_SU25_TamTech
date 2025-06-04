@@ -5,6 +5,8 @@ const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
 const Information = require("../models/information");
 const axios = require("axios");
+const sequelize = require("../config/database");
+const { generateAndUploadInvoice } = require("../services/orderService");
 require("dotenv").config();
 
 const provinceMapping = {
@@ -23,7 +25,7 @@ const provinceMapping = {
 };
 
 const standardizeProvince = (province) => {
-  if (!province) return "TP. Hồ Chí Minh"; // Default value if province is not specified
+  if (!province) return "TP. Hồ Chí Minh";
   const normalizedProvince = province.trim().toUpperCase();
   return provinceMapping[normalizedProvince] || provinceMapping[province] || province;
 };
@@ -200,26 +202,17 @@ router.get("/user", verifyToken, getUserOrders);
  *         name: code
  *         schema:
  *           type: string
- *         required: true
  *         description: Payment status code from PayOS
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Payment status from PayOS
  *     responses:
- *       200:
- *         description: Payment processed and invoice generated
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 invoiceUrl:
- *                   type: string
+ *       302:
+ *         description: Redirects to frontend payment success page
  *       400:
- *         description: Invalid input or payment failed
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error
+ *         description: Invalid input
  *   post:
  *     summary: Handle successful payment callback (POST)
  *     tags: [Orders]
@@ -236,30 +229,18 @@ router.get("/user", verifyToken, getUserOrders);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - code
  *             properties:
  *               code:
  *                 type: string
  *                 description: Payment status code from PayOS
+ *               status:
+ *                 type: string
+ *                 description: Payment status from PayOS
  *     responses:
- *       200:
- *         description: Payment processed and invoice generated
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 invoiceUrl:
- *                   type: string
+ *       302:
+ *         description: Redirects to frontend payment success page
  *       400:
- *         description: Invalid input or payment failed
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error
+ *         description: Invalid input
  */
 router.get("/success", handlePaymentSuccess);
 router.post("/success", handlePaymentSuccess);
@@ -299,7 +280,6 @@ router.get("/cancel", async (req, res) => {
       console.log("Order not found for orderId:", orderId);
       return res.status(404).json({ message: "Order not found" });
     }
-    // Optionally update status to "Cancelled" if needed
     console.log("Payment cancelled for orderId:", orderId);
     res.status(200).json({ message: "Payment cancelled" });
   } catch (error) {
@@ -345,7 +325,9 @@ router.get("/cancel", async (req, res) => {
  *         description: Server error
  */
 router.post("/webhook", async (req, res) => {
-  console.log("PayOS webhook received:", req.body);
+  console.log("PayOS webhook received at:", new Date().toISOString());
+  console.log("Webhook headers:", JSON.stringify(req.headers, null, 2));
+  console.log("Webhook body:", JSON.stringify(req.body, null, 2));
   const { orderCode, status, code } = req.body;
   if (!orderCode) {
     console.log("Missing orderCode in webhook");
@@ -361,11 +343,34 @@ router.post("/webhook", async (req, res) => {
       console.log("Webhook updating status_id to 2 for orderId:", orderCode);
       order.status_id = 2;
       order.payment_time = new Date();
-      await order.save();
+
+      const user = await User.findOne({ where: { id: order.userId } });
+      if (user) {
+        const currentMemberPoint = user.member_point || 0;
+        const orderPointEarn = order.order_point_earn || 0;
+        user.member_point = currentMemberPoint + orderPointEarn;
+        console.log(`Updated user ${user.id} member_point to ${user.member_point}`);
+        await user.save();
+      }
+
+      const transaction = await sequelize.transaction();
+      try {
+        const invoiceUrl = await generateAndUploadInvoice(order, orderCode, transaction);
+        order.invoiceUrl = invoiceUrl;
+        await order.save({ transaction });
+        await transaction.commit();
+        console.log("Invoice generated and saved for orderId:", orderCode, "Invoice URL:", invoiceUrl);
+      } catch (error) {
+        await transaction.rollback();
+        console.error("Error generating invoice for orderId:", orderCode, error.message);
+        return res.status(500).json({ message: "Failed to generate invoice", error: error.message });
+      }
+    } else {
+      console.log("Webhook skipped: Payment not successful", { status, code });
     }
     res.status(200).json({ message: "Webhook processed" });
   } catch (error) {
-    console.log("Error in webhook:", error.message);
+    console.error("Error in webhook:", error.message, error.stack);
     res.status(500).json({ message: "Failed to process webhook", error: error.message });
   }
 });
@@ -422,16 +427,13 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       });
     }
 
-    // Use default weight if not provided
     const defaultWeight = weight || 1000;
 
-    // Default pick address (sender address)
     const pickProvince = "TP. Hồ Chí Minh";
     const pickDistrict = "Quận 1";
     const pickWard = "Phường Bến Nghé";
     const pickAddress = "123 Đường Số 1";
 
-    // Parse deliver address manually with improved logic
     const addressParts = deliver_address.split(",").map((part) => part.trim());
     let deliverWard = "Phường 1";
     let deliverDistrict = "Quận 3";
@@ -448,7 +450,6 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
 
     console.log("Parsed Address:", { deliverProvince, deliverDistrict, deliverWard, deliverFullAddress });
 
-    // Call GHTK API to calculate shipping fee using GET method
     const ghtkApiUrl = process.env.GHTK_API_BASE_URL + "/services/shipment/fee";
     const queryParams = {
       pick_province: pickProvince,
@@ -477,19 +478,16 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       throw new Error(`GHTK Error: ${response.data.message || "Unknown error"}`);
     }
 
-    // Get the correct fee value from response.data.fee.fee
     const shippingFee = response.data.fee && response.data.fee.fee ? response.data.fee.fee : 0;
     if (shippingFee === 0) {
       console.warn("Warning: GHTK returned zero shipping fee, possible invalid data.");
     }
 
-    // Save address to Information table
     const newAddress = await Information.create({
       userId: req.userId,
       address: deliver_address,
     });
 
-    // Return only status, message, and fee
     res.status(200).json({
       status: 200,
       message: "Shipping fee calculated and address saved successfully",
