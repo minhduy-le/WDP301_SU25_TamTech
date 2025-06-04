@@ -171,6 +171,7 @@ const Navbar = () => {
               type="text"
               icon={<AccountIcon />}
               style={{ color: "#d97706", marginRight: "10px" }}
+              onClick={() => navigate("/login")}
             />
           )}
           <Badge count={totalItemCount} style={{ background: "#da7339" }}>
