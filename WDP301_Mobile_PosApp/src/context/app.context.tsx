@@ -5,6 +5,8 @@ interface AppContextType {
   setAppState: (v: any) => void;
   cart: ICart | Record<string, never>;
   setCart: (v: any) => void;
+  counter: ICounter | null;
+  setCounter: (v: any) => void;
 }
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -15,6 +17,7 @@ interface IProps {
 const AppProvider = (props: IProps) => {
   const [appState, setAppState] = useState<IUserLogin | null>(null);
   const [cart, setCart] = useState<ICart | Record<string, never>>({});
+  const [counter, setCounter] = useState<ICounter | null>(null);
   return (
     <AppContext.Provider
       value={{
@@ -22,6 +25,8 @@ const AppProvider = (props: IProps) => {
         setAppState,
         cart,
         setCart,
+        counter,
+        setCounter,
       }}
     >
       {props.children}

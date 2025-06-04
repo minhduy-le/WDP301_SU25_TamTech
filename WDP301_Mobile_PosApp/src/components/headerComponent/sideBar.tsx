@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   sidebar: {
     position: "absolute",
     top: 0,
-    left: 0,
+    right: 0,
     width: screenWidth * 0.8,
     height: screenHeight,
     backgroundColor: APP_COLOR.WHITE,

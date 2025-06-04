@@ -25,3 +25,19 @@ interface ICart {
     };
   };
 }
+interface ICounter {
+  longitude: number;
+  latitude: number;
+  _id: string;
+  name: string;
+  phone: string;
+  address: string;
+  email: string;
+  rating: number;
+  image: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  menu: IMenu[];
+  isLike: boolean;
+}
