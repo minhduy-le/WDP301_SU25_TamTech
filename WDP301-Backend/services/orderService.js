@@ -797,12 +797,111 @@ const setOrderToDelivering = async (req, res) => {
   }
 };
 
+const setOrderToDelivered = async (req, res) => {
+  console.log("setOrderToDelivered called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+  const imageFile = req.file;
+
+  if (!["Shipper"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Shipper can set orders to Delivered");
+  }
+
+  if (!imageFile) {
+    console.log("No certification image provided for orderId:", orderId);
+    return res.status(400).send("Certification image is required");
+  }
+
+  const allowedMimes = ["image/jpeg", "image/png"];
+  if (!allowedMimes.includes(imageFile.mimetype)) {
+    console.log("Invalid image format for orderId:", orderId, "Mime:", imageFile.mimetype);
+    return res.status(400).send("Invalid image format. Only JPEG and PNG are allowed");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 3) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Delivering to transition to Delivered.`
+        );
+    }
+
+    if (order.assignToShipperId !== userId) {
+      console.log("Order not assigned to shipperId:", userId, "for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(403).send("Unauthorized: Order not assigned to this Shipper");
+    }
+
+    let imageUrl;
+    try {
+      imageUrl = await uploadFileToFirebase(
+        imageFile.buffer,
+        `delivery_cert_${parsedOrderId}_${Date.now()}.jpg`,
+        imageFile.mimetype
+      );
+      console.log("Image uploaded to Firebase for orderId:", parsedOrderId, "URL:", imageUrl);
+    } catch (uploadError) {
+      console.error("Failed to upload image for orderId:", parsedOrderId, uploadError.message);
+      await transaction.rollback();
+      return res.status(500).send("Failed to upload certification image");
+    }
+
+    const deliveryTime = new Date();
+    order.status_id = 4; // Delivered
+    order.certificationOfDelivered = imageUrl;
+    order.order_delivery_at = deliveryTime;
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Delivered for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Delivered",
+      orderId: parsedOrderId,
+      status: "Delivered",
+      certificationOfDelivered: imageUrl,
+      order_delivery_at: deliveryTime,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToDelivered:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
   getUserOrders,
   setOrderToPreparing,
   setOrderToDelivering,
+  setOrderToDelivered,
 };
-
-module.exports = { createOrder, handlePaymentSuccess, getUserOrders, setOrderToPreparing, setOrderToDelivering };
