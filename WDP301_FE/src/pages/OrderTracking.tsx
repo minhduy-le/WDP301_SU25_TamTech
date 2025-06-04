@@ -99,6 +99,11 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
     return <div>Không tìm thấy thông tin đơn hàng.</div>;
   }
 
+  const totalAmount =
+    originalPrice +
+    parseFloat(order.order_shipping_fee) -
+    parseFloat(order.order_discount_value);
+
   return (
     <div className="order-tracking-container">
       <Row gutter={[16, 16]}>
@@ -235,7 +240,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
               </div>
               <div className="item-row total">
                 <span>TỔNG CỘNG</span>
-                <span>{parseFloat(order.order_amount).toLocaleString()}đ</span>
+                <span>{totalAmount.toLocaleString()}đ</span>
               </div>
             </div>
             <div className="button-group">
