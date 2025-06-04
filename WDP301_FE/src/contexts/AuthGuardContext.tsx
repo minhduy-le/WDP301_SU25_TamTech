@@ -60,7 +60,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     if (!user || !user.role) {
       if (!publicPages.includes(location.pathname)) {
         navigate("/login", { replace: true });
-        message.error("Bạn phải đăng nhập để chuyển tới trang này");
+        // message.error("Bạn phải đăng nhập để chuyển tới trang này");
       }
       return;
     }

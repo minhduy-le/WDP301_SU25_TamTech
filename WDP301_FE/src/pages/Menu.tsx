@@ -121,7 +121,6 @@ const Menu = () => {
     }
 
     if (productDetail && user?.id) {
-      // Create addOns array with proper type
       const addOnsWithPrices = addOnProductQueries
         .flatMap(({ typeId, query }) =>
           query.data?.map((item, index) => ({
@@ -142,13 +141,12 @@ const Menu = () => {
           } => addOn !== undefined && addOn.quantity > 0
         );
 
-      // Calculate total price for add-ons using their own prices
       const totalAddOnPrice = addOnsWithPrices.reduce(
         (sum, addOn) => sum + addOn.quantity * addOn.price,
         0
       );
 
-      const basePrice = Number(productDetail.price); // Price of the main product
+      const basePrice = Number(productDetail.price);
       const totalPrice = basePrice * quantity + totalAddOnPrice;
 
       const cartItem = {
@@ -169,6 +167,7 @@ const Menu = () => {
       };
 
       addToCart(cartItem);
+      message.success("Thêm vào giỏ hàng thành công");
       handleModalClose();
     }
   };
@@ -338,9 +337,9 @@ const Menu = () => {
                 <Text className="modal-price">
                   {Number(productDetail.price).toLocaleString("vi-VN")}đ
                 </Text>
-                <Text className="modal-price-first">
+                {/* <Text className="modal-price-first">
                   {totalPrice.toLocaleString("vi-VN")}đ
-                </Text>
+                </Text> */}
                 <div className="quantity-selector">
                   <Button
                     className="quantity-button minus-button"

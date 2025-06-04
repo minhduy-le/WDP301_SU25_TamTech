@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -46,10 +47,12 @@ interface AuthState {
   user: User | null;
   token: string | null;
   error: string | null;
-  login: (values: {
-    email: string;
-    password: string;
-  }) => Promise<{ success: boolean; message: string; role: string }>;
+  login: (
+    values: LoginDto
+  ) => Promise<{ success: boolean; message: string; role: string }>;
+  googleLogin: (
+    values: GoogleLoginDto
+  ) => Promise<{ success: boolean; message: string; role: string }>;
   logout: () => void;
   setUser: (user: User) => void;
   setToken: (token: string) => void;
@@ -70,7 +73,7 @@ export const useAuthStore = create<AuthState>((set) => {
   return {
     ...loadStoredAuth(),
 
-    login: async (values) => {
+    login: async (values: LoginDto) => {
       try {
         const response = await axiosInstance.post("auth/login", values, {
           headers: { "Content-Type": "application/json" },
@@ -98,10 +101,59 @@ export const useAuthStore = create<AuthState>((set) => {
           localStorage.setItem("token", data.token);
 
           set({ user, token: data.token, error: null });
-          return { success: true, message: data.message, role: decoded.role };
+          return {
+            success: true,
+            message: data.message,
+            role: decoded.role,
+          };
         } else {
-          set({ error: "Login failed" });
-          return { success: false, message: "Login failed", role: "" };
+          const errorMessage = data.message;
+          set({ error: errorMessage });
+          return { success: false, message: errorMessage, role: "" };
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          set({ error: errorMessage });
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          set({ error: errorMessage });
+          throw new Error(errorMessage);
+        }
+      }
+    },
+
+    googleLogin: async (values: GoogleLoginDto) => {
+      try {
+        const response = await axiosInstance.post("auth/google-login", values, {
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = response.data;
+        if (data.token) {
+          const user = {
+            id: data.id,
+            role: data.role,
+            fullName: data.fullName,
+            email: data.email,
+            phone_number: data.phone_number,
+          };
+
+          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("token", data.token);
+
+          set({ user, token: data.token, error: null });
+          return {
+            success: true,
+            message: data.message || "Login successful",
+            role: data.role,
+          };
+        } else {
+          set({ error: "Google login failed" });
+          return { success: false, message: "Google login failed", role: "" };
         }
       } catch (error) {
         const errorMessage =

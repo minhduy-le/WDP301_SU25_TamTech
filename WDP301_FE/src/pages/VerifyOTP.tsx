@@ -58,9 +58,7 @@ const VerifyOTP = () => {
       </div>
       <div className="form-section">
         <div className="form-content">
-          <p className="subtitle">
-            Mã OTP vừa được gửi vào số điện thoại của bạn.
-          </p>
+          <p className="subtitle">Mã OTP vừa được gửi vào {email}.</p>
           <h1 className="title">
             Tấm <span className="login-brown">ngon,</span>{" "}
             <span className="login-green">Tắc </span>

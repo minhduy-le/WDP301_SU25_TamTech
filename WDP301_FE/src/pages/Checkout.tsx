@@ -17,7 +17,7 @@ import {
 } from "antd";
 import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
@@ -76,9 +76,17 @@ const Checkout = () => {
   } = useWardByDistrictId(selectedDistrictId);
 
   const location = useLocation();
-  const { selectedItems = [] } = (location.state || {}) as {
+  const { selectedItems: initialSelectedItems = [] } = (location.state ||
+    {}) as {
     selectedItems: CartItem[];
   };
+
+  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+
+  // Initialize selectedItems with quantities from initialSelectedItems
+  useEffect(() => {
+    setSelectedItems(initialSelectedItems);
+  }, [initialSelectedItems]);
 
   const subtotal = selectedItems.reduce(
     (sum, item) => sum + item.totalPrice,
@@ -107,11 +115,12 @@ const Checkout = () => {
             message.success("Phí giao hàng đã được cập nhật.");
           },
           onError: (error: any) => {
-            console.error("Error calculating shipping:", error);
-            message.error(
-              "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-            );
-            setDeliveryFee(16000);
+            // console.error("Error calculating shipping:", error);
+            // message.error(
+            //   "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+            // );
+            message.error(error.response.data?.message);
+            setDeliveryFee(22000);
           },
         }
       );
@@ -138,7 +147,7 @@ const Checkout = () => {
             message.error(
               "Không thể tính phí giao hàng. Sử dụng phí mặc định."
             );
-            setDeliveryFee(16000);
+            setDeliveryFee(22000);
           },
         }
       );
@@ -195,11 +204,39 @@ const Checkout = () => {
         });
         updateCartItems(updatedCartItems);
       },
-      onError: (error: any) => {
-        console.error("Error creating order:", error);
-        message.error("Đặt hàng thất bại. Vui lòng thử lại.");
+      onError: (error) => {
+        // message.error("Đặt hàng thất bại. Vui lòng thử lại.");
+        const errorMessage = error.response.data;
+        message.error(errorMessage);
       },
     });
+  };
+
+  const handleIncrement = (productId: number) => {
+    setSelectedItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.productId === productId) {
+          const newQuantity = item.quantity + 1;
+          const newTotalPrice = item.price * newQuantity;
+          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+        }
+        return item;
+      })
+    );
+  };
+
+  // Handle decrement quantity
+  const handleDecrement = (productId: number) => {
+    setSelectedItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.productId === productId && item.quantity > 1) {
+          const newQuantity = item.quantity - 1;
+          const newTotalPrice = item.price * newQuantity;
+          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+        }
+        return item;
+      })
+    );
   };
 
   return (
@@ -493,9 +530,18 @@ const Checkout = () => {
                           {(item.totalPrice / item.quantity).toLocaleString()}đ
                         </Text>
                         <div className="quantity-controls">
-                          <Button>-</Button>
+                          <Button
+                            disabled={item.quantity === 1}
+                            onClick={() => handleDecrement(item.productId)}
+                          >
+                            -
+                          </Button>
                           <span>{item.quantity}</span>
-                          <Button>+</Button>
+                          <Button
+                            onClick={() => handleIncrement(item.productId)}
+                          >
+                            +
+                          </Button>
                         </div>
                       </div>
                     </Col>
