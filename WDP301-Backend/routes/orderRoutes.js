@@ -112,10 +112,29 @@ const standardizeProvince = (province) => {
  *                   type: string
  *       400:
  *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Order items must be an array"
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
  *       500:
  *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Failed to create order"
  */
 router.post("/", verifyToken, createOrder);
 

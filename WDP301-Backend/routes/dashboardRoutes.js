@@ -125,4 +125,83 @@ router.get("/user-stats", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dashboard/revenue-stats/{year}:
+ *   get:
+ *     summary: Get monthly revenue statistics for a given year
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The year for which to retrieve revenue statistics (e.g., 2025)
+ *     responses:
+ *       200:
+ *         description: Revenue statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       month:
+ *                         type: integer
+ *                         description: Month number (1-12)
+ *                       revenue:
+ *                         type: number
+ *                         description: Total revenue for the month
+ *       400:
+ *         description: Invalid year format
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Year must be between 2001 and 2025
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Failed to retrieve revenue statistics
+ */
+router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
+  try {
+    const year = req.params.year;
+    const stats = await dashboardService.getRevenueStats(year);
+    res.status(200).json({
+      status: 200,
+      message: "Revenue statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving revenue stats:", error);
+    res.status(500).send(error.message || "Failed to retrieve revenue statistics");
+  }
+});
+
 module.exports = router;

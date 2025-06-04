@@ -33,7 +33,7 @@ const createOrder = async (req, res) => {
 
   if (!req.body || typeof req.body !== "object") {
     console.log("Invalid req.body:", req.body);
-    return res.status(400).json("Request body is missing or invalid");
+    return res.status(400).send("Request body is missing or invalid");
   }
 
   const { orderItems, order_discount_value, order_shipping_fee, payment_method_id, order_address, note } = req.body;
@@ -44,43 +44,43 @@ const createOrder = async (req, res) => {
 
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
-    return res.status(400).json("Order items are required");
+    return res.status(400).send("Order items are required");
   }
   if (!Array.isArray(orderItems)) {
     console.log("orderItems is not an array:", orderItems);
-    return res.status(400).json("Order items must be an array");
+    return res.status(400).send("Order items must be an array");
   }
   if (orderItems.length === 0) {
     console.log("orderItems is empty");
-    return res.status(400).json("Order items array cannot be empty");
+    return res.status(400).send("Order items array cannot be empty");
   }
   console.log("orderItems validation passed:", JSON.stringify(orderItems, null, 2));
 
   if (!order_address) {
     console.log("order_address is missing");
-    return res.status(400).json("Order address is required");
+    return res.status(400).send("Order address is required");
   }
   if (!payment_method_id || ![1, 2, 3, 4].includes(payment_method_id)) {
     console.log("Invalid payment_method_id:", payment_method_id);
-    return res.status(400).json("Valid payment method ID is required (1-4)");
+    return res.status(400).send("Valid payment method ID is required (1-4)");
   }
 
   for (const item of orderItems) {
     if (!item.productId || !item.quantity || !item.price) {
       console.log("Invalid order item:", item);
-      return res.status(400).json("Each order item must have productId, quantity, and price");
+      return res.status(400).send("Each order item must have productId, quantity, and price");
     }
     if (typeof item.productId !== "number" || typeof item.quantity !== "number" || typeof item.price !== "number") {
       console.log("Invalid order item types:", item);
-      return res.status(400).json("productId, quantity, and price must be numbers");
+      return res.status(400).send("productId, quantity, and price must be numbers");
     }
     if (item.quantity < 1) {
       console.log("Invalid quantity:", item.quantity);
-      return res.status(400).json("Quantity must be at least 1");
+      return res.status(400).send("Quantity must be at least 1");
     }
     if (item.price < 0) {
       console.log("Invalid price:", item.price);
-      return res.status(400).json("Price cannot be negative");
+      return res.status(400).send("Price cannot be negative");
     }
   }
 
@@ -98,7 +98,7 @@ const createOrder = async (req, res) => {
         console.log(`Product not found or inactive for productId: ${item.productId}`);
         await transaction.rollback();
         console.log("Transaction rolled back due to product not found");
-        return res.status(400).json(`Product with ID ${item.productId} not found or inactive`);
+        return res.status(400).send(`Product with ID ${item.productId} not found or inactive`);
       }
       const productPrice = parseFloat(product.price);
       const itemPrice = parseFloat(item.price);
@@ -111,7 +111,7 @@ const createOrder = async (req, res) => {
         console.log(`Price mismatch for productId: ${item.productId}. Expected: ${productPrice}, Got: ${itemPrice}`);
         await transaction.rollback();
         console.log("Transaction rolled back due to price mismatch");
-        return res.status(400).json(`Price for product ID ${item.productId} does not match`);
+        return res.status(400).send(`Price for product ID ${item.productId} does not match`);
       }
     }
 
@@ -125,7 +125,7 @@ const createOrder = async (req, res) => {
         console.log(`No recipes found for productId: ${item.productId}`);
         await transaction.rollback();
         console.log("Transaction rolled back due to no recipes found");
-        return res.status(400).json(`No recipes found for product ID ${item.productId}`);
+        return res.status(400).send(`No recipes found for product ID ${item.productId}`);
       }
 
       for (const recipe of recipes) {
@@ -139,7 +139,7 @@ const createOrder = async (req, res) => {
           console.log("Transaction rolled back due to insufficient material");
           return res
             .status(400)
-            .json(
+            .send(
               `Insufficient material ${material.name} for product ID ${item.productId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
             );
         }
@@ -215,7 +215,7 @@ const createOrder = async (req, res) => {
       console.log("Error in OrderItem.bulkCreate:", bulkCreateError.message);
       await transaction.rollback();
       console.log("Transaction rolled back due to order items creation failure");
-      return res.status(500).json("Failed to create order items");
+      return res.status(500).send("Failed to create order items");
     }
 
     const paymentLinkData = {
@@ -236,7 +236,7 @@ const createOrder = async (req, res) => {
       console.error("PayOS Error details:", payosError);
       await transaction.rollback();
       console.log("Transaction rolled back due to payment link creation failure");
-      return res.status(500).json("Failed to create payment link");
+      return res.status(500).send("Failed to create payment link");
     }
 
     await transaction.commit();
@@ -253,7 +253,7 @@ const createOrder = async (req, res) => {
       });
       if (!recheckOrder) {
         console.error("Order verification failed after retry for orderId:", order.orderId);
-        return res.status(500).json("Order was not saved correctly after commit");
+        return res.status(500).send("Order was not saved correctly after commit");
       }
     }
 
@@ -272,7 +272,7 @@ const createOrder = async (req, res) => {
     console.error("Error in createOrder:", error.message, error.stack);
     await transaction.rollback();
     console.log("Transaction rolled back due to error");
-    return res.status(500).json("Failed to create order");
+    return res.status(500).send("Failed to create order");
   }
 };
 
