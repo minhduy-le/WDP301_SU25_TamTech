@@ -25,23 +25,13 @@ interface IProduct {
   productName: string;
   productPrice: number;
   productDes: string;
+  productQuantity: number;
 }
 
 const HomePage = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct>();
   const [showDetail, setShowDetail] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-screenWidth)).current;
-
-  const toggleSidebar = () => {
-    const toValue = showSidebar ? -screenWidth : 0;
-    Animated.timing(sidebarAnimation, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setShowSidebar(!showSidebar);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
@@ -93,6 +83,7 @@ const HomePage = () => {
                 productName: selectedProduct.productName,
                 productPrice: selectedProduct.productPrice,
                 productImg: selectedProduct.productImg,
+                productQuantity: selectedProduct.productQuantity,
               }}
             />
           </Animated.View>
