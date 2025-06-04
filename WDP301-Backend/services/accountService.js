@@ -90,15 +90,7 @@ const createUser = async (userData) => {
 const getAllUsers = async () => {
   try {
     const users = await User.findAll({
-      attributes: [
-        "id",
-        "fullName",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "note",
-        "role", // Thêm role vào danh sách trả về
-      ],
+      attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
     });
     return users;
   } catch (error) {
