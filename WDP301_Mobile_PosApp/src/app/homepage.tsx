@@ -1,6 +1,4 @@
 import CollectionList from "@/components/headerComponent/collectionList";
-import Sidebar from "@/components/headerComponent/sideBar";
-import TopHeader from "@/components/headerComponent/topHeader";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
@@ -16,7 +14,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
@@ -46,9 +43,8 @@ const HomePage = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
       <ScrollView>
-        <TopHeader onMenuPress={toggleSidebar} />
         <SearchComponent />
         <TopList />
         <CollectionList
@@ -58,11 +54,6 @@ const HomePage = () => {
           }}
         />
       </ScrollView>
-
-      <Sidebar
-        sidebarAnimation={sidebarAnimation}
-        toggleSidebar={toggleSidebar}
-      />
 
       {showDetail && selectedProduct && (
         <View style={modalStyles.overlay}>
@@ -99,7 +90,7 @@ const HomePage = () => {
           </Animated.View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
