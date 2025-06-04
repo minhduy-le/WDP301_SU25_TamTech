@@ -86,7 +86,10 @@ const AdminSidebar: React.FC = () => {
       key: "logout",
       label: "Đăng xuất",
       icon: <LogoutOutlined />,
-      onClick: () => navigate("/login"),
+      onClick: () => {
+        localStorage.removeItem("token");
+        navigate("/login");
+      },
     },
   ];
 
