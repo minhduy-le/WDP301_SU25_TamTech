@@ -127,13 +127,13 @@ router.post("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts:
  *   get:
- *     summary: Get all user accounts
+ *     summary: Get all user accounts (excluding Admin role)
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of users
+ *         description: List of users excluding those with Admin role
  *         content:
  *           application/json:
  *             schema:
@@ -163,6 +163,8 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: string
  *                       role:
  *                         type: string
+ *                         enum: [User, Staff, Shipper]
+ *                         description: Role of the user (Admin excluded)
  *                       isActive:
  *                         type: boolean
  *                         description: Indicates whether the user account is active
@@ -191,7 +193,7 @@ router.get("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts/{id}:
  *   get:
- *     summary: Get a user by ID
+ *     summary: Get a user by ID (excluding Admin role)
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
@@ -204,7 +206,7 @@ router.get("/", verifyToken, async (req, res, next) => {
  *         description: User ID
  *     responses:
  *       200:
- *         description: User retrieved successfully
+ *         description: User retrieved successfully (excluding Admin role)
  *         content:
  *           application/json:
  *             schema:
@@ -232,13 +234,15 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     role:
  *                       type: string
+ *                       enum: [User, Staff, Shipper]
+ *                       description: Role of the user (Admin excluded)
  *                     isActive:
  *                       type: boolean
  *                       description: Indicates whether the user account is active
  *       400:
  *         description: Invalid user ID
  *       404:
- *         description: User not found
+ *         description: User not found or is an Admin
  *       401:
  *         description: Unauthorized
  *       500:

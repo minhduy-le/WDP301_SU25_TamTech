@@ -91,6 +91,11 @@ const getAllUsers = async () => {
   try {
     const users = await User.findAll({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
+      where: {
+        role: {
+          [Op.ne]: "Admin", // Exclude users with Admin role
+        },
+      },
     });
     return users;
   } catch (error) {
@@ -106,19 +111,16 @@ const getUserById = async (userId) => {
     }
 
     const user = await User.findByPk(userId, {
-      attributes: [
-        "id",
-        "fullName",
-        "email",
-        "phone_number",
-        "date_of_birth",
-        "note",
-        "role", // Thêm role vào danh sách trả về
-      ],
+      attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
+      where: {
+        role: {
+          [Op.ne]: "Admin", // Exclude users with Admin role
+        },
+      },
     });
 
     if (!user) {
-      throw "User not found";
+      throw "User not found or is an Admin";
     }
 
     return user;
