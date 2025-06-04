@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: APP_COLOR.BROWN,
     marginHorizontal: 17,
-    marginTop: 10,
+    marginTop: 3,
     ...Platform.select({
       ios: {
         shadowColor: APP_COLOR.BLACK,
@@ -65,14 +65,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     flexDirection: "row",
-    paddingTop: Platform.OS === "android" ? 10 : 0,
     marginTop: 10,
   },
   filterBtn: {
     height: 50,
     width: 50,
     backgroundColor: APP_COLOR.BROWN,
-    marginTop: 5,
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",

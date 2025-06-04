@@ -1,5 +1,8 @@
+import logo from "@/assets/data/logo.png";
+import Sidebar from "@/components/headerComponent/sideBar";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
-import Entypo from "@expo/vector-icons/Entypo";
+import useCustomFonts from "@/hooks/useFonts";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import {
@@ -9,7 +12,11 @@ import {
 } from "@react-navigation/native";
 import { Drawer } from "expo-router/drawer";
 import { StatusBar } from "expo-status-bar";
+import { useRef, useState } from "react";
 import {
+  Animated,
+  Dimensions,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -18,27 +25,55 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+const screenWidth = Dimensions.get("screen").width;
+
 const HeaderRight = () => {
+  const sidebarAnimation = useRef(new Animated.Value(screenWidth)).current;
+  const [showSidebar, setShowSidebar] = useState(false);
+  const toggleSidebar = () => {
+    const toValue = showSidebar ? screenWidth : 0;
+    Animated.timing(sidebarAnimation, {
+      toValue,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+    setShowSidebar(!showSidebar);
+  };
   return (
     <View style={styles.headerContainer}>
       <Pressable
-        style={styles.locationContent}
+        style={styles.locationContainer}
         onPress={() => console.log("Địa chỉ nè")}
       >
-        <Entypo name="location-pin" size={24} color="red" />
+        <Image source={logo} style={{ height: 50, width: 75 }} />
         <Text style={styles.locationText}>Ho Chi Minh City</Text>
         <Octicons name="chevron-down" size={20} color={APP_COLOR.BROWN} />
       </Pressable>
-      <MaterialIcons name="settings" size={29} color={APP_COLOR.BROWN} />
+      <AntDesign
+        name="shoppingcart"
+        size={24}
+        color={APP_COLOR.BROWN}
+        onPress={toggleSidebar}
+      />
+      <Sidebar
+        sidebarAnimation={sidebarAnimation}
+        toggleSidebar={toggleSidebar}
+      />
     </View>
   );
 };
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
+  const { fontsLoaded, onLayoutRootView } = useCustomFonts();
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Drawer
           screenOptions={{
@@ -70,7 +105,7 @@ export default function DrawerLayout() {
             }}
           />
           <Drawer.Screen
-            name="(tabs)/orderHistory"
+            name="(tabs)/order.history"
             options={{
               drawerLabel: "Lịch sử giao dịch",
               title: "",
@@ -94,23 +129,23 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 70,
+    gap: 30,
     marginRight: 10,
     ...Platform.select({
       android: {
         position: "absolute",
-        left: 40,
+        left: 20,
       },
     }),
   },
-  locationContent: {
+  locationContainer: {
     flexDirection: "row",
-    gap: 10,
     alignItems: "center",
+    gap: 5,
   },
   locationText: {
-    fontFamily: APP_FONT.REGULAR,
-    fontSize: 17,
     color: APP_COLOR.BROWN,
+    fontFamily: APP_FONT.REGULAR,
+    fontSize: 16,
   },
 });
