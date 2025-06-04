@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   textHeader: {
     fontFamily: APP_FONT.SEMIBOLD,
     color: APP_COLOR.BROWN,
-    fontSize: 17,
+    fontSize: 19,
     marginBottom: 5,
     width: "100%",
   },
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontFamily: APP_FONT.SEMIBOLD,
-    fontSize: 20,
+    fontSize: 17,
     color: APP_COLOR.ORANGE,
   },
   currencyText: {

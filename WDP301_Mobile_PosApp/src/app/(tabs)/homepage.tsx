@@ -1,3 +1,4 @@
+import AddToCart from "@/components/btnComponent/addToCart";
 import CollectionList from "@/components/headerComponent/collectionList";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
@@ -79,7 +80,6 @@ const HomePage = () => {
                 }}
               ></View>
             </Pressable>
-
             <Text style={modalStyles.name}>{selectedProduct.productName}</Text>
             <Text style={modalStyles.description}>
               {selectedProduct.productDes}
@@ -87,6 +87,14 @@ const HomePage = () => {
             <Text style={modalStyles.price}>
               {currencyFormatter(selectedProduct.productPrice)} VND
             </Text>
+            <AddToCart
+              product={{
+                productId: selectedProduct.id,
+                productName: selectedProduct.productName,
+                productPrice: selectedProduct.productPrice,
+                productImg: selectedProduct.productImg,
+              }}
+            />
           </Animated.View>
         </View>
       )}
