@@ -1,294 +1,515 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
+  Table,
+  Space,
+  Modal,
+  Tag,
+  message,
   Card,
   Row,
   Col,
-  Table,
-  Tag,
-  Space,
-  Button,
-  Progress,
-  Timeline,
   Statistic,
-} from 'antd';
+  Button,
+  Input,
+} from "antd";
 import {
-  WarningOutlined,
+  SearchOutlined,
+  FileTextOutlined,
   CheckCircleOutlined,
-  SyncOutlined,
+  ClockCircleOutlined,
   ExclamationCircleOutlined,
-  BugOutlined,
-  ApiOutlined,
-  CloudServerOutlined,
-  DownloadOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+} from "@ant-design/icons";
+import type { ColumnsType, TableProps } from "antd/es/table";
+import type { SorterResult, FilterValue } from "antd/es/table/interface";
+import spinTamTac from "../../assets/spinTamTac.json";
+import Lottie from "lottie-react";
 
-const generateSystemIssues = () => {
-  const statuses = ['critical', 'warning', 'info', 'resolved'];
-  const components = ['API Gateway', 'Database', 'Authentication', 'File Storage', 'Cache Server'];
-  const types = ['Error', 'Warning', 'Info', 'Maintenance'];
-  
-  return Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    component: components[Math.floor(Math.random() * components.length)],
-    type: types[Math.floor(Math.random() * types.length)],
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    description: `Issue description ${i + 1}`,
-    timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-    impact: Math.floor(Math.random() * 100),
-  }));
-};
-
-// Generate fake data for system metrics
-const generateSystemMetrics = () => {
-  return {
-    uptime: 99.9,
-    responseTime: 150,
-    errorRate: 0.5,
-    activeUsers: 1250,
-    cpuUsage: 45,
-    memoryUsage: 60,
-    diskUsage: 75,
-    networkUsage: 30,
-  };
-};
+interface Report {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  title: string;
+  content: string;
+  status: "pending" | "in_progress" | "resolved";
+  createdAt: string;
+  updatedAt: string;
+  priority: "low" | "medium" | "high";
+  category: string;
+}
 
 const SystemIssuesReport: React.FC = () => {
-  const [issues] = useState(generateSystemIssues());
-  const [metrics] = useState(generateSystemMetrics());
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [filteredInfo, setFilteredInfo] = useState<Record<string, FilterValue | null>>({});
+  const [sortedInfo, setSortedInfo] = useState<SorterResult<Report>>({});
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'critical':
-        return 'red';
-      case 'warning':
-        return 'orange';
-      case 'info':
-        return 'blue';
-      case 'resolved':
-        return 'green';
-      default:
-        return 'default';
+  // Fake data
+  const fakeReports: Report[] = [
+    {
+      id: "1",
+      userId: "user1",
+      userName: "Nguyễn Văn A",
+      userEmail: "nguyenvana@example.com",
+      title: "Lỗi không thể đăng nhập",
+      content: "Tôi không thể đăng nhập vào tài khoản của mình. Hệ thống hiển thị lỗi 'Invalid credentials' mặc dù tôi đã nhập đúng thông tin.",
+      status: "pending",
+      createdAt: "2024-03-15T08:30:00Z",
+      updatedAt: "2024-03-15T08:30:00Z",
+      priority: "high",
+      category: "bug"
+    },
+    {
+      id: "2",
+      userId: "user2",
+      userName: "Trần Thị B",
+      userEmail: "tranthib@example.com",
+      title: "Đề xuất tính năng mới",
+      content: "Tôi muốn đề xuất thêm tính năng lưu địa chỉ giao hàng để không phải nhập lại mỗi lần đặt hàng.",
+      status: "in_progress",
+      createdAt: "2024-03-14T15:45:00Z",
+      updatedAt: "2024-03-15T09:20:00Z",
+      priority: "medium",
+      category: "feature"
+    },
+    {
+      id: "3",
+      userId: "user3",
+      userName: "Lê Văn C",
+      userEmail: "levanc@example.com",
+      title: "Góp ý về giao diện",
+      content: "Giao diện trang web rất đẹp nhưng tôi nghĩ nên thêm chế độ tối (dark mode) để người dùng có thể chọn.",
+      status: "resolved",
+      createdAt: "2024-03-13T10:15:00Z",
+      updatedAt: "2024-03-14T16:30:00Z",
+      priority: "low",
+      category: "feedback"
+    },
+    {
+      id: "4",
+      userId: "user4",
+      userName: "Phạm Thị D",
+      userEmail: "phamthid@example.com",
+      title: "Lỗi hiển thị giá sản phẩm",
+      content: "Giá sản phẩm hiển thị không đúng, có sự chênh lệch giữa giá hiển thị và giá khi thanh toán.",
+      status: "pending",
+      createdAt: "2024-03-15T11:20:00Z",
+      updatedAt: "2024-03-15T11:20:00Z",
+      priority: "high",
+      category: "bug"
+    },
+    {
+      id: "5",
+      userId: "user5",
+      userName: "Hoàng Văn E",
+      userEmail: "hoangvane@example.com",
+      title: "Đề xuất cải thiện UX",
+      content: "Nên thêm tính năng tìm kiếm nâng cao với bộ lọc theo nhiều tiêu chí khác nhau.",
+      status: "in_progress",
+      createdAt: "2024-03-14T09:30:00Z",
+      updatedAt: "2024-03-15T10:15:00Z",
+      priority: "medium",
+      category: "feature"
+    }
+  ];
+
+  useEffect(() => {
+    // Simulate API call with setTimeout
+    setLoading(true);
+    setTimeout(() => {
+      setReports(fakeReports);
+      setLoading(false);
+      message.success("Tải danh sách báo cáo thành công!");
+    }, 1000);
+  }, []);
+
+  const handleChange: TableProps<Report>["onChange"] = (
+    _pagination,
+    filters,
+    sorter,
+    _extra
+  ) => {
+    setFilteredInfo(filters);
+    setSortedInfo(sorter as SorterResult<Report>);
+  };
+
+  const handleViewReport = (report: Report) => {
+    setSelectedReport(report);
+    setIsModalVisible(true);
+  };
+
+  const handleUpdateStatus = async (reportId: string, newStatus: Report["status"]) => {
+    // Simulate API call
+    try {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setReports((prevReports) =>
+        prevReports.map((report) =>
+          report.id === reportId ? { ...report, status: newStatus } : report
+        )
+      );
+
+      message.success("Cập nhật trạng thái báo cáo thành công!");
+    } catch (error) {
+      console.error("Error updating report status:", error);
+      message.error("Không thể cập nhật trạng thái báo cáo");
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'Error':
-        return <BugOutlined style={{ color: '#ff4d4f' }} />;
-      case 'Warning':
-        return <WarningOutlined style={{ color: '#faad14' }} />;
-      case 'Info':
-        return <ExclamationCircleOutlined style={{ color: '#1890ff' }} />;
-      case 'Maintenance':
-        return <SyncOutlined style={{ color: '#52c41a' }} />;
-      default:
-        return null;
-    }
-  };
-
-  const columns = [
+  const columns: ColumnsType<Report> = [
     {
-      title: 'Component',
-      dataIndex: 'component',
-      key: 'component',
-      render: (text: string) => (
-        <Space>
-          <CloudServerOutlined />
-          {text}
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      width: 80,
+      align: "center",
+      sorter: (a, b) => a.id.localeCompare(b.id),
+      sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
+    },
+    {
+      title: "Tiêu đề",
+      dataIndex: "title",
+      key: "title",
+      width: 200,
+      align: "center",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
+    },
+    {
+      title: "Người gửi",
+      dataIndex: "userName",
+      key: "userName",
+      width: 160,
+      align: "center",
+      render: (_, record) => (
+        <div>
+          <div>{record.userName}</div>
+          <div style={{ fontSize: "12px", color: "#666" }}>{record.userEmail}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Danh mục",
+      dataIndex: "category",
+      key: "category",
+      width: 120,
+      align: "center",
+      filters: [
+        { text: "Bug", value: "bug" },
+        { text: "Feature Request", value: "feature" },
+        { text: "Feedback", value: "feedback" },
+        { text: "Other", value: "other" },
+      ],
+      filteredValue: filteredInfo.category || null,
+      onFilter: (value, record) => record.category === value,
+    },
+    {
+      title: "Độ ưu tiên",
+      dataIndex: "priority",
+      key: "priority",
+      width: 120,
+      align: "center",
+      render: (priority: Report["priority"]) => {
+        const colorMap = {
+          low: "green",
+          medium: "orange",
+          high: "red",
+        };
+        return <Tag color={colorMap[priority]}>{priority.toUpperCase()}</Tag>;
+      },
+      filters: [
+        { text: "Low", value: "low" },
+        { text: "Medium", value: "medium" },
+        { text: "High", value: "high" },
+      ],
+      filteredValue: filteredInfo.priority || null,
+      onFilter: (value, record) => record.priority === value,
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      width: 120,
+      align: "center",
+      render: (status: Report["status"]) => {
+        const statusConfig = {
+          pending: { color: "orange", icon: <ClockCircleOutlined />, text: "Chờ xử lý" },
+          in_progress: { color: "blue", icon: <ExclamationCircleOutlined />, text: "Đang xử lý" },
+          resolved: { color: "green", icon: <CheckCircleOutlined />, text: "Đã xử lý" },
+        };
+        const config = statusConfig[status];
+        return (
+          <Tag color={config.color} icon={config.icon}>
+            {config.text}
+          </Tag>
+        );
+      },
+      filters: [
+        { text: "Chờ xử lý", value: "pending" },
+        { text: "Đang xử lý", value: "in_progress" },
+        { text: "Đã xử lý", value: "resolved" },
+      ],
+      filteredValue: filteredInfo.status || null,
+      onFilter: (value, record) => record.status === value,
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 150,
+      align: "center",
+      render: (date: string) => new Date(date).toLocaleDateString(),
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      sortOrder: sortedInfo.columnKey === "createdAt" ? sortedInfo.order : null,
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      width: 200,
+      fixed: "right",
+      align: "center",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="primary"
+            onClick={() => handleViewReport(record)}
+            style={{
+              background: "#2E7D32",
+              borderColor: "#2E7D32",
+              borderRadius: "6px",
+              outline: "none",
+            }}
+          >
+            Chi tiết
+          </Button>
+          {record.status !== "resolved" && (
+            <Button
+              type="primary"
+              onClick={() => handleUpdateStatus(record.id, "resolved")}
+              style={{
+                background: "#4CAF50",
+                borderColor: "#4CAF50",
+                borderRadius: "6px",
+                outline: "none",
+              }}
+            >
+              Đã xử lý
+            </Button>
+          )}
         </Space>
       ),
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => (
-        <Space>
-          {getTypeIcon(type)}
-          {type}
-        </Space>
-      ),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {status.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: 'Impact',
-      dataIndex: 'impact',
-      key: 'impact',
-      render: (impact: number) => (
-        <Progress
-          percent={impact}
-          size="small"
-          status={impact > 70 ? 'exception' : impact > 30 ? 'normal' : 'success'}
-          showInfo={false}
-        />
-      ),
-    },
-    {
-      title: 'Timestamp',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      render: (timestamp: string) => new Date(timestamp).toLocaleString(),
     },
   ];
 
+  const stats = {
+    totalReports: reports.length,
+    pendingReports: reports.filter((report) => report.status === "pending").length,
+    resolvedReports: reports.filter((report) => report.status === "resolved").length,
+  };
+
+  const displayedReports = reports.filter((report) => {
+    const searchTextLower = searchText.toLowerCase();
+    return (
+      report.title.toLowerCase().includes(searchTextLower) ||
+      report.userName.toLowerCase().includes(searchTextLower) ||
+      report.userEmail.toLowerCase().includes(searchTextLower) ||
+      report.content.toLowerCase().includes(searchTextLower)
+    );
+  });
+
   return (
-    <div style={{ padding: '24px' }}>
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
-          <Card>
+    <div style={{ padding: "24px", position: "relative", minHeight: 600 }}>
+      {loading && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(255,255,255,0.85)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Lottie
+            animationData={spinTamTac}
+            loop={true}
+            style={{ width: 200, height: 200 }}
+          />
+        </div>
+      )}
+
+      <Row gutter={[16, 16]} style={{ marginBottom: "24px" }}>
+        <Col xs={24} sm={12} md={8}>
+          <Card bordered={false}>
             <Statistic
-              title="System Uptime"
-              value={metrics.uptime}
-              precision={1}
-              suffix="%"
-              valueStyle={{ color: metrics.uptime > 99 ? '#52c41a' : '#faad14' }}
-              prefix={<CheckCircleOutlined />}
+              title="Tổng số báo cáo"
+              value={stats.totalReports}
+              prefix={<FileTextOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
+        <Col xs={24} sm={12} md={8}>
+          <Card bordered={false}>
             <Statistic
-              title="Response Time"
-              value={metrics.responseTime}
-              suffix="ms"
-              valueStyle={{ color: metrics.responseTime < 200 ? '#52c41a' : '#faad14' }}
-              prefix={<ApiOutlined />}
+              title="Báo cáo chờ xử lý"
+              value={stats.pendingReports}
+              prefix={<ClockCircleOutlined style={{ color: "orange" }} />}
             />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
+        <Col xs={24} sm={12} md={8}>
+          <Card bordered={false}>
             <Statistic
-              title="Error Rate"
-              value={metrics.errorRate}
-              precision={2}
-              suffix="%"
-              valueStyle={{ color: metrics.errorRate < 1 ? '#52c41a' : '#ff4d4f' }}
-              prefix={<BugOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="Active Users"
-              value={metrics.activeUsers}
-              valueStyle={{ color: '#1890ff' }}
-              prefix={<UserOutlined />}
+              title="Báo cáo đã xử lý"
+              value={stats.resolvedReports}
+              prefix={<CheckCircleOutlined style={{ color: "green" }} />}
             />
           </Card>
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col span={12}>
-          <Card title="System Resources">
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <div>
-                <div style={{ marginBottom: '8px' }}>CPU Usage</div>
-                <Progress
-                  percent={metrics.cpuUsage}
-                  status={metrics.cpuUsage > 80 ? 'exception' : 'normal'}
-                  strokeColor={{
-                    '0%': '#108ee9',
-                    '100%': '#87d068',
-                  }}
-                />
-              </div>
-              <div>
-                <div style={{ marginBottom: '8px' }}>Memory Usage</div>
-                <Progress
-                  percent={metrics.memoryUsage}
-                  status={metrics.memoryUsage > 80 ? 'exception' : 'normal'}
-                  strokeColor={{
-                    '0%': '#108ee9',
-                    '100%': '#87d068',
-                  }}
-                />
-              </div>
-              <div>
-                <div style={{ marginBottom: '8px' }}>Disk Usage</div>
-                <Progress
-                  percent={metrics.diskUsage}
-                  status={metrics.diskUsage > 80 ? 'exception' : 'normal'}
-                  strokeColor={{
-                    '0%': '#108ee9',
-                    '100%': '#87d068',
-                  }}
-                />
-              </div>
-              <div>
-                <div style={{ marginBottom: '8px' }}>Network Usage</div>
-                <Progress
-                  percent={metrics.networkUsage}
-                  status={metrics.networkUsage > 80 ? 'exception' : 'normal'}
-                  strokeColor={{
-                    '0%': '#108ee9',
-                    '100%': '#87d068',
-                  }}
-                />
-              </div>
-            </Space>
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card title="Recent System Events">
-            <Timeline>
-              {issues.slice(0, 5).map((issue) => (
-                <Timeline.Item
-                  key={issue.id}
-                  color={getStatusColor(issue.status)}
-                  dot={getTypeIcon(issue.type)}
+      <Card bordered={false}>
+        <div
+          style={{
+            marginBottom: "16px",
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "16px",
+          }}
+        >
+          <Input
+            placeholder="Tìm kiếm theo tiêu đề, người gửi, nội dung..."
+            prefix={<SearchOutlined style={{ color: "#2E7D32" }} />}
+            style={{
+              width: "300px",
+              borderRadius: "20px",
+              borderColor: "#4CAF50",
+            }}
+            onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            allowClear
+          />
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={displayedReports}
+          rowKey="id"
+          scroll={{ x: 1300 }}
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} của ${total} báo cáo`,
+          }}
+          onChange={handleChange}
+          locale={{
+            emptyText: loading ? "Đang tải dữ liệu..." : "Không có dữ liệu",
+          }}
+        />
+      </Card>
+
+      <Modal
+        title="Chi tiết báo cáo"
+        open={isModalVisible}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setSelectedReport(null);
+        }}
+        footer={null}
+        
+        width={700}
+        style={{ top: 20 }}
+      >
+        {selectedReport && (
+          <div style={{ padding: "20px" }}>
+            <h2>{selectedReport.title}</h2>
+            <div style={{ marginBottom: "20px" }}>
+              <p>
+                <strong>Người gửi:</strong> {selectedReport.userName} ({selectedReport.userEmail})
+              </p>
+              <p>
+                <strong>Danh mục:</strong> {selectedReport.category}
+              </p>
+              <p>
+                <strong>Độ ưu tiên:</strong>{" "}
+                <Tag
+                  color={
+                    selectedReport.priority === "high"
+                      ? "red"
+                      : selectedReport.priority === "medium"
+                      ? "orange"
+                      : "green"
+                  }
                 >
-                  <p>{issue.description}</p>
-                  <p style={{ fontSize: '12px', color: '#999' }}>
-                    {new Date(issue.timestamp).toLocaleString()}
-                  </p>
-                </Timeline.Item>
-              ))}
-            </Timeline>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col span={24}>
-          <Card
-            title="System Issues"
-            extra={
-              <Space>
-                <Button type="primary" icon={<SyncOutlined />}>
-                  Refresh
+                  {selectedReport.priority.toUpperCase()}
+                </Tag>
+              </p>
+              <p>
+                <strong>Trạng thái:</strong>{" "}
+                <Tag
+                  color={
+                    selectedReport.status === "resolved"
+                      ? "green"
+                      : selectedReport.status === "in_progress"
+                      ? "blue"
+                      : "orange"
+                  }
+                >
+                  {selectedReport.status === "resolved"
+                    ? "Đã xử lý"
+                    : selectedReport.status === "in_progress"
+                    ? "Đang xử lý"
+                    : "Chờ xử lý"}
+                </Tag>
+              </p>
+              <p>
+                <strong>Ngày tạo:</strong>{" "}
+                {new Date(selectedReport.createdAt).toLocaleString()}
+              </p>
+            </div>
+            <div style={{ marginBottom: "20px" }}>
+              <h3>Nội dung báo cáo:</h3>
+              <div
+                style={{
+                  padding: "15px",
+                  background: "#f5f5f5",
+                  borderRadius: "8px",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {selectedReport.content}
+              </div>
+            </div>
+            {selectedReport.status !== "resolved" && (
+              <div style={{ textAlign: "right" }}>
+                <Button
+                  type="primary"
+                  onClick={() => handleUpdateStatus(selectedReport.id, "resolved")}
+                  style={{
+                    background: "#4CAF50",
+                    borderColor: "#4CAF50",
+                    borderRadius: "6px",
+                    outline: "none",
+                  }}
+                >
+                  Đánh dấu đã xử lý
                 </Button>
-                <Button icon={<DownloadOutlined />}>Export</Button>
-              </Space>
-            }
-          >
-            <Table
-              columns={columns}
-              dataSource={issues}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-            />
-          </Card>
-        </Col>
-      </Row>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

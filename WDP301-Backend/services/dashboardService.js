@@ -2,6 +2,7 @@ const sequelize = require("../config/database");
 const { Op } = require("sequelize"); // Import Op object
 const Product = require("../models/product");
 const User = require("../models/user");
+const Order = require("../models/order");
 
 const getProductStats = async () => {
   const [results] = await sequelize.query(
@@ -57,4 +58,40 @@ const getUserStats = async () => {
   return stats;
 };
 
-module.exports = { getProductStats, getUserStats };
+const getRevenueStats = async (year) => {
+  const parsedYear = parseInt(year, 10);
+  const currentYear = new Date().getFullYear(); // 2025 as of June 04, 2025
+
+  if (isNaN(parsedYear) || parsedYear < 2001 || parsedYear > currentYear) {
+    throw new Error("Year must be between 2001 and " + currentYear);
+  }
+
+  const revenueData = await Order.findAll({
+    where: {
+      status_id: { [Op.ne]: 1 }, // Exclude status_id 1 (Pending)
+      [Op.and]: [sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("YEAR FROM order_create_at")), parsedYear)],
+    },
+    attributes: [
+      [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM order_create_at")), "month"],
+      [sequelize.fn("SUM", sequelize.col("order_amount")), "revenue"],
+    ],
+    group: [sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM order_create_at"))],
+    raw: true,
+  });
+
+  // Initialize array for all 12 months with revenue 0
+  const monthlyRevenue = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    revenue: 0,
+  }));
+
+  // Populate revenue data
+  revenueData.forEach((data) => {
+    const monthIndex = parseInt(data.month) - 1;
+    monthlyRevenue[monthIndex].revenue = parseFloat(data.revenue) || 0;
+  });
+
+  return monthlyRevenue;
+};
+
+module.exports = { getProductStats, getUserStats, getRevenueStats };
