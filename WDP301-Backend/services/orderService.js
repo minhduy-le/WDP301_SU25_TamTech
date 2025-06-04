@@ -517,7 +517,9 @@ const handlePaymentSuccess = async (req, res) => {
       await transaction.commit();
       console.log("Transaction committed successfully for already processed order");
       return res.redirect(
-        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${status || ""}&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
+        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${
+          status || ""
+        }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
       );
     }
 
@@ -559,7 +561,9 @@ const handlePaymentSuccess = async (req, res) => {
       console.log("Transaction committed successfully for orderId:", parsedOrderId);
       console.log("Payment processed, redirecting to frontend with invoiceUrl:", invoiceUrl);
       return res.redirect(
-        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${status || ""}&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
+        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${
+          status || ""
+        }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
       );
     } else {
       console.log("Payment failed for orderId:", parsedOrderId, { code, status });
@@ -662,4 +666,143 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, handlePaymentSuccess, getUserOrders };
+const setOrderToPreparing = async (req, res) => {
+  console.log("setOrderToPreparing called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff can set orders to Preparing");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 2) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Preparing.`
+        );
+    }
+
+    order.status_id = 6; // Preparing
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Preparing for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Preparing",
+      orderId: parsedOrderId,
+      status: "Preparing",
+    });
+  } catch (error) {
+    console.error("Error in setOrderToPreparing:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
+const setOrderToDelivering = async (req, res) => {
+  console.log("setOrderToDelivering called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff", "Shipper"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Shipper can set orders to Delivering");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 6) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Delivering.`
+        );
+    }
+
+    order.status_id = 3; // Delivering
+    if (userRole === "Shipper") {
+      order.assignToShipperId = userId;
+      console.log("Assigned shipperId:", userId, "to orderId:", parsedOrderId);
+    }
+
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Delivering for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Delivering",
+      orderId: parsedOrderId,
+      status: "Delivering",
+    });
+  } catch (error) {
+    console.error("Error in setOrderToDelivering:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
+module.exports = {
+  createOrder,
+  handlePaymentSuccess,
+  getUserOrders,
+  setOrderToPreparing,
+  setOrderToDelivering,
+};
+
+module.exports = { createOrder, handlePaymentSuccess, getUserOrders, setOrderToPreparing, setOrderToDelivering };

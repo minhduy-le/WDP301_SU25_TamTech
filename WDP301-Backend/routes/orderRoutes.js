@@ -1,6 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { createOrder, handlePaymentSuccess, getUserOrders } = require("../services/orderService");
+const {
+  createOrder,
+  handlePaymentSuccess,
+  getUserOrders,
+  setOrderToPreparing,
+  setOrderToDelivering,
+} = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
 const Information = require("../models/information");
@@ -504,5 +510,149 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
     });
   }
 });
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/preparing:
+ *   put:
+ *     summary: Set order status to Preparing
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Preparing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Preparing
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Pending. It must be Paid to transition to Preparing.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff can set orders to Preparing'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/delivering:
+ *   put:
+ *     summary: Set order status to Delivering
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Delivering
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Delivering
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Paid. It must be Preparing to transition to Delivering.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff or Shipper can set orders to Delivering'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
 
 module.exports = router;
