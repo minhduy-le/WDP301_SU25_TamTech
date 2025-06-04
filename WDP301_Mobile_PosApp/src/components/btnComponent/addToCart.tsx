@@ -1,7 +1,7 @@
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { useCurrentApp } from "@/context/app.context";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 interface AddToCartProps {
@@ -10,15 +10,25 @@ interface AddToCartProps {
     productName: string;
     productPrice: number;
     productImg: any;
+    productQuantity: number;
   };
 }
 
 const AddToCart = ({ product }: AddToCartProps) => {
-  const { cart, setCart, counter } = useCurrentApp();
+  const { cart, setCart } = useCurrentApp();
   const [quantity, setQuantity] = useState(0);
 
+  useEffect(() => {
+    if (product) {
+      const defaultCounterId = "default";
+      const currentQuantity =
+        cart[defaultCounterId]?.items[product.productId]?.quantity || 0;
+      setQuantity(currentQuantity);
+    }
+  }, [product, cart]);
+
   const handleQuantityChange = (action: "MINUS" | "PLUS") => {
-    if (!counter?._id || !product) return;
+    if (!product) return;
 
     const total = action === "MINUS" ? -1 : 1;
     const newQuantity = quantity + total;
@@ -29,20 +39,23 @@ const AddToCart = ({ product }: AddToCartProps) => {
     const priceChange = total * product.productPrice;
 
     const newCart = { ...cart };
-    if (!newCart[counter._id]) {
-      newCart[counter._id] = {
+    const defaultCounterId = "default";
+
+    if (!newCart[defaultCounterId]) {
+      newCart[defaultCounterId] = {
         sum: 0,
         quantity: 0,
         items: {},
       };
     }
 
-    newCart[counter._id].sum = (newCart[counter._id].sum || 0) + priceChange;
-    newCart[counter._id].quantity =
-      (newCart[counter._id].quantity || 0) + total;
+    newCart[defaultCounterId].sum =
+      (newCart[defaultCounterId].sum || 0) + priceChange;
+    newCart[defaultCounterId].quantity =
+      (newCart[defaultCounterId].quantity || 0) + total;
 
-    if (!newCart[counter._id].items[product.productId]) {
-      newCart[counter._id].items[product.productId] = {
+    if (!newCart[defaultCounterId].items[product.productId]) {
+      newCart[defaultCounterId].items[product.productId] = {
         data: {
           ...product,
           basePrice: product.productPrice,
@@ -53,15 +66,16 @@ const AddToCart = ({ product }: AddToCartProps) => {
     }
 
     const currentQuantity =
-      (newCart[counter._id].items[product.productId].quantity || 0) + total;
+      (newCart[defaultCounterId].items[product.productId].quantity || 0) +
+      total;
 
     if (currentQuantity <= 0) {
-      delete newCart[counter._id].items[product.productId];
-      if (Object.keys(newCart[counter._id].items).length === 0) {
-        delete newCart[counter._id];
+      delete newCart[defaultCounterId].items[product.productId];
+      if (Object.keys(newCart[defaultCounterId].items).length === 0) {
+        delete newCart[defaultCounterId];
       }
     } else {
-      newCart[counter._id].items[product.productId] = {
+      newCart[defaultCounterId].items[product.productId] = {
         data: {
           ...product,
           basePrice: product.productPrice,

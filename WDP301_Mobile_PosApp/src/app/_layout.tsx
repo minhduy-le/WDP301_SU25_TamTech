@@ -1,7 +1,7 @@
 import logo from "@/assets/data/logo.png";
 import Sidebar from "@/components/headerComponent/sideBar";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
-import AppProvider from "@/context/app.context";
+import AppProvider, { useCurrentApp } from "@/context/app.context";
 import useCustomFonts from "@/hooks/useFonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -10,7 +10,7 @@ import Octicons from "@expo/vector-icons/Octicons";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Drawer } from "expo-router/drawer";
 import { StatusBar } from "expo-status-bar";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -26,6 +26,20 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 const screenWidth = Dimensions.get("screen").width;
 
 const HeaderRight = () => {
+  const { cart } = useCurrentApp();
+  const [quantity, setQuantity] = useState(0);
+  useEffect(() => {
+    if (
+      cart &&
+      cart.default &&
+      typeof cart.default.quantity === "number" &&
+      cart.default.quantity > 0
+    ) {
+      setQuantity(cart.default.quantity);
+    } else {
+      setQuantity(0);
+    }
+  }, [cart]);
   const sidebarAnimation = useRef(new Animated.Value(screenWidth)).current;
   const [showSidebar, setShowSidebar] = useState(false);
   const toggleSidebar = () => {
@@ -48,12 +62,37 @@ const HeaderRight = () => {
           <Text style={styles.locationText}>Ho Chi Minh City</Text>
           <Octicons name="chevron-down" size={15} color={APP_COLOR.BROWN} />
         </Pressable>
-        <AntDesign
-          name="shoppingcart"
-          size={27}
-          color={APP_COLOR.BROWN}
-          onPress={toggleSidebar}
-        />
+        <View>
+          <View
+            style={{
+              position: "absolute",
+              top: -10,
+              right: -10,
+              backgroundColor: APP_COLOR.BROWN,
+              width: 20,
+              height: 20,
+              borderRadius: 50,
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: APP_FONT.BOLD,
+                color: APP_COLOR.ORANGE,
+                zIndex: 1000,
+              }}
+            >
+              {quantity}
+            </Text>
+          </View>
+          <AntDesign
+            name="shoppingcart"
+            size={38}
+            color={APP_COLOR.BROWN}
+            onPress={toggleSidebar}
+          />
+        </View>
         <Sidebar
           sidebarAnimation={sidebarAnimation}
           toggleSidebar={toggleSidebar}
