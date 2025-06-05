@@ -1,4 +1,4 @@
-import { APP_FONT } from "@/constants/Colors";
+import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { currencyFormatter } from "@/constants/Function";
 import { Image, StyleSheet, Text, View } from "react-native";
 
@@ -16,15 +16,11 @@ const CartProductTag = (props: IProductCart) => {
       <Image source={props.productImg} style={styles.image} />
       <View style={styles.infoContainer}>
         <Text style={styles.productName}>{props.productName}</Text>
-        <Text style={styles.itemsText}>
-          {props.productQuantity} Item{props.productQuantity > 1 ? "s" : ""}
-        </Text>
+        <Text style={styles.itemsText}>{props.productQuantity} Phần</Text>
         <View style={styles.priceRow}>
-          <Text style={styles.totalLabel}>Total Price</Text>
-          <Text style={styles.price}>
-            <Text style={styles.priceValue}>
-              {currencyFormatter(props.productPrice)}
-            </Text>
+          <Text style={styles.totalLabel}>Thành tiền</Text>
+          <Text style={styles.priceValue}>
+            {currencyFormatter(props.productPrice)}
           </Text>
         </View>
       </View>
@@ -38,6 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
+    marginHorizontal: 10,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -51,7 +48,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 12,
     marginRight: 16,
-    resizeMode: "contain",
+    resizeMode: "cover",
     backgroundColor: "#f5f5f5",
   },
   infoContainer: {
@@ -60,19 +57,14 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#222",
+    fontFamily: APP_FONT.BOLD,
+    color: APP_COLOR.BROWN,
     marginBottom: 2,
-  },
-  productDes: {
-    fontSize: 13,
-    color: "#888",
-    marginBottom: 4,
   },
   itemsText: {
     fontSize: 13,
-    color: "#F8A91F",
-    fontWeight: "500",
+    color: APP_COLOR.ORANGE,
+    fontFamily: APP_FONT.SEMIBOLD,
     marginBottom: 8,
   },
   priceRow: {
@@ -82,18 +74,14 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 13,
-    color: "#222",
-    fontWeight: "500",
+    color: APP_COLOR.GREY,
+    fontFamily: APP_FONT.SEMIBOLD,
   },
-  price: {
-    fontSize: 18,
-    color: "#F8A91F",
-    fontWeight: "bold",
-  },
+
   priceValue: {
     fontSize: 18,
-    color: "#F8A91F",
-    fontFamily: APP_FONT.SEMIBOLD,
+    color: APP_COLOR.ORANGE,
+    fontFamily: APP_FONT.MEDIUM,
   },
 });
 

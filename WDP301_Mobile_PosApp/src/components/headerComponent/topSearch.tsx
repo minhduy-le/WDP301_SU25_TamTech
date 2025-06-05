@@ -1,16 +1,51 @@
 import { APP_COLOR } from "@/constants/Colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
+import debounce from "debounce";
+import { useCallback, useState } from "react";
 import {
   Platform,
   Pressable,
   SafeAreaView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
-
+import { TextInput } from "react-native-gesture-handler";
+interface IProduct {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImage: string;
+}
 const SearchComponent = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const fetchProducts = useCallback(
+    debounce(async (text: string) => {
+      if (!text.trim()) {
+        setProducts([]);
+        return;
+      }
+      try {
+        // const res = await axios.get(
+        //   `${BASE_URL}/products?page=0&size=10&keyword=${text}`
+        // );
+        // if (res.data?.data?.content) {
+        //   setProducts(res.data.data.content);
+        // } else {
+        //   setProducts([]);
+        // }
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+        setProducts([]);
+      }
+    }, 500),
+    []
+  );
+  const handleChangeText = (text: string) => {
+    setSearchTerm(text);
+    fetchProducts(text);
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <Pressable onPress={() => console.log("hihi")} style={styles.container}>
@@ -20,14 +55,13 @@ const SearchComponent = () => {
           size={20}
           color={APP_COLOR.BROWN}
         />
-        <Text
-          style={{
-            color: APP_COLOR.BROWN,
-            marginVertical: "auto",
-          }}
-        >
-          Chọn món ăn bạn cần tìm
-        </Text>
+        <TextInput
+          placeholder="Hôm nay bạn muốn ăn gì nào?"
+          placeholderTextColor={APP_COLOR.BROWN}
+          style={styles.input}
+          onChangeText={handleChangeText}
+          value={searchTerm}
+        />
       </Pressable>
       <Pressable>
         <View style={styles.filterBtn}>
@@ -74,6 +108,10 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
+  },
+  input: {
+    marginLeft: 10,
+    flex: 1,
   },
 });
 export default SearchComponent;

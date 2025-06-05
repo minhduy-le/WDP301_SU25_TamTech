@@ -1,5 +1,6 @@
 import logo from "@/assets/data/logo.png";
 import CartProductTag from "@/components/btnComponent/cartProductTag";
+import ShareButton from "@/components/btnComponent/shareBtn";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { useCurrentApp } from "@/context/app.context";
 import {
@@ -7,6 +8,7 @@ import {
   Dimensions,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -53,22 +55,44 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
         </Pressable>
         <Text style={styles.sidebarText}>Giỏ hàng</Text>
       </View>
-      {cart &&
-        cart.default &&
-        Object.entries(cart.default.items).map(
-          ([key, item]: [string, CartItem]) => {
-            return (
-              <View key={key}>
-                <CartProductTag
-                  productImg={item.data.productImg}
-                  productName={item.data.title}
-                  productQuantity={item.quantity}
-                  productPrice={item.data.basePrice}
-                />
-              </View>
-            );
-          }
-        )}
+      <View>
+        <ScrollView>
+          {cart &&
+            cart.default &&
+            Object.entries(cart.default.items).map(
+              ([key, item]: [string, CartItem]) => {
+                return (
+                  <View key={key}>
+                    <CartProductTag
+                      productImg={item.data.productImg}
+                      productName={item.data.title}
+                      productQuantity={item.quantity}
+                      productPrice={item.data.basePrice}
+                    />
+                  </View>
+                );
+              }
+            )}
+          <ShareButton
+            title="Tạo đơn hàng"
+            onPress={() => console.log("Đặt hàng")}
+            textStyle={{
+              textTransform: "uppercase",
+              color: APP_COLOR.WHITE,
+              paddingVertical: 5,
+              fontFamily: APP_FONT.MEDIUM,
+            }}
+            btnStyle={{
+              justifyContent: "center",
+              borderRadius: 30,
+              marginTop: 20,
+              paddingVertical: 10,
+              backgroundColor: APP_COLOR.ORANGE,
+              marginHorizontal: 70,
+            }}
+          />
+        </ScrollView>
+      </View>
     </Animated.View>
   );
 };
@@ -98,6 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 30,
     alignItems: "center",
+    justifyContent: "center",
   },
   sidebarText: {
     color: APP_COLOR.BROWN,
