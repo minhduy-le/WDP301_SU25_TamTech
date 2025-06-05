@@ -31,6 +31,7 @@ import SystemIssuesReport from "./pages/admin/SystemIssuesReport";
 import Forbidden from "./pages/Forbidden";
 import { AuthGuardProvider } from "./contexts/AuthGuardContext";
 import Blog from "./pages/Blog";
+import AdminProfile from "./pages/admin/AdminProfile";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -100,6 +101,7 @@ function App() {
               path="/admin/system-issues"
               element={<SystemIssuesReport />}
             />
+            <Route path="/admin/profile" element={<AdminProfile />} />
           </Route>
         </Routes>
       </AuthGuardProvider>

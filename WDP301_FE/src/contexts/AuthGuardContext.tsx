@@ -94,7 +94,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/product/:productId",
       ],
       Shipper: [],
-      Admin: ["/admin/dashboard", "/admin/users", "/admin/system-issues"],
+      Admin: ["/admin/dashboard", "/admin/users", "/admin/system-issues", "/admin/profile"],
     };
 
     // const currentPage = location.pathname;
