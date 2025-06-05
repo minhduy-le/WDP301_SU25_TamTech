@@ -16,7 +16,7 @@ const PaymentHistory = (props: IOrderHistory) => {
       </View>
       <View style={styles.detailsContainer}>
         <Text style={styles.priceText}>
-          {currencyFormatter(props.countPrice)}đ
+          +{currencyFormatter(props.countPrice)}đ
         </Text>
       </View>
     </View>

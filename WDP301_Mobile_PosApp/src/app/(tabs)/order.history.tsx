@@ -8,11 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type Payment = { countPrice: number; date: string; time: string };
 type DailyPayments = { [date: string]: { paymentHistory: Payment[] } };
 
-const dataSample = {
-  staffName: "Lê Minh Duy",
-  staffCounter: "TP.Hồ Chí Minh",
-};
-
 const dataSample1: { dailyPayments: DailyPayments } = {
   dailyPayments: {
     "05/06/2025": {
@@ -120,10 +115,7 @@ const OrderHistory = () => {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       >
-        <StaffHeader
-          staffName={dataSample.staffName}
-          staffCounter={dataSample.staffCounter}
-        />
+        <StaffHeader />
         <View>
           <Text
             style={{

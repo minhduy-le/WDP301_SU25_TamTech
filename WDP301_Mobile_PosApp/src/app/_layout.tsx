@@ -171,6 +171,7 @@ export default function RootLayout() {
                 drawerIcon: ({ color, size }) => (
                   <FontAwesome6 name="chart-line" size={size} color={color} />
                 ),
+                headerShown: false,
               }}
             />
             <Drawer.Screen

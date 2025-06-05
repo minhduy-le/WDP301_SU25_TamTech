@@ -4,8 +4,8 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 interface IStaff {
-  staffName: string;
-  staffCounter: string;
+  staffName?: string;
+  staffCounter?: string;
 }
 const StaffHeader = (props: IStaff) => {
   return (
@@ -29,11 +29,15 @@ const StaffHeader = (props: IStaff) => {
             size={24}
             color={APP_COLOR.BROWN}
           />
-          <Text style={styles.text}>{props.staffName}</Text>
+          <Text style={styles.text}>
+            {props.staffName ? props.staffName : "Lê Minh Duy"}
+          </Text>
         </View>
         <View style={styles.infoContent}>
           <FontAwesome5 name="store" size={20} color={APP_COLOR.BROWN} />
-          <Text style={styles.text}>{props.staffCounter}</Text>
+          <Text style={styles.text}>
+            {props.staffCounter ? props.staffCounter : "NVH Sinh Viên"}
+          </Text>
         </View>
       </View>
       <Pressable onPress={() => console.log("logout")}>
