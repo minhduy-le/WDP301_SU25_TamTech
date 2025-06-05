@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore, type LoginDto } from "../hooks/usersApi";
 import { useMutation } from "@tanstack/react-query";
 import Role from "../enums/role.enum";
-import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const [loginForm] = Form.useForm();
@@ -23,11 +22,8 @@ const Login = () => {
       if (response.success) {
         if (response.role === Role.ADMIN) {
           navigate("/admin/dashboard");
-          // } else if (
-          //   response.role === RoleCode.STAFF ||
-          //   response.role === RoleCode.THERAPIST
-          // ) {
-          //   navigate(PagePath.BOOKING);
+        } else if (response.role === Role.MANAGER) {
+          navigate("/manager/dashboard");
         } else {
           navigate("/");
         }
@@ -45,7 +41,7 @@ const Login = () => {
   const googleLoginMutation = useMutation<
     { success: boolean; message: string; role: string },
     unknown,
-    { idToken: string }
+    void
   >({
     mutationFn: googleLogin,
     onSuccess: (response) => {
@@ -57,21 +53,13 @@ const Login = () => {
       }
     },
     onError: (error) => {
-      message.error("Google login failed: " + (error as Error).message);
+      const errorMessage = (error as { responseValue: string }).responseValue;
+      message.error(errorMessage);
     },
   });
 
-  const handleGoogleSuccess = (credentialResponse: any) => {
-    const idToken = credentialResponse.credential;
-    if (idToken) {
-      googleLoginMutation.mutate({ idToken });
-    } else {
-      message.error("No ID token received from Google");
-    }
-  };
-
-  const handleGoogleError = () => {
-    message.error("Google login failed");
+  const handleGoogleLogin = () => {
+    googleLoginMutation.mutate();
   };
 
   const onFinish = (values: any) => {
@@ -128,11 +116,9 @@ const Login = () => {
           >
             Hoặc
           </Divider>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            shape="circle"
-          />
+          <Button className="google-login-button" onClick={handleGoogleLogin}>
+            Đăng nhập bằng Google
+          </Button>
           <div className="divider">
             <span className="divider-text">
               <Link to="/register">Bạn là người mới của Tấm Tắc?</Link>
