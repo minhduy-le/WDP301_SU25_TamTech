@@ -1,6 +1,5 @@
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { currencyFormatter } from "@/constants/Function";
-import { useState } from "react";
 import {
   Dimensions,
   Image,
@@ -15,11 +14,11 @@ interface IProductsProps {
   productName: string;
   productPrice: number;
   productDes: string;
+  productQuantity: number;
   onPress?: () => void;
 }
 const screenWidth = Dimensions.get("window").width;
 const ProductTag = (props: IProductsProps) => {
-  const [showDetails, setShowDetails] = useState(false);
   return (
     <Pressable onPress={props.onPress}>
       <View style={styles.container}>
@@ -84,7 +83,7 @@ const styles = StyleSheet.create({
   textHeader: {
     fontFamily: APP_FONT.SEMIBOLD,
     color: APP_COLOR.BROWN,
-    fontSize: 17,
+    fontSize: 19,
     marginBottom: 5,
     width: "100%",
   },
@@ -102,7 +101,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontFamily: APP_FONT.SEMIBOLD,
-    fontSize: 20,
+    fontSize: 17,
     color: APP_COLOR.ORANGE,
   },
   currencyText: {

@@ -1,3 +1,4 @@
+import AddToCart from "@/components/btnComponent/addToCart";
 import CollectionList from "@/components/headerComponent/collectionList";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
@@ -24,23 +25,13 @@ interface IProduct {
   productName: string;
   productPrice: number;
   productDes: string;
+  productQuantity: number;
 }
 
 const HomePage = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct>();
   const [showDetail, setShowDetail] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-screenWidth)).current;
-
-  const toggleSidebar = () => {
-    const toValue = showSidebar ? -screenWidth : 0;
-    Animated.timing(sidebarAnimation, {
-      toValue,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setShowSidebar(!showSidebar);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
@@ -79,7 +70,6 @@ const HomePage = () => {
                 }}
               ></View>
             </Pressable>
-
             <Text style={modalStyles.name}>{selectedProduct.productName}</Text>
             <Text style={modalStyles.description}>
               {selectedProduct.productDes}
@@ -87,6 +77,15 @@ const HomePage = () => {
             <Text style={modalStyles.price}>
               {currencyFormatter(selectedProduct.productPrice)} VND
             </Text>
+            <AddToCart
+              product={{
+                productId: selectedProduct.id,
+                productName: selectedProduct.productName,
+                productPrice: selectedProduct.productPrice,
+                productImg: selectedProduct.productImg,
+                productQuantity: selectedProduct.productQuantity,
+              }}
+            />
           </Animated.View>
         </View>
       )}
@@ -101,7 +100,6 @@ const modalStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
     zIndex: 100,
   },
