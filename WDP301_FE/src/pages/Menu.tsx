@@ -1,4 +1,13 @@
-import { Card, Button, Row, Col, Modal, Typography, message } from "antd";
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Modal,
+  Typography,
+  message,
+  Skeleton,
+} from "antd";
 import "../style/Menu.css";
 import { useState } from "react";
 import { useGetProductById, useGetProductByTypeId } from "../hooks/productsApi";
@@ -222,7 +231,7 @@ const Menu = () => {
         <div className="menu-categories">
           <div className="category-item father">Thực đơn</div>
           {isProductTypesLoading ? (
-            <div>Loading categories...</div>
+            <Skeleton />
           ) : isProductTypesError ? (
             <div>Error loading categories. Please try again later.</div>
           ) : productTypes && productTypes.length > 0 ? (
@@ -243,9 +252,9 @@ const Menu = () => {
         </div>
         <div className="menu-items">
           {isProductsLoading ? (
-            <div>Loading...</div>
+            <Skeleton />
           ) : isProductsError ? (
-            <div>Error loading products. Please try again later.</div>
+            <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
             <Row gutter={[24, 16]} className="menu-card-row">
               {mainProducts.map((product) => (

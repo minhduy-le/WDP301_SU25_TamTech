@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore, type LoginDto } from "../hooks/usersApi";
 import { useMutation } from "@tanstack/react-query";
 import Role from "../enums/role.enum";
+import GoogleIcon from "../components/icon/GoogleIcon";
 
 const Login = () => {
   const [loginForm] = Form.useForm();
@@ -116,7 +117,11 @@ const Login = () => {
           >
             Hoặc
           </Divider>
-          <Button className="google-login-button" onClick={handleGoogleLogin}>
+          <Button
+            className="google-login-button"
+            onClick={handleGoogleLogin}
+            icon={<GoogleIcon />}
+          >
             Đăng nhập bằng Google
           </Button>
           <div className="divider">
