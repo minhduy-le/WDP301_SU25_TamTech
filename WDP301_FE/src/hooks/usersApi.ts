@@ -4,6 +4,8 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import axiosInstance from "../config/axios";
 import { useMutation } from "@tanstack/react-query";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../config/firebase";
 
 export interface LoginDto {
   email: string;
@@ -50,9 +52,11 @@ interface AuthState {
   login: (
     values: LoginDto
   ) => Promise<{ success: boolean; message: string; role: string }>;
-  googleLogin: (
-    values: GoogleLoginDto
-  ) => Promise<{ success: boolean; message: string; role: string }>;
+  googleLogin: () => Promise<{
+    success: boolean;
+    message: string;
+    role: string;
+  }>;
   logout: () => void;
   setUser: (user: User) => void;
   setToken: (token: string) => void;
@@ -126,11 +130,22 @@ export const useAuthStore = create<AuthState>((set) => {
       }
     },
 
-    googleLogin: async (values: GoogleLoginDto) => {
+    googleLogin: async () => {
       try {
-        const response = await axiosInstance.post("auth/google-login", values, {
-          headers: { "Content-Type": "application/json" },
-        });
+        const result = await signInWithPopup(auth, googleProvider);
+        const idToken = await result.user.getIdToken();
+
+        if (!idToken || typeof idToken !== "string" || idToken.length < 100) {
+          throw new Error("Invalid ID token received from Firebase");
+        }
+
+        const response = await axiosInstance.post(
+          "auth/google-login",
+          { idToken },
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
 
         const data = response.data;
         if (data.token) {
@@ -148,7 +163,7 @@ export const useAuthStore = create<AuthState>((set) => {
           set({ user, token: data.token, error: null });
           return {
             success: true,
-            message: data.message || "Login successful",
+            message: data.message || "Google login successful",
             role: data.role,
           };
         } else {
@@ -156,13 +171,17 @@ export const useAuthStore = create<AuthState>((set) => {
           return { success: false, message: "Google login failed", role: "" };
         }
       } catch (error) {
-        const errorMessage =
-          axios.isAxiosError(error) && error.response?.data?.message
-            ? error.response.data.message
-            : (error as Error).message;
-
-        set({ error: errorMessage });
-        return { success: false, message: errorMessage, role: "" };
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          set({ error: errorMessage });
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          set({ error: errorMessage });
+          throw new Error(errorMessage);
+        }
       }
     },
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Layout, Menu, Button, Input, Dropdown, Badge } from "antd";
+import { Layout, Menu, Button, Input, Dropdown, Badge, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
 import {
@@ -35,6 +35,7 @@ const Navbar = () => {
         onClick={() => {
           logout();
           navigate("/login");
+          message.success("Đăng xuất thành công");
         }}
       >
         Đăng xuất
@@ -123,7 +124,7 @@ const Navbar = () => {
             <Link to="/menu">Menu</Link>
           </Menu.Item>
           <Menu.Item key="3">
-            <Link to="/thuc-don-ai">Thực đơn từ AI</Link>
+            <Link to="/blog">Blog</Link>
           </Menu.Item>
           <Menu.Item key="6">
             <Link to="/cua-hang">Cửa Hàng</Link>
@@ -132,7 +133,7 @@ const Navbar = () => {
         <div className="header-media">
           <Link to="/">Về Tấm Tắc</Link>
           <Link to="/menu">Menu</Link>
-          <Link to="/thuc-don-ai">Thực đơn từ AI</Link>
+          <Link to="/blog">Blog</Link>
           <Link to="/cua-hang">Cửa Hàng</Link>
         </div>
         <Input
