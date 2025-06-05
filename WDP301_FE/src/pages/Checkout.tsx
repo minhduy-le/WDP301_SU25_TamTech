@@ -62,6 +62,7 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<number>(0);
   const [note, setNote] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
+  const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
@@ -99,6 +100,11 @@ const Checkout = () => {
 
   const handleDistrictChange = (value: number) => {
     setSelectedDistrictId(value);
+    setSelectedWard(null);
+  };
+
+  const handleWardChange = (value: string) => {
+    setSelectedWard(value);
   };
 
   const { mutate: calculateShipping } = useCalculateShipping();
@@ -115,10 +121,6 @@ const Checkout = () => {
             message.success("Phí giao hàng đã được cập nhật.");
           },
           onError: (error: any) => {
-            // console.error("Error calculating shipping:", error);
-            // message.error(
-            //   "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-            // );
             message.error(error.response.data?.message);
             setDeliveryFee(22000);
           },
@@ -129,12 +131,12 @@ const Checkout = () => {
 
   const handleAddressBlur = () => {
     if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
-      const selectedWard = wards.find((ward) => ward.name === wards[0].name);
+      const selectedWardName = selectedWard;
       const selectedDistrict = districts.find(
         (district) => district.districtId === selectedDistrictId
       );
       const deliverAddress =
-        `${detailedAddressProxy}, ${selectedWard?.name}, ${selectedDistrict?.name}, TPHCM`.trim();
+        `${detailedAddressProxy}, ${selectedWardName}, ${selectedDistrict?.name}, TPHCM`.trim();
       calculateShipping(
         { deliver_address: deliverAddress },
         {
@@ -205,7 +207,6 @@ const Checkout = () => {
         updateCartItems(updatedCartItems);
       },
       onError: (error) => {
-        // message.error("Đặt hàng thất bại. Vui lòng thử lại.");
         const errorMessage = error.response.data;
         message.error(errorMessage);
       },
@@ -311,16 +312,18 @@ const Checkout = () => {
                 value={userProfile?.email}
                 disabled
               />
-              <Input
-                placeholder="Địa chỉ chi tiết"
-                style={{
-                  background: "transparent",
-                  fontFamily: "'Montserrat', sans-serif",
-                }}
-                value={detailedAddress}
-                onChange={(e) => setDetailedAddress(e.target.value)}
-                onBlur={handleAddressBlurUser}
-              />
+              {!isProxyOrder && (
+                <Input
+                  placeholder="Địa chỉ chi tiết"
+                  style={{
+                    background: "transparent",
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                  value={detailedAddress}
+                  onChange={(e) => setDetailedAddress(e.target.value)}
+                  onBlur={handleAddressBlurUser}
+                />
+              )}
               <Row>
                 <Title
                   level={3}
@@ -381,6 +384,8 @@ const Checkout = () => {
                     </Col>
                     <Col span={11}>
                       <Select
+                        value={selectedWard}
+                        onChange={handleWardChange}
                         placeholder="Phường xã"
                         style={{
                           width: "100%",
@@ -390,7 +395,6 @@ const Checkout = () => {
                         loading={isWardsLoading}
                         disabled={isWardsError || !selectedDistrictId}
                       >
-                        {/* <Option value="huyen">Quận huyện</Option> */}
                         {wards.map((ward, index) => (
                           <Option key={index} value={ward.name}>
                             {ward.name}
