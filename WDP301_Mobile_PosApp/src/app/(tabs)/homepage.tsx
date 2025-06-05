@@ -4,7 +4,7 @@ import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { currencyFormatter } from "@/constants/Function";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -31,7 +31,6 @@ interface IProduct {
 const HomePage = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct>();
   const [showDetail, setShowDetail] = useState(false);
-  const sidebarAnimation = useRef(new Animated.Value(-screenWidth)).current;
 
   return (
     <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
@@ -96,6 +95,7 @@ const HomePage = () => {
 const modalStyles = StyleSheet.create({
   overlay: {
     position: "absolute",
+    backgroundColor: "rgba(0, 0, 0, 0.34)",
     top: 0,
     left: 0,
     right: 0,
@@ -113,7 +113,7 @@ const modalStyles = StyleSheet.create({
   closeBtn: { alignItems: "center" },
   img: {
     width: screenWidth,
-    height: 300,
+    height: 350,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     borderBottomLeftRadius: 150,

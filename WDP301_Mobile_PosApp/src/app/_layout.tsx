@@ -15,6 +15,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -154,6 +155,7 @@ export default function RootLayout() {
                 title: "",
                 drawerActiveTintColor: APP_COLOR.ORANGE,
                 drawerInactiveTintColor: APP_COLOR.BROWN,
+                headerShown: false,
                 drawerIcon: ({ color, size }) => (
                   <MaterialIcons name="history" color={color} size={size} />
                 ),
@@ -205,6 +207,11 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   safeArea: {
+    ...Platform.select({
+      android: {
+        marginTop: 30,
+      },
+    }),
     backgroundColor: APP_COLOR.WHITE,
     width: "100%",
   },
