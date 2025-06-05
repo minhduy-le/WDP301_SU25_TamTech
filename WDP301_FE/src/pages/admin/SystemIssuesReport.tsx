@@ -38,6 +38,31 @@ interface Report {
   category: string;
 }
 
+const ScopedGreenStyles = () => (
+  <style>{`
+    /* ĐỔI MÀU PHÂN TRANG VÀ PLACEHOLDER TÌM KIẾM TOÀN TRANG */
+    .ant-pagination .ant-pagination-item-active {
+      border-color: #4CAF50 !important;
+    }
+    .ant-pagination .ant-pagination-item-active a {
+      color: #4CAF50 !important;
+    }
+    .ant-pagination .ant-pagination-item-active:hover {
+      border-color: #388e3c !important;
+    }
+    .ant-pagination .ant-pagination-item-active a:hover {
+      color: #388e3c !important;
+    }
+    input[placeholder="Tìm kiếm theo tiêu đề, người gửi, nội dung..."] {
+      color: #4CAF50 !important;
+    }
+    input[placeholder="Tìm kiếm theo tiêu đề, người gửi, nội dung..."]::placeholder {
+      color: #4CAF50 !important;
+      opacity: 1;
+    }
+  `}</style>
+);
+
 const SystemIssuesReport: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -323,6 +348,7 @@ const SystemIssuesReport: React.FC = () => {
 
   return (
     <div style={{ padding: "24px", position: "relative", minHeight: 600 }}>
+      <ScopedGreenStyles />
       {loading && (
         <div
           style={{

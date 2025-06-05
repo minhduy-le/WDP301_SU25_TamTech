@@ -19,6 +19,35 @@ import "./AdminSidebar.css";
 import logo from '../../assets/logo-footer.png';
 
 const { Header, Sider, Content } = Layout;
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+const AdminSidebarGreenStyles = () => (
+  <style>{`
+    /* Nút menu đóng/mở sidebar */
+    .admin-sidebar-toggle-btn {
+      color: #4CAF50 !important;
+    }
+    .admin-sidebar-toggle-btn:hover {
+      color: #2e7d32 !important;
+    }
+    /* Placeholder input tìm kiếm */
+    input[placeholder="Tìm kiếm..."] {
+      color: #2e7d32 !important;
+    }
+    input[placeholder="Tìm kiếm..."]::placeholder {
+      color: #2e7d32 !important;
+      opacity: 1;
+    }
+       .admin-bell-btn {
+      color:rgb(26, 96, 28) !important;
+      transition: color 0.2s;
+    }
+    .admin-bell-btn:hover {
+      color: #2e7d32 !important;
+      transition: color 0.2s;
+    }
+  `}</style>
+);
 
 const AdminSidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -57,7 +86,7 @@ const AdminSidebar: React.FC = () => {
       label: "Quản lý người dùng",
     },
     {
-      key: "/admin/report",
+      key: "/admin/system-issues",
       icon: <AuditOutlined />,
       label: "Kiểm tra hệ thống",
     },
@@ -73,6 +102,9 @@ const AdminSidebar: React.FC = () => {
       key: "profile",
       label: "Thông tin cá nhân",
       icon: <UserOutlined />,
+      onClick: () => {
+        navigate("/admin/profile");
+      },
     },
     {
       key: "settingsMenu",
@@ -87,7 +119,8 @@ const AdminSidebar: React.FC = () => {
       label: "Đăng xuất",
       icon: <LogoutOutlined />,
       onClick: () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("token") ;
+        localStorage.removeItem("user");
         navigate("/login");
       },
     },
@@ -95,6 +128,7 @@ const AdminSidebar: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
+      <AdminSidebarGreenStyles />
       <Sider
         collapsible
         collapsed={collapsed}
@@ -188,11 +222,11 @@ const AdminSidebar: React.FC = () => {
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
+            className="admin-sidebar-toggle-btn"
             style={{
               fontSize: "16px",
               width: 64,
               height: 64,
-              color: "#2E7D32",
               outline: "none",
               border: "none",
               background: "transparent",
@@ -213,19 +247,19 @@ const AdminSidebar: React.FC = () => {
           >
             <Input
               placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined style={{ color: '#1B5E20' }} />}
+              prefix={<SearchOutlined style={{ color: '#4CAF50' }} />}
               style={{
                 width: 200,
                 borderRadius: "25px",
                 background: "#C8E6C9",
-                color: "#1B5E20", 
+                color: "#4CAF50",
                 border: "1px solid #4CAF50",
               }}
             />
 
             <Button
               type="text"
-              icon={<BellOutlined />}
+              icon={<BellOutlined className="admin-bell-btn" />}
               style={{
                 fontSize: "18px",
                 color: "#2E7D32",
@@ -268,7 +302,7 @@ const AdminSidebar: React.FC = () => {
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#1B5E20", fontWeight: 600 }}>Admin</span>
+                <span style={{ color: "#1B5E20", fontWeight: 600 }}>{user.fullName}</span>
                 <DownOutlined style={{ color: "#1B5E20" }} />
               </div>
             </Dropdown>
