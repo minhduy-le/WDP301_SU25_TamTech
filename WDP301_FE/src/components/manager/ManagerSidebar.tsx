@@ -75,12 +75,7 @@ const ManagerSidebar: React.FC = () => {
       key: "/manager/staffs",
       icon: <UserOutlined />,
       label: "Quản lý nhân viên",
-    },
-    {
-      key: "/manager/settings",
-      icon: <SettingOutlined />,
-      label: "Cài đặt",
-    },
+    }
   ];
 
   const userMenuItems: MenuProps["items"] = [
