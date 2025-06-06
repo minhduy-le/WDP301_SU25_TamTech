@@ -30,7 +30,7 @@ const createUser = async (userData) => {
       if (userData.role.trim() === "") {
         throw "Role cannot be blank";
       }
-      const validRoles = ["Admin", "User", "Staff", "Shipper"];
+      const validRoles = ["Admin", "User", "Staff", "Shipper", "Manager"];
       if (!validRoles.includes(userData.role)) {
         throw "Invalid role";
       }

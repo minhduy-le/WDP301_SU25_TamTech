@@ -423,7 +423,11 @@ router.post("/webhook", async (req, res) => {
  *             properties:
  *               deliver_address:
  *                 type: string
- *                 example: "643 Điện Biên Phủ, Phường 1, Quận 3, TPHCM"
+ *                 example: "123 Nguyễn Trãi, Phường 2, Quận 5, TP.HCM"
+ *               weight:
+ *                 type: number
+ *                 example: 1000
+ *                 description: Weight of the package in grams
  *     responses:
  *       200:
  *         description: Shipping fee calculated and address saved successfully
@@ -438,6 +442,10 @@ router.post("/webhook", async (req, res) => {
  *                   type: string
  *                 fee:
  *                   type: number
+ *                 insurance_fee:
+ *                   type: number
+ *                 total_fee:
+ *                   type: number
  *       400:
  *         description: Missing required fields or invalid address
  *       401:
@@ -449,6 +457,7 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
   try {
     const { deliver_address, weight } = req.body;
 
+    // Validate delivery address presence
     if (!deliver_address) {
       return res.status(400).json({
         status: 400,
@@ -456,28 +465,44 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       });
     }
 
+    // Validate address format: "street name, ward, district, city"
+    const addressRegex = /^[^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+$/;
+    if (!addressRegex.test(deliver_address)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Delivery address must be in the format: street name, ward, district, city",
+      });
+    }
+
     const defaultWeight = weight || 1000;
 
+    // Hardcode pickup address
     const pickProvince = "TP. Hồ Chí Minh";
-    const pickDistrict = "Quận 1";
-    const pickWard = "Phường Bến Nghé";
-    const pickAddress = "123 Đường Số 1";
+    const pickDistrict = "Quận 3";
+    const pickWard = "Phường 1";
+    const pickAddress = "643 Điện Biên Phủ";
 
+    // Parse delivery address
     const addressParts = deliver_address.split(",").map((part) => part.trim());
-    let deliverWard = "Phường 1";
-    let deliverDistrict = "Quận 3";
-    let deliverProvince = "TPHCM";
+    const [street, ward, district, province] = addressParts;
 
-    for (let part of addressParts) {
-      part = part.toLowerCase();
-      if (part.includes("phường") || part.includes("p.")) deliverWard = part;
-      else if (part.includes("quận")) deliverDistrict = part;
-      else if (part.includes("thành phố") || part.includes("tp")) deliverProvince = part;
+    const deliverAddress = street; // Only the street name
+    let deliverWard = ward;
+    let deliverDistrict = district;
+    let deliverProvince = province;
+
+    // Standardize province
+    deliverProvince = standardizeProvince(deliverProvince);
+
+    // Restrict delivery to HCMC
+    if (deliverProvince !== "TP. Hồ Chí Minh") {
+      return res.status(400).json({
+        status: 400,
+        message: "Delivery is only available within Ho Chi Minh City (TP. Hồ Chí Minh)",
+      });
     }
-    deliverProvince = standardizeProvince(deliverProvince.replace(/tp/gi, "TP.").replace(/\s+/g, " ").trim());
-    const deliverFullAddress = deliver_address;
 
-    console.log("Parsed Address:", { deliverProvince, deliverDistrict, deliverWard, deliverFullAddress });
+    console.log("Parsed Address:", { deliverProvince, deliverDistrict, deliverWard, deliverAddress });
 
     const ghtkApiUrl = process.env.GHTK_API_BASE_URL + "/services/shipment/fee";
     const queryParams = {
@@ -488,10 +513,11 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       province: deliverProvince,
       district: deliverDistrict,
       ward: deliverWard,
-      address: deliverFullAddress,
+      address: deliverAddress,
       weight: defaultWeight,
-      value: 0,
-      deliver_option: "none",
+      value: 500000,
+      deliver_option: "xteam", // Test with same-day delivery
+      transport: "road", // Explicitly set transport mode
     };
     console.log("GHTK Query Params:", queryParams);
 
@@ -508,6 +534,9 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
     }
 
     const shippingFee = response.data.fee && response.data.fee.fee ? response.data.fee.fee : 0;
+    const insuranceFee = response.data.fee && response.data.fee.insurance_fee ? response.data.fee.insurance_fee : 0;
+    const totalFee = shippingFee + insuranceFee;
+
     if (shippingFee === 0) {
       console.warn("Warning: GHTK returned zero shipping fee, possible invalid data.");
     }
@@ -521,6 +550,8 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       status: 200,
       message: "Shipping fee calculated and address saved successfully",
       fee: shippingFee,
+      insurance_fee: insuranceFee,
+      total_fee: totalFee,
     });
   } catch (error) {
     console.error("Error calculating shipping fee:", error);
