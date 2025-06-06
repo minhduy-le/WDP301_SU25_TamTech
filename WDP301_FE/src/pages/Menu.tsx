@@ -183,7 +183,7 @@ const Menu = () => {
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
+    if (newQuantity >= 1 && newQuantity <= 10) {
       setQuantity(newQuantity);
     }
   };
@@ -193,7 +193,7 @@ const Menu = () => {
       const newValue = (prev[key] || 0) + change;
       return {
         ...prev,
-        [key]: newValue >= 0 ? newValue : 0,
+        [key]: newValue >= 0 && newValue <= 10 ? newValue : 0,
       };
     });
   };
@@ -247,7 +247,7 @@ const Menu = () => {
               </div>
             ))
           ) : (
-            <div>No categories available.</div>
+            <div>Không có loại.</div>
           )}
         </div>
         <div className="menu-items">
@@ -298,7 +298,7 @@ const Menu = () => {
               </Col>
             </Row>
           ) : (
-            <div>No products available for this category.</div>
+            <div>Không có món nào trong danh mục này.</div>
           )}
         </div>
       </div>
@@ -346,9 +346,6 @@ const Menu = () => {
                 <Text className="modal-price">
                   {Number(productDetail.price).toLocaleString("vi-VN")}đ
                 </Text>
-                {/* <Text className="modal-price-first">
-                  {totalPrice.toLocaleString("vi-VN")}đ
-                </Text> */}
                 <div className="quantity-selector">
                   <Button
                     className="quantity-button minus-button"
@@ -361,6 +358,7 @@ const Menu = () => {
                   <Button
                     className="quantity-button plus-button"
                     onClick={() => handleQuantityChange(1)}
+                    disabled={quantity === 10}
                   >
                     +
                   </Button>
@@ -415,6 +413,9 @@ const Menu = () => {
                                     1
                                   )
                                 }
+                                disabled={
+                                  addOnQuantities[`${typeId}-${index}`] === 10
+                                }
                               >
                                 +
                               </Button>
@@ -440,7 +441,7 @@ const Menu = () => {
               </div>
             </>
           ) : (
-            <div>No product details available.</div>
+            <div>Không có chi tiết món ăn</div>
           )}
         </div>
       </Modal>
