@@ -29,7 +29,7 @@ const ManagerSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const siderWidth = 200;
+  const siderWidth = 240;
   const siderCollapsedWidth = 80;
 
   const menuItems = [
