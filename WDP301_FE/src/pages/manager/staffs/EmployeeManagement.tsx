@@ -252,17 +252,6 @@ const EmployeeManagement: React.FC = () => {
 
   const columns = [
     {
-      title: <Avatar size="small" icon={<UserOutlined />} style={{marginRight: 8, backgroundColor: 'transparent', color: headerColor}}/>,
-      dataIndex: "avatarUrl",
-      key: "avatar",
-      width: 60,
-      render: (avatarUrl: string, record: Employee) => (
-        <Avatar src={avatarUrl} icon={<UserOutlined />}>
-          {!avatarUrl && record.fullName ? record.fullName.charAt(0).toUpperCase() : null}
-        </Avatar>
-      ),
-    },
-    {
       title: "Họ và Tên",
       dataIndex: "fullName",
       key: "fullName",

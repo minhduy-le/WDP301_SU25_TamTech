@@ -18,7 +18,6 @@ import {
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
   PercentageOutlined,
@@ -28,6 +27,7 @@ import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
+import PromotionTypeManagement from "./PromotionTypeManagement";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -86,7 +86,7 @@ const initialPromotions: Promotion[] = [
 const PromotionManagement: React.FC = () => {
   const [promotions, setPromotions] = useState<Promotion[]>(initialPromotions);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("Tất cả");
+  const [statusFilter] = useState<string>("Tất cả");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
@@ -142,21 +142,6 @@ const PromotionManagement: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (promotionId: string) => {
-    Modal.confirm({
-      title: "Bạn có chắc chắn muốn xóa khuyến mãi này?",
-      content: "Hành động này không thể hoàn tác.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: () => {
-        setPromotions((prev) =>
-          prev.filter((p) => p.promotionId !== promotionId)
-        );
-        message.success("Đã xóa khuyến mãi! (Client-side)");
-      },
-    });
-  };
 
   const handleModalOk = async () => {
     setIsSubmitting(true);
@@ -336,7 +321,7 @@ const PromotionManagement: React.FC = () => {
               style={{ outline: "none", boxShadow: "none" }} 
             />
           </Tooltip>
-          <Tooltip title="Xóa">
+          {/* <Tooltip title="Xóa">
             <Button
               type="text"
               danger
@@ -344,25 +329,17 @@ const PromotionManagement: React.FC = () => {
               onClick={() => handleDelete(record.promotionId)}
               style={{ outline: "none", boxShadow: "none" }} 
             />
-          </Tooltip>
+          </Tooltip> */}
         </Space>
       ),
     },
   ];
-  const statusFilterOptions = [
-    "Tất cả",
-    "Đang diễn ra",
-    "Sắp diễn ra",
-    "Đã kết thúc",
-    "Không hoạt động",
-  ];
-
   return (
     <div
       style={{
         minHeight: "100vh",
         background: "#FFF9F0",
-        padding: "20px 30px 30px 60px", // Giữ nguyên padding bạn đã đặt
+        padding: "20px 30px 30px 60px", 
       }}
     >
       <style>{`
@@ -400,13 +377,74 @@ const PromotionManagement: React.FC = () => {
         .promo-table .ant-table-thead > tr > th.ant-table-cell-fix-right {
           background-color: ${headerBgColor} !important;
         }
+        /* InputNumber: border cam khi hover/focus */
+        .ant-input-number:focus,
+        .ant-input-number-focused,
+        .ant-input-number:hover {
+          border-color: #D97B41 !important;
+          box-shadow: none !important;
+        }
+
+        /* Select: border cam khi hover/focus */
+        .ant-select-focused .ant-select-selector,
+        .ant-select-selector:focus,
+        .ant-select-selector:hover {
+          border-color: #D97B41 !important;
+          box-shadow: none !important;
+        }
+        /* Các rule khác giữ nguyên */
+        .ant-picker:focus, .ant-picker:hover {
+          border-color: #D97B41 !important;
+          box-shadow: none !important;
+        }
+        .ant-pagination .ant-pagination-item-active,
+        .ant-pagination .ant-pagination-item-active a,
+        .ant-pagination .ant-pagination-item-active:hover,
+        .ant-pagination .ant-pagination-item-active:focus,
+        .ant-table-filter-dropdown {
+          border-color: #D97B41 !important;
+          box-shadow: none !important;
+        }
+        .ant-table-filter-dropdown .ant-checkbox-checked .ant-checkbox-inner {
+          background-color: #D97B41 !important;
+          border-color: #D97B41 !important;
+        }
+        .ant-table-filter-dropdown-btns .ant-btn-primary {
+          background: #D97B41 !important;
+          border-color: #D97B41 !important;
+        }
+        .ant-pagination .ant-pagination-item-active {
+          border-color: #D97B41 !important;
+        }
+        .ant-pagination .ant-pagination-item-active a {
+          color: #D97B41 !important;
+        }
+        .ant-table-filter-trigger, .ant-table-filter-trigger:hover, .ant-table-filter-trigger.active {
+          color: #D97B41 !important;
+        }
+        .ant-table-column-sorter-up.active,
+        .ant-table-column-sorter-down.active,
+        .ant-table-column-sorter-up:hover,
+        .ant-table-column-sorter-down:hover {
+          color: #D97B41 !important;
+        }
+        /* Loại bỏ hoàn toàn box-shadow cho input và wrapper */
+        .ant-input:focus, .ant-input:hover {
+          box-shadow: none !important;
+        }
+        .ant-input-affix-wrapper:focus,
+        .ant-input-affix-wrapper-focused,
+        .ant-input-affix-wrapper:hover,
+        .ant-input-affix-wrapper:focus-within {
+          box-shadow: none !important;
+        }
       `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
         <h1
           style={{
             fontWeight: 800,
-            color: "#A05A2C", // Đồng bộ màu tiêu đề chính
+            color: "#A05A2C",
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
@@ -440,20 +478,9 @@ const PromotionManagement: React.FC = () => {
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
+                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "none"}}
                 allowClear
               />
-              <Select
-                value={statusFilter}
-                style={{ width: 200, borderRadius: 6 }}
-                onChange={(value) => setStatusFilter(value)}
-              >
-                {statusFilterOptions.map((opt) => (
-                  <Option key={opt} value={opt}>
-                    {opt}
-                  </Option>
-                ))}
-              </Select>
             </Space>
             <Button
               type="primary"
@@ -464,6 +491,7 @@ const PromotionManagement: React.FC = () => {
                 fontWeight: 600,
                 borderRadius: 6,
                 boxShadow: "0 2px 0 rgba(0,0,0,0.043)",
+                outline: 'none',
               }}
               onClick={handleAdd}
             >
@@ -485,6 +513,7 @@ const PromotionManagement: React.FC = () => {
             sticky
           />
         </Card>
+        <PromotionTypeManagement />
         <Modal
           open={modalVisible}
           title={
@@ -518,8 +547,9 @@ const PromotionManagement: React.FC = () => {
                       setModalVisible(false);
                       form.resetFields();
                     }}
-                    style={{ borderRadius: 6 }}
+                    style={{ borderRadius: 6, outline: 'none' }}
                     disabled={isSubmitting}
+                  
                   >
                     Hủy
                   </Button>,
@@ -532,6 +562,7 @@ const PromotionManagement: React.FC = () => {
                       background: "#D97B41",
                       borderColor: "#D97B41",
                       borderRadius: 6,
+                      outline: 'none',
                     }}
                   >
                     {modalMode === "add" ? "Thêm mới" : "Cập nhật"}
@@ -587,17 +618,17 @@ const PromotionManagement: React.FC = () => {
                 </Descriptions.Item>
               </Descriptions>
             </Card>
-          ) : ( // Nội dung Form Add/Edit giữ nguyên
+          ) : ( 
             <Form form={form} layout="vertical" style={{ background: "#fff", padding: "24px", borderRadius: "8px", border: "1px solid #f0f0f0" }}
                 initialValues={{ isActive: true, discountType: "percentage" }} >
-              <Form.Item name="name" label={<span style={{ color: "#A05A2C" }}>Tên khuyến mãi</span>} rules={[{ required: true, message: "Vui lòng nhập tên khuyến mãi!" }]} >
-                <Input placeholder="Ví dụ: Giảm giá khai trương" style={{ borderRadius: 6 }} />
+              <Form.Item style={{marginBottom: 0}} name="name" label={<span style={{ color: "#A05A2C" }}>Tên khuyến mãi</span>} rules={[{ required: true, message: "Vui lòng nhập tên khuyến mãi!" }]} >
+                <Input placeholder="Ví dụ: Giảm giá khai trương" style={{ borderRadius: 6, marginBottom: "16px" }} />
               </Form.Item>
-              <Form.Item name="description" label={<span style={{ color: "#A05A2C" }}>Mô tả</span>} rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]} >
-                <Input.TextArea rows={3} placeholder="Mô tả chi tiết về chương trình khuyến mãi" style={{ borderRadius: 6 }} />
+              <Form.Item style={{marginBottom: 0}} name="description" label={<span style={{ color: "#A05A2C" }}>Mô tả</span>} rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]} >
+                <Input.TextArea rows={3} placeholder="Mô tả chi tiết về chương trình khuyến mãi" style={{ borderRadius: 6, marginBottom: "16px" }} />
               </Form.Item>
               <Form.Item name="code" label={ <span style={{ color: "#A05A2C" }}> Mã khuyến mãi (tùy chọn) </span> } >
-                <Input placeholder="Ví dụ: SALE2025 (để trống nếu tự động áp dụng)" style={{ borderRadius: 6 }} />
+                <Input placeholder="Ví dụ: SALE2025 (để trống nếu tự động áp dụng)" style={{ borderRadius: 6}} />
               </Form.Item>
               <Space align="start" style={{ display: "flex", marginBottom: 0 }} size="large" >
                 <Form.Item name="discountType" label={ <span style={{ color: "#A05A2C" }}>Loại giảm giá</span> } rules={[{ required: true }]} style={{ flex: 1 }} >
@@ -606,7 +637,7 @@ const PromotionManagement: React.FC = () => {
                     <Option value="fixed_amount"> <DollarCircleOutlined /> Giảm số tiền cố định </Option>
                   </Select>
                 </Form.Item>
-                <Form.Item name="discountValue" label={<span style={{ color: "#A05A2C" }}>Giá trị giảm</span>} rules={[{ required: true, message: "Vui lòng nhập giá trị giảm!" }]} style={{ flex: 1 }} >
+                <Form.Item name="discountValue" label={<span style={{ color: "#A05A2C" }}>Giá trị giảm</span>} rules={[{ required: true, message: "Vui lòng nhập giá trị giảm!" }, ]} style={{ flex: 1 }} >
                   <InputNumber style={{ width: "100%", borderRadius: 6 }} min={0} placeholder="Nhập số (ví dụ: 20 hoặc 50000)"
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     parser={(value: any) => value!.replace(/[^0-9]/g, "")} />
