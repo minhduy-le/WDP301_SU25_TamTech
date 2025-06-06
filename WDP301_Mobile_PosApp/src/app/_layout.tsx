@@ -184,6 +184,7 @@ export default function RootLayout() {
                 drawerIcon: ({ color, size }) => (
                   <AntDesign name="user" size={size} color={color} />
                 ),
+                headerShown: false,
               }}
             />
             <Drawer.Screen
@@ -196,6 +197,7 @@ export default function RootLayout() {
                 drawerIcon: ({ color, size }) => (
                   <FontAwesome6 name="ticket" size={size} color={color} />
                 ),
+                headerShown: false,
               }}
             />
           </Drawer>

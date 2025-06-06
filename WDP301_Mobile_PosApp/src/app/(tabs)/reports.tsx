@@ -157,10 +157,10 @@ const Reports = () => {
               yAxisLabel=""
               yAxisSuffix=""
               fromZero
-              showValuesOnTopOfBars={false}
+              showValuesOnTopOfBars={true}
               withCustomBarColorFromData={true}
               showBarTops={false}
-              segments={6}
+              segments={5}
             />
           </ScrollView>
         </View>
