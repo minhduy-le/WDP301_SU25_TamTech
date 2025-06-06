@@ -18,7 +18,6 @@ import {
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
   PercentageOutlined,
@@ -143,21 +142,6 @@ const PromotionManagement: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (promotionId: string) => {
-    Modal.confirm({
-      title: "Bạn có chắc chắn muốn xóa khuyến mãi này?",
-      content: "Hành động này không thể hoàn tác.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: () => {
-        setPromotions((prev) =>
-          prev.filter((p) => p.promotionId !== promotionId)
-        );
-        message.success("Đã xóa khuyến mãi! (Client-side)");
-      },
-    });
-  };
 
   const handleModalOk = async () => {
     setIsSubmitting(true);
