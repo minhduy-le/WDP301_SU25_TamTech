@@ -216,7 +216,7 @@ const Checkout = () => {
   const handleIncrement = (productId: number) => {
     setSelectedItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.productId === productId) {
+        if (item.productId === productId && item.quantity < 10) {
           const newQuantity = item.quantity + 1;
           const newTotalPrice = item.price * newQuantity;
           return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
@@ -543,6 +543,7 @@ const Checkout = () => {
                           <span>{item.quantity}</span>
                           <Button
                             onClick={() => handleIncrement(item.productId)}
+                            disabled={item.quantity === 10}
                           >
                             +
                           </Button>
