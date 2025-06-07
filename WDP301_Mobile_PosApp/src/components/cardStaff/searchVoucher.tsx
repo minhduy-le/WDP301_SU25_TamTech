@@ -15,6 +15,7 @@ const SearchVoucher = () => {
           color: APP_COLOR.BROWN,
           fontSize: 17,
           marginTop: 10,
+          marginHorizontal: 10,
         }}
       >
         Tất cả ưu đãi hiện hành (5)
@@ -23,7 +24,7 @@ const SearchVoucher = () => {
         style={{
           borderRadius: 10,
           backgroundColor: APP_COLOR.WHITE,
-          height: screenHeight * 0.3,
+          height: screenHeight * 0.35,
           marginTop: 10,
           borderColor: "#E0E0E0",
           shadowColor: "#000",
@@ -131,6 +132,35 @@ const SearchVoucher = () => {
           <View style={styles.iconContent}>
             <Entypo name="ticket" size={24} color={APP_COLOR.BROWN} />
             <Text style={styles.textLabel}>Đã sử dụng</Text>
+          </View>
+          <View style={{ marginTop: 4, width: "100%" }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                fontSize: 16,
+                color: APP_COLOR.BROWN,
+              }}
+            >
+              125/1000
+            </Text>
+            <View
+              style={{
+                height: 8,
+                backgroundColor: "#E5E7EB",
+                borderRadius: 4,
+                marginTop: 2,
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  height: 8,
+                  backgroundColor: APP_COLOR.ORANGE,
+                  width: `${(125 / 1000) * 100}%`,
+                  borderRadius: 4,
+                }}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
