@@ -4,6 +4,7 @@ import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import AppProvider, { useCurrentApp } from "@/context/app.context";
 import useCustomFonts from "@/hooks/useFonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
@@ -187,7 +188,21 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Drawer.Screen
+              name="(tabs)/manage.store"
+              options={{
+                drawerLabel: "Kiểm kho",
+                title: "Kiểm kho",
+                drawerActiveTintColor: APP_COLOR.ORANGE,
+                drawerInactiveTintColor: APP_COLOR.BROWN,
+                drawerIcon: ({ color, size }) => (
+                  <FontAwesome5 name="store" size={size} color={color} />
+                ),
+                headerShown: false,
+              }}
+            />
           </Drawer>
+
           <StatusBar style="auto" />
         </ThemeProvider>
       </AppProvider>

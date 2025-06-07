@@ -132,7 +132,7 @@ const Reports = () => {
         <View style={styles.container}>
           <Text style={styles.header}>Báo cáo đơn hàng</Text>
           <Text style={styles.subHeader}>
-            Số lượng đơn hàng của Lê Minh Duy trong ngày hôm nay
+            Số đơn hàng của Lê Minh Duy trong hôm nay
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <BarChart
