@@ -155,7 +155,7 @@ router.get("/search", async (req, res) => {
  * @swagger
  * /api/products:
  *   post:
- *     summary: Create a new product with recipes
+ *     summary: Create a new product with optional recipes
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -169,7 +169,6 @@ router.get("/search", async (req, res) => {
  *               - name
  *               - price
  *               - productTypeId
- *               - recipes
  *             properties:
  *               name:
  *                 type: string
@@ -194,7 +193,6 @@ router.get("/search", async (req, res) => {
  *                 example: 1
  *               recipes:
  *                 type: array
- *                 minItems: 1
  *                 items:
  *                   type: object
  *                   required:
@@ -281,7 +279,7 @@ router.get("/search", async (req, res) => {
  *               examples:
  *                 missingFields: { value: "Name is required and must be a non-empty string" }
  *                 invalidPrice: { value: "Price must be a number greater than 0 and 1,000,000" }
- *                 invalidRecipes: { value: "Recipes must be a non-empty array" }
+ *                 invalidRecipes: { value: "Each recipe must have a valid materialId and quantity" }
  *                 materialNotFound: { value: "Material with ID 5 not found" }
  *       401:
  *         description: Unauthorized
@@ -330,7 +328,7 @@ router.post("/", verifyToken, async (req, res) => {
       productTypeId,
       createBy: userId,
       storeId: 1, // Adjust if dynamic storeId is needed
-      recipes,
+      recipes: recipes || [], // Default to empty array if recipes not provided
     };
 
     const product = await productService.createProduct(productData);
@@ -343,7 +341,6 @@ router.post("/", verifyToken, async (req, res) => {
         error.message.includes("Name") ||
           error.message.includes("Price") ||
           error.message.includes("ProductTypeId") ||
-          error.message.includes("Recipes") ||
           error.message.includes("materialId") ||
           error.message.includes("quantity") ||
           error.message.includes("Description") ||

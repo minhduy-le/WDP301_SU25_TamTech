@@ -1,4 +1,5 @@
 import SearchCustomerInfo from "@/components/cardStaff/searchCustomerInfo";
+import SearchVoucher from "@/components/cardStaff/searchVoucher";
 import StaffHeader from "@/components/staffComponent/staffHeader";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
@@ -123,7 +124,36 @@ const SearchInfor = () => {
               </>
             ) : (
               <>
-                <Text>hihi</Text>
+                <View>
+                  <Pressable
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      borderColor: APP_COLOR.BROWN,
+                      borderWidth: 0.5,
+                      borderRadius: 30,
+                      paddingVertical: 3,
+                      backgroundColor: APP_COLOR.WHITE,
+                      marginTop: 10,
+                      width: "95%",
+                      alignSelf: "center",
+                    }}
+                    onPress={() => console.log("hihi")}
+                  >
+                    <EvilIcons
+                      name="search"
+                      size={20}
+                      color={APP_COLOR.BROWN}
+                    />
+                    <TextInput
+                      placeholder="Nhập mã giảm giá"
+                      placeholderTextColor={APP_COLOR.BROWN}
+                      onChangeText={handleChangeText}
+                      value={searchTerm}
+                    />
+                  </Pressable>
+                  <SearchVoucher />
+                </View>
               </>
             )}
           </View>
