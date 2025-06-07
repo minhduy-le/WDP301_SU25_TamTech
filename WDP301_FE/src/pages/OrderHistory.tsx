@@ -324,7 +324,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               );
             })
           ) : (
-            <div>No order history.</div>
+            <div style={{ padding: "0 34px" }}>Chưa có lịch sử mua hàng</div>
           )}
         </Tabs.TabPane>
 
