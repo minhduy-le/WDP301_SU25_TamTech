@@ -33,6 +33,7 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
+import { useRevenueStats, useTopProducts } from "../../hooks/dashboardApi";
 
 const { Title, Text } = Typography;
 
@@ -72,15 +73,6 @@ const percentChangeOrders =
 const totalProductsSold = 320;
 const percentChangeProducts = 8;
 
-const topProducts = [
-  { name: "Sữa tắm Dove", sold: 120, revenue: 2400000 },
-  { name: "Dầu gội Clear", sold: 95, revenue: 1900000 },
-  { name: "Bánh Oreo", sold: 80, revenue: 800000 },
-  { name: "Sữa tươi Vinamilk", sold: 75, revenue: 1125000 },
-  { name: "Snack Lay's", sold: 60, revenue: 600000 },
-  { name: "Snack Lay's", sold: 60, revenue: 600000 },
-];
-
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
@@ -89,16 +81,6 @@ const yearList: number[] = [];
 for (let y = startYear; y <= currentYear; y++) {
   yearList.push(y);
 }
-
-const monthlyRevenueData: {
-  [year: number]: { month: string; revenue: number }[];
-} = {};
-yearList.forEach((year) => {
-  monthlyRevenueData[year] = Array.from({ length: 12 }, (_, i) => ({
-    month: `Tháng ${i + 1}`,
-    revenue: Math.floor(20000000 + Math.random() * 25000000),
-  }));
-});
 
 const customerTypeData = [
   { name: 'Mang đi', value: 120 },
@@ -135,8 +117,18 @@ const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
 
 const ManagerDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const { data: revenueStats } = useRevenueStats(selectedYear);
+  const { data: topProductsData = [], isLoading: topProductsLoading } =
+    useTopProducts();
+  const monthlyRevenueData =
+    revenueStats?.map((s) => ({ month: `Tháng ${s.month}`, revenue: s.revenue })) || [];
   const averageOrderValue =
     totalOrdersThisMonth > 0 ? totalThisMonth / totalOrdersThisMonth : 0;
+  const topProducts = topProductsData.map((p) => ({
+    name: p.productName,
+    sold: p.totalQuantity,
+    revenue: p.totalRevenue,
+  }));
 
   return (
     <div style={{ padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
@@ -375,7 +367,7 @@ const ManagerDashboard: React.FC = () => {
           >
             <ResponsiveContainer width="100%" height={340}>
               <BarChart
-                data={monthlyRevenueData[selectedYear]}
+                data={monthlyRevenueData}
                 margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -445,6 +437,7 @@ const ManagerDashboard: React.FC = () => {
                 <List
                   itemLayout="horizontal"
                   dataSource={topProducts}
+                  loading={topProductsLoading}
                   renderItem={(item, _idx) => (
                     <List.Item>
                       <List.Item.Meta
