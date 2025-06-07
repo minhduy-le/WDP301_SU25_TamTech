@@ -183,6 +183,7 @@ const PromotionManagement: React.FC = () => {
     setModalMode("edit");
     form.setFieldsValue({
       ...promotion,
+      discountAmount: promotion.discountValue,
       dateRange: [dayjs(promotion.startDate), dayjs(promotion.endDate)],
     });
     setModalVisible(true);
@@ -204,8 +205,8 @@ const PromotionManagement: React.FC = () => {
         code: values.code,
         promotionTypeId: values.promotionTypeId,
         description: values.description,
-        startDate: startDate.utc().toISOString(),
-        endDate: endDate.utc().toISOString(),
+        startDate: startDate.format('YYYY-MM-DDTHH:mm:ss'),
+        endDate: endDate.format('YYYY-MM-DDTHH:mm:ss'),
         minOrderAmount: values.minOrderAmount || 0,
         discountAmount: values.discountAmount,
         maxNumberOfUses: values.maxNumberOfUses || 0,
@@ -470,7 +471,7 @@ const PromotionManagement: React.FC = () => {
               </Form.Item>
               <Row gutter={[16, 16]}>
                 <Col span={12}>
-                  <Form.Item name="discountValue" label={<span style={{ color: "#A05A2C" }}>Giá trị giảm</span>} rules={[{ required: true, message: "Vui lòng nhập giá trị giảm!" }]} style={{ flex: 1 }}>
+                  <Form.Item name="discountAmount" label={<span style={{ color: "#A05A2C" }}>Giá trị giảm</span>} rules={[{ required: true, message: "Vui lòng nhập giá trị giảm!" }]} style={{ flex: 1 }}>
                     <InputNumber style={{ width: "100%", borderRadius: 6 }} min={0} placeholder="Nhập số (ví dụ: 20 hoặc 50000)" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value: any) => value!.replace(/[^0-9]/g, "")} />
                   </Form.Item>
                 </Col>
@@ -490,14 +491,17 @@ const PromotionManagement: React.FC = () => {
                     validator: (_, value) => {
                       if (!value || value.length !== 2) return Promise.resolve();
                       const now = dayjs();
-                      if (value[0].isAfter(now)) {
+                      if (value[0].isAfter(now) && value[1].isAfter(value[0])) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error('Ngày bắt đầu phải sau thời điểm hiện tại!'));
+                      if (!value[0].isAfter(now)) {
+                        return Promise.reject(new Error('Ngày bắt đầu phải sau thời điểm hiện tại!'));
+                      }
+                      return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu!'));
                     }
                   }
-                ]}
-              >
+               ]}
+             >
                 <RangePicker showTime format="YYYY-MM-DD HH:mm:ss" style={{ width: "100%", marginBottom: 16 }} />
               </Form.Item>
             </Form>
