@@ -8,6 +8,7 @@ const {
   setOrderToDelivering,
   setOrderToDelivered,
   getAllOrders,
+  setOrderToCooked,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -806,6 +807,85 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *               example: 'Failed to update order status'
  */
 router.put("/:orderId/delivered", verifyToken, upload.single("certificationOfDelivered"), setOrderToDelivered);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cooked:
+ *   put:
+ *     summary: Set order status to Cooked
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Cooked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Cooked
+ *                 cookedBy:
+ *                   type: integer
+ *                   description: ID of the staff who marked the order as cooked
+ *                 cookedTime:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Timestamp when the order was marked as cooked
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Paid. It must be Preparing to transition to Cooked.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff can set orders to Cooked'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
 
 /**
  * @swagger

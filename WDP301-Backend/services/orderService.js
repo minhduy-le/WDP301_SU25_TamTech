@@ -1074,6 +1074,68 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+const setOrderToCooked = async (req, res) => {
+  console.log("setOrderToCooked called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 6) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Cooked.`
+        );
+    }
+
+    order.status_id = 7; // Cooked
+    order.cookedBy = userId;
+    order.cookedTime = new Date();
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Cooked for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Cooked",
+      orderId: parsedOrderId,
+      status: "Cooked",
+      cookedBy: userId,
+      cookedTime: order.cookedTime,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToCooked:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -1082,4 +1144,5 @@ module.exports = {
   setOrderToDelivering,
   setOrderToDelivered,
   getAllOrders,
+  setOrderToCooked,
 };

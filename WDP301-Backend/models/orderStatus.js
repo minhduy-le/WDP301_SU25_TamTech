@@ -23,7 +23,7 @@ const OrderStatus = sequelize.define(
 // Pre-populate the OrderStatus table with the allowed values
 (async () => {
   await OrderStatus.sync({ force: false });
-  const statuses = ["Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing"];
+  const statuses = ["Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked"];
   for (const status of statuses) {
     await OrderStatus.findOrCreate({
       where: { status: status },
