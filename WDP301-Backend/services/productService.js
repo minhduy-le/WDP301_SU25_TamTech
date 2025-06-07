@@ -22,32 +22,36 @@ const validateProductData = (data) => {
   if (!Number.isInteger(productTypeId) || productTypeId < 1) {
     throw new Error("ProductTypeId must be a positive integer");
   }
-  if (!Array.isArray(recipes) || recipes.length === 0) {
-    throw new Error("Recipes must be a non-empty array");
-  }
-  for (const recipe of recipes) {
-    if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
-      throw new Error("Each recipe must have a valid materialId (positive integer)");
+  if (recipes) {
+    if (!Array.isArray(recipes)) {
+      throw new Error("Recipes must be an array");
     }
-    if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
-      throw new Error("Each recipe must have a valid quantity (positive integer)");
+    for (const recipe of recipes) {
+      if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+        throw new Error("Each recipe must have a valid materialId (positive integer)");
+      }
+      if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+        throw new Error("Each recipe must have a valid quantity (positive integer)");
+      }
     }
   }
 };
 
 const createProduct = async (productData) => {
-  const { name, description, price, image, productTypeId, createBy, storeId, recipes } = productData;
+  const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
   validateProductData({ name, price, productTypeId, recipes, description });
 
   const transaction = await sequelize.transaction();
 
   try {
-    // Check if materials exist
-    for (const recipe of recipes) {
-      const material = await Material.findByPk(recipe.materialId, { transaction });
-      if (!material) {
-        throw new Error(`Material with ID ${recipe.materialId} not found`);
+    // Check if materials exist for provided recipes
+    if (recipes.length > 0) {
+      for (const recipe of recipes) {
+        const material = await Material.findByPk(recipe.materialId, { transaction });
+        if (!material) {
+          throw new Error(`Material with ID ${recipe.materialId} not found`);
+        }
       }
     }
 
@@ -64,15 +68,17 @@ const createProduct = async (productData) => {
       { transaction }
     );
 
-    for (const recipe of recipes) {
-      await ProductRecipe.create(
-        {
-          productId: product.productId,
-          materialId: recipe.materialId,
-          quantity: recipe.quantity,
-        },
-        { transaction }
-      );
+    if (recipes.length > 0) {
+      for (const recipe of recipes) {
+        await ProductRecipe.create(
+          {
+            productId: product.productId,
+            materialId: recipe.materialId,
+            quantity: recipe.quantity,
+          },
+          { transaction }
+        );
+      }
     }
 
     await transaction.commit();

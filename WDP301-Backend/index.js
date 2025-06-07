@@ -19,6 +19,7 @@ const shipperRoutes = require("./routes/shipperRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const districtsRoutes = require("./routes/districtsRoutes");
 const promotionTypeRoutes = require("./routes/promotionTypeRoutes");
+const promotionRoutes = require("./routes/promotionRoutes");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
@@ -48,6 +49,7 @@ app.use("/api/shippers", shipperRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/location", districtsRoutes);
 app.use("/api/promotion-types", promotionTypeRoutes);
+app.use("/api/promotions", promotionRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
