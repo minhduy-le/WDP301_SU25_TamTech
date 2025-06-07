@@ -8,7 +8,7 @@ export const currencyFormatter = (value: any) => {
   if (typeof value !== "number") value = 0.0;
   value = value.toFixed(options.significantDigits);
 
-  const [currency, decimal] = value.split(".");
+  const [currency] = value.split(".");
   return `${currency.replace(
     /\B(?=(\d{3})+(?!\d))/g,
     options.thousandsSeparator
