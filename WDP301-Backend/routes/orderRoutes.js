@@ -7,6 +7,7 @@ const {
   setOrderToPreparing,
   setOrderToDelivering,
   setOrderToDelivered,
+  getAllOrders,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -82,6 +83,11 @@ const standardizeProvince = (province) => {
  *                 type: number
  *                 description: Discount value applied to the order
  *                 nullable: true
+ *               promotion_code:
+ *                 type: string
+ *                 description: Code of the promotion applied to the order
+ *                 nullable: true
+ *                 example: "SUMMER2025"
  *               order_shipping_fee:
  *                 type: number
  *                 description: Shipping fee for the order
@@ -800,5 +806,108 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *               example: 'Failed to update order status'
  */
 router.put("/:orderId/delivered", verifyToken, upload.single("certificationOfDelivered"), setOrderToDelivered);
+
+/**
+ * @swagger
+ * /api/orders:
+ *   get:
+ *     summary: Retrieve all orders (Admin/Staff only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   orderId:
+ *                     type: integer
+ *                   userId:
+ *                     type: integer
+ *                   payment_time:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                   order_create_at:
+ *                     type: string
+ *                     format: date-time
+ *                   order_address:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                     description: Order status (e.g., Pending, Paid, Preparing, Delivering, Delivered)
+ *                   fullName:
+ *                     type: string
+ *                     description: User's full name
+ *                   phone_number:
+ *                     type: string
+ *                     nullable: true
+ *                   orderItems:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         productId:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                           description: Product name
+ *                         quantity:
+ *                           type: integer
+ *                         price:
+ *                           type: number
+ *                   order_shipping_fee:
+ *                     type: number
+ *                   order_discount_value:
+ *                     type: number
+ *                   order_amount:
+ *                     type: number
+ *                   invoiceUrl:
+ *                     type: string
+ *                     nullable: true
+ *                   order_point_earn:
+ *                     type: integer
+ *                   note:
+ *                     type: string
+ *                     nullable: true
+ *                   payment_method:
+ *                     type: string
+ *                     description: Payment method name (e.g., Vnpay, PayOS)
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Admin or Staff can retrieve all orders'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+router.get("/", verifyToken, getAllOrders);
 
 module.exports = router;

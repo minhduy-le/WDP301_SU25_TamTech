@@ -90,6 +90,15 @@ class PromotionService {
     const existing = await Promotion.findOne({ where: whereClause });
     return !!existing;
   }
+
+  async checkCodeExists(code, excludeId = null) {
+    const whereClause = { code };
+    if (excludeId) {
+      whereClause.promotionId = { [Op.ne]: excludeId };
+    }
+    const existing = await Promotion.findOne({ where: whereClause });
+    return !!existing;
+  }
 }
 
 module.exports = new PromotionService();

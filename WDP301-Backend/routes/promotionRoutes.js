@@ -19,6 +19,24 @@ const promotionValidation = [
       }
       return true;
     }),
+  body("code")
+    .trim()
+    .notEmpty()
+    .withMessage("Promotion code is required")
+    .isLength({ max: 50 })
+    .withMessage("Promotion code must not exceed 50 characters")
+    .custom(async (value, { req }) => {
+      const existing = await promotionService.checkCodeExists(value, req.params.id);
+      if (existing) {
+        throw new Error("Promotion code already exists");
+      }
+      return true;
+    }),
+  body("promotionTypeId")
+    .notEmpty()
+    .withMessage("Promotion type ID is required")
+    .isInt({ min: 1 })
+    .withMessage("Promotion type ID must be a positive integer"),
   body("description")
     .optional()
     .trim()
@@ -85,16 +103,21 @@ const handleError = (error, res) => {
   // Validation errors
   if (
     error.message.includes("Promotion name is required") ||
+    error.message.includes("Promotion code is required") ||
+    error.message.includes("Promotion type ID is required") ||
     error.message.includes("Invalid start date format") ||
     error.message.includes("Invalid end date format") ||
     error.message.includes("Start date must be after current date") ||
     error.message.includes("End date must be after start date") ||
     error.message.includes("Promotion name must not exceed 100 characters") ||
+    error.message.includes("Promotion code must not exceed 50 characters") ||
     error.message.includes("Description must not exceed 255 characters") ||
     error.message.includes("Minimum order amount must be a positive number") ||
     error.message.includes("Discount amount must be a positive number") ||
     error.message.includes("Maximum number of uses must be a positive integer") ||
     error.message.includes("Promotion name already exists") ||
+    error.message.includes("Promotion code already exists") ||
+    error.message.includes("Promotion type ID must be a positive integer") ||
     error.message.includes("Invalid promotion ID")
   ) {
     return res.status(400).send(error.message);
@@ -125,6 +148,8 @@ const handleError = (error, res) => {
  *             type: object
  *             required:
  *               - name
+ *               - code
+ *               - promotionTypeId
  *               - startDate
  *               - endDate
  *               - minOrderAmount
@@ -134,6 +159,12 @@ const handleError = (error, res) => {
  *               name:
  *                 type: string
  *                 maxLength: 100
+ *               code:
+ *                 type: string
+ *                 maxLength: 50
+ *               promotionTypeId:
+ *                 type: integer
+ *                 minimum: 1
  *               description:
  *                 type: string
  *                 maxLength: 255
@@ -164,7 +195,10 @@ const handleError = (error, res) => {
  */
 router.post("/", verifyToken, promotionValidation, validate, async (req, res) => {
   try {
-    const promotion = await promotionService.createPromotion(req.body);
+    const promotion = await promotionService.createPromotion({
+      ...req.body,
+      createBy: req.userId,
+    });
     res.status(201).json(promotion);
   } catch (error) {
     handleError(error, res);
@@ -257,10 +291,25 @@ router.get(
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - code
+ *               - promotionTypeId
+ *               - startDate
+ *               - endDate
+ *               - minOrderAmount
+ *               - discountAmount
+ *               - maxNumberOfUses
  *             properties:
  *               name:
  *                 type: string
  *                 maxLength: 100
+ *               code:
+ *                 type: string
+ *                 maxLength: 50
+ *               promotionTypeId:
+ *                 type: integer
+ *                 minimum: 1
  *               description:
  *                 type: string
  *                 maxLength: 255
@@ -356,18 +405,27 @@ router.delete(
  *       required:
  *         - promotionId
  *         - name
+ *         - code
+ *         - promotionTypeId
  *         - startDate
  *         - endDate
  *         - minOrderAmount
  *         - discountAmount
  *         - maxNumberOfUses
  *         - isActive
+ *         - createBy
  *       properties:
  *         promotionId:
  *           type: integer
  *         name:
  *           type: string
  *           maxLength: 100
+ *         code:
+ *           type: string
+ *           maxLength: 50
+ *         promotionTypeId:
+ *           type: integer
+ *           minimum: 1
  *         description:
  *           type: string
  *           maxLength: 255
@@ -387,6 +445,8 @@ router.delete(
  *           type: integer
  *         isActive:
  *           type: boolean
+ *         createBy:
+ *           type: integer
  *         createdAt:
  *           type: string
  *           format: date-time
