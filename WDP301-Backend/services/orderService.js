@@ -9,6 +9,7 @@ const {
   PaymentMethod,
   ProductRecipe,
   Material,
+  Promotion,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -36,11 +37,27 @@ const createOrder = async (req, res) => {
     return res.status(400).send("Request body is missing or invalid");
   }
 
-  const { orderItems, order_discount_value, order_shipping_fee, payment_method_id, order_address, note } = req.body;
+  const {
+    orderItems,
+    order_discount_value,
+    promotion_code,
+    order_shipping_fee,
+    payment_method_id,
+    order_address,
+    note,
+  } = req.body;
   const userId = req.userId;
   const storeId = 1;
 
-  console.log("Destructured parameters:", { orderItems, userId, note, order_address, payment_method_id });
+  console.log("Destructured parameters:", {
+    orderItems,
+    userId,
+    note,
+    order_address,
+    payment_method_id,
+    promotion_code,
+    order_discount_value,
+  });
 
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
@@ -81,6 +98,68 @@ const createOrder = async (req, res) => {
     if (item.price < 0) {
       console.log("Invalid price:", item.price);
       return res.status(400).send("Price cannot be negative");
+    }
+  }
+
+  console.log("Starting promotion validation");
+  if (promotion_code || order_discount_value) {
+    if (!promotion_code) {
+      console.log("Missing promotion_code when order_discount_value is provided:", order_discount_value);
+      return res.status(400).send("Promotion code is required when a discount value is provided");
+    }
+    if (!order_discount_value) {
+      console.log("Missing order_discount_value when promotion_code is provided:", promotion_code);
+      return res.status(400).send("Discount value is required when a promotion code is provided");
+    }
+
+    const promotion = await Promotion.findOne({
+      where: { code: promotion_code, isActive: true },
+    });
+    if (!promotion) {
+      console.log("Promotion not found or inactive for code:", promotion_code);
+      return res.status(400).send(`Promotion code '${promotion_code}' not found or is not active`);
+    }
+
+    const currentDate = new Date();
+    if (currentDate < promotion.startDate || currentDate > promotion.endDate) {
+      console.log("Promotion is not active for current date:", {
+        promotion_code,
+        startDate: promotion.startDate,
+        endDate: promotion.endDate,
+        currentDate,
+      });
+      return res.status(400).send(`Promotion code '${promotion_code}' is not active for the current date`);
+    }
+
+    if (promotion.NumberCurrentUses >= promotion.maxNumberOfUses) {
+      console.log("Promotion has reached maximum uses:", {
+        promotion_code,
+        NumberCurrentUses: promotion.NumberCurrentUses,
+        maxNumberOfUses: promotion.maxNumberOfUses,
+      });
+      return res.status(400).send(`Promotion code '${promotion_code}' has reached its maximum usage limit`);
+    }
+
+    const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (order_amount < promotion.minOrderAmount) {
+      console.log("Order amount does not meet minimum requirement for promotion:", {
+        promotion_code,
+        order_amount,
+        minOrderAmount: promotion.minOrderAmount,
+      });
+      return res
+        .status(400)
+        .send(`Order amount does not meet the minimum requirement for promotion code '${promotion_code}'`);
+    }
+
+    if (parseFloat(order_discount_value) !== parseFloat(promotion.discountAmount)) {
+      console.log("Discount value does not match promotion:", {
+        order_discount_value,
+        promotion_discountAmount: promotion.discountAmount,
+      });
+      return res
+        .status(400)
+        .send(`Discount value does not match the promotion code '${promotion_code}' discount amount`);
     }
   }
 
@@ -199,6 +278,15 @@ const createOrder = async (req, res) => {
       },
       { transaction }
     );
+
+    if (promotion_code) {
+      const promotion = await Promotion.findOne({ where: { code: promotion_code }, transaction });
+      promotion.NumberCurrentUses += 1;
+      await promotion.save({ transaction });
+      console.log(
+        `Incremented NumberCurrentUses for promotion code '${promotion_code}' to ${promotion.NumberCurrentUses}`
+      );
+    }
 
     const orderItemData = orderItems.map((item) => ({
       orderId: order.orderId,
@@ -897,6 +985,95 @@ const setOrderToDelivered = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  console.log("getAllOrders called at:", new Date().toISOString());
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const userRole = req.userRole;
+
+  try {
+    const orders = await Order.findAll({
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "userId",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]], // Sort by creation date, newest first
+    });
+
+    console.log("Fetched all orders:", orders.length);
+
+    const formattedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    }));
+
+    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
+    res.status(200).json(formattedOrders);
+  } catch (error) {
+    console.error("Error in getAllOrders:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -904,4 +1081,5 @@ module.exports = {
   setOrderToPreparing,
   setOrderToDelivering,
   setOrderToDelivered,
+  getAllOrders,
 };
