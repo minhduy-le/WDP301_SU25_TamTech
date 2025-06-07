@@ -9,7 +9,6 @@ import Footer from "./components/Footer";
 import Login from "./pages/Login";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOTP from "./pages/VerifyOTP";
-// import Sidebar from "./components/Sidebar";np
 import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import Register from "./pages/Register";
 import HomePage from "./pages/HomePage";
@@ -32,10 +31,7 @@ import Forbidden from "./pages/Forbidden";
 import { AuthGuardProvider } from "./contexts/AuthGuardContext";
 import Blog from "./pages/Blog";
 import AdminProfile from "./pages/admin/AdminProfile";
-import StaffSidebar from "./components/staff/StaffSidebar";
-import StaffOrderManagement from "./pages/OrderManageStaff";
-import StaffConfirmOrders from "./pages/ConfirmOrderStaff";
-import StaffProfile from "./pages/StaffProfile";
+import CustomerFeedbackManagement from "./pages/manager/feedbacks/CustomerFeedbackManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -47,28 +43,16 @@ const LayoutWithNavFooter = () => (
   </>
 );
 
-// const LayoutWithSidebar = () => (
-//   <>
-//     <Sidebar />
-//   </>
-// );
 const LayoutWithSidebarManager = () => (
   <>
     <ManagerSidebar />
   </>
 );
-
 const LayoutWithSidebarAdmin = () => (
   <>
     <AdminSidebar />
   </>
 );
-const LayoutWithSidebarStaff = () => (
-  <>
-    <StaffSidebar />
-  </>
-);
-
 function App() {
   return (
     <Router>
@@ -88,24 +72,17 @@ function App() {
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/blog" element={<Blog />} />
           </Route>
-          {/* <Route element={<LayoutWithSidebar />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Route> */}
           <Route element={<LayoutWithSidebarManager />}>
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/orders" element={<OrderManagement />} />
-            <Route
-              path="/manager/orders/confirm-orders"
-              element={<ConfirmOrders />}
-            />
             <Route path="/manager/products" element={<ProductManagement />} />
             <Route
               path="/manager/promotions"
               element={<PromotionManagement />}
             />
             <Route path="/manager/staffs" element={<EmployeeManagement />} />
+            <Route path="/manager/feedback" element={<CustomerFeedbackManagement />} />
           </Route>
-
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/dashboard" element={<ReportManagement />} />
@@ -114,15 +91,6 @@ function App() {
               element={<SystemIssuesReport />}
             />
             <Route path="/admin/profile" element={<AdminProfile />} />
-          </Route>
-
-          <Route element={<LayoutWithSidebarStaff />}>
-            <Route path="/staff/orders" element={<StaffOrderManagement />} />
-            <Route
-              path="/staff/orders/confirm-orders"
-              element={<StaffConfirmOrders />}
-            />
-            <Route path="/staff/profile" element={<StaffProfile />} />
           </Route>
         </Routes>
       </AuthGuardProvider>

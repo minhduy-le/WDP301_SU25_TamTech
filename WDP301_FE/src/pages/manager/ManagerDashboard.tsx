@@ -5,8 +5,6 @@ import {
   Col,
   Statistic,
   Typography,
-  Table,
-  Tag,
   List,
   Avatar,
   Select,
@@ -34,6 +32,7 @@ import {
   Bar,
 } from "recharts";
 import type { TooltipProps } from "recharts";
+import LatestOrders from "../../components/manager/dashboard/LatestOrders";
 
 const { Title, Text } = Typography;
 
@@ -82,49 +81,6 @@ const topProducts = [
   { name: "Snack Lay's", sold: 60, revenue: 600000 },
 ];
 
-const recentOrders = [
-  {
-    id: "ORD001",
-    customer: "Nguyễn Văn A",
-    product: "Sữa tắm Dove",
-    status: "Thành công",
-    amount: 200000,
-  },
-  {
-    id: "ORD002",
-    customer: "Trần Thị B",
-    product: "Dầu gội Clear",
-    status: "Đang xử lý",
-    amount: 150000,
-  },
-  {
-    id: "ORD003",
-    customer: "Lê Văn C",
-    product: "Bánh Oreo",
-    status: "Thành công",
-    amount: 80000,
-  },
-  {
-    id: "ORD004",
-    customer: "Phạm Thị D",
-    product: "Sữa tươi Vinamilk",
-    status: "Hủy",
-    amount: 120000,
-  },
-  {
-    id: "ORD005",
-    customer: "Vũ Văn E",
-    product: "Snack Lay's",
-    status: "Thành công",
-    amount: 60000,
-  },
-];
-
-const orderStatusColors: { [key: string]: string } = {
-  "Thành công": "#A05A2C",
-  "Đang xử lý": "#D97B41",
-  Hủy: "#faad14",
-};
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
@@ -341,11 +297,10 @@ const ManagerDashboard: React.FC = () => {
 
       <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
         <Col xs={24} lg={17}>
-          {/* Biểu đồ so sánh 2 tháng */}
           <Card
             title={
               <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
-                So sánh doanh thu & đơn hàng
+                So sánh doanh thu 
               </span>
             }
             style={{
@@ -356,7 +311,7 @@ const ManagerDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={350}>
               <LineChart
                 data={chartData}
-                margin={{ top: 24, right: 24, left: 0, bottom: 8 }}
+                margin={{ top: 24, left: 0, bottom: 8 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
@@ -386,24 +341,6 @@ const ManagerDashboard: React.FC = () => {
                   dataKey="Doanh thu tháng này"
                   stroke="#D97B41"
                   strokeWidth={3}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="Đơn hàng tháng trước"
-                  stroke="#faad14"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="Đơn hàng tháng này"
-                  stroke="#A05A2C"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
                   dot={false}
                 />
               </LineChart>
@@ -536,57 +473,9 @@ const ManagerDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Đơn hàng mới nhất */}
       <Row style={{ marginTop: 32 }}>
         <Col xs={24}>
-          <Card
-            title={
-              <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                Đơn hàng mới nhất
-              </span>
-            }
-            bordered={false}
-            style={{ borderRadius: 12 }}
-          >
-            <Table
-              dataSource={recentOrders}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              columns={[
-                { title: "Mã", dataIndex: "id", key: "id", width: 70 },
-                {
-                  title: "Khách hàng",
-                  dataIndex: "customer",
-                  key: "customer",
-                  width: 120,
-                },
-                {
-                  title: "Sản phẩm",
-                  dataIndex: "product",
-                  key: "product",
-                  width: 120,
-                },
-                {
-                  title: "Số tiền",
-                  dataIndex: "amount",
-                  key: "amount",
-                  width: 90,
-                  render: (v: number) => v.toLocaleString() + "đ",
-                },
-                {
-                  title: "Trạng thái",
-                  dataIndex: "status",
-                  key: "status",
-                  width: 90,
-                  render: (v: string) => (
-                    <Tag color={orderStatusColors[v]}>{v}</Tag>
-                  ),
-                },
-              ]}
-              scroll={{ x: 400 }}
-            />
-          </Card>
+          <LatestOrders />
         </Col>
       </Row>
     </div>

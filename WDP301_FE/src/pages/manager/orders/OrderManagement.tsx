@@ -5,10 +5,10 @@ import {
   Space,
   Button,
   Input,
-  Select,
   Card,
   Modal,
   Descriptions,
+  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -22,70 +22,37 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
+import axios from "axios";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
-
-const { Option } = Select;
-
 interface OrderItem {
-  id: number;
+  productId: number;
   name: string;
   quantity: number;
-  price: number;
+  price: string;
 }
 
 interface Order {
-  id: number;
-  customerName: string;
-  orderDate: string;
-  totalAmount: number;
-  status: "pending" | "processing" | "completed" | "cancelled";
-  items: OrderItem[];
+  orderId: number;
+  userId: number;
+  payment_time: string;
+  order_create_at: string;
+  order_address: string;
+  status: string;
+  fullName: string;
+  phone_number: string;
+  orderItems: OrderItem[];
+  order_shipping_fee: string;
+  order_discount_value: string;
+  order_amount: string;
+  invoiceUrl: string;
+  order_point_earn: number;
+  note: string;
+  payment_method: string;
 }
-
-const fakeData: Order[] = [
-  {
-    id: 1,
-    customerName: "Nguyễn Văn A",
-    orderDate: "2025-05-20T10:30:00Z",
-    totalAmount: 1500000,
-    status: "pending",
-    items: [
-      { id: 1, name: "Sản phẩm 1", quantity: 2, price: 500000 },
-      { id: 2, name: "Sản phẩm 2", quantity: 1, price: 500000 },
-    ],
-  },
-  {
-    id: 2,
-    customerName: "Trần Thị B",
-    orderDate: "2025-05-21T15:00:00Z",
-    totalAmount: 2300000,
-    status: "completed",
-    items: [
-      { id: 3, name: "Sản phẩm 3", quantity: 1, price: 1000000 },
-      { id: 4, name: "Sản phẩm 4", quantity: 2, price: 650000 },
-    ],
-  },
-  {
-    id: 3,
-    customerName: "Lê Văn C",
-    orderDate: "2025-05-22T09:15:00Z",
-    totalAmount: 850000,
-    status: "processing",
-    items: [{ id: 5, name: "Sản phẩm 5", quantity: 1, price: 850000 }],
-  },
-  {
-    id: 4,
-    customerName: "Phạm Thị D",
-    orderDate: "2025-05-19T11:00:00Z",
-    totalAmount: 1200000,
-    status: "cancelled",
-    items: [{ id: 6, name: "Sản phẩm 6", quantity: 3, price: 400000 }],
-  },
-];
 
 const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -93,22 +60,38 @@ const OrderManagement: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter] = useState<string>("all");
 
   useEffect(() => {
-    setTimeout(() => {
-        setOrders(fakeData);
-        setLoading(false);
-    }, 500);
+    fetchOrders();
   }, []);
 
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/orders',
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      setOrders(response.data);
+    } catch (error) {
+      message.error('Failed to fetch orders');
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusTheme = (status: string): { tagBg: string; tagText: string; iconColor?: string } => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "pending":
         return { tagBg: "#F9E4B7", tagText: "#A05A2C", iconColor: "#A05A2C" };
       case "processing":
         return { tagBg: "#FAD2A5", tagText: "#A05A2C", iconColor: "#A05A2C" };
-      case "completed":
+      case "paid":
         return { tagBg: "#81C784", tagText: "#fff", iconColor: "#fff" };
       case "cancelled":
         return { tagBg: "#E57373", tagText: "#fff", iconColor: "#fff" };
@@ -119,12 +102,12 @@ const OrderManagement: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     const theme = getStatusTheme(status);
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "pending":
         return <ClockCircleOutlined style={{color: theme.iconColor}} />;
       case "processing":
         return <ClockCircleOutlined style={{color: theme.iconColor}} />;
-      case "completed":
+      case "paid":
         return <CheckCircleOutlined style={{color: theme.iconColor}}/>;
       case "cancelled":
         return <CloseCircleOutlined style={{color: theme.iconColor}}/>;
@@ -144,36 +127,36 @@ const OrderManagement: React.FC = () => {
   const columns = [
     {
       title: "Mã ĐH",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "orderId",
+      key: "orderId",
       width: 100,
-      sorter: (a: Order, b: Order) => a.id - b.id,
+      sorter: (a: Order, b: Order) => a.orderId - b.orderId,
     },
     {
       title: "Khách hàng",
-      dataIndex: "customerName",
-      key: "customerName",
+      dataIndex: "fullName",
+      key: "fullName",
       width: 200,
       ellipsis: true,
-      sorter: (a: Order, b: Order) => a.customerName.localeCompare(b.customerName),
+      sorter: (a: Order, b: Order) => a.fullName.localeCompare(b.fullName),
       render: (name: string) => <span style={{fontWeight: 500}}>{name}</span>
     },
     {
       title: "Ngày đặt",
-      dataIndex: "orderDate",
-      key: "orderDate",
+      dataIndex: "order_create_at",
+      key: "order_create_at",
       width: 180,
-      sorter: (a: Order, b: Order) => dayjs(a.orderDate).unix() - dayjs(b.orderDate).unix(),
+      sorter: (a: Order, b: Order) => dayjs(a.order_create_at).unix() - dayjs(b.order_create_at).unix(),
       render: (date: string) => dayjs(date).format("DD/MM/YYYY HH:mm"),
     },
     {
       title: "Tổng tiền",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
+      dataIndex: "order_amount",
+      key: "order_amount",
       width: 150,
       align: 'right' as const,
-      sorter: (a: Order, b: Order) => a.totalAmount - b.totalAmount,
-      render: (amount: number) => `${amount.toLocaleString()}đ`,
+      sorter: (a: Order, b: Order) => parseFloat(a.order_amount) - parseFloat(b.order_amount),
+      render: (amount: string) => `${parseFloat(amount).toLocaleString()}đ`,
     },
     {
       title: "Trạng thái",
@@ -184,11 +167,11 @@ const OrderManagement: React.FC = () => {
       filters: [
         { text: 'Chờ xử lý', value: 'pending' },
         { text: 'Đang xử lý', value: 'processing' },
-        { text: 'Hoàn thành', value: 'completed' },
+        { text: 'Đã thanh toán', value: 'paid' },
         { text: 'Đã hủy', value: 'cancelled' },
       ],
-      onFilter: (value: string | number | boolean, record: Order) => record.status === value,
-      render: (status: Order["status"]) => {
+      onFilter: (value: string | number | boolean, record: Order) => record.status.toLowerCase() === value,
+      render: (status: string) => {
         const theme = getStatusTheme(status);
         return (
             <Tag
@@ -233,6 +216,7 @@ const OrderManagement: React.FC = () => {
           <Button
             type="default"
             icon={<DownloadOutlined />}
+            onClick={() => window.open(record.invoiceUrl, '_blank')}
             style={{ color: "#D97B41", borderColor: "#D97B41", background: "#FFF9F0", fontWeight: 600, outline: "none", boxShadow: "none" }}
           >
             Biên lai
@@ -244,10 +228,10 @@ const OrderManagement: React.FC = () => {
 
   const filteredOrders = useMemo(() => orders.filter((order) => {
     const matchesSearch =
-      order.customerName.toLowerCase().includes(searchText.toLowerCase()) ||
-      order.id.toString().includes(searchText);
+      order.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
+      order.orderId.toString().includes(searchText);
     const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
+      statusFilter === "all" || order.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   }), [orders, searchText, statusFilter]);
 
@@ -318,17 +302,6 @@ const OrderManagement: React.FC = () => {
                 style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
                 allowClear
               />
-              <Select
-                value={statusFilter}
-                style={{ width: 200, borderRadius: 6 }}
-                onChange={(value) => setStatusFilter(value)}
-              >
-                <Option value="all">Tất cả trạng thái</Option>
-                <Option value="pending">Chờ xử lý</Option>
-                <Option value="processing">Đang xử lý</Option>
-                <Option value="completed">Hoàn thành</Option>
-                <Option value="cancelled">Đã hủy</Option>
-              </Select>
             </Space>
             <Button
               type="default"
@@ -344,7 +317,7 @@ const OrderManagement: React.FC = () => {
             columns={columns as ColumnType<Order>[]}
             dataSource={filteredOrders}
             loading={loading}
-            rowKey="id"
+            rowKey="orderId"
             style={{ borderRadius: 8, border: `1px solid ${tableBorderColor}`, overflow: 'hidden' }}
             rowClassName={(_, index) => (index % 2 === 0 ? 'even-row-order' : 'odd-row-order')}
             scroll={{ x: 980 }}
@@ -375,9 +348,9 @@ const OrderManagement: React.FC = () => {
                 labelStyle={{ color: "#A05A2C", fontWeight: 600, background: '#FFF9F0', width: '160px' }}
                 contentStyle={{ color: cellTextColor, background: '#FFFFFF' }}
               >
-                <Descriptions.Item label="Mã đơn hàng">{selectedOrder.id}</Descriptions.Item>
-                <Descriptions.Item label="Khách hàng">{selectedOrder.customerName}</Descriptions.Item>
-                <Descriptions.Item label="Ngày đặt">{dayjs(selectedOrder.orderDate).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
+                <Descriptions.Item label="Mã đơn hàng">{selectedOrder.orderId}</Descriptions.Item>
+                <Descriptions.Item label="Khách hàng">{selectedOrder.fullName}</Descriptions.Item>
+                <Descriptions.Item label="Ngày đặt">{dayjs(selectedOrder.order_create_at).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   {(() => {
                       const theme = getStatusTheme(selectedOrder.status);
@@ -392,20 +365,40 @@ const OrderManagement: React.FC = () => {
                   })()}
                 </Descriptions.Item>
                 <Descriptions.Item label="Tổng tiền" span={2}>
-                  <span style={{color: "#D97B41", fontWeight: 'bold', fontSize: '1.1em'}}>{selectedOrder.totalAmount.toLocaleString()}đ</span>
+                  <span style={{color: "#D97B41", fontWeight: 'bold', fontSize: '1.1em'}}>{parseFloat(selectedOrder.order_amount).toLocaleString()}đ</span>
                 </Descriptions.Item>
+                <Descriptions.Item label="Phí vận chuyển">
+                  <span style={{color: cellTextColor}}>{parseFloat(selectedOrder.order_shipping_fee).toLocaleString()}đ</span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Giảm giá">
+                  <span style={{color: cellTextColor}}>{parseFloat(selectedOrder.order_discount_value).toLocaleString()}đ</span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Phương thức thanh toán">
+                  <span style={{color: cellTextColor}}>{selectedOrder.payment_method}</span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ giao hàng">
+                  <span style={{color: cellTextColor}}>{selectedOrder.order_address}</span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  <span style={{color: cellTextColor}}>{selectedOrder.phone_number}</span>
+                </Descriptions.Item>
+                {selectedOrder.note && (
+                  <Descriptions.Item label="Ghi chú" span={2}>
+                    <span style={{color: cellTextColor}}>{selectedOrder.note}</span>
+                  </Descriptions.Item>
+                )}
                 <Descriptions.Item label="Chi tiết sản phẩm" span={2}>
                   <Table
                     className="order-items-table"
-                    dataSource={selectedOrder.items}
+                    dataSource={selectedOrder.orderItems}
                     columns={[
                       { title: "Tên sản phẩm", dataIndex: "name", key: "name", render: (text: string) => <span style={{color: cellTextColor}}>{text}</span> },
                       { title: "Số lượng", dataIndex: "quantity", key: "quantity", align: 'center' as const, render: (text: number) => <span style={{color: cellTextColor}}>{text}</span> },
-                      { title: "Đơn giá", dataIndex: "price", key: "price", align: 'right' as const, render: (price: number) => <span style={{color: cellTextColor}}>{price.toLocaleString()}đ</span> },
-                      { title: "Thành tiền", key: "subtotal", align: 'right' as const, render: (_:any, item: OrderItem) => <span style={{color: cellTextColor, fontWeight: 500}}>{(item.quantity * item.price).toLocaleString()}đ</span> },
+                      { title: "Đơn giá", dataIndex: "price", key: "price", align: 'right' as const, render: (price: string) => <span style={{color: cellTextColor}}>{parseFloat(price).toLocaleString()}đ</span> },
+                      { title: "Thành tiền", key: "subtotal", align: 'right' as const, render: (_:any, item: OrderItem) => <span style={{color: cellTextColor, fontWeight: 500}}>{(item.quantity * parseFloat(item.price)).toLocaleString()}đ</span> },
                     ]}
                     pagination={false}
-                    rowKey="id"
+                    rowKey="productId"
                     size="small"
                     style={{ background: evenRowBgColor, borderRadius: 8, border: `1px solid ${borderColor}` }}
                   />

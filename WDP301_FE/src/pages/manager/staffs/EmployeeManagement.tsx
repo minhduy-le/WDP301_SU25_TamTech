@@ -22,10 +22,10 @@ import {
   DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
-  UserOutlined, // Icon mặc định cho Avatar
+  UserOutlined,
   PhoneOutlined,
   MailOutlined,
-  SafetyCertificateOutlined, // For role
+  SafetyCertificateOutlined, 
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import dayjs, { Dayjs } from 'dayjs';
