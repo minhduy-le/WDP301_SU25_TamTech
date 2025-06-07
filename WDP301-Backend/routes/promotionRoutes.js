@@ -50,10 +50,8 @@ const promotionValidation = [
     .custom((value) => {
       const startDate = new Date(value);
       const currentDate = new Date();
-      // Set time to start of day for comparison
       currentDate.setHours(0, 0, 0, 0);
       startDate.setHours(0, 0, 0, 0);
-
       if (startDate <= currentDate) {
         throw new Error("Start date must be after current date");
       }
@@ -78,8 +76,8 @@ const promotionValidation = [
   body("discountAmount")
     .notEmpty()
     .withMessage("Discount amount is required")
-    .isFloat({ min: 0 })
-    .withMessage("Discount amount must be a positive number"),
+    .isFloat({ min: 1000 })
+    .withMessage("Discount amount must be at least 1000"),
   body("maxNumberOfUses")
     .notEmpty()
     .withMessage("Maximum number of uses is required")

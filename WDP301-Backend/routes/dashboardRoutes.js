@@ -204,4 +204,78 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dashboard/top-products:
+ *   get:
+ *     summary: Get top 6 best-selling products
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Top products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productName:
+ *                         type: string
+ *                         description: Name of the product
+ *                       totalQuantity:
+ *                         type: integer
+ *                         description: Total quantity sold
+ *                       totalRevenue:
+ *                         type: number
+ *                         description: Total revenue from the product
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ */
+router.get("/top-products", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getTopProducts();
+    res.status(200).json({
+      status: 200,
+      message: "Top products retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving top products:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Failed to retrieve top products",
+    });
+  }
+});
+
 module.exports = router;

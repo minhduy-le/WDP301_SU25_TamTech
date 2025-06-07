@@ -3,6 +3,7 @@ const { Op } = require("sequelize"); // Import Op object
 const Product = require("../models/product");
 const User = require("../models/user");
 const Order = require("../models/order");
+const OrderItem = require("../models/orderItem");
 
 const getProductStats = async () => {
   const [results] = await sequelize.query(
@@ -94,4 +95,39 @@ const getRevenueStats = async (year) => {
   return monthlyRevenue;
 };
 
-module.exports = { getProductStats, getUserStats, getRevenueStats };
+const getTopProducts = async () => {
+  const topProducts = await OrderItem.findAll({
+    attributes: [
+      [sequelize.col("Product.name"), "productName"],
+      [sequelize.fn("SUM", sequelize.col("quantity")), "totalQuantity"],
+      [sequelize.fn("SUM", sequelize.literal("`OrderItem`.`quantity` * `OrderItem`.`price`")), "totalRevenue"],
+    ],
+    include: [
+      {
+        model: Product,
+        as: "Product",
+        attributes: [],
+      },
+      {
+        model: Order,
+        as: "Order",
+        attributes: [],
+        where: {
+          status_id: { [Op.notIn]: [1, 5] }, // Exclude Pending (1) and Canceled (5)
+        },
+      },
+    ],
+    group: ["Product.productId", "Product.name"],
+    order: [[sequelize.fn("SUM", sequelize.col("quantity")), "DESC"]],
+    limit: 6,
+    raw: true,
+  });
+
+  return topProducts.map((item) => ({
+    productName: item.productName,
+    totalQuantity: parseInt(item.totalQuantity) || 0,
+    totalRevenue: parseFloat(item.totalRevenue) || 0,
+  }));
+};
+
+module.exports = { getProductStats, getUserStats, getRevenueStats, getTopProducts };
