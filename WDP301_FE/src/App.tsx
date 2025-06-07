@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOTP from "./pages/VerifyOTP";
 // import Sidebar from "./components/Sidebar";np
-import Dashboard from "./pages/manager/Dashboard";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import Register from "./pages/Register";
 import HomePage from "./pages/HomePage";
 import Menu from "./pages/Menu";
@@ -81,7 +81,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
         </Route> */}
           <Route element={<LayoutWithSidebarManager />}>
-            <Route path="/manager/dashboard" element={<Dashboard />} />
+            <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/orders" element={<OrderManagement />} />
             <Route
               path="/manager/orders/confirm-orders"

@@ -175,27 +175,16 @@ export default function RootLayout() {
               }}
             />
             <Drawer.Screen
-              name="(tabs)/customer.info"
+              name="(tabs)/search.information"
               options={{
-                drawerLabel: "Tra cứu khách hàng",
-                title: "Tra cứu khách hàng",
+                drawerLabel: "Tra cứu thông tin",
+                title: "Tra cứu thông tin",
                 drawerActiveTintColor: APP_COLOR.ORANGE,
                 drawerInactiveTintColor: APP_COLOR.BROWN,
                 drawerIcon: ({ color, size }) => (
-                  <AntDesign name="user" size={size} color={color} />
+                  <AntDesign name="search1" size={size} color={color} />
                 ),
-              }}
-            />
-            <Drawer.Screen
-              name="(tabs)/voucher"
-              options={{
-                drawerLabel: "Tra cứu ưu đãi",
-                title: "Tra cứu ưu đãi",
-                drawerActiveTintColor: APP_COLOR.ORANGE,
-                drawerInactiveTintColor: APP_COLOR.BROWN,
-                drawerIcon: ({ color, size }) => (
-                  <FontAwesome6 name="ticket" size={size} color={color} />
-                ),
+                headerShown: false,
               }}
             />
           </Drawer>
