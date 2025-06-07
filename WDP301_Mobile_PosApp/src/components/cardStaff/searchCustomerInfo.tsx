@@ -19,7 +19,7 @@ const SearchCustomerInfo = () => {
       style={{
         borderRadius: 10,
         backgroundColor: APP_COLOR.WHITE,
-        height: screenHeight * 0.57,
+        height: screenHeight * 0.55,
         marginTop: 10,
         borderColor: "#E0E0E0",
         shadowColor: "#000",
@@ -32,54 +32,37 @@ const SearchCustomerInfo = () => {
         elevation: 2,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 30,
-          justifyContent: "space-between",
-          backgroundColor: APP_COLOR.BROWN,
-          paddingHorizontal: 10,
-          paddingVertical: 15,
-          borderTopLeftRadius: 10,
-          borderTopRightRadius: 10,
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: APP_FONT.MEDIUM,
-            fontSize: 17,
-            color: APP_COLOR.WHITE,
-          }}
-        >
-          Thông tin khách hàng
-        </Text>
-        <View
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            backgroundColor: "yellow",
-            borderRadius: 30,
-            borderWidth: 0.5,
-            borderColor: APP_COLOR.ORANGE,
-          }}
-        >
-          <Text style={{ fontFamily: APP_FONT.REGULAR, fontSize: 12 }}>
-            Gold
-          </Text>
-        </View>
-      </View>
       <View>
         <View style={{ marginHorizontal: 10, marginTop: 15 }}>
-          <Text
-            style={{
-              fontFamily: APP_FONT.BOLD,
-              fontSize: 20,
-              color: APP_COLOR.BROWN,
-            }}
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
-            Lê Minh Duy
-          </Text>
+            <Text
+              style={{
+                fontFamily: APP_FONT.BOLD,
+                fontSize: 20,
+                color: APP_COLOR.BROWN,
+              }}
+            >
+              Lê Minh Duy
+            </Text>
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                backgroundColor: "yellow",
+                borderRadius: 30,
+                borderWidth: 0.5,
+                borderColor: APP_COLOR.ORANGE,
+                alignItems: "center",
+                justifyContent: "space-around",
+              }}
+            >
+              <Text style={{ fontFamily: APP_FONT.REGULAR, fontSize: 10 }}>
+                Gold
+              </Text>
+            </View>
+          </View>
           <Text
             style={{ fontFamily: APP_FONT.REGULAR, color: APP_COLOR.BROWN }}
           >
@@ -184,10 +167,10 @@ const SearchCustomerInfo = () => {
             style={{ flexDirection: "row", gap: 5, marginHorizontal: "auto" }}
           >
             <PressBtn
-              title="Chỉnh sửa thông tin"
+              title="Chỉnh sửa"
               onPress={handleEdit}
               btnStyle={{
-                width: screenWidth * 0.43,
+                width: screenWidth * 0.4,
                 backgroundColor: APP_COLOR.BROWN,
               }}
               textStyle={{
@@ -199,7 +182,7 @@ const SearchCustomerInfo = () => {
             <PressBtn
               title="Liên hệ"
               onPress={handleContact}
-              btnStyle={{ width: screenWidth * 0.43 }}
+              btnStyle={{ width: screenWidth * 0.4 }}
               textStyle={{
                 fontFamily: APP_FONT.REGULAR,
                 color: APP_COLOR.BROWN,
@@ -224,7 +207,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   inforTag: {
-    paddingHorizontal: 25,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 0.5,
     borderColor: APP_COLOR.BROWN,
