@@ -4,11 +4,13 @@ const {
   createOrder,
   handlePaymentSuccess,
   getUserOrders,
+  setOrderToApproved,
   setOrderToPreparing,
+  setOrderToCooked,
   setOrderToDelivering,
   setOrderToDelivered,
   getAllOrders,
-  setOrderToCooked,
+  getPaidOrders,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -176,7 +178,7 @@ router.post("/", verifyToken, createOrder);
  *                     type: string
  *                   status:
  *                     type: string
- *                     description: Order status (e.g., Pending, Paid)
+ *                     description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
  *                   fullName:
  *                     type: string
  *                     description: User's full name
@@ -377,7 +379,7 @@ router.post("/webhook", async (req, res) => {
     }
     if (status === "PAID" && code === "00") {
       console.log("Webhook updating status_id to 2 for orderId:", orderCode);
-      order.status_id = 2;
+      order.status_id = 2; // Paid
       order.payment_time = new Date();
 
       const user = await User.findOne({ where: { id: order.userId } });
@@ -464,7 +466,6 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
   try {
     const { deliver_address, weight } = req.body;
 
-    // Validate delivery address presence
     if (!deliver_address) {
       return res.status(400).json({
         status: 400,
@@ -472,7 +473,6 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       });
     }
 
-    // Validate address format: "street name, ward, district, city"
     const addressRegex = /^[^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+$/;
     if (!addressRegex.test(deliver_address)) {
       return res.status(400).json({
@@ -483,25 +483,21 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
 
     const defaultWeight = weight || 1000;
 
-    // Hardcode pickup address
     const pickProvince = "TP. Hồ Chí Minh";
     const pickDistrict = "Quận 3";
     const pickWard = "Phường 1";
     const pickAddress = "643 Điện Biên Phủ";
 
-    // Parse delivery address
     const addressParts = deliver_address.split(",").map((part) => part.trim());
     const [street, ward, district, province] = addressParts;
 
-    const deliverAddress = street; // Only the street name
+    const deliverAddress = street;
     let deliverWard = ward;
     let deliverDistrict = district;
     let deliverProvince = province;
 
-    // Standardize province
     deliverProvince = standardizeProvince(deliverProvince);
 
-    // Restrict delivery to HCMC
     if (deliverProvince !== "TP. Hồ Chí Minh") {
       return res.status(400).json({
         status: 400,
@@ -523,8 +519,8 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
       address: deliverAddress,
       weight: defaultWeight,
       value: 500000,
-      deliver_option: "xteam", // Test with same-day delivery
-      transport: "road", // Explicitly set transport mode
+      deliver_option: "xteam",
+      transport: "road",
     };
     console.log("GHTK Query Params:", queryParams);
 
@@ -574,6 +570,78 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /api/orders/{orderId}/approved:
+ *   put:
+ *     summary: Set order status to Approved
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Approved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Approved
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Pending. It must be Paid to transition to Approved.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff or Admin can set orders to Approved'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/approved", verifyToken, setOrderToApproved);
+
+/**
+ * @swagger
  * /api/orders/{orderId}/preparing:
  *   put:
  *     summary: Set order status to Preparing
@@ -608,7 +676,7 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
  *           text/plain:
  *             schema:
  *               type: string
- *               example: 'Invalid status transition: Order is currently Pending. It must be Paid to transition to Preparing.'
+ *               example: 'Invalid status transition: Order is currently Paid. It must be Approved to transition to Preparing.'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -646,6 +714,85 @@ router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
 
 /**
  * @swagger
+ * /api/orders/{orderId}/cooked:
+ *   put:
+ *     summary: Set order status to Cooked
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Cooked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Cooked
+ *                 cookedBy:
+ *                   type: integer
+ *                   description: ID of the staff who marked the order as cooked
+ *                 cookedTime:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Timestamp when the order was marked as cooked
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Approved. It must be Preparing to transition to Cooked.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff can set orders to Cooked'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
+
+/**
+ * @swagger
  * /api/orders/{orderId}/delivering:
  *   put:
  *     summary: Set order status to Delivering
@@ -680,7 +827,7 @@ router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
  *           text/plain:
  *             schema:
  *               type: string
- *               example: 'Invalid status transition: Order is currently Paid. It must be Preparing to transition to Delivering.'
+ *               example: 'Invalid status transition: Order is currently Preparing. It must be Cooked to transition to Delivering.'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -737,13 +884,11 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - certificationOfDelivered
  *             properties:
- *               certificationOfDelivered:
+ *               file:
  *                 type: string
  *                 format: binary
- *                 description: Image file (JPEG or PNG) proving delivery
+ *                 description: Certification image (JPEG or PNG) confirming delivery
  *     responses:
  *       200:
  *         description: Order status updated to Delivered
@@ -767,12 +912,12 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *                   format: date-time
  *                   description: Timestamp when the order was marked as delivered
  *       400:
- *         description: Invalid input or invalid status transition
+ *         description: Invalid input, missing image, or invalid status transition
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *               example: 'Invalid status transition: Order is currently Preparing. It must be Delivering to transition to Delivered.'
+ *               example: 'Certification image is required'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -785,7 +930,7 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *                 status:
  *                   type: integer
  *       403:
- *         description: Forbidden (user role not allowed or shipper not assigned)
+ *         description: Forbidden (user role not allowed or order not assigned to shipper)
  *         content:
  *           text/plain:
  *             schema:
@@ -806,92 +951,13 @@ router.put("/:orderId/delivering", verifyToken, setOrderToDelivering);
  *               type: string
  *               example: 'Failed to update order status'
  */
-router.put("/:orderId/delivered", verifyToken, upload.single("certificationOfDelivered"), setOrderToDelivered);
-
-/**
- * @swagger
- * /api/orders/{orderId}/cooked:
- *   put:
- *     summary: Set order status to Cooked
- *     tags: [Orders]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order
- *     responses:
- *       200:
- *         description: Order status updated to Cooked
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 orderId:
- *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Cooked
- *                 cookedBy:
- *                   type: integer
- *                   description: ID of the staff who marked the order as cooked
- *                 cookedTime:
- *                   type: string
- *                   format: date-time
- *                   description: Timestamp when the order was marked as cooked
- *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Paid. It must be Preparing to transition to Cooked.'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 status:
- *                   type: integer
- *       403:
- *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff can set orders to Cooked'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
- *       500:
- *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
- */
-router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
+router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderToDelivered);
 
 /**
  * @swagger
  * /api/orders:
  *   get:
- *     summary: Retrieve all orders (Admin/Staff only)
+ *     summary: Retrieve all orders (for authorized users)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -920,7 +986,85 @@ router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
  *                     type: string
  *                   status:
  *                     type: string
- *                     description: Order status (e.g., Pending, Paid, Preparing, Delivering, Delivered)
+ *                     description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
+ *                   fullName:
+ *                     type: string
+ *                     description: User's full name
+ *                   phone_number:
+ *                     type: string
+ *                     nullable: true
+ *                   orderItems:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         productId:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                           description: Product name
+ *                         quantity:
+ *                           type: integer
+ *                         price:
+ *                           type: number
+ *                   order_shipping_fee:
+ *                     type: number
+ *                   order_discount_value:
+ *                     type: number
+ *                   order_amount:
+ *                     type: number
+ *                   invoiceUrl:
+ *                     type: string
+ *                     nullable: true
+ *                   order_point_earn:
+ *                     type: integer
+ *                   note:
+ *                     type: string
+ *                     nullable: true
+ *                   payment_method:
+ *                     type: string
+ *                     description: Payment method name (e.g., Vnpay, PayOS)
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/", verifyToken, getAllOrders);
+
+/**
+ * @swagger
+ * /api/orders/paid:
+ *   get:
+ *     summary: Retrieve all orders with Paid status
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of Paid orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   orderId:
+ *                     type: integer
+ *                   userId:
+ *                     type: integer
+ *                   payment_time:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                   order_create_at:
+ *                     type: string
+ *                     format: date-time
+ *                   order_address:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                     description: Order status (Paid)
  *                   fullName:
  *                     type: string
  *                     description: User's full name
@@ -975,7 +1119,7 @@ router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
  *           text/plain:
  *             schema:
  *               type: string
- *               example: 'Unauthorized: Only Admin or Staff can retrieve all orders'
+ *               example: 'Unauthorized: Only Staff or Admin can view Paid orders'
  *       500:
  *         description: Server error
  *         content:
@@ -988,6 +1132,6 @@ router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
  *                 error:
  *                   type: string
  */
-router.get("/", verifyToken, getAllOrders);
+router.get("/paid", verifyToken, getPaidOrders);
 
 module.exports = router;
