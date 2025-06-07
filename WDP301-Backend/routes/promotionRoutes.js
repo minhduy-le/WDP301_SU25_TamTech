@@ -232,6 +232,54 @@ router.get("/", verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /api/promotions/code/{code}:
+ *   get:
+ *     summary: Get a promotion by code
+ *     tags: [Promotions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Promotion details
+ *       400:
+ *         description: Invalid promotion code
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Promotion not found
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/code/:code",
+  verifyToken,
+  [
+    param("code")
+      .trim()
+      .notEmpty()
+      .withMessage("Promotion code is required")
+      .isLength({ max: 50 })
+      .withMessage("Invalid promotion code"),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const promotion = await promotionService.getPromotionByCode(req.params.code);
+      res.status(200).json(promotion);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
+ * @swagger
  * /api/promotions/{id}:
  *   get:
  *     summary: Get a promotion by ID

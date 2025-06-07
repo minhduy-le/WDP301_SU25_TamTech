@@ -99,6 +99,27 @@ class PromotionService {
     const existing = await Promotion.findOne({ where: whereClause });
     return !!existing;
   }
+
+  async getPromotionByCode(code) {
+    await this.updatePromotionsStatus();
+    const promotion = await Promotion.findOne({
+      where: { code, isActive: true },
+    });
+    if (!promotion) {
+      throw new Error("Promotion not found");
+    }
+    return promotion;
+  }
+
+  async updatePromotion(id, data) {
+    const promotion = await Promotion.findByPk(id);
+    if (!promotion) {
+      throw new Error("Promotion not found");
+    }
+    await promotion.update(data);
+    await this.updatePromotionsStatus();
+    return promotion;
+  }
 }
 
 module.exports = new PromotionService();
