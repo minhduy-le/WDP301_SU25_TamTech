@@ -754,6 +754,71 @@ const getUserOrders = async (req, res) => {
   }
 };
 
+const setOrderToApproved = async (req, res) => {
+  console.log("setOrderToApproved called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff", "Admin"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Admin can set orders to Approved");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 2) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Approved.`
+        );
+    }
+
+    order.status_id = 8; // Approved
+    order.approvedBy = userId; // Set approvedBy to the userId from verifyToken
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Approved for orderId:", parsedOrderId, "Approved by userId:", userId);
+
+    res.status(200).json({
+      message: "Order status updated to Approved",
+      orderId: parsedOrderId,
+      status: "Approved",
+      approvedBy: userId,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToApproved:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
 const setOrderToPreparing = async (req, res) => {
   console.log("setOrderToPreparing called at:", new Date().toISOString());
   console.log("Request params:", req.params);
@@ -788,14 +853,14 @@ const setOrderToPreparing = async (req, res) => {
       return res.status(404).send("Order not found");
     }
 
-    if (order.status_id !== 2) {
+    if (order.status_id !== 8) {
       const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
       console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
       await transaction.rollback();
       return res
         .status(400)
         .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Preparing.`
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Approved to transition to Preparing.`
         );
     }
 
@@ -812,6 +877,73 @@ const setOrderToPreparing = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in setOrderToPreparing:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
+const setOrderToCooked = async (req, res) => {
+  console.log("setOrderToCooked called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff can set orders to Cooked");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 6) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Cooked.`
+        );
+    }
+
+    order.status_id = 7; // Cooked
+    order.cookedBy = userId;
+    order.cookedTime = new Date();
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Cooked for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Cooked",
+      orderId: parsedOrderId,
+      status: "Cooked",
+      cookedBy: userId,
+      cookedTime: order.cookedTime,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToCooked:", error.message, error.stack);
     await transaction.rollback();
     return res.status(500).send("Failed to update order status");
   }
@@ -851,14 +983,14 @@ const setOrderToDelivering = async (req, res) => {
       return res.status(404).send("Order not found");
     }
 
-    if (order.status_id !== 6) {
+    if (order.status_id !== 7) {
       const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
       console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
       await transaction.rollback();
       return res
         .status(400)
         .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Delivering.`
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Cooked to transition to Delivering.`
         );
     }
 
@@ -1037,7 +1169,7 @@ const getAllOrders = async (req, res) => {
           attributes: ["name"],
         },
       ],
-      order: [["order_create_at", "DESC"]], // Sort by creation date, newest first
+      order: [["order_create_at", "DESC"]],
     });
 
     console.log("Fetched all orders:", orders.length);
@@ -1074,65 +1206,98 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-const setOrderToCooked = async (req, res) => {
-  console.log("setOrderToCooked called at:", new Date().toISOString());
-  console.log("Request params:", req.params);
+const getPaidOrders = async (req, res) => {
+  console.log("getPaidOrders called at:", new Date().toISOString());
   console.log("User ID:", req.userId, "User role:", req.userRole);
 
-  const { orderId } = req.params;
-  const userId = req.userId;
   const userRole = req.userRole;
 
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).send("Invalid order ID");
+  if (!["Staff", "Admin"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", req.userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Admin can view Paid orders");
   }
 
-  const transaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({
-      where: { orderId: parsedOrderId },
-      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
-      transaction,
+    const orders = await Order.findAll({
+      where: { status_id: 2 }, // Paid
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "userId",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]],
     });
 
-    if (!order) {
-      console.log("Order not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).send("Order not found");
-    }
+    console.log("Fetched Paid orders:", orders.length);
 
-    if (order.status_id !== 6) {
-      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
-      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
-      await transaction.rollback();
-      return res
-        .status(400)
-        .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Cooked.`
-        );
-    }
+    const formattedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    }));
 
-    order.status_id = 7; // Cooked
-    order.cookedBy = userId;
-    order.cookedTime = new Date();
-    await order.save({ transaction });
-
-    await transaction.commit();
-    console.log("Order status updated to Cooked for orderId:", parsedOrderId);
-
-    res.status(200).json({
-      message: "Order status updated to Cooked",
-      orderId: parsedOrderId,
-      status: "Cooked",
-      cookedBy: userId,
-      cookedTime: order.cookedTime,
-    });
+    console.log("Returning formatted Paid orders:", formattedOrders.length);
+    res.status(200).json(formattedOrders);
   } catch (error) {
-    console.error("Error in setOrderToCooked:", error.message, error.stack);
-    await transaction.rollback();
-    return res.status(500).send("Failed to update order status");
+    console.error("Error in getPaidOrders:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve Paid orders", error: error.message });
   }
 };
 
@@ -1140,9 +1305,11 @@ module.exports = {
   createOrder,
   handlePaymentSuccess,
   getUserOrders,
+  setOrderToApproved,
   setOrderToPreparing,
+  setOrderToCooked,
   setOrderToDelivering,
   setOrderToDelivered,
   getAllOrders,
-  setOrderToCooked,
+  getPaidOrders,
 };

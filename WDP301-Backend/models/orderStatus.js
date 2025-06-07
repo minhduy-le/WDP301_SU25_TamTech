@@ -10,7 +10,7 @@ const OrderStatus = sequelize.define(
       autoIncrement: true,
     },
     status: {
-      type: DataTypes.ENUM("Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked"),
+      type: DataTypes.ENUM("Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked", "Approved"),
       allowNull: false,
     },
   },
@@ -23,7 +23,7 @@ const OrderStatus = sequelize.define(
 // Pre-populate the OrderStatus table with the allowed values
 (async () => {
   await OrderStatus.sync({ force: false });
-  const statuses = ["Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked"];
+  const statuses = ["Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked", "Approved"];
   for (const status of statuses) {
     await OrderStatus.findOrCreate({
       where: { status: status },
