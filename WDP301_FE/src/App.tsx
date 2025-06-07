@@ -32,6 +32,10 @@ import Forbidden from "./pages/Forbidden";
 import { AuthGuardProvider } from "./contexts/AuthGuardContext";
 import Blog from "./pages/Blog";
 import AdminProfile from "./pages/admin/AdminProfile";
+import StaffSidebar from "./components/staff/StaffSidebar";
+import StaffOrderManagement from "./pages/OrderManageStaff";
+import StaffConfirmOrders from "./pages/ConfirmOrderStaff";
+import StaffProfile from "./pages/StaffProfile";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -53,11 +57,18 @@ const LayoutWithSidebarManager = () => (
     <ManagerSidebar />
   </>
 );
+
 const LayoutWithSidebarAdmin = () => (
   <>
     <AdminSidebar />
   </>
 );
+const LayoutWithSidebarStaff = () => (
+  <>
+    <StaffSidebar />
+  </>
+);
+
 function App() {
   return (
     <Router>
@@ -94,6 +105,7 @@ function App() {
             />
             <Route path="/manager/staffs" element={<EmployeeManagement />} />
           </Route>
+
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/dashboard" element={<ReportManagement />} />
@@ -102,6 +114,15 @@ function App() {
               element={<SystemIssuesReport />}
             />
             <Route path="/admin/profile" element={<AdminProfile />} />
+          </Route>
+
+          <Route element={<LayoutWithSidebarStaff />}>
+            <Route path="/staff/orders" element={<StaffOrderManagement />} />
+            <Route
+              path="/staff/orders/confirm-orders"
+              element={<StaffConfirmOrders />}
+            />
+            <Route path="/staff/profile" element={<StaffProfile />} />
           </Route>
         </Routes>
       </AuthGuardProvider>

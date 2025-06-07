@@ -25,6 +25,8 @@ const Login = () => {
           navigate("/admin/dashboard");
         } else if (response.role === Role.MANAGER) {
           navigate("/manager/dashboard");
+        } else if (response.role === Role.STAFF) {
+          navigate("/staff/orders");
         } else {
           navigate("/");
         }

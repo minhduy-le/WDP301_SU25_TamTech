@@ -425,7 +425,7 @@ const Menu = () => {
                       </>
                     ) : (
                       <div>
-                        No items available for {getProductTypeName(typeId)}.
+                        {/* No items available for {getProductTypeName(typeId)}. */}
                       </div>
                     )}
                   </div>
