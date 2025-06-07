@@ -18,7 +18,6 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import UserInfomation from "./pages/UserInformation";
 import ManagerSidebar from "./components/manager/ManagerSidebar";
 import OrderManagement from "./pages/manager/orders/OrderManagement";
-import ConfirmOrders from "./pages/manager/orders/ConfirmOrders";
 import ProductManagement from "./pages/manager/products/ProductManagement";
 import PromotionManagement from "./pages/manager/promotions/PromotionManagement";
 import EmployeeManagement from "./pages/manager/staffs/EmployeeManagement";
