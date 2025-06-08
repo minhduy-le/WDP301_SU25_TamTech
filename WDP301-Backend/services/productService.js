@@ -5,7 +5,7 @@ const Material = require("../models/material");
 const { Op } = require("sequelize");
 
 const validateProductData = (data) => {
-  const { name, price, productTypeId, recipes, description } = data;
+  const { name, price, productTypeId, recipes, description, image } = data;
 
   if (!name || typeof name !== "string" || name.trim() === "") {
     throw new Error("Name is required and must be a non-empty string");
@@ -16,12 +16,33 @@ const validateProductData = (data) => {
   if (description && (typeof description !== "string" || description.length > 1000)) {
     throw new Error("Description must be a string and cannot exceed 1000 characters");
   }
-  if (typeof price !== "number" || price <= 0 || price >= 1000000) {
-    throw new Error("Price must be a number greater than 0 and less than 1,000,000");
+  if (typeof price !== "number" || price < 1000 || price > 1000000) {
+    throw new Error("Price must be a number between 1,000 and 1,000,000");
   }
   if (!Number.isInteger(productTypeId) || productTypeId < 1) {
     throw new Error("ProductTypeId must be a positive integer");
   }
+
+  // Validate image extension if image is provided
+  if (image && typeof image === "string") {
+    // Check if it's a URL or base64 string
+    if (image.startsWith("http")) {
+      // For URLs, check the extension in the URL
+      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
+      if (!urlPattern.test(image)) {
+        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
+      }
+    } else if (image.startsWith("data:image/")) {
+      // For base64, check the MIME type
+      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
+      if (!base64Pattern.test(image)) {
+        throw new Error("Image must be in .jpg, .jpeg, or .png format");
+      }
+    } else {
+      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+    }
+  }
+
   if (recipes) {
     if (!Array.isArray(recipes)) {
       throw new Error("Recipes must be an array");
@@ -40,11 +61,20 @@ const validateProductData = (data) => {
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
-  validateProductData({ name, price, productTypeId, recipes, description });
+  validateProductData({ name, price, productTypeId, recipes, description, image });
 
   const transaction = await sequelize.transaction();
 
   try {
+    // Check for unique name
+    const existingProduct = await Product.findOne({
+      where: { name: name.trim(), isActive: true },
+      transaction,
+    });
+    if (existingProduct) {
+      throw new Error("Product name already exists");
+    }
+
     // Check if materials exist for provided recipes
     if (recipes.length > 0) {
       for (const recipe of recipes) {
@@ -153,16 +183,50 @@ const updateProduct = async (productId, updateData) => {
   if (description !== undefined && (typeof description !== "string" || description.length > 1000)) {
     throw new Error("Description must be a string and cannot exceed 1000 characters");
   }
-  if (price !== undefined && (typeof price !== "number" || price <= 0 || price >= 1000000)) {
-    throw new Error("Price must be a number greater than 0 and less than 1,000,000");
+  if (price !== undefined && (typeof price !== "number" || price < 1000 || price > 1000000)) {
+    throw new Error("Price must be a number between 1,000 and 1,000,000");
   }
   if (productTypeId !== undefined && (!Number.isInteger(productTypeId) || productTypeId < 1)) {
     throw new Error("ProductTypeId must be a positive integer");
   }
 
+  // Validate image extension if image is provided for update
+  if (image !== undefined && image && typeof image === "string") {
+    // Check if it's a URL or base64 string
+    if (image.startsWith("http")) {
+      // For URLs, check the extension in the URL
+      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
+      if (!urlPattern.test(image)) {
+        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
+      }
+    } else if (image.startsWith("data:image/")) {
+      // For base64, check the MIME type
+      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
+      if (!base64Pattern.test(image)) {
+        throw new Error("Image must be in .jpg, .jpeg, or .png format");
+      }
+    } else {
+      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+    }
+  }
+
   const product = await Product.findByPk(productId);
   if (!product || !product.isActive) {
     throw new Error("Product not found or inactive");
+  }
+
+  // Check for unique name (excluding the current product)
+  if (name !== undefined) {
+    const existingProduct = await Product.findOne({
+      where: {
+        name: name.trim(),
+        productId: { [Op.ne]: productId },
+        isActive: true,
+      },
+    });
+    if (existingProduct) {
+      throw new Error("Product name already exists");
+    }
   }
 
   await product.update({
