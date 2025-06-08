@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   Button,
@@ -22,9 +22,12 @@ import {
   DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
+  MinusCircleOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import axios from "axios";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../../../config/firebase";
 import type { ColumnType } from "antd/es/table";
 const { Option } = Select;
 
@@ -70,16 +73,17 @@ const productTypeApiOptions: ProductType[] = [
   { productTypeId: 3, name: "Đồ uống" },
 ];
 
-const typeOptionsForFilter = [
-  "Tất cả",
-  ...productTypeApiOptions.map(pt => pt.name),
-];
+const uploadImageAndGetUrl = async (file: File) => {
+  const storageRef = ref(storage, `products/${Date.now()}_${file.name}?alt=media`);
+  await uploadBytes(storageRef, file);
+  console.log(storageRef);
+  return getDownloadURL(storageRef);
+};
 
 
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("Tất cả");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -88,6 +92,8 @@ const ProductManagement: React.FC = () => {
   const [tableLoading, setTableLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [materials, setMaterials] = useState<Material[]>([]);
 
   const fetchProducts = async () => {
     try {
@@ -119,8 +125,84 @@ const ProductManagement: React.FC = () => {
     }
   };
 
+  const fetchMaterials = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get<{ data?: Material[]; materials?: Material[]; results?: Material[] } | Material[]>(
+        "https://wdp-301-0fd32c261026.herokuapp.com/api/materials",
+        {
+          headers: {
+            accept: "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+      let materialData: Material[] = [];
+      if (Array.isArray(response.data)) {
+        materialData = response.data;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        materialData = response.data.data;
+      } else if (response.data && Array.isArray(response.data.materials)) {
+        materialData = response.data.materials;
+      } else if (response.data && Array.isArray(response.data.results)) {
+        materialData = response.data.results;
+      }
+      setMaterials(materialData);
+    } catch (error) {
+      console.error("Fetch materials error:", error);
+      message.error("Không thể tải nguyên liệu!");
+    }
+  };
+
+  const createProductApiCall = async (payload: any) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      "https://wdp-301-0fd32c261026.herokuapp.com/api/products",
+      payload,
+      {
+        headers: {
+          accept: "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  };
+
+  const updateProductApiCall = async (productId: number, payload: any) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+      `https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`,
+      payload,
+      {
+        headers: {
+          accept: "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  };
+
+  const deleteProductApiCall = async (productId: number) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(
+      `https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`,
+      {
+        headers: {
+          accept: "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      }
+    );
+    return response.data;
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchMaterials();
   }, []);
 
   const handleAdd = () => {
@@ -128,8 +210,10 @@ const ProductManagement: React.FC = () => {
     setSelectedProduct(null);
     setModalMode("add");
     form.resetFields();
-    form.setFieldsValue({ isActive: true }); 
+    form.setFieldsValue({ isActive: true, recipes: [] });
     setFileList([]);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
     setModalVisible(true);
   };
 
@@ -140,16 +224,23 @@ const ProductManagement: React.FC = () => {
     form.setFieldsValue({
       ...product,
       productTypeId: product.ProductType?.productTypeId,
+      recipes: product.ProductRecipes.map(r => ({ materialId: r.materialId, quantity: r.quantity })),
     });
     if (product.image) {
-      setFileList([{
-        uid: '-1',
-        name: 'image.png',
-        status: 'done',
-        url: product.image,
-      }]);
+      setFileList([
+        {
+          uid: '-1',
+          name: 'image.png',
+          status: 'done',
+          url: product.image,
+        },
+      ]);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(product.image);
     } else {
       setFileList([]);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
     setModalVisible(true);
   };
@@ -169,8 +260,14 @@ const ProductManagement: React.FC = () => {
       okType: "danger",
       cancelText: "Hủy",
       onOk: async () => {
-        setProducts((prev) => prev.filter((p) => p.productId !== productId));
-        message.success("Đã xóa sản phẩm! (Client-side)");
+        try {
+          await deleteProductApiCall(productId);
+          message.success("Đã xóa sản phẩm!");
+          await fetchProducts();
+        } catch (error) {
+          console.error("Delete product error:", error);
+          message.error("Xóa sản phẩm thất bại!");
+        }
       },
     });
   };
@@ -179,56 +276,53 @@ const ProductManagement: React.FC = () => {
     setIsSubmitting(true);
     try {
       const values = await form.validateFields();
-      let imageUrl = values.image; 
+    let imageUrl = editingProduct?.image || "";
 
-      if (Array.isArray(values.image) && values.image.length > 0 && values.image[0].originFileObj) {
-        imageUrl = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.readAsDataURL(values.image[0].originFileObj as Blob);
-            reader.onload = () => resolve(reader.result as string);
-        });
-      } else if (Array.isArray(values.image) && values.image.length > 0 && values.image[0].url) {
-        imageUrl = values.image[0].url;
-      } else if (typeof values.image === 'string') {
-        imageUrl = values.image;
-      }
-       else if (editingProduct?.image && modalMode === 'edit' && (!values.image || values.image.length === 0) ) {
-        imageUrl = editingProduct.image;
-      }
-       else {
-        imageUrl = ""; 
-      }
+    if (
+      Array.isArray(values.image) &&
+      values.image.length > 0 &&
+      values.image[0].originFileObj
+    ) {
+      imageUrl = await uploadImageAndGetUrl(
+        values.image[0].originFileObj as File
+      );
+    } else if (
+      Array.isArray(values.image) &&
+      values.image.length > 0 &&
+      values.image[0].url
+    ) {
+      imageUrl = values.image[0].url;
+    } else if (typeof values.image === "string") {
+      imageUrl = values.image;
+    }
 
 
       const productPayload = {
         ...values,
+        price: Number(values.price),
         image: imageUrl,
+        recipes: Array.isArray(values.recipes)
+          ? values.recipes.map((r: any) => ({
+              materialId: r.materialId,
+              quantity: r.quantity,
+            }))
+          : [],
       };
-      delete productPayload.imageUpload; 
 
       if (modalMode === "add") {
-        const newProduct = {
-            ...productPayload,
-            productId: Date.now(),
-            createAt: new Date().toISOString(),
-            ProductType: productTypeApiOptions.find(pt => pt.productTypeId === values.productTypeId),
-            ProductRecipes: [],
-        };
-        setProducts((prev) => [newProduct as Product, ...prev]);
-        message.success("Đã thêm sản phẩm! (Client-side)");
+        await createProductApiCall(productPayload);
+        message.success("Đã thêm sản phẩm!");
       } else if (editingProduct) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.productId === editingProduct.productId
-              ? { ...p, ...productPayload, ProductType: productTypeApiOptions.find(pt => pt.productTypeId === values.productTypeId) }
-              : p
-          )
-        );
-        message.success("Đã cập nhật sản phẩm! (Client-side)");
+        await updateProductApiCall(editingProduct.productId, productPayload);
+        message.success("Đã cập nhật sản phẩm!");
       }
+
+      await fetchProducts();
       setModalVisible(false);
       form.resetFields();
       setFileList([]);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     } catch (error: any) {
       console.error("Modal OK error:", error);
       let errorMessage = "Có lỗi xảy ra!";
@@ -247,21 +341,21 @@ const ProductManagement: React.FC = () => {
     setFileList(newFileList);
     if (newFileList.length > 0) {
         form.setFieldsValue({ image: newFileList });
+        const file = newFileList[0];
+        if (file.originFileObj) {
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          const preview = URL.createObjectURL(file.originFileObj as File);
+          setPreviewUrl(preview);
+        } else if (file.url) {
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(file.url);
+        }
     } else {
-        form.setFieldsValue({ image: null }); 
+        form.setFieldsValue({ image: null });
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
     }
   };
-
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((product) =>
-        product.name.toLowerCase().includes(searchText.toLowerCase())
-      )
-      .filter((product) =>
-        typeFilter === "Tất cả" ? true : product.ProductType?.name === typeFilter
-      );
-  }, [products, searchText, typeFilter]);
-
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
@@ -272,10 +366,18 @@ const ProductManagement: React.FC = () => {
 
   const columns: ColumnType<Product>[] = [
     {
+      title: "ID",
+      dataIndex: "productId",
+      key: "productId",
+      sorter: (a: Product, b: Product) => a.productId - b.productId,
+      width: 70,
+      render: (id: number) => `${id}`,
+    },
+    {
       title: "Ảnh", 
       dataIndex: "image",
       key: "image",
-      width: 80, 
+      width: 85, 
       render: (img: string, record: Product) => (
         <Image
           src={img || "https://via.placeholder.com/60x60?text=N/A"}
@@ -292,7 +394,7 @@ const ProductManagement: React.FC = () => {
       title: "Tên sản phẩm",
       dataIndex: "name",
       key: "name",
-      width: 200, // Tăng width cho tên sản phẩm
+      width: 200, 
       ellipsis: true,
       sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
       render: (name: string) => (
@@ -367,7 +469,7 @@ const ProductManagement: React.FC = () => {
       title: "Hành động",
       key: "actions",
       align: "center" as const,
-      width: 120,
+      width: 135,
       fixed: 'right',
       render: (_: any, record: Product) => (
         <Space size="small">
@@ -422,6 +524,19 @@ const ProductManagement: React.FC = () => {
         .product-table .ant-table-thead > tr > th.ant-table-cell-fix-right {
           background-color: ${headerBgColor} !important;
         }
+        /* Bỏ outline cho nút xác nhận (Xóa) trong Modal.confirm của Ant Design */
+        .ant-btn-dangerous:focus, 
+        .ant-btn-dangerous:active, 
+        .ant-btn-dangerous:focus-visible {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        .ant-btn:focus, 
+        .ant-btn:active, 
+        .ant-btn:focus-visible {
+          outline: none !important;
+          box-shadow: none !important;
+        }
       `}</style>
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
         <h1 style={{ fontWeight: 800, color: "#A05A2C", fontSize: 36, marginBottom: 24, textAlign: "left" }}>
@@ -447,18 +562,6 @@ const ProductManagement: React.FC = () => {
               style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 31, display: "flex", alignItems: "center", justifyContent: "center"}}
               allowClear
             />
-            <Select
-              value={typeFilter}
-              style={{ width: 200, borderRadius: 6 }}
-              onChange={(value) => setTypeFilter(value)}
-              dropdownStyle={{ borderRadius: 8 }}
-            >
-              {typeOptionsForFilter.map((type) => (
-                <Option key={type} value={type} style={{ color: type === "Tất cả" ? "#888" : "#A05A2C" }}>
-                    {type}
-                </Option>
-              ))}
-            </Select>
             </Space>
             <Button
               type="primary"
@@ -472,7 +575,9 @@ const ProductManagement: React.FC = () => {
           <Table
             className="product-table" 
             columns={columns} 
-            dataSource={filteredProducts}
+            dataSource={products.filter(product => 
+              product.name.toLowerCase().includes(searchText.toLowerCase())
+            )}
             loading={tableLoading} 
             rowKey="productId"
             style={{ 
@@ -499,12 +604,27 @@ const ProductManagement: React.FC = () => {
             setModalVisible(false);
             form.resetFields();
             setFileList([]);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
           }}
           footer={
             modalMode === "view"
               ? [ <Button key="close" onClick={() => setModalVisible(false)} style={{ borderRadius: 6}}> Đóng </Button>, ]
               : [
-                  <Button key="cancel" onClick={() => { setModalVisible(false); form.resetFields(); setFileList([]); }} style={{ borderRadius: 6}} disabled={isSubmitting} > Hủy </Button>,
+                  <Button
+                    key="cancel"
+                    onClick={() => {
+                      setModalVisible(false);
+                      form.resetFields();
+                      setFileList([]);
+                      if (previewUrl) URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                    }}
+                    style={{ borderRadius: 6 }}
+                    disabled={isSubmitting}
+                  >
+                    Hủy
+                  </Button>,
                   <Button key="submit" type="primary" onClick={handleModalOk} style={{ background: "#D97B41", borderColor: "#D97B41", borderRadius: 6 }} loading={isSubmitting} >
                     {modalMode === "add" ? "Thêm mới" : "Cập nhật"}
                   </Button>,
@@ -521,6 +641,7 @@ const ProductManagement: React.FC = () => {
                 labelStyle={{ color: "#A05A2C", fontWeight: 500, width: '150px', background: '#FFF9F0' }} 
                 contentStyle={{ color: "#555", background: '#FFFFFF' }}
               >
+                <Descriptions.Item label="ID">{selectedProduct.productId}</Descriptions.Item>
                 <Descriptions.Item label="Ảnh" span={selectedProduct.description && selectedProduct.description.length > 100 ? 2 : 1}>
                   <Image src={selectedProduct.image || "https://via.placeholder.com/120x120?text=No+Image"} width={120} height={120} style={{ objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }} />
                 </Descriptions.Item>
@@ -556,8 +677,21 @@ const ProductManagement: React.FC = () => {
                 getValueFromEvent={(e) => { if (Array.isArray(e)) { return e; } return e && e.fileList; }}
               >
                 <Upload listType="picture-card" fileList={fileList} onChange={onUploadChange} beforeUpload={() => false} maxCount={1} accept="image/*" >
-                  {fileList.length < 1 && ( <div> <PlusOutlined /> <div style={{ marginTop: 8 }}>Tải lên</div> </div> )}
+                  {fileList.length < 1 && (
+                    <div>
+                      <PlusOutlined />
+                      <div style={{ marginTop: 8 }}>Tải lên</div>
+                    </div>
+                  )}
                 </Upload>
+                {previewUrl && (
+                  <Image
+                    src={previewUrl}
+                    alt="preview"
+                    width={100}
+                    style={{ display: 'block', marginTop: 8 }}
+                  />
+                )}
               </Form.Item>
               <Form.Item name="name" label={<span style={{ color: "#A05A2C" }}>Tên sản phẩm</span>} rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm!" }]} >
                 <Input placeholder="Ví dụ: Cơm tấm sườn bì chả" style={{borderRadius: 6}} />
@@ -569,21 +703,49 @@ const ProductManagement: React.FC = () => {
                 <Form.Item name="price" label={<span style={{ color: "#A05A2C" }}>Giá</span>} rules={[{ required: true, message: "Vui lòng nhập giá!" }]} style={{ flex: 1 }} >
                   <InputNumber style={{ width: "100%", borderRadius: 6 }} formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value: any) => value!.replace(/\$\s?|(,*)/g, "")} placeholder="Ví dụ: 35000" min={0} />
                 </Form.Item>
-                <Form.Item name="quantity" label={<span style={{ color: "#A05A2C" }}>Số lượng tồn kho</span>} rules={[{ required: true, message: "Vui lòng nhập số lượng!" }]} style={{ flex: 1 }} >
-                  <InputNumber style={{ width: "100%", borderRadius: 6 }} placeholder="Ví dụ: 100" min={0} />
-                </Form.Item>
-              </Space>
-              <Space align="start" style={{display: 'flex', marginBottom: 0}} size="large">
-                <Form.Item name="productTypeId" label={<span style={{ color: "#A05A2C" }}>Loại sản phẩm</span>} rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm!" }]} style={{ flex: 1 }} >
-                  <Select placeholder="Chọn loại sản phẩm" style={{borderRadius: 6}}>
+            </Space>
+            <Form.Item label={<span style={{ color: "#A05A2C" }}>Nguyên liệu</span>} required>
+              <Form.List name="recipes">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map((field, _index) => (
+                      <Space key={field.key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'materialId']}
+                          rules={[{ required: true, message: 'Chọn nguyên liệu' }]}
+                          style={{ minWidth: 200 }}
+                        >
+                          <Select placeholder="Chọn nguyên liệu" style={{ borderRadius: 6 }}>
+                            {materials.map((m) => (
+                              <Option key={m.materialId} value={m.materialId}>
+                                {m.name}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'quantity']}
+                          rules={[{ required: true, message: 'Nhập số lượng' }]}
+                        >
+                          <InputNumber min={1} style={{ width: 120, borderRadius: 6 }} />
+                        </Form.Item>
+                        {fields.length > 1 && (
+                          <MinusCircleOutlined onClick={() => remove(field.name)} style={{ color: '#ff4d4f' }} />
+                        )}
+                      </Space>
+                    ))}
+                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>Thêm nguyên liệu</Button>
+                  </>
+                )}
+              </Form.List>
+            </Form.Item>
+            <Space align="start" style={{display: 'flex', marginBottom: 0}} size="large">
+              <Form.Item name="productTypeId" label={<span style={{ color: "#A05A2C" }}>Loại sản phẩm</span>} rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm!" }]} style={{ flex: 1 }} >
+                <Select placeholder="Chọn loại sản phẩm" style={{borderRadius: 6}}>
                   {productTypeApiOptions.map((type) => ( <Option key={type.productTypeId} value={type.productTypeId}> {type.name} </Option> ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item name="isActive" label={<span style={{ color: "#A05A2C" }}>Trạng thái</span>} initialValue={true} style={{ flex: 1 }} >
-                  <Select style={{borderRadius: 6}}>
-                  <Option value={true}>Đang bán</Option>
-                  <Option value={false}>Ngừng bán</Option>
-                  </Select>
+                </Select>
                 </Form.Item>
               </Space>
             </Form>
