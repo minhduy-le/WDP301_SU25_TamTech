@@ -174,19 +174,20 @@ router.get("/search", async (req, res) => {
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 100
- *                 example: Chocolate Cake
+ *                 example: string
  *               description:
  *                 type: string
  *                 maxLength: 1000
- *                 example: Delicious chocolate cake
+ *                 example: string
  *               price:
  *                 type: number
- *                 minimum: 0.01
- *                 maximum: 999999.99
- *                 example: 29.99
+ *                 minimum: 1000
+ *                 maximum: 1000000
+ *                 example: 0
  *               image:
  *                 type: string
- *                 example: https://example.com/image.jpg
+ *                 example: string
+ *                 description: Must be a valid URL ending with .jpg, .jpeg, or .png, or base64 string with supported format
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
@@ -206,7 +207,7 @@ router.get("/search", async (req, res) => {
  *                     quantity:
  *                       type: integer
  *                       minimum: 1
- *                       example: 100
+ *                       example: 1
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -278,7 +279,8 @@ router.get("/search", async (req, res) => {
  *               type: string
  *               examples:
  *                 missingFields: { value: "Name is required and must be a non-empty string" }
- *                 invalidPrice: { value: "Price must be a number greater than 0 and 1,000,000" }
+ *                 invalidPrice: { value: "Price must be a number between 1,000 and 1,000,000" }
+ *                 invalidImage: { value: "Image URL must have .jpg, .jpeg, or .png extension" }
  *                 invalidRecipes: { value: "Each recipe must have a valid materialId and quantity" }
  *                 materialNotFound: { value: "Material with ID 5 not found" }
  *       401:
@@ -301,9 +303,6 @@ router.post("/", verifyToken, async (req, res) => {
 
     let imageUrl = null;
     if (image) {
-      if (!image.match(/^(https:\/\/|data:image\/)/)) {
-        throw new Error("Image must be a valid URL or base64 string");
-      }
       let imageBuffer;
       const fileName = `product_${Date.now()}.jpg`;
 
@@ -324,7 +323,7 @@ router.post("/", verifyToken, async (req, res) => {
       name,
       description,
       price,
-      image: imageUrl,
+      image: imageUrl || image, // Use processed imageUrl or original image
       productTypeId,
       createBy: userId,
       storeId: 1, // Adjust if dynamic storeId is needed

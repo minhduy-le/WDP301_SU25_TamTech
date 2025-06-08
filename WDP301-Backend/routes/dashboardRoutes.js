@@ -278,4 +278,160 @@ router.get("/top-products", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dashboard/current-month-revenue:
+ *   get:
+ *     summary: Get current month's revenue, percentage change from previous month, and average order value
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current month revenue statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     currentRevenue:
+ *                       type: number
+ *                       description: Total revenue for current month
+ *                     percentageChange:
+ *                       type: number
+ *                       description: Percentage change compared to previous month
+ *                     averageOrderValue:
+ *                       type: number
+ *                       description: Average value per order
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/current-month-revenue", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getCurrentMonthRevenue();
+    res.status(200).json({
+      status: 200,
+      message: "Current month revenue statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving current month revenue:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/current-month-orders:
+ *   get:
+ *     summary: Get current month's order count and percentage change from previous month
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current month order statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     currentOrders:
+ *                       type: integer
+ *                       description: Total number of orders for current month
+ *                     percentageChange:
+ *                       type: number
+ *                       description: Percentage change compared to previous month
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/current-month-orders", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getCurrentMonthOrders();
+    res.status(200).json({
+      status: 200,
+      message: "Current month order statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving current month orders:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/current-month-products:
+ *   get:
+ *     summary: Get current month's sold product quantity and percentage change from previous month
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current month product statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     currentQuantity:
+ *                       type: integer
+ *                       description: Total quantity of products sold in current month
+ *                     percentageChange:
+ *                       type: number
+ *                       description: Percentage change compared to previous month
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/current-month-products", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getCurrentMonthProducts();
+    res.status(200).json({
+      status: 200,
+      message: "Current month product statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving current month products:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
 module.exports = router;
