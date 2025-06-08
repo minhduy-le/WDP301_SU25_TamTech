@@ -7,15 +7,29 @@ const OrderItem = require("../models/orderItem");
 
 const getProductStats = async () => {
   const [results] = await sequelize.query(
-    `SELECT 
+    `WITH ProductStock AS (
+      SELECT 
+        p.productId,
+        p.isActive,
+        MIN((m.quantity / NULLIF(pr.quantity, 0)) * pr.quantity) as availableStock
+      FROM products p
+      LEFT JOIN product_recipes pr ON p.productId = pr.productId
+      LEFT JOIN materials m ON pr.materialId = m.materialId
+      GROUP BY p.productId, p.isActive
+    )
+    SELECT 
       SUM(CASE WHEN isActive = true THEN 1 ELSE 0 END) as activeProducts,
-      SUM(CASE WHEN isActive = false THEN 1 ELSE 0 END) as inactiveProducts
-    FROM products`
+      SUM(CASE WHEN isActive = false THEN 1 ELSE 0 END) as inactiveProducts,
+      SUM(CASE WHEN availableStock < 10 AND availableStock IS NOT NULL THEN 1 ELSE 0 END) as productsUnder10,
+      SUM(CASE WHEN availableStock <= 0 OR availableStock IS NULL THEN 1 ELSE 0 END) as productsOutOfStock
+    FROM ProductStock`
   );
 
   return {
     activeProducts: parseInt(results[0].activeProducts) || 0,
     inactiveProducts: parseInt(results[0].inactiveProducts) || 0,
+    productsUnder10: parseInt(results[0].productsUnder10) || 0,
+    productsOutOfStock: parseInt(results[0].productsOutOfStock) || 0,
   };
 };
 
@@ -231,7 +245,6 @@ const getCurrentMonthProducts = async () => {
   const previousYear = previousMonthDate.getFullYear();
   const previousMonth = previousMonthDate.getMonth() + 1;
 
-  // Use raw SQL query to avoid GROUP BY issues
   const [currentProductsData] = await sequelize.query(
     `SELECT SUM(oi.quantity) as totalQuantity
      FROM order_items oi
@@ -273,6 +286,48 @@ const getCurrentMonthProducts = async () => {
   };
 };
 
+const getMonthlyRevenue = async () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const previousMonthDate = new Date(now);
+  previousMonthDate.setMonth(now.getMonth() - 1);
+  const previousYear = previousMonthDate.getFullYear();
+  const previousMonth = previousMonthDate.getMonth() + 1;
+
+  const [currentRevenueData] = await sequelize.query(
+    `SELECT SUM(order_amount) as revenue
+     FROM orders
+     WHERE status_id NOT IN (1, 5)
+     AND EXTRACT(YEAR FROM order_create_at) = :currentYear
+     AND EXTRACT(MONTH FROM order_create_at) = :currentMonth`,
+    {
+      replacements: { currentYear, currentMonth },
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  const [previousRevenueData] = await sequelize.query(
+    `SELECT SUM(order_amount) as revenue
+     FROM orders
+     WHERE status_id NOT IN (1, 5)
+     AND EXTRACT(YEAR FROM order_create_at) = :previousYear
+     AND EXTRACT(MONTH FROM order_create_at) = :previousMonth`,
+    {
+      replacements: { previousYear, previousMonth },
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  const currentMonthRevenue = parseFloat(currentRevenueData?.revenue) || 0;
+  const previousMonthRevenue = parseFloat(previousRevenueData?.revenue) || 0;
+
+  return {
+    currentMonthRevenue,
+    previousMonthRevenue,
+  };
+};
+
 module.exports = {
   getProductStats,
   getUserStats,
@@ -281,4 +336,5 @@ module.exports = {
   getCurrentMonthRevenue,
   getCurrentMonthOrders,
   getCurrentMonthProducts,
+  getMonthlyRevenue,
 };
