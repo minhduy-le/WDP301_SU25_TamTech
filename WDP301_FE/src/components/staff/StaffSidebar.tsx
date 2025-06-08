@@ -11,8 +11,6 @@ import {
   SearchOutlined,
   BellOutlined,
   DownOutlined,
-  EyeOutlined,
-  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./StaffSidebar.css";
@@ -60,21 +58,9 @@ const StaffSidebar = () => {
 
   const menuItems = [
     {
-      key: "orders",
+      key: "/staff/orders",
       icon: <ShoppingFilled />,
       label: "Quản lý đơn hàng",
-      children: [
-        {
-          key: "/staff/orders",
-          icon: <EyeOutlined />,
-          label: "Xem đơn hàng",
-        },
-        {
-          key: "/staff/orders/confirm-orders",
-          icon: <CheckCircleOutlined />,
-          label: "Xác nhận đơn",
-        },
-      ],
     },
   ];
 
