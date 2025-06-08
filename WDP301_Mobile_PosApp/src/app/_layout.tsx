@@ -6,6 +6,7 @@ import useCustomFonts from "@/hooks/useFonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
@@ -201,8 +202,20 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Drawer.Screen
+              name="(tabs)/notification"
+              options={{
+                drawerLabel: "Thông báo",
+                title: "Thông báo",
+                drawerActiveTintColor: APP_COLOR.ORANGE,
+                drawerInactiveTintColor: APP_COLOR.BROWN,
+                drawerIcon: ({ color, size }) => (
+                  <Ionicons name="notifications" size={size} color={color} />
+                ),
+                headerShown: false,
+              }}
+            />
           </Drawer>
-
           <StatusBar style="auto" />
         </ThemeProvider>
       </AppProvider>

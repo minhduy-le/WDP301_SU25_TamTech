@@ -13,11 +13,13 @@ const PaymentHistory = (props: IOrderHistory) => {
     <View style={styles.container}>
       <View style={styles.timeContainer}>
         <Text style={styles.timeText}>{props.time}</Text>
-      </View>
-      <View style={styles.detailsContainer}>
         <Text style={styles.priceText}>
           +{currencyFormatter(props.countPrice)}đ
         </Text>
+      </View>
+      <View style={styles.detailsContainer}>
+        <Text style={styles.timeText}>Khách hàng: Lê Minh Duy</Text>
+        <Text style={styles.timeText}>Đơn hàng: ORD001</Text>
       </View>
     </View>
   );
@@ -26,10 +28,8 @@ const PaymentHistory = (props: IOrderHistory) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: APP_COLOR.WHITE,
-    padding: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    padding: 10,
+    justifyContent: "space-around",
     shadowColor: APP_COLOR.BLACK,
     shadowOffset: {
       width: 0,
@@ -42,7 +42,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   timeContainer: {
-    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 10,
   },
   timeText: {
     fontFamily: APP_FONT.MEDIUM,
@@ -50,8 +53,7 @@ const styles = StyleSheet.create({
     color: APP_COLOR.BROWN,
   },
   detailsContainer: {
-    flex: 1,
-    alignItems: "flex-end",
+    marginHorizontal: 10,
   },
   priceText: {
     fontFamily: APP_FONT.BOLD,
