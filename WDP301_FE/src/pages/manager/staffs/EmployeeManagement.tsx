@@ -1,4 +1,6 @@
-import React, {useState, useMemo } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useMemo } from "react";
 import {
   Table,
   Button,
@@ -13,7 +15,6 @@ import {
   Tooltip,
   DatePicker,
   Avatar,
-  Upload,   
   Descriptions,
 } from "antd";
 import {
@@ -25,16 +26,16 @@ import {
   UserOutlined,
   PhoneOutlined,
   MailOutlined,
-  SafetyCertificateOutlined, 
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
-import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
-import dayjs, { Dayjs } from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import type { UploadFile } from "antd/es/upload/interface";
+import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault(dayjs.tz.guess()); 
+dayjs.tz.setDefault(dayjs.tz.guess());
 
 const { Option } = Select;
 
@@ -44,57 +45,62 @@ interface Employee {
   email: string;
   phoneNumber: string;
   role: string;
-  joinDate: string; 
-  dateOfBirth?: string; 
-  address?: string; 
-  avatarUrl?: string; 
-  status: 'active' | 'inactive';
+  joinDate: string;
+  dateOfBirth?: string;
+  address?: string;
+  avatarUrl?: string;
+  status: "active" | "inactive";
 }
 
-const ROLES = ['Quản lý', 'Nhân viên Sale', 'Nhân viên Marketing', 'Nhân viên Kho', 'Kế toán', 'Lễ tân'];
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Đang làm việc' },
-  { value: 'inactive', label: 'Đã nghỉ việc' },
+const ROLES = [
+  "Quản lý",
+  "Nhân viên Sale",
+  "Nhân viên Marketing",
+  "Nhân viên Kho",
+  "Kế toán",
+  "Lễ tân",
 ];
-
+const STATUS_OPTIONS = [
+  { value: "active", label: "Đang làm việc" },
+  { value: "inactive", label: "Đã nghỉ việc" },
+];
 
 const initialEmployees: Employee[] = [
   {
-    employeeId: 'EMP001',
-    fullName: 'Nguyễn Văn An',
-    email: 'an.nguyen@example.com',
-    phoneNumber: '0901234567',
-    role: 'Quản lý',
-    joinDate: dayjs().subtract(2, 'year').toISOString(),
-    dateOfBirth: dayjs('1990-05-15').toISOString(),
-    address: '123 Đường ABC, Quận 1, TP. HCM',
-    avatarUrl: 'https://i.pravatar.cc/150?img=1',
-    status: 'active',
+    employeeId: "EMP001",
+    fullName: "Nguyễn Văn An",
+    email: "an.nguyen@example.com",
+    phoneNumber: "0901234567",
+    role: "Quản lý",
+    joinDate: dayjs().subtract(2, "year").toISOString(),
+    dateOfBirth: dayjs("1990-05-15").toISOString(),
+    address: "123 Đường ABC, Quận 1, TP. HCM",
+    avatarUrl: "https://i.pravatar.cc/150?img=1",
+    status: "active",
   },
   {
-    employeeId: 'EMP002',
-    fullName: 'Trần Thị Bình',
-    email: 'binh.tran@example.com',
-    phoneNumber: '0987654321',
-    role: 'Nhân viên',
-    joinDate: dayjs().subtract(1, 'year').toISOString(),
-    dateOfBirth: dayjs('1995-10-20').toISOString(),
-    address: '456 Đường XYZ, Quận 3, TP. HCM',
-    avatarUrl: 'https://i.pravatar.cc/150?img=2',
-    status: 'active',
+    employeeId: "EMP002",
+    fullName: "Trần Thị Bình",
+    email: "binh.tran@example.com",
+    phoneNumber: "0987654321",
+    role: "Nhân viên",
+    joinDate: dayjs().subtract(1, "year").toISOString(),
+    dateOfBirth: dayjs("1995-10-20").toISOString(),
+    address: "456 Đường XYZ, Quận 3, TP. HCM",
+    avatarUrl: "https://i.pravatar.cc/150?img=2",
+    status: "active",
   },
   {
-    employeeId: 'EMP003',
-    fullName: 'Lê Văn Cường',
-    email: 'cuong.le@example.com',
-    phoneNumber: '0912345678',
-    role: 'Nhân viên',
-    joinDate: dayjs().subtract(6, 'month').toISOString(),
-    avatarUrl: 'https://i.pravatar.cc/150?img=3',
-    status: 'inactive',
+    employeeId: "EMP003",
+    fullName: "Lê Văn Cường",
+    email: "cuong.le@example.com",
+    phoneNumber: "0912345678",
+    role: "Nhân viên",
+    joinDate: dayjs().subtract(6, "month").toISOString(),
+    avatarUrl: "https://i.pravatar.cc/150?img=3",
+    status: "inactive",
   },
 ];
-
 
 const EmployeeManagement: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
@@ -104,20 +110,21 @@ const EmployeeManagement: React.FC = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   // const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalMode, setModalMode] = useState<"view" | "add" | "edit">("view");
   const [form] = Form.useForm();
   // const [loading, setLoading] = useState(false);
   const [avatarFileList, setAvatarFileList] = useState<UploadFile[]>([]);
 
-
   const handleAdd = () => {
     setEditingEmployee(null);
     setSelectedEmployee(null);
     setModalMode("add");
     form.resetFields();
-    form.setFieldsValue({ status: 'active', joinDate: dayjs() });
+    form.setFieldsValue({ status: "active", joinDate: dayjs() });
     setAvatarFileList([]);
     setModalVisible(true);
   };
@@ -132,7 +139,14 @@ const EmployeeManagement: React.FC = () => {
       dateOfBirth: employee.dateOfBirth ? dayjs(employee.dateOfBirth) : null,
     });
     if (employee.avatarUrl) {
-      setAvatarFileList([{ uid: '-1', name: 'avatar.png', status: 'done', url: employee.avatarUrl }]);
+      setAvatarFileList([
+        {
+          uid: "-1",
+          name: "avatar.png",
+          status: "done",
+          url: employee.avatarUrl,
+        },
+      ]);
     } else {
       setAvatarFileList([]);
     }
@@ -149,53 +163,47 @@ const EmployeeManagement: React.FC = () => {
   const handleDelete = (employeeId: string) => {
     Modal.confirm({
       title: "Bạn có chắc chắn muốn xóa nhân viên này?",
-      content: "Hành động này không thể hoàn tác nếu xóa hẳn. Cân nhắc chuyển sang trạng thái 'Đã nghỉ việc'.",
+      content:
+        "Hành động này không thể hoàn tác nếu xóa hẳn. Cân nhắc chuyển sang trạng thái 'Đã nghỉ việc'.",
       okText: "Xóa hẳn",
       okType: "danger",
       cancelText: "Hủy",
       onOk: () => {
-        setEmployees((prev) => prev.filter((emp) => emp.employeeId !== employeeId));
+        setEmployees((prev) =>
+          prev.filter((emp) => emp.employeeId !== employeeId)
+        );
         message.success("Đã xóa nhân viên! (Client-side)");
       },
     });
-  };
-  
-  const handleAvatarUploadChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
-    setAvatarFileList(newFileList);
-    if (newFileList.length > 0 && newFileList[0].originFileObj) {
-        form.setFieldsValue({ avatarUpload: newFileList }); 
-    } else {
-        form.setFieldsValue({ avatarUpload: null });
-    }
   };
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      let avatarUrl = editingEmployee?.avatarUrl || '';
+      let avatarUrl = editingEmployee?.avatarUrl || "";
 
       if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
-        avatarUrl = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.readAsDataURL(avatarFileList[0].originFileObj as Blob);
-            reader.onload = () => resolve(reader.result as string);
+        avatarUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(avatarFileList[0].originFileObj as Blob);
+          reader.onload = () => resolve(reader.result as string);
         });
-      } else if (avatarFileList.length === 0 && modalMode === 'edit') {
-         if(editingEmployee && form.getFieldValue('avatarUpload') === null) avatarUrl = '';
-
+      } else if (avatarFileList.length === 0 && modalMode === "edit") {
+        if (editingEmployee && form.getFieldValue("avatarUpload") === null)
+          avatarUrl = "";
       }
 
-
-      const employeePayload: Omit<Employee, 'employeeId'> = {
+      const employeePayload: Omit<Employee, "employeeId"> = {
         ...values,
         joinDate: (values.joinDate as Dayjs).toISOString(),
-        dateOfBirth: values.dateOfBirth ? (values.dateOfBirth as Dayjs).toISOString() : undefined,
+        dateOfBirth: values.dateOfBirth
+          ? (values.dateOfBirth as Dayjs).toISOString()
+          : undefined,
         avatarUrl: avatarUrl,
       };
       delete (employeePayload as any).password;
       delete (employeePayload as any).confirmPassword;
       delete (employeePayload as any).avatarUpload;
-
 
       if (modalMode === "add") {
         const newEmployee: Employee = {
@@ -210,7 +218,11 @@ const EmployeeManagement: React.FC = () => {
           ...employeePayload,
         };
         setEmployees((prev) =>
-          prev.map((emp) => (emp.employeeId === editingEmployee.employeeId ? updatedEmployee : emp))
+          prev.map((emp) =>
+            emp.employeeId === editingEmployee.employeeId
+              ? updatedEmployee
+              : emp
+          )
         );
         message.success("Đã cập nhật thông tin nhân viên! (Client-side)");
       }
@@ -222,7 +234,7 @@ const EmployeeManagement: React.FC = () => {
       if (error.errorFields) {
         message.error("Vui lòng điền đầy đủ các trường bắt buộc.");
       } else {
-        message.error(`Có lỗi xảy ra: ${error.message || 'Không rõ lỗi'}`);
+        message.error(`Có lỗi xảy ra: ${error.message || "Không rõ lỗi"}`);
       }
     }
   };
@@ -238,7 +250,9 @@ const EmployeeManagement: React.FC = () => {
         );
       })
       .filter((emp) => filterRole === "Tất cả" || emp.role === filterRole)
-      .filter((emp) => filterStatus === "Tất cả" || emp.status === filterStatus);
+      .filter(
+        (emp) => filterStatus === "Tất cả" || emp.status === filterStatus
+      );
   }, [employees, searchText, filterRole, filterStatus]);
 
   const headerColor = "#A05A2C";
@@ -249,7 +263,6 @@ const EmployeeManagement: React.FC = () => {
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
-
   const columns = [
     {
       title: "Họ và Tên",
@@ -257,7 +270,8 @@ const EmployeeManagement: React.FC = () => {
       key: "fullName",
       width: 170,
       ellipsis: true,
-      sorter: (a: Employee, b: Employee) => a.fullName.localeCompare(b.fullName),
+      sorter: (a: Employee, b: Employee) =>
+        a.fullName.localeCompare(b.fullName),
       render: (name: string) => (
         <Tooltip title={name}>
           <span style={{ fontWeight: 600, color: "#D97B41" }}>{name}</span>
@@ -270,7 +284,11 @@ const EmployeeManagement: React.FC = () => {
       key: "email",
       width: 220,
       ellipsis: true,
-      render: (email: string) => <a href={`mailto:${email}`} style={{color: cellTextColor}}>{email}</a>,
+      render: (email: string) => (
+        <a href={`mailto:${email}`} style={{ color: cellTextColor }}>
+          {email}
+        </a>
+      ),
     },
     {
       title: "Số điện thoại",
@@ -283,16 +301,22 @@ const EmployeeManagement: React.FC = () => {
       dataIndex: "role",
       key: "role",
       width: 120,
-      filters: ROLES.map(role => ({text: role, value: role})),
-      onFilter: (value: string | number | boolean, record: Employee) => record.role === value,
-      render: (role: string) => <Tag color="#A05A2C" style={{color: '#fff', fontWeight: 500}}>{role}</Tag>,
+      filters: ROLES.map((role) => ({ text: role, value: role })),
+      onFilter: (value: string | number | boolean, record: Employee) =>
+        record.role === value,
+      render: (role: string) => (
+        <Tag color="#A05A2C" style={{ color: "#fff", fontWeight: 500 }}>
+          {role}
+        </Tag>
+      ),
     },
     {
       title: "Ngày vào làm",
       dataIndex: "joinDate",
       key: "joinDate",
       width: 130,
-      sorter: (a: Employee, b: Employee) => dayjs(a.joinDate).diff(dayjs(b.joinDate)),
+      sorter: (a: Employee, b: Employee) =>
+        dayjs(a.joinDate).diff(dayjs(b.joinDate)),
       render: (date: string) => dayjs(date).format("DD/MM/YYYY"),
     },
     {
@@ -300,12 +324,19 @@ const EmployeeManagement: React.FC = () => {
       dataIndex: "status",
       key: "status",
       width: 150,
-      align: 'center' as const,
-      filters: STATUS_OPTIONS.map(opt => ({text: opt.label, value: opt.value})),
-      onFilter: (value: string | number | boolean, record: Employee) => record.status === value,
-      render: (status: 'active' | 'inactive') => (
-        <Tag color={status === 'active' ? "#81C784" : "#E57373"} style={{color: '#fff', fontWeight: 500 }}>
-          {status === 'active' ? 'Đang làm việc' : 'Đã nghỉ việc'}
+      align: "center" as const,
+      filters: STATUS_OPTIONS.map((opt) => ({
+        text: opt.label,
+        value: opt.value,
+      })),
+      onFilter: (value: string | number | boolean, record: Employee) =>
+        record.status === value,
+      render: (status: "active" | "inactive") => (
+        <Tag
+          color={status === "active" ? "#81C784" : "#E57373"}
+          style={{ color: "#fff", fontWeight: 500 }}
+        >
+          {status === "active" ? "Đang làm việc" : "Đã nghỉ việc"}
         </Tag>
       ),
     },
@@ -314,41 +345,66 @@ const EmployeeManagement: React.FC = () => {
       key: "actions",
       align: "center" as const,
       width: 150,
-      fixed: 'right' as const,
+      fixed: "right" as const,
       render: (_: any, record: Employee) => (
         <Space size="small">
           <Tooltip title="Xem chi tiết">
-            <Button type="text" icon={<EyeOutlined style={{ color: "#D97B41", fontSize: 17 }} />} onClick={() => handleView(record)} style={{ outline: "none", boxShadow: "none" }}/>
+            <Button
+              type="text"
+              icon={<EyeOutlined style={{ color: "#D97B41", fontSize: 17 }} />}
+              onClick={() => handleView(record)}
+              style={{ outline: "none", boxShadow: "none" }}
+            />
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <Button type="text" icon={<EditOutlined style={{ color: "#A05A2C", fontSize: 17 }} />} onClick={() => handleEdit(record)} style={{ outline: "none", boxShadow: "none" }}/>
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: "#A05A2C", fontSize: 17 }} />}
+              onClick={() => handleEdit(record)}
+              style={{ outline: "none", boxShadow: "none" }}
+            />
           </Tooltip>
           <Tooltip title="Xóa/Vô hiệu hóa">
-            <Button type="text" danger icon={<DeleteOutlined style={{ fontSize: 17 }} />} onClick={() => handleDelete(record.employeeId)} style={{ outline: "none", boxShadow: "none" }}/>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined style={{ fontSize: 17 }} />}
+              onClick={() => handleDelete(record.employeeId)}
+              style={{ outline: "none", boxShadow: "none" }}
+            />
           </Tooltip>
         </Space>
       ),
     },
   ];
-  
-  const styledColumns = useMemo(() => columns.map(col => {
-      const headerStyle : React.CSSProperties = {
-        backgroundColor: headerBgColor,
-        color: headerColor,
-        fontWeight: 'bold',
-        borderRight: `1px solid ${borderColor}`,
-        borderBottom: `2px solid ${tableBorderColor}`,
-      };
-      if (col.key === 'avatar') { 
-      }
 
-      return {
-        ...col,
-        title: col.key === 'avatar' ? col.title : <span style={{color: headerColor}}>{(col as any).title}</span>, 
-        onHeaderCell: () => ({ style: headerStyle }),
-      };
-  }), [columns]);
+  const styledColumns = useMemo(
+    () =>
+      columns.map((col) => {
+        const headerStyle: React.CSSProperties = {
+          backgroundColor: headerBgColor,
+          color: headerColor,
+          fontWeight: "bold",
+          borderRight: `1px solid ${borderColor}`,
+          borderBottom: `2px solid ${tableBorderColor}`,
+        };
+        if (col.key === "avatar") {
+          return "";
+        }
 
+        return {
+          ...col,
+          title:
+            col.key === "avatar" ? (
+              col.title
+            ) : (
+              <span style={{ color: headerColor }}>{(col as any).title}</span>
+            ),
+          onHeaderCell: () => ({ style: headerStyle }),
+        };
+      }),
+    [columns]
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: "#FFF9F0" }}>
@@ -389,8 +445,22 @@ const EmployeeManagement: React.FC = () => {
         }
       `}</style>
 
-      <div style={{ maxWidth: 1300, margin: "0 auto", padding: "20px 20px 20px 60px" }}>
-        <h1 style={{ fontWeight: 700, color: "#A05A2C", fontSize: 32, marginBottom: 24, textAlign: "left" }}>
+      <div
+        style={{
+          maxWidth: 1300,
+          margin: "0 auto",
+          padding: "20px 20px 20px 60px",
+        }}
+      >
+        <h1
+          style={{
+            fontWeight: 700,
+            color: "#A05A2C",
+            fontSize: 32,
+            marginBottom: 24,
+            textAlign: "left",
+          }}
+        >
           Quản lý Nhân viên
         </h1>
         <Card
@@ -403,14 +473,31 @@ const EmployeeManagement: React.FC = () => {
             marginBottom: 24,
           }}
         >
-          <div style={{ marginBottom: 20, display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
+          <div
+            style={{
+              marginBottom: 20,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 16,
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Space wrap>
               <Input
                 placeholder="Tìm theo tên, email, SĐT..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32, display: "flex", alignItems: "center", justifyContent: "center"}}
+                style={{
+                  width: 280,
+                  borderRadius: 6,
+                  borderColor: "#E9C97B",
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
                 allowClear
               />
               <Select
@@ -420,7 +507,11 @@ const EmployeeManagement: React.FC = () => {
                 placeholder="Lọc theo vai trò"
               >
                 <Option value="Tất cả">Tất cả vai trò</Option>
-                {ROLES.map(role => <Option key={role} value={role}>{role}</Option>)}
+                {ROLES.map((role) => (
+                  <Option key={role} value={role}>
+                    {role}
+                  </Option>
+                ))}
               </Select>
               <Select
                 value={filterStatus}
@@ -429,13 +520,22 @@ const EmployeeManagement: React.FC = () => {
                 placeholder="Lọc theo trạng thái"
               >
                 <Option value="Tất cả">Tất cả trạng thái</Option>
-                {STATUS_OPTIONS.map(opt => <Option key={opt.value} value={opt.value}>{opt.label}</Option>)}
+                {STATUS_OPTIONS.map((opt) => (
+                  <Option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </Option>
+                ))}
               </Select>
             </Space>
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              style={{ background: "#D97B41", borderColor: "#D97B41", fontWeight: 600, borderRadius: 6 }}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                fontWeight: 600,
+                borderRadius: 6,
+              }}
               onClick={handleAdd}
             >
               Thêm nhân viên
@@ -447,16 +547,33 @@ const EmployeeManagement: React.FC = () => {
             dataSource={filteredEmployees}
             // loading={loading}
             rowKey="employeeId"
-            style={{ borderRadius: 8, border: `1px solid ${tableBorderColor}`, overflow: 'hidden' }}
-            rowClassName={(_, index) => (index % 2 === 0 ? 'even-row-emp' : 'odd-row-emp')}
+            style={{
+              borderRadius: 8,
+              border: `1px solid ${tableBorderColor}`,
+              overflow: "hidden",
+            }}
+            rowClassName={(_, index) =>
+              index % 2 === 0 ? "even-row-emp" : "odd-row-emp"
+            }
             sticky
           />
         </Card>
 
         <Modal
           open={modalVisible}
-          title={ <span style={{ color: "#A05A2C", fontWeight: 600, fontSize: 22 }}> {modalMode === "add" ? "Thêm mới nhân viên" : "Cập nhật thông tin nhân viên"} </span> }
-          onCancel={() => { setModalVisible(false); form.resetFields(); setAvatarFileList([]); }}
+          title={
+            <span style={{ color: "#A05A2C", fontWeight: 600, fontSize: 22 }}>
+              {" "}
+              {modalMode === "add"
+                ? "Thêm mới nhân viên"
+                : "Cập nhật thông tin nhân viên"}{" "}
+            </span>
+          }
+          onCancel={() => {
+            setModalVisible(false);
+            form.resetFields();
+            setAvatarFileList([]);
+          }}
           footer={
             modalMode === "view"
               ? [
@@ -479,7 +596,7 @@ const EmployeeManagement: React.FC = () => {
                       setAvatarFileList([]);
                     }}
                     style={{ borderRadius: 6 }}
-                    // disabled={isSubmitting} 
+                    // disabled={isSubmitting}
                   >
                     Hủy
                   </Button>,
@@ -487,77 +604,154 @@ const EmployeeManagement: React.FC = () => {
                     key="submit"
                     type="primary"
                     onClick={handleModalOk}
-                    style={{ background: "#D97B41", borderColor: "#D97B41", borderRadius: 6 }}
-                    // loading={isSubmitting} 
+                    style={{
+                      background: "#D97B41",
+                      borderColor: "#D97B41",
+                      borderRadius: 6,
+                    }}
+                    // loading={isSubmitting}
                   >
                     {modalMode === "add" ? "Thêm mới" : "Cập nhật"}
                   </Button>,
                 ]
           }
-          width={modalMode === 'view' ? 750 : 700} 
+          width={modalMode === "view" ? 750 : 700}
           destroyOnHidden
-          styles={{ body: { background: "#FFF9F0", borderRadius: "0 0 12px 12px", padding: "24px" } }}
+          styles={{
+            body: {
+              background: "#FFF9F0",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+          }}
           style={{ borderRadius: 12, top: 20 }}
         >
-          {modalMode === 'view' && selectedEmployee ? (
-            <Card bordered={false} style={{ background: "#fff", borderRadius: 8 }}>
-              <Descriptions bordered layout="vertical"
-                labelStyle={{ color: "#A05A2C", fontWeight: 500, background: '#FFF9F0' }} 
-                contentStyle={{ color: "#555", background: '#FFFFFF' }}
+          {modalMode === "view" && selectedEmployee ? (
+            <Card
+              bordered={false}
+              style={{ background: "#fff", borderRadius: 8 }}
+            >
+              <Descriptions
+                bordered
+                layout="vertical"
+                labelStyle={{
+                  color: "#A05A2C",
+                  fontWeight: 500,
+                  background: "#FFF9F0",
+                }}
+                contentStyle={{ color: "#555", background: "#FFFFFF" }}
               >
-                <Descriptions.Item label="Ảnh đại diện" span={3} contentStyle={{textAlign: 'center'}}>
-                  <Avatar size={128} src={selectedEmployee.avatarUrl} icon={<UserOutlined />} />
+                <Descriptions.Item
+                  label="Ảnh đại diện"
+                  span={3}
+                  contentStyle={{ textAlign: "center" }}
+                >
+                  <Avatar
+                    size={128}
+                    src={selectedEmployee.avatarUrl}
+                    icon={<UserOutlined />}
+                  />
                 </Descriptions.Item>
-                <Descriptions.Item label="Họ và Tên">{selectedEmployee.fullName}</Descriptions.Item>
-                <Descriptions.Item label="Email">{selectedEmployee.email}</Descriptions.Item>
-                <Descriptions.Item label="Số điện thoại">{selectedEmployee.phoneNumber}</Descriptions.Item>
-                <Descriptions.Item label="Vai trò">{selectedEmployee.role}</Descriptions.Item>
-                <Descriptions.Item label="Ngày vào làm">{dayjs(selectedEmployee.joinDate).format("DD/MM/YYYY")}</Descriptions.Item>
+                <Descriptions.Item label="Họ và Tên">
+                  {selectedEmployee.fullName}
+                </Descriptions.Item>
+                <Descriptions.Item label="Email">
+                  {selectedEmployee.email}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  {selectedEmployee.phoneNumber}
+                </Descriptions.Item>
+                <Descriptions.Item label="Vai trò">
+                  {selectedEmployee.role}
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày vào làm">
+                  {dayjs(selectedEmployee.joinDate).format("DD/MM/YYYY")}
+                </Descriptions.Item>
                 <Descriptions.Item label="Ngày sinh">
-                  {selectedEmployee.dateOfBirth ? dayjs(selectedEmployee.dateOfBirth).format("DD/MM/YYYY") : "Chưa cập nhật"}
+                  {selectedEmployee.dateOfBirth
+                    ? dayjs(selectedEmployee.dateOfBirth).format("DD/MM/YYYY")
+                    : "Chưa cập nhật"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Địa chỉ" span={2}>
                   {selectedEmployee.address || "Chưa cập nhật"}
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
-                  <Tag color={selectedEmployee.status === 'active' ? "#81C784" : "#E57373"} style={{color: '#fff'}}>
-                    {selectedEmployee.status === 'active' ? 'Đang làm việc' : 'Đã nghỉ việc'}
+                  <Tag
+                    color={
+                      selectedEmployee.status === "active"
+                        ? "#81C784"
+                        : "#E57373"
+                    }
+                    style={{ color: "#fff" }}
+                  >
+                    {selectedEmployee.status === "active"
+                      ? "Đang làm việc"
+                      : "Đã nghỉ việc"}
                   </Tag>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
-          ) : ( // Form Add/Edit
-            <Form form={form} layout="vertical" 
-                initialValues={{ status: 'active', joinDate: dayjs() }}
-                style={{ background: "#fff", padding: "24px", borderRadius: "8px", border: "1px solid #f0f0f0"}}
+          ) : (
+            // Form Add/Edit
+            <Form
+              form={form}
+              layout="vertical"
+              initialValues={{ status: "active", joinDate: dayjs() }}
+              style={{
+                background: "#fff",
+                padding: "24px",
+                borderRadius: "8px",
+                border: "1px solid #f0f0f0",
+              }}
             >
-              <Form.Item name="avatarUpload" label="Ảnh đại diện" valuePropName="fileList" getValueFromEvent={(e) => Array.isArray(e) ? e : e?.fileList}>
-                <Upload
-                    listType="picture-card"
-                    fileList={avatarFileList}
-                    onChange={handleAvatarUploadChange}
-                    beforeUpload={() => false} 
-                    maxCount={1}
-                    accept="image/*"
+              <Space
+                align="start"
+                style={{ display: "flex", width: "100%" }}
+                size="large"
+              >
+                <Form.Item
+                  name="fullName"
+                  label="Họ và Tên"
+                  rules={[{ required: true }]}
+                  style={{ flex: 1 }}
                 >
-                  {avatarFileList.length < 1 && <div><PlusOutlined /><div style={{ marginTop: 8 }}>Tải lên</div></div>}
-                </Upload>
-              </Form.Item>
-
-              <Space align="start" style={{ display: 'flex', width: '100%' }} size="large">
-                <Form.Item name="fullName" label="Họ và Tên" rules={[{ required: true }]} style={{ flex: 1 }}>
                   <Input prefix={<UserOutlined />} placeholder="Nhập họ tên" />
                 </Form.Item>
-                <Form.Item name="dateOfBirth" label="Ngày sinh" style={{ flex: 1 }}>
-                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày sinh"/>
+                <Form.Item
+                  name="dateOfBirth"
+                  label="Ngày sinh"
+                  style={{ flex: 1 }}
+                >
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    placeholder="Chọn ngày sinh"
+                  />
                 </Form.Item>
               </Space>
 
-              <Space align="start" style={{ display: 'flex', width: '100%' }} size="large">
-                <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]} style={{ flex: 1 }}>
-                  <Input prefix={<MailOutlined />} placeholder="vidu@example.com" />
+              <Space
+                align="start"
+                style={{ display: "flex", width: "100%" }}
+                size="large"
+              >
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[{ required: true, type: "email" }]}
+                  style={{ flex: 1 }}
+                >
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="vidu@example.com"
+                  />
                 </Form.Item>
-                <Form.Item name="phoneNumber" label="Số điện thoại" rules={[{ required: true }]} style={{ flex: 1 }}>
+                <Form.Item
+                  name="phoneNumber"
+                  label="Số điện thoại"
+                  rules={[{ required: true }]}
+                  style={{ flex: 1 }}
+                >
                   <Input prefix={<PhoneOutlined />} placeholder="09xxxxxxxx" />
                 </Form.Item>
               </Space>
@@ -565,45 +759,96 @@ const EmployeeManagement: React.FC = () => {
                 <Input.TextArea rows={2} placeholder="Nhập địa chỉ" />
               </Form.Item>
 
-              <Space align="start" style={{ display: 'flex', width: '100%' }} size="large">
-                <Form.Item name="role" label="Vai trò" rules={[{ required: true }]} style={{ flex: 1 }}>
-                  <Select prefix={<SafetyCertificateOutlined />} placeholder="Chọn vai trò">
-                    {ROLES.map(role => <Option key={role} value={role}>{role}</Option>)}
+              <Space
+                align="start"
+                style={{ display: "flex", width: "100%" }}
+                size="large"
+              >
+                <Form.Item
+                  name="role"
+                  label="Vai trò"
+                  rules={[{ required: true }]}
+                  style={{ flex: 1 }}
+                >
+                  <Select
+                    prefix={<SafetyCertificateOutlined />}
+                    placeholder="Chọn vai trò"
+                  >
+                    {ROLES.map((role) => (
+                      <Option key={role} value={role}>
+                        {role}
+                      </Option>
+                    ))}
                   </Select>
                 </Form.Item>
-                <Form.Item name="joinDate" label="Ngày vào làm" rules={[{ required: true }]} style={{ flex: 1 }}>
-                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày vào làm" />
+                <Form.Item
+                  name="joinDate"
+                  label="Ngày vào làm"
+                  rules={[{ required: true }]}
+                  style={{ flex: 1 }}
+                >
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    placeholder="Chọn ngày vào làm"
+                  />
                 </Form.Item>
               </Space>
-              
-              {modalMode === 'add' && ( 
-                <Space align="start" style={{ display: 'flex', width: '100%' }} size="large">
-                    <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]} style={{ flex: 1 }}>
-                        <Input.Password placeholder="Nhập mật khẩu" />
-                    </Form.Item>
-                    <Form.Item name="confirmPassword" label="Xác nhận mật khẩu"
-                        dependencies={['password']}
-                        rules={[
-                            { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
-                            ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                    if (!value || getFieldValue('password') === value) {
-                                        return Promise.resolve();
-                                    }
-                                    return Promise.reject(new Error('Hai mật khẩu không khớp!'));
-                                },
-                            }),
-                        ]}
-                        style={{ flex: 1 }}
-                    >
-                        <Input.Password placeholder="Nhập lại mật khẩu" />
-                    </Form.Item>
+
+              {modalMode === "add" && (
+                <Space
+                  align="start"
+                  style={{ display: "flex", width: "100%" }}
+                  size="large"
+                >
+                  <Form.Item
+                    name="password"
+                    label="Mật khẩu"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập mật khẩu!" },
+                    ]}
+                    style={{ flex: 1 }}
+                  >
+                    <Input.Password placeholder="Nhập mật khẩu" />
+                  </Form.Item>
+                  <Form.Item
+                    name="confirmPassword"
+                    label="Xác nhận mật khẩu"
+                    dependencies={["password"]}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng xác nhận mật khẩu!",
+                      },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue("password") === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(
+                            new Error("Hai mật khẩu không khớp!")
+                          );
+                        },
+                      }),
+                    ]}
+                    style={{ flex: 1 }}
+                  >
+                    <Input.Password placeholder="Nhập lại mật khẩu" />
+                  </Form.Item>
                 </Space>
               )}
 
-              <Form.Item name="status" label="Trạng thái" rules={[{ required: true }]}>
+              <Form.Item
+                name="status"
+                label="Trạng thái"
+                rules={[{ required: true }]}
+              >
                 <Select placeholder="Chọn trạng thái">
-                  {STATUS_OPTIONS.map(opt => <Option key={opt.value} value={opt.value}>{opt.label}</Option>)}
+                  {STATUS_OPTIONS.map((opt) => (
+                    <Option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Form>
