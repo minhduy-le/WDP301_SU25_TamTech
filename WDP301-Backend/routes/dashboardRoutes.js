@@ -30,6 +30,10 @@ const verifyToken = require("../middlewares/verifyToken");
  *                       type: integer
  *                     inactiveProducts:
  *                       type: integer
+ *                     productsUnder10:
+ *                       type: integer
+ *                     productsOutOfStock:
+ *                       type: integer
  *       401:
  *         description: Unauthorized
  *       500:
@@ -427,6 +431,57 @@ router.get("/current-month-products", verifyToken, async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error retrieving current month products:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/monthly-revenue:
+ *   get:
+ *     summary: Get revenue for current and previous month
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Monthly revenue statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     currentMonthRevenue:
+ *                       type: number
+ *                       description: Total revenue for current month
+ *                     previousMonthRevenue:
+ *                       type: number
+ *                       description: Total revenue for previous month
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/monthly-revenue", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getMonthlyRevenue();
+    res.status(200).json({
+      status: 200,
+      message: "Monthly revenue statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving monthly revenue:", error);
     res.status(500).json({
       status: 500,
       message: error.message || "Internal Server Error",
