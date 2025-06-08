@@ -101,7 +101,6 @@ const renderCustomerTypeLabel = ({ cx, cy, midAngle, outerRadius, value }: { cx:
   );
 };
 
-// Custom tooltip cho Pie chart hình thức mua hàng
 const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
   const { active, payload } = props;
   if (active && payload && payload.length) {
@@ -155,7 +154,6 @@ const ManagerDashboard: React.FC = () => {
         </Button>
       </div>
 
-      {/* Quick Stats */}
       <style>{`
         /* Màu border và shadow khi focus vào Select */
         .ant-select-focused .ant-select-selector,

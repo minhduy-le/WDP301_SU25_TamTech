@@ -282,7 +282,7 @@ const PromotionManagement: React.FC = () => {
       sorter: (a: Promotion, b: Promotion) => a.discountValue - b.discountValue,
       render: (_value: number, record: Promotion) => (
         <span style={{ color: "#A05A2C", fontWeight: 500 }}>
-          {record.discountValue}%
+          {record.discountValue.toLocaleString()}đ
         </span>
       ),
     },
@@ -427,7 +427,7 @@ const PromotionManagement: React.FC = () => {
                 <Descriptions.Item label="Mô tả">{selectedPromotion.description}</Descriptions.Item>
                 {selectedPromotion.code && (<Descriptions.Item label="Mã khuyến mãi">{selectedPromotion.code}</Descriptions.Item>)}
                 <Descriptions.Item label="Giá trị giảm giá">
-                  {selectedPromotion.discountType === "percentage" ? `${selectedPromotion.discountValue}%` : `${selectedPromotion.discountValue.toLocaleString()}đ`}
+                  {selectedPromotion.discountValue.toLocaleString()}đ
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày bắt đầu">{dayjs(selectedPromotion.startDate).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
                 <Descriptions.Item label="Ngày kết thúc">{dayjs(selectedPromotion.endDate).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
@@ -472,7 +472,7 @@ const PromotionManagement: React.FC = () => {
               <Row gutter={[16, 16]}>
                 <Col span={12}>
                   <Form.Item name="discountAmount" label={<span style={{ color: "#A05A2C" }}>Giá trị giảm</span>} rules={[{ required: true, message: "Vui lòng nhập giá trị giảm!" }]} style={{ flex: 1 }}>
-                    <InputNumber style={{ width: "100%", borderRadius: 6 }} min={0} placeholder="Nhập số (ví dụ: 20 hoặc 50000)" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value: any) => value!.replace(/[^0-9]/g, "")} />
+                    <InputNumber style={{ width: "100%", borderRadius: 6 }} min={1000} placeholder="Nhập số lớn hơn 1000" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value: any) => value!.replace(/[^0-9]/g, "")} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
