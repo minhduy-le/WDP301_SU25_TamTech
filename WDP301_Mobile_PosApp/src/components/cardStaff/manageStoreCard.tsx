@@ -98,7 +98,8 @@ const styles = StyleSheet.create({
     backgroundColor: APP_COLOR.WHITE,
     height: screenHeight * 0.13,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "flex-start",
+    paddingHorizontal: 10,
     borderRadius: 10,
   },
   labelView: {
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     fontFamily: APP_FONT.BOLD,
     fontSize: 13,
     color: APP_COLOR.BROWN,
+    width: "70%",
   },
   numberText: {
     color: APP_COLOR.ORANGE,
