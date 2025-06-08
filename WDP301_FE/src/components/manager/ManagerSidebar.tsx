@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
+import { Layout, Menu, Button, Input, Avatar, Dropdown } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -8,6 +8,7 @@ import {
   BarChartOutlined,
   SettingOutlined,
   LogoutOutlined,
+  SearchOutlined,
   BellOutlined,
   DownOutlined,
   ShoppingFilled,
@@ -17,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
-import logo from "../../assets/logo-footer.png";
+import logo from '../../assets/logo-footer.png';
 
 const { Header, Sider, Content } = Layout;
 
@@ -37,7 +38,7 @@ const ManagerSidebar: React.FC = () => {
     },
     {
       key: "/manager/orders",
-      icon: <ShoppingFilled />,
+      icon: <ShoppingFilled/>,
       label: "Quản lý đơn hàng",
     },
     {
@@ -55,12 +56,12 @@ const ManagerSidebar: React.FC = () => {
       icon: <MessageOutlined />,
       label: "Quản lý phản hồi",
     },
-
+    
     {
       key: "/manager/staffs",
       icon: <UserOutlined />,
       label: "Quản lý nhân viên",
-    },
+    }
   ];
 
   const userMenuItems: MenuProps["items"] = [
@@ -95,17 +96,17 @@ const ManagerSidebar: React.FC = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
-        width={siderWidth}
-        collapsedWidth={siderCollapsedWidth}
+        width={siderWidth} 
+        collapsedWidth={siderCollapsedWidth} 
         style={{
           backgroundColor: "#D97B41",
           boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
-          position: "fixed",
-          height: "100vh",
-          left: 0,
+          position: 'fixed', 
+          height: '100vh',   
+          left: 0,          
           top: 0,
-          zIndex: 1000,
-          overflowY: "auto",
+          zIndex: 1000,       
+          overflowY: 'auto', 
         }}
         className="aside-sidebar"
       >
@@ -116,7 +117,7 @@ const ManagerSidebar: React.FC = () => {
             textAlign: "center",
             borderBottom: "1px solid #E9C97B",
             marginBottom: "8px",
-            background: "#D97B41",
+            background: "#D97B41", 
             width: "100%",
           }}
         >
@@ -128,21 +129,21 @@ const ManagerSidebar: React.FC = () => {
               fontWeight: "bold",
               transition: "all 0.3s",
               letterSpacing: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "60px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '60px', 
             }}
           >
-            <img
-              src={logo}
-              alt="logo"
-              style={{
-                maxHeight: "100%",
-                maxWidth: collapsed ? "90%" : "70%",
-                objectFit: "contain",
-                transition: "all 0.3s",
-              }}
+            <img 
+              src={logo} 
+              alt="logo" 
+              style={{ 
+                maxHeight: '100%', 
+                maxWidth: collapsed ? '90%' : '70%', 
+                objectFit: 'contain',
+                transition: 'all 0.3s'
+              }} 
             />
           </h2>
         </div>
@@ -150,7 +151,7 @@ const ManagerSidebar: React.FC = () => {
           className="manager-menu"
           mode="inline"
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={["orders", "revenue"]}
+          defaultOpenKeys={["orders", "revenue"]} 
           onClick={({ key }) => navigate(key)}
           items={menuItems}
           style={{
@@ -163,7 +164,7 @@ const ManagerSidebar: React.FC = () => {
       <Layout
         style={{
           marginLeft: collapsed ? siderCollapsedWidth : siderWidth,
-          transition: "margin-left 0.2s",
+          transition: 'margin-left 0.2s', 
           minHeight: "100vh",
         }}
       >
@@ -175,9 +176,9 @@ const ManagerSidebar: React.FC = () => {
             padding: "0 24px",
             borderBottom: "1px solid #E9C97B",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-            position: "sticky",
+            position: "sticky", 
             top: 0,
-            zIndex: 999,
+            zIndex: 999, 
           }}
         >
           <Button
@@ -192,10 +193,10 @@ const ManagerSidebar: React.FC = () => {
               outline: "none",
               border: "none",
               background: "transparent",
-              position: "absolute",
-              left: collapsed ? "-10px" : "15px",
-              top: "50%",
-              transform: "translateY(-50%)",
+              position: 'absolute',
+              left: collapsed ? '-10px' : '15px',
+              top: '50%',
+              transform: 'translateY(-50%)',
             }}
           />
 
@@ -207,6 +208,19 @@ const ManagerSidebar: React.FC = () => {
               gap: 24,
             }}
           >
+            <Input
+              placeholder="Tìm kiếm..."
+              prefix={<SearchOutlined style={{ color: '#A05A2C' }} />}
+              style={{
+                width: 200,
+                borderRadius: "25px",
+                background: "#F9E4B7",
+                color: "#A05A2C", 
+                border: "1px solid #E9C97B",
+              }}
+              
+            />
+
             <Button
               type="text"
               icon={<BellOutlined />}
@@ -252,9 +266,7 @@ const ManagerSidebar: React.FC = () => {
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                  {user.fullName}
-                </span>
+                <span style={{ color: "#A05A2C", fontWeight: 600 }}>{user.fullName}</span>
                 <DownOutlined style={{ color: "#A05A2C" }} />
               </div>
             </Dropdown>
@@ -264,7 +276,7 @@ const ManagerSidebar: React.FC = () => {
         <Content
           style={{
             background: "#FFF3D6",
-            minHeight: 280,
+            minHeight: 280, 
           }}
         >
           <Outlet />

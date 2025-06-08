@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
-import { Table, Tag, Space, Button, Card, Modal, Descriptions } from "antd";
+import { useState, useEffect } from "react";
+import {
+  Table,
+  Tag,
+  Space,
+  Button,
+  Card,
+  Modal,
+  Descriptions,
+  message,
+} from "antd";
 import {
   EyeOutlined,
   CheckCircleOutlined,
@@ -10,117 +19,123 @@ import {
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import { useGetOrders, type OrderHistory } from "../hooks/ordersApi";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
-const getFormattedPrice = (price: string | number) => {
-  const priceStr = typeof price === "number" ? price.toString() : price;
-  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
+interface OrderItem {
+  id: number;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: number;
+  customerName: string;
+  orderDate: string;
+  totalAmount: number;
+  status: "pending" | "confirmed" | "rejected";
+  items: OrderItem[];
+}
+
+const fakeOrdersData: Order[] = [
+  {
+    id: 101,
+    customerName: "Nguyễn Văn An",
+    orderDate: "2025-05-22T10:30:00Z",
+    totalAmount: 1200000,
+    status: "pending",
+    items: [
+      { id: 1, name: "Sản phẩm Sang Trọng X1", quantity: 2, price: 300000 },
+      { id: 2, name: "Vật phẩm Cao Cấp Y2", quantity: 1, price: 600000 },
+    ],
+  },
+  {
+    id: 102,
+    customerName: "Trần Thị Bích",
+    orderDate: "2025-05-22T12:00:00Z",
+    totalAmount: 800000,
+    status: "pending",
+    items: [{ id: 3, name: "Mặt hàng Độc Đáo Z3", quantity: 1, price: 800000 }],
+  },
+  {
+    id: 103,
+    customerName: "Lê Hoàng Cảnh",
+    orderDate: "2025-05-23T09:15:00Z",
+    totalAmount: 2500000,
+    status: "pending",
+    items: [
+      { id: 4, name: "Thiết bị Hiện Đại A4", quantity: 1, price: 1500000 },
+      { id: 5, name: "Phụ kiện Thời Trang B5", quantity: 2, price: 500000 },
+    ],
+  },
+];
 
 const StaffConfirmOrders = () => {
-  const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
+  const [orders, setOrders] = useState<Order[]>(fakeOrdersData);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const { data: orders, isLoading: isOrderLoading } = useGetOrders();
+  const [loading, setLoading] = useState(false);
 
-  // const handleConfirm = (orderToConfirm: Order) => {
-  //   Modal.confirm({
-  //     title: "Xác nhận đơn hàng",
-  //     content: `Bạn có chắc chắn muốn xác nhận đơn hàng #${orderToConfirm.id} của khách ${orderToConfirm.customerName}?`,
-  //     okText: "Xác nhận",
-  //     cancelText: "Hủy",
-  //     okButtonProps: {
-  //       style: { background: "#60A5FA", borderColor: "#60A5FA", color: "#fff" },
-  //     },
-  //     cancelButtonProps: { style: { borderRadius: 6 } },
-  //     onOk: () => {
-  //       setOrders((prev) =>
-  //         prev
-  //           .map((order) =>
-  //             order.id === orderToConfirm.id
-  //               ? { ...order, status: "confirmed" as const }
-  //               : order
-  //           )
-  //           .filter((order) => order.status === "pending")
-  //       );
-  //       message.success(`Đã xác nhận đơn hàng #${orderToConfirm.id}!`);
-  //     },
-  //   });
-  // };
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      setOrders(fakeOrdersData.filter((o) => o.status === "pending"));
+      setLoading(false);
+    }, 300);
+  }, []);
 
-  // const handleReject = (orderToReject: Order) => {
-  //   Modal.confirm({
-  //     title: "Từ chối đơn hàng",
-  //     content: `Bạn có chắc chắn muốn từ chối đơn hàng #${orderToReject.id} của khách ${orderToReject.customerName}?`,
-  //     okText: "Từ chối",
-  //     okType: "danger",
-  //     cancelText: "Hủy",
-  //     okButtonProps: {
-  //       style: { background: "#EF4444", borderColor: "#EF4444", color: "#fff" },
-  //     },
-  //     cancelButtonProps: { style: { borderRadius: 6 } },
-  //     onOk: () => {
-  //       setOrders((prev) =>
-  //         prev
-  //           .map((order) =>
-  //             order.id === orderToReject.id
-  //               ? { ...order, status: "rejected" as const }
-  //               : order
-  //           )
-  //           .filter((order) => order.status === "pending")
-  //       );
-  //       message.error(`Đã từ chối đơn hàng #${orderToReject.id}!`);
-  //     },
-  //   });
-  // };
-
-  const getStatusTheme = (
-    status: string
-  ): { tagBg: string; tagText: string; iconColor?: string } => {
-    switch (status) {
-      case "Pending":
-        return { tagBg: "#BFDBFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "Paid":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "Preparing":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "Cooked":
-        return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
-      case "Delivering":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "Delivered":
-        return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
-      case "Canceled":
-        return { tagBg: "#EF4444", tagText: "#fff", iconColor: "#fff" };
-      default:
-        return { tagBg: "#E0E7FF", tagText: "#1E40AF" };
-    }
+  const handleConfirm = (orderToConfirm: Order) => {
+    Modal.confirm({
+      title: "Xác nhận đơn hàng",
+      content: `Bạn có chắc chắn muốn xác nhận đơn hàng #${orderToConfirm.id} của khách ${orderToConfirm.customerName}?`,
+      okText: "Xác nhận",
+      cancelText: "Hủy",
+      okButtonProps: {
+        style: { background: "#60A5FA", borderColor: "#60A5FA", color: "#fff" },
+      },
+      cancelButtonProps: { style: { borderRadius: 6 } },
+      onOk: () => {
+        setOrders((prev) =>
+          prev
+            .map((order) =>
+              order.id === orderToConfirm.id
+                ? { ...order, status: "confirmed" as const }
+                : order
+            )
+            .filter((order) => order.status === "pending")
+        );
+        message.success(`Đã xác nhận đơn hàng #${orderToConfirm.id}!`);
+      },
+    });
   };
 
-  const getStatusIcon = (status: string) => {
-    const theme = getStatusTheme(status);
-    switch (status) {
-      case "Pending":
-        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Paid":
-        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Preparing":
-        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Cooked":
-        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Delivering":
-        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Delivered":
-        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Canceled":
-        return <CloseCircleOutlined style={{ color: theme.iconColor }} />;
-      default:
-        return null;
-    }
+  const handleReject = (orderToReject: Order) => {
+    Modal.confirm({
+      title: "Từ chối đơn hàng",
+      content: `Bạn có chắc chắn muốn từ chối đơn hàng #${orderToReject.id} của khách ${orderToReject.customerName}?`,
+      okText: "Từ chối",
+      okType: "danger",
+      cancelText: "Hủy",
+      okButtonProps: {
+        style: { background: "#EF4444", borderColor: "#EF4444", color: "#fff" },
+      },
+      cancelButtonProps: { style: { borderRadius: 6 } },
+      onOk: () => {
+        setOrders((prev) =>
+          prev
+            .map((order) =>
+              order.id === orderToReject.id
+                ? { ...order, status: "rejected" as const }
+                : order
+            )
+            .filter((order) => order.status === "pending")
+        );
+        message.error(`Đã từ chối đơn hàng #${orderToReject.id}!`);
+      },
+    });
   };
 
   const headerColor = "#e8f5e9";
@@ -134,39 +149,37 @@ const StaffConfirmOrders = () => {
   const columns = [
     {
       title: "Mã đơn",
-      dataIndex: "orderId",
-      key: "orderId",
+      dataIndex: "id",
+      key: "id",
       width: 100,
-      sorter: (a: OrderHistory, b: OrderHistory) => a.orderId - b.orderId,
+      sorter: (a: Order, b: Order) => a.id - b.id,
     },
     {
       title: "Khách hàng",
-      dataIndex: "fullName",
-      key: "fullName",
+      dataIndex: "customerName",
+      key: "customerName",
       width: 180,
       ellipsis: true,
-      sorter: (a: OrderHistory, b: OrderHistory) =>
-        a.fullName.localeCompare(b.fullName),
+      sorter: (a: Order, b: Order) =>
+        a.customerName.localeCompare(b.customerName),
     },
     {
       title: "Ngày đặt",
-      dataIndex: "order_create_at",
-      key: "order_create_at",
+      dataIndex: "orderDate",
+      key: "orderDate",
       width: 180,
-      render: (order_create_at: string) =>
-        dayjs(order_create_at).format("DD/MM/YYYY HH:mm"),
-      sorter: (a: OrderHistory, b: OrderHistory) =>
-        dayjs(a.order_create_at).unix() - dayjs(b.order_create_at).unix(),
+      render: (date: string) => dayjs(date).format("DD/MM/YYYY HH:mm"),
+      sorter: (a: Order, b: Order) =>
+        dayjs(a.orderDate).unix() - dayjs(b.orderDate).unix(),
     },
     {
       title: "Tổng tiền",
-      dataIndex: "order_amount",
-      key: "order_amount",
+      dataIndex: "totalAmount",
+      key: "totalAmount",
       width: 130,
       align: "right" as const,
-      render: (order_amount: number) => `${getFormattedPrice(order_amount)}`,
-      sorter: (a: OrderHistory, b: OrderHistory) =>
-        a.order_amount - b.order_amount,
+      render: (amount: number) => `${amount.toLocaleString()}đ`,
+      sorter: (a: Order, b: Order) => a.totalAmount - b.totalAmount,
     },
     {
       title: "Trạng thái",
@@ -174,26 +187,45 @@ const StaffConfirmOrders = () => {
       key: "status",
       width: 150,
       align: "center" as const,
-      render: (status: OrderHistory["status"]) => {
-        const theme = getStatusTheme(status);
+      render: (status: string) => {
+        let icon = <ClockCircleOutlined />;
+        let text = "Chờ xác nhận";
+        let tagTextColor = "#1E40AF";
+        let tagBgColor = "#BFDBFE";
+
+        if (status === "pending") {
+          icon = <ClockCircleOutlined style={{ color: "#1E40AF" }} />;
+          tagTextColor = "#1E40AF";
+          tagBgColor = "#BFDBFE";
+        } else if (status === "confirmed") {
+          icon = <CheckCircleOutlined style={{ color: "#fff" }} />;
+          text = "Đã xác nhận";
+          tagTextColor = "#fff";
+          tagBgColor = "#60A5FA";
+        } else if (status === "rejected") {
+          icon = <CloseCircleOutlined style={{ color: "#fff" }} />;
+          text = "Đã từ chối";
+          tagTextColor = "#fff";
+          tagBgColor = "#EF4444";
+        }
         return (
           <Tag
-            icon={getStatusIcon(status)}
+            icon={icon}
             style={{
-              color: theme.tagText,
+              color: tagTextColor,
+              background: tagBgColor,
+              borderColor: tagBgColor,
               fontWeight: 600,
-              background: theme.tagBg,
-              borderColor: theme.tagBg,
               borderRadius: 12,
               padding: "2px 12px",
-              minWidth: "120px",
+              minWidth: "130px",
               textAlign: "center",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
             }}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {text}
           </Tag>
         );
       },
@@ -203,7 +235,7 @@ const StaffConfirmOrders = () => {
       key: "actions",
       width: 320,
       align: "center" as const,
-      render: (_: any, record: OrderHistory) => (
+      render: (_: any, record: Order) => (
         <Space size={12}>
           <Button
             type="link"
@@ -235,8 +267,8 @@ const StaffConfirmOrders = () => {
               boxShadow: "none",
               border: "none",
             }}
-            disabled={record.status !== "Paid"}
-            // onClick={() => handleConfirm(record)}
+            disabled={record.status !== "pending"}
+            onClick={() => handleConfirm(record)}
           >
             Xác nhận
           </Button>
@@ -245,8 +277,8 @@ const StaffConfirmOrders = () => {
             danger
             icon={<CloseCircleOutlined />}
             style={{ fontWeight: 600, outline: "none", boxShadow: "none" }}
-            disabled={record.status !== "Pending"}
-            // onClick={() => handleReject(record)}
+            disabled={record.status !== "pending"}
+            onClick={() => handleReject(record)}
           >
             Từ chối
           </Button>
@@ -334,9 +366,9 @@ const StaffConfirmOrders = () => {
           <Table
             className="confirm-orders-table-staff"
             columns={columns}
-            dataSource={orders?.filter((order) => order.status === "Paid")}
+            dataSource={orders.filter((order) => order.status === "pending")}
             rowKey="id"
-            loading={isOrderLoading}
+            loading={loading}
             style={{
               borderRadius: 8,
               border: `1px solid ${tableBorderColor}`,
@@ -410,15 +442,13 @@ const StaffConfirmOrders = () => {
                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
                 <Descriptions.Item label="Mã đơn">
-                  {selectedOrder.orderId}
+                  {selectedOrder.id}
                 </Descriptions.Item>
                 <Descriptions.Item label="Khách hàng">
-                  {selectedOrder.fullName}
+                  {selectedOrder.customerName}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày đặt">
-                  {dayjs(selectedOrder.order_create_at).format(
-                    "DD/MM/YYYY HH:mm:ss"
-                  )}
+                  {dayjs(selectedOrder.orderDate).format("DD/MM/YYYY HH:mm:ss")}
                 </Descriptions.Item>
                 <Descriptions.Item label="Tổng tiền">
                   <span
@@ -428,31 +458,55 @@ const StaffConfirmOrders = () => {
                       fontSize: "1.1em",
                     }}
                   >
-                    {getFormattedPrice(selectedOrder.order_amount)}
+                    {selectedOrder.totalAmount.toLocaleString()}đ
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái" span={2}>
                   {(() => {
-                    const theme = getStatusTheme(selectedOrder.status);
+                    let statusText = "Chờ xác nhận";
+                    let statusBg = "#BFDBFE";
+                    let statusColorText = "#1E40AF";
+                    let statusIcon = (
+                      <ClockCircleOutlined style={{ color: statusColorText }} />
+                    );
+
+                    if (selectedOrder.status === "confirmed") {
+                      statusText = "Đã xác nhận";
+                      statusBg = "#60A5FA";
+                      statusColorText = "#fff";
+                      statusIcon = (
+                        <CheckCircleOutlined
+                          style={{ color: statusColorText }}
+                        />
+                      );
+                    } else if (selectedOrder.status === "rejected") {
+                      statusText = "Đã từ chối";
+                      statusBg = "#EF4444";
+                      statusColorText = "#fff";
+                      statusIcon = (
+                        <CloseCircleOutlined
+                          style={{ color: statusColorText }}
+                        />
+                      );
+                    }
                     return (
                       <Tag
-                        icon={getStatusIcon(selectedOrder.status)}
+                        icon={statusIcon}
                         style={{
-                          color: theme.tagText,
+                          color: statusColorText,
                           fontWeight: 600,
-                          background: theme.tagBg,
-                          borderColor: theme.tagBg,
+                          background: statusBg,
+                          borderColor: statusBg,
                           borderRadius: 12,
                           padding: "2px 12px",
-                          minWidth: "120px",
+                          minWidth: "130px",
                           textAlign: "center",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
                         }}
                       >
-                        {selectedOrder.status.charAt(0).toUpperCase() +
-                          selectedOrder.status.slice(1)}
+                        {statusText}
                       </Tag>
                     );
                   })()}
@@ -460,7 +514,7 @@ const StaffConfirmOrders = () => {
                 <Descriptions.Item label="Sản phẩm" span={2}>
                   <Table
                     className="order-items-table-modal-staff"
-                    dataSource={selectedOrder.orderItems}
+                    dataSource={selectedOrder.items}
                     columns={[
                       {
                         title: <span style={{ color: headerColor }}>Tên</span>,
@@ -500,10 +554,7 @@ const StaffConfirmOrders = () => {
                         ),
                         key: "subtotal",
                         align: "right" as const,
-                        render: (
-                          _: any,
-                          item: { quantity: number; price: number }
-                        ) => (
+                        render: (_: any, item: OrderItem) => (
                           <span
                             style={{ color: cellTextColor, fontWeight: 500 }}
                           >
@@ -513,7 +564,7 @@ const StaffConfirmOrders = () => {
                       },
                     ]}
                     pagination={false}
-                    rowKey="orderId"
+                    rowKey="id"
                     size="small"
                     style={{
                       background: evenRowBgColor,

@@ -33,7 +33,7 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
-import { useRevenueStats, useTopProducts } from "../../hooks/dashboardApi";
+import { useRevenueStats, useTopProducts, useMonthlyRevenueComparison, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder } from "../../hooks/dashboardApi";
 
 const { Title, Text } = Typography;
 
@@ -121,14 +121,15 @@ const ManagerDashboard: React.FC = () => {
     useTopProducts();
   const monthlyRevenueData =
     revenueStats?.map((s) => ({ month: `Tháng ${s.month}`, revenue: s.revenue })) || [];
-  const averageOrderValue =
-    totalOrdersThisMonth > 0 ? totalThisMonth / totalOrdersThisMonth : 0;
+  
   const topProducts = topProductsData.map((p) => ({
     name: p.productName,
     sold: p.totalQuantity,
     revenue: p.totalRevenue,
   }));
-
+  const { data: currentMonthProductStats } = useCurrentMonthProduct();
+  const { data: currentMonthRevenueStats } = useCurrentMonthRevenue();
+  const { data: currentMonthOrderStats } = useCurrentMonthOrder();
   return (
     <div style={{ padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
       <div
@@ -196,16 +197,20 @@ const ManagerDashboard: React.FC = () => {
                   Doanh thu tháng này
                 </span>
               }
-              value={totalThisMonth}
+              value={currentMonthRevenueStats?.currentRevenue || 0}
               valueStyle={{ color: "#D97B41", fontWeight: 700 }}
               prefix={<DollarOutlined />}
               precision={0}
               groupSeparator=","
             />
-            <Text type={percentChangeRevenue >= 0 ? "success" : "warning"}>
-              {percentChangeRevenue >= 0 ? "+" : ""}
-              {percentChangeRevenue.toFixed(2)}% so với tháng trước
-            </Text>
+            {typeof currentMonthRevenueStats?.percentageChange === 'number' ? (
+              <Text type={currentMonthRevenueStats.percentageChange >= 0 ? "success" : "warning"}>
+                {currentMonthRevenueStats.percentageChange >= 0 ? "+" : ""}
+                {currentMonthRevenueStats.percentageChange}% so với tháng trước
+              </Text>
+            ) : (
+              <Text type="secondary">Đang tải...</Text>
+            )}
           </Card>
         </Col>
         <Col xs={24} md={12} lg={6}>
@@ -222,16 +227,20 @@ const ManagerDashboard: React.FC = () => {
                   Đơn hàng tháng này
                 </span>
               }
-              value={totalOrdersThisMonth}
+              value={currentMonthOrderStats?.currentOrders || 0}
               valueStyle={{ color: "#A05A2C", fontWeight: 700 }}
               prefix={<ShoppingOutlined />}
               precision={0}
               groupSeparator=","
             />
-            <Text type={percentChangeOrders >= 0 ? "success" : "warning"}>
-              {percentChangeOrders >= 0 ? "+" : ""}
-              {percentChangeOrders.toFixed(2)}% so với tháng trước
-            </Text>
+           {typeof currentMonthOrderStats?.percentageChange === 'number' ? (
+              <Text type={currentMonthOrderStats.percentageChange >= 0 ? "success" : "warning"}>
+                {currentMonthOrderStats.percentageChange >= 0 ? "+" : ""}
+                {currentMonthOrderStats.percentageChange}% so với tháng trước
+              </Text>
+            ) : (
+              <Text type="secondary">Đang tải...</Text>
+            )}
           </Card>
         </Col>
         <Col xs={24} md={12} lg={6}>
@@ -248,7 +257,7 @@ const ManagerDashboard: React.FC = () => {
                   Giá trị đơn trung bình
                 </span>
               }
-              value={averageOrderValue}
+              value={currentMonthRevenueStats?.averageOrderValue || 0}
               valueStyle={{ color: "#D97B41", fontWeight: 700 }}
               prefix={<DollarOutlined />}
               suffix="đ"
@@ -272,15 +281,20 @@ const ManagerDashboard: React.FC = () => {
                   Sản phẩm bán ra
                 </span>
               }
-              value={totalProductsSold}
+              value={currentMonthProductStats?.currentQuantity || 0}
               valueStyle={{ color: "#faad14", fontWeight: 700 }}
               prefix={<ShoppingOutlined />}
               precision={0}
               groupSeparator=","
             />
-            <Text type={percentChangeProducts >= 0 ? "success" : "warning"}>
-              +{percentChangeProducts}% so với tháng trước
-            </Text>
+            {typeof currentMonthProductStats?.percentageChange === 'number' ? (
+              <Text type={currentMonthProductStats.percentageChange >= 0 ? "success" : "warning"}>
+                {currentMonthProductStats.percentageChange >= 0 ? "+" : ""}
+                {currentMonthProductStats.percentageChange}% so với tháng trước
+              </Text>
+            ) : (
+              <Text type="secondary">Đang tải...</Text>
+            )}
           </Card>
         </Col>
       </Row>

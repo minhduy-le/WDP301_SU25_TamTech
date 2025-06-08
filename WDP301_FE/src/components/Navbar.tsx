@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Layout, Menu, Button, Dropdown, Badge, message } from "antd";
+import { Layout, Menu, Button, Input, Dropdown, Badge, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
-import { ShoppingCartOutlined, MenuOutlined } from "@ant-design/icons";
+import {
+  ShoppingCartOutlined,
+  SearchOutlined,
+  MenuOutlined,
+} from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
 import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
@@ -132,6 +136,23 @@ const Navbar = () => {
           <Link to="/blog">Blog</Link>
           <Link to="/cua-hang">Cửa Hàng</Link>
         </div>
+        <Input
+          placeholder="Tìm kiếm món ăn, combo, cửa hàng..."
+          prefix={<SearchOutlined style={{ color: "#da7339" }} />}
+          style={{
+            borderRadius: 20,
+            background: "##fff7e6",
+            border: "2px solid #da7339",
+            width: 300,
+            height: 40,
+            margin: "0 24px",
+            fontSize: 16,
+            color: "#7c4a03",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        />
         <div className="header-icon">
           <Button
             type="text"
