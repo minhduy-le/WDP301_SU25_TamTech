@@ -66,167 +66,161 @@ const ManageStore = () => {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <StaffHeader />
-          <View style={styles.componentsContent}>
-            <ManageStoreCard title="Tổng sản phẩm" />
-            <ManageStoreCard title="Còn hàng" />
-          </View>
-          <View style={styles.componentsContent}>
-            <ManageStoreCard title="Sắp hết" />
-            <ManageStoreCard title="Hết hàng" />
-          </View>
+        <StaffHeader />
+        <View style={styles.componentsContent}>
+          <ManageStoreCard title="Tổng sản phẩm" />
+          <ManageStoreCard title="Còn hàng" />
+        </View>
+        <View style={styles.componentsContent}>
+          <ManageStoreCard title="Sắp hết" />
+          <ManageStoreCard title="Hết hàng" />
+        </View>
+        <View
+          style={{
+            borderRadius: 10,
+            backgroundColor: APP_COLOR.WHITE,
+            height: screenHeight * 0.49,
+            borderColor: "#E0E0E0",
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 1.5,
+            elevation: 2,
+          }}
+        >
           <View
             style={{
-              borderRadius: 10,
-              backgroundColor: APP_COLOR.WHITE,
-              height: screenHeight * 0.55,
-              borderColor: "#E0E0E0",
-              shadowColor: "#000",
-              shadowOffset: {
-                width: 0,
-                height: 1,
-              },
-              shadowOpacity: 0.05,
-              shadowRadius: 1.5,
-              elevation: 2,
+              marginTop: 10,
+              marginHorizontal: 10,
+              borderBottomColor: APP_COLOR.BROWN,
+              borderBottomWidth: 0.5,
+              paddingBottom: 5,
+              marginBottom: 10,
             }}
           >
-            <View
+            <Text
               style={{
-                marginTop: 10,
-                marginHorizontal: 10,
-                borderBottomColor: APP_COLOR.BROWN,
-                borderBottomWidth: 0.5,
-                paddingBottom: 5,
-                marginBottom: 10,
+                fontFamily: APP_FONT.SEMIBOLD,
+                color: APP_COLOR.BROWN,
+                fontSize: 17,
               }}
             >
-              <Text
-                style={{
-                  fontFamily: APP_FONT.SEMIBOLD,
-                  color: APP_COLOR.BROWN,
-                  fontSize: 17,
-                }}
-              >
-                Danh sách sản phẩm
-              </Text>
-              <Text
-                style={{
-                  fontFamily: APP_FONT.REGULAR,
-                  color: APP_COLOR.BROWN,
-                  fontSize: 15,
-                }}
-              >
-                Quản lí và cập nhật sản phẩm tồn kho
-              </Text>
-            </View>
-            <View style={styles.tabContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  activeTab === "customerInfor" && styles.activeTab,
-                ]}
-                onPress={() => setActiveTab("customerInfor")}
-              >
-                <Feather
-                  name="box"
-                  size={20}
-                  style={[
-                    styles.icon,
-                    activeTab === "customerInfor" && styles.activeIcon,
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === "customerInfor" && styles.activeTabText,
-                  ]}
-                >
-                  Sản phẩm
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  activeTab === "voucher" && styles.activeTab,
-                ]}
-                onPress={() => setActiveTab("voucher")}
-              >
-                <AntDesign
-                  name="warning"
-                  size={18}
-                  style={[
-                    styles.icon,
-                    activeTab === "voucher" && styles.activeIcon,
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === "voucher" && styles.activeTabText,
-                  ]}
-                >
-                  Cảnh báo
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {activeTab === "customerInfor" ? (
-              <View>
-                <View
-                  style={{
-                    marginLeft: 5,
-                    flexDirection: "row",
-                    gap: 10,
-                    alignItems: "center",
-                  }}
-                >
-                  <Pressable
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      borderColor: APP_COLOR.BROWN,
-                      borderWidth: 0.5,
-                      borderRadius: 30,
-                      paddingVertical: 3,
-                      backgroundColor: APP_COLOR.WHITE,
-                      marginTop: 10,
-                      width: "75%",
-                      paddingHorizontal: 5,
-                    }}
-                    onPress={() => console.log("hihi")}
-                  >
-                    <EvilIcons
-                      name="search"
-                      size={20}
-                      color={APP_COLOR.BROWN}
-                    />
-                    <TextInput
-                      placeholder="Nhập tên/mã sản phẩm"
-                      placeholderTextColor={APP_COLOR.BROWN}
-                      onChangeText={handleChangeText}
-                      value={searchTerm}
-                    />
-                  </Pressable>
-                  <Pressable>
-                    <View style={styles.filterBtn}>
-                      <AntDesign
-                        name="filter"
-                        size={24}
-                        color={APP_COLOR.WHITE}
-                      />
-                    </View>
-                  </Pressable>
-                </View>
-                <ManageProducts />
-              </View>
-            ) : (
-              <View>
-                <Text>haha</Text>
-              </View>
-            )}
+              Danh sách sản phẩm
+            </Text>
+            <Text
+              style={{
+                fontFamily: APP_FONT.REGULAR,
+                color: APP_COLOR.BROWN,
+                fontSize: 15,
+              }}
+            >
+              Quản lí và cập nhật sản phẩm tồn kho
+            </Text>
           </View>
-        </ScrollView>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === "customerInfor" && styles.activeTab,
+              ]}
+              onPress={() => setActiveTab("customerInfor")}
+            >
+              <Feather
+                name="box"
+                size={20}
+                style={[
+                  styles.icon,
+                  activeTab === "customerInfor" && styles.activeIcon,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "customerInfor" && styles.activeTabText,
+                ]}
+              >
+                Sản phẩm
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "voucher" && styles.activeTab]}
+              onPress={() => setActiveTab("voucher")}
+            >
+              <AntDesign
+                name="warning"
+                size={18}
+                style={[
+                  styles.icon,
+                  activeTab === "voucher" && styles.activeIcon,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "voucher" && styles.activeTabText,
+                ]}
+              >
+                Cảnh báo
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {activeTab === "customerInfor" ? (
+            <View>
+              <View
+                style={{
+                  marginLeft: 5,
+                  flexDirection: "row",
+                  gap: 10,
+                  alignItems: "center",
+                }}
+              >
+                <Pressable
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    borderColor: APP_COLOR.BROWN,
+                    borderWidth: 0.5,
+                    borderRadius: 30,
+                    paddingVertical: 3,
+                    backgroundColor: APP_COLOR.WHITE,
+                    marginTop: 10,
+                    width: "75%",
+                    paddingHorizontal: 5,
+                  }}
+                  onPress={() => console.log("hihi")}
+                >
+                  <EvilIcons name="search" size={20} color={APP_COLOR.BROWN} />
+                  <TextInput
+                    placeholder="Nhập tên/mã sản phẩm"
+                    placeholderTextColor={APP_COLOR.BROWN}
+                    onChangeText={handleChangeText}
+                    value={searchTerm}
+                  />
+                </Pressable>
+                <Pressable>
+                  <View style={styles.filterBtn}>
+                    <AntDesign
+                      name="filter"
+                      size={24}
+                      color={APP_COLOR.WHITE}
+                    />
+                  </View>
+                </Pressable>
+              </View>
+              <ScrollView showsHorizontalScrollIndicator={false}>
+                <ManageProducts />
+              </ScrollView>
+            </View>
+          ) : (
+            <ScrollView showsHorizontalScrollIndicator={false}>
+              <ManageProducts />
+              <ManageProducts />
+            </ScrollView>
+          )}
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -253,7 +247,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: "70%",
     marginHorizontal: 10,
-    marginTop: 10,
+    marginVertical: 10,
     borderColor: APP_COLOR.BROWN,
     borderWidth: 0.5,
     borderRadius: 10,
