@@ -43,7 +43,7 @@ const HomepageHeader = () => {
     setShowSidebar(!showSidebar);
   };
   return (
-    <View style={{ marginHorizontal: 5 }}>
+    <View style={{ marginHorizontal: 5, marginTop: 35 }}>
       <View style={styles.headerContainer}>
         <Image source={logo} style={{ height: 60, width: 100 }} />
         <Pressable
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    // paddingVertical: 5,
   },
   locationContainer: {
     flexDirection: "row",

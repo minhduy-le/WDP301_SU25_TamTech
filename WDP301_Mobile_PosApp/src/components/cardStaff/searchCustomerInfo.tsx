@@ -19,7 +19,7 @@ const SearchCustomerInfo = () => {
       style={{
         borderRadius: 10,
         backgroundColor: APP_COLOR.WHITE,
-        height: screenHeight * 0.55,
+        height: screenHeight * 0.5,
         marginTop: 10,
         borderColor: "#E0E0E0",
         shadowColor: "#000",

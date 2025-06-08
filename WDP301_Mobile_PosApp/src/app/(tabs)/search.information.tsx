@@ -7,14 +7,15 @@ import debounce from "debounce";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
 import {
+  Platform,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ICustomers {
   cusName?: string;
@@ -61,102 +62,75 @@ const SearchInfor = () => {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       >
-        <View style={styles.container}>
-          <StaffHeader />
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
+        <StaffHeader />
+
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === "customerInfor" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("customerInfor")}
+          >
+            <Text
               style={[
-                styles.tab,
-                activeTab === "customerInfor" && styles.activeTab,
+                styles.tabText,
+                activeTab === "customerInfor" && styles.activeTabText,
               ]}
-              onPress={() => setActiveTab("customerInfor")}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "customerInfor" && styles.activeTabText,
-                ]}
-              >
-                Thông tin khách hàng
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "voucher" && styles.activeTab]}
-              onPress={() => setActiveTab("voucher")}
+              Thông tin khách hàng
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "voucher" && styles.activeTab]}
+            onPress={() => setActiveTab("voucher")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "voucher" && styles.activeTabText,
+              ]}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "voucher" && styles.activeTabText,
-                ]}
+              Tra cứu ưu đãi
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ backgroundColor: APP_COLOR.WHITE }}>
+          {activeTab === "customerInfor" ? (
+            <>
+              <Pressable
+                style={styles.pressable}
+                onPress={() => console.log("hihi")}
               >
-                Tra cứu ưu đãi
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ backgroundColor: APP_COLOR.WHITE }}>
-            {activeTab === "customerInfor" ? (
-              <>
+                <EvilIcons name="search" size={20} color={APP_COLOR.BROWN} />
+                <TextInput
+                  placeholder="Nhập số điện thoại/email của khách hàng"
+                  placeholderTextColor={APP_COLOR.BROWN}
+                  onChangeText={handleChangeText}
+                  value={searchTerm}
+                />
+              </Pressable>
+              <SearchCustomerInfo />
+            </>
+          ) : (
+            <>
+              <View>
                 <Pressable
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    borderColor: APP_COLOR.BROWN,
-                    borderWidth: 0.5,
-                    borderRadius: 30,
-                    paddingVertical: 3,
-                    backgroundColor: APP_COLOR.WHITE,
-                    marginTop: 10,
-                    width: "95%",
-                    alignSelf: "center",
-                  }}
+                  style={styles.pressable}
                   onPress={() => console.log("hihi")}
                 >
                   <EvilIcons name="search" size={20} color={APP_COLOR.BROWN} />
                   <TextInput
-                    placeholder="Nhập số điện thoại/email của khách hàng"
+                    placeholder="Nhập mã giảm giá"
                     placeholderTextColor={APP_COLOR.BROWN}
                     onChangeText={handleChangeText}
                     value={searchTerm}
                   />
                 </Pressable>
-                <SearchCustomerInfo />
-              </>
-            ) : (
-              <>
-                <View>
-                  <Pressable
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      borderColor: APP_COLOR.BROWN,
-                      borderWidth: 0.5,
-                      borderRadius: 30,
-                      paddingVertical: 3,
-                      backgroundColor: APP_COLOR.WHITE,
-                      marginTop: 10,
-                      width: "95%",
-                      alignSelf: "center",
-                    }}
-                    onPress={() => console.log("hihi")}
-                  >
-                    <EvilIcons
-                      name="search"
-                      size={20}
-                      color={APP_COLOR.BROWN}
-                    />
-                    <TextInput
-                      placeholder="Nhập mã giảm giá"
-                      placeholderTextColor={APP_COLOR.BROWN}
-                      onChangeText={handleChangeText}
-                      value={searchTerm}
-                    />
-                  </Pressable>
-                  <SearchVoucher />
-                </View>
-              </>
-            )}
-          </View>
+                <SearchVoucher />
+              </View>
+            </>
+          )}
         </View>
       </LinearGradient>
     </SafeAreaView>
@@ -171,13 +145,10 @@ const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,
     borderRadius: 13,
+    paddingHorizontal: 10,
     paddingVertical: 10,
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 25,
-  },
+
   tabContainer: {
     flexDirection: "row",
     backgroundColor: APP_COLOR.WHITE,
@@ -202,6 +173,23 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: APP_COLOR.WHITE,
     fontWeight: "bold",
+  },
+  pressable: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: APP_COLOR.BROWN,
+    borderWidth: 0.5,
+    borderRadius: 30,
+    paddingVertical: 3,
+    ...Platform.select({
+      ios: {
+        paddingVertical: 15,
+      },
+    }),
+    backgroundColor: APP_COLOR.WHITE,
+    marginTop: 10,
+    width: "95%",
+    alignSelf: "center",
   },
   title: {
     fontSize: 18,

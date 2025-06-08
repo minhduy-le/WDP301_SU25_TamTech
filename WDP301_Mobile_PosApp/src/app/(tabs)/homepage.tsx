@@ -16,7 +16,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
@@ -35,14 +34,14 @@ const HomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
-    <SafeAreaView
+    <View
       style={{
         flex: 1,
         backgroundColor: APP_COLOR.WHITE,
       }}
     >
+      <HomepageHeader />
       <ScrollView>
-        <HomepageHeader />
         <SearchComponent />
         <TopList />
         <CollectionList
@@ -96,7 +95,7 @@ const HomePage = () => {
           </Animated.View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

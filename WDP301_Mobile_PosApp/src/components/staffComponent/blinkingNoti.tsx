@@ -8,7 +8,6 @@ interface IBlinkingNoti {
 }
 const BlinkingBadge = (props: IBlinkingNoti) => {
   const opacityAnim = useRef(new Animated.Value(1)).current;
-
   useEffect(() => {
     if (props.count > 0) {
       const animation = Animated.loop(
