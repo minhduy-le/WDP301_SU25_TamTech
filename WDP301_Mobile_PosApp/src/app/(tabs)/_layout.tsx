@@ -61,6 +61,18 @@ export default function DrawerLayout() {
         }}
       />
       <Drawer.Screen
+        name="confirmorder"
+        options={{
+          drawerLabel: "Quản lý đơn hàng",
+          title: "",
+          drawerActiveTintColor: APP_COLOR.ORANGE,
+          drawerInactiveTintColor: APP_COLOR.BROWN,
+          drawerIcon: ({ color, size }) => (
+            <AntDesign name="filetext1" size={size} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="order.history"
         options={{
           drawerLabel: "Lịch sử giao dịch",

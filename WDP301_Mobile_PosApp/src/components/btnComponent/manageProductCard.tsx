@@ -43,13 +43,14 @@ const ManageProducts = () => {
             <View
               style={{
                 paddingHorizontal: 10,
-                paddingVertical: 5,
                 backgroundColor: "#DCFCE7",
                 borderRadius: 30,
                 borderWidth: 0.5,
                 borderColor: "#DCCCA3",
                 position: "relative",
                 right: -20,
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
               <Text

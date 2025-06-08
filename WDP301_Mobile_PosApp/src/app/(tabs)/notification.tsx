@@ -32,7 +32,7 @@ const Notification = () => {
                 color={APP_COLOR.WHITE}
               />
               <View style={{ position: "absolute", top: -5, right: 0 }}>
-                <BlinkingBadge count={3} children={0} />
+                <BlinkingBadge count={3} />
               </View>
             </View>
             <View>

@@ -63,7 +63,6 @@ const SearchInfor = () => {
         end={{ x: 0.5, y: 1 }}
       >
         <StaffHeader />
-
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[
@@ -156,6 +155,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 15,
     alignSelf: "center",
     overflow: "hidden",
+    marginTop: 20,
   },
   tab: {
     flex: 1,
