@@ -1,9 +1,9 @@
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 const StaffNotification = () => {
   return (
-    <View
+    <ScrollView
       style={{
         backgroundColor: APP_COLOR.WHITE,
         borderWidth: 0.5,
@@ -21,20 +21,51 @@ const StaffNotification = () => {
         elevation: 2,
       }}
     >
-      <Text
+      <View
         style={{
-          color: APP_COLOR.BROWN,
-          fontFamily: APP_FONT.SEMIBOLD,
-          fontSize: 17,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginBottom: 5,
         }}
       >
-        Cập nhật hệ thống
-      </Text>
+        <Text
+          style={{
+            color: APP_COLOR.BROWN,
+            fontFamily: APP_FONT.SEMIBOLD,
+            fontSize: 17,
+          }}
+        >
+          Cập nhật hệ thống
+        </Text>
+        <View
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            backgroundColor: "#DCFCE7",
+            borderRadius: 30,
+            borderWidth: 0.5,
+            borderColor: "#DCCCA3",
+            position: "relative",
+            right: 0,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: APP_FONT.REGULAR,
+              fontSize: 10,
+              color: "#74AD89",
+            }}
+          >
+            Mới
+          </Text>
+        </View>
+      </View>
       <Text
         style={{
           color: APP_COLOR.BLACK,
           fontFamily: APP_FONT.REGULAR,
           fontSize: 15,
+          marginBottom: 5,
         }}
       >
         Hệ thống sẽ được bảo trì vào lúc 2:00 AM ngày mai. Thời gian dự kiến là
@@ -49,7 +80,7 @@ const StaffNotification = () => {
       >
         Thời gian: 12:30 08/06/2025
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 export default StaffNotification;

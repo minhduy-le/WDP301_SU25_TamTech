@@ -15,12 +15,12 @@ const BlinkingBadge = (props: IBlinkingNoti) => {
         Animated.sequence([
           Animated.timing(opacityAnim, {
             toValue: 0.2,
-            duration: 1200,
+            duration: 1000,
             useNativeDriver: true,
           }),
           Animated.timing(opacityAnim, {
             toValue: 1,
-            duration: 1200,
+            duration: 2000,
             useNativeDriver: true,
           }),
         ])

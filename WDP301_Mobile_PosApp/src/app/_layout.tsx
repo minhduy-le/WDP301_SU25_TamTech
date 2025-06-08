@@ -215,6 +215,19 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Drawer.Screen
+              name="(tabs)/setting"
+              options={{
+                drawerLabel: "Cài đặt",
+                title: "Cài đặt",
+                drawerActiveTintColor: APP_COLOR.ORANGE,
+                drawerInactiveTintColor: APP_COLOR.BROWN,
+                drawerIcon: ({ color, size }) => (
+                  <AntDesign name="setting" size={size} color={color} />
+                ),
+                headerShown: false,
+              }}
+            />
           </Drawer>
           <StatusBar style="auto" />
         </ThemeProvider>
