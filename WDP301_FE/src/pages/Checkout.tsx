@@ -24,7 +24,6 @@ import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
 import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser } from "../hooks/profileApi";
 import { useCartStore } from "../store/cart.store";
-import { useGetPromotionByCode, type Promotion } from "../hooks/promotionApi";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -62,7 +61,6 @@ const Checkout = () => {
   const currentDate = dayjs().format("DD/MM/YYYY");
   const [paymentMethod, setPaymentMethod] = useState<number>(0);
   const [note, setNote] = useState("");
-  const [promotionCode, setPromotionCode] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const { cartItems, updateCartItems } = useCartStore();
@@ -77,15 +75,6 @@ const Checkout = () => {
     isLoading: isWardsLoading,
     isError: isWardsError,
   } = useWardByDistrictId(selectedDistrictId);
-
-  const {
-    data: promotion,
-    refetch: refetchPromotion,
-    isError: isPromotionError,
-  } = useGetPromotionByCode(promotionCode);
-  const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(
-    null
-  );
 
   const location = useLocation();
   const { selectedItems: initialSelectedItems = [] } = (location.state ||
@@ -105,7 +94,7 @@ const Checkout = () => {
     0
   );
   const discountOnItems = 0;
-  const promoDiscount = appliedPromotion ? appliedPromotion.discountAmount : 0;
+  const promoDiscount = 0;
   const [deliveryFee, setDeliveryFee] = useState(0);
   const total = subtotal - discountOnItems - promoDiscount + deliveryFee;
 
@@ -167,31 +156,6 @@ const Checkout = () => {
     }
   };
 
-  const handleApplyPromotion = () => {
-    if (!promotionCode) {
-      message.warning("Vui lòng nhập mã khuyến mãi.");
-      return;
-    }
-    refetchPromotion().then(() => {
-      if (isPromotionError) {
-        message.error("Mã giảm giá không hợp lệ.");
-        setAppliedPromotion(null);
-        return;
-      }
-      if (promotion) {
-        if (subtotal >= promotion.minOrderAmount) {
-          message.success("Mã giảm giá hợp lệ.");
-          setAppliedPromotion(promotion);
-        } else {
-          message.error(
-            `Mã giảm giá không hợp lệ. Tổng đơn hàng phải tối thiểu ${promotion.minOrderAmount.toLocaleString()}đ.`
-          );
-          setAppliedPromotion(null);
-        }
-      }
-    });
-  };
-
   const handleOrderSubmit = () => {
     const orderItems: OrderItem[] = [];
 
@@ -224,14 +188,11 @@ const Checkout = () => {
 
     const orderData = {
       orderItems,
-      order_discount_value: appliedPromotion
-        ? appliedPromotion.discountAmount
-        : 0,
+      order_discount_value: 0,
       order_shipping_fee: deliveryFee,
       payment_method_id: paymentMethodId,
       order_address: orderAddress,
       note: note || "",
-      promotion_code: appliedPromotion ? promotionCode : "",
     };
 
     createOrder(orderData, {
@@ -613,8 +574,6 @@ const Checkout = () => {
                     background: "#efe6db",
                     fontFamily: "'Montserrat', sans-serif",
                   }}
-                  value={promotionCode}
-                  onChange={(e) => setPromotionCode(e.target.value)}
                 />
               </Col>
               <Col>
@@ -625,7 +584,6 @@ const Checkout = () => {
                     fontFamily: "'Montserrat', sans-serif",
                     height: 40,
                   }}
-                  onClick={handleApplyPromotion}
                 >
                   Áp dụng
                 </Button>

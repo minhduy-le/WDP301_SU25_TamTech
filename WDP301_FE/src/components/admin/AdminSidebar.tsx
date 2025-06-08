@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
+import { Layout, Menu, Button, Input, Avatar, Dropdown } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -8,6 +8,7 @@ import {
   BarChartOutlined,
   SettingOutlined,
   LogoutOutlined,
+  SearchOutlined,
   BellOutlined,
   DownOutlined,
   TeamOutlined,
@@ -15,7 +16,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
-import logo from "../../assets/logo-footer.png";
+import logo from '../../assets/logo-footer.png';
 
 const { Header, Sider, Content } = Layout;
 const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -118,7 +119,7 @@ const AdminSidebar: React.FC = () => {
       label: "Đăng xuất",
       icon: <LogoutOutlined />,
       onClick: () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("token") ;
         localStorage.removeItem("user");
         navigate("/login");
       },
@@ -132,17 +133,17 @@ const AdminSidebar: React.FC = () => {
         collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
-        width={siderWidth}
-        collapsedWidth={siderCollapsedWidth}
+        width={siderWidth} 
+        collapsedWidth={siderCollapsedWidth} 
         style={{
           backgroundColor: "#2E7D32",
           boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
-          position: "fixed",
-          height: "100vh",
-          left: 0,
+          position: 'fixed', 
+          height: '100vh',   
+          left: 0,          
           top: 0,
-          zIndex: 1000,
-          overflowY: "auto",
+          zIndex: 1000,       
+          overflowY: 'auto', 
         }}
         className="admin-sidebar"
       >
@@ -153,7 +154,7 @@ const AdminSidebar: React.FC = () => {
             textAlign: "center",
             borderBottom: "1px solid #4CAF50",
             marginBottom: "8px",
-            background: "#2E7D32",
+            background: "#2E7D32", 
             width: "100%",
           }}
         >
@@ -165,21 +166,21 @@ const AdminSidebar: React.FC = () => {
               fontWeight: "bold",
               transition: "all 0.3s",
               letterSpacing: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "60px",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '60px', 
             }}
           >
-            <img
-              src={logo}
-              alt="logo"
-              style={{
-                maxHeight: "100%",
-                maxWidth: collapsed ? "90%" : "70%",
-                objectFit: "contain",
-                transition: "all 0.3s",
-              }}
+            <img 
+              src={logo} 
+              alt="logo" 
+              style={{ 
+                maxHeight: '100%', 
+                maxWidth: collapsed ? '90%' : '70%', 
+                objectFit: 'contain',
+                transition: 'all 0.3s'
+              }} 
             />
           </h2>
         </div>
@@ -187,7 +188,7 @@ const AdminSidebar: React.FC = () => {
           className="admin-menu"
           mode="inline"
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={["stores"]}
+          defaultOpenKeys={["stores"]} 
           onClick={({ key }) => navigate(key)}
           items={menuItems}
           style={{
@@ -200,7 +201,7 @@ const AdminSidebar: React.FC = () => {
       <Layout
         style={{
           marginLeft: collapsed ? siderCollapsedWidth : siderWidth,
-          transition: "margin-left 0.2s",
+          transition: 'margin-left 0.2s', 
           minHeight: "100vh",
         }}
       >
@@ -212,9 +213,9 @@ const AdminSidebar: React.FC = () => {
             padding: "0 24px",
             borderBottom: "1px solid #4CAF50",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-            position: "sticky",
+            position: "sticky", 
             top: 0,
-            zIndex: 999,
+            zIndex: 999, 
           }}
         >
           <Button
@@ -229,10 +230,10 @@ const AdminSidebar: React.FC = () => {
               outline: "none",
               border: "none",
               background: "transparent",
-              position: "absolute",
-              left: collapsed ? "-10px" : "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
+              position: 'absolute',
+              left: collapsed ? '-10px' : '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
             }}
           />
 
@@ -244,6 +245,18 @@ const AdminSidebar: React.FC = () => {
               gap: 24,
             }}
           >
+            <Input
+              placeholder="Tìm kiếm..."
+              prefix={<SearchOutlined style={{ color: '#4CAF50' }} />}
+              style={{
+                width: 200,
+                borderRadius: "25px",
+                background: "#C8E6C9",
+                color: "#4CAF50",
+                border: "1px solid #4CAF50",
+              }}
+            />
+
             <Button
               type="text"
               icon={<BellOutlined className="admin-bell-btn" />}
@@ -289,9 +302,7 @@ const AdminSidebar: React.FC = () => {
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#1B5E20", fontWeight: 600 }}>
-                  {user.fullName}
-                </span>
+                <span style={{ color: "#1B5E20", fontWeight: 600 }}>{user.fullName}</span>
                 <DownOutlined style={{ color: "#1B5E20" }} />
               </div>
             </Dropdown>
@@ -301,7 +312,7 @@ const AdminSidebar: React.FC = () => {
         <Content
           style={{
             background: "#E8F5E9",
-            minHeight: 280,
+            minHeight: 280, 
           }}
         >
           <Outlet />
@@ -311,4 +322,4 @@ const AdminSidebar: React.FC = () => {
   );
 };
 
-export default AdminSidebar;
+export default AdminSidebar; 

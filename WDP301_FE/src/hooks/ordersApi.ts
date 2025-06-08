@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 import axios from "axios";
 
@@ -10,7 +10,6 @@ interface CreateOrder {
   payment_method_id: number;
   order_address: string;
   note: string;
-  promotion_code: string;
 }
 
 interface ProductItemDto {
@@ -53,15 +52,11 @@ export interface OrderHistory {
   ];
   order_shipping_fee: number;
   order_discount_value: number;
-  order_amount: number;
+  order_amount: string;
   invoiceUrl: string;
   order_point_earn: number;
   note: string;
   payment_method: string;
-}
-
-interface MutationVariables {
-  orderId: string;
 }
 
 export const useCreateOrder = () => {
@@ -111,43 +106,5 @@ export const useGetOrderHistory = () => {
   return useQuery<OrderHistory[], Error>({
     queryKey: ["user"],
     queryFn: fetchOrderHistory,
-  });
-};
-
-const fetchOrders = async (): Promise<OrderHistory[]> => {
-  const response = await axiosInstance.get<OrderHistory[]>("orders");
-  return response.data;
-};
-
-export const useGetOrders = () => {
-  return useQuery<OrderHistory[], Error>({
-    queryKey: ["orders"],
-    queryFn: fetchOrders,
-  });
-};
-
-export const usePrepareOrder = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, MutationVariables>({
-    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
-      await axiosInstance.put(`orders/${orderId}/preparing`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preparing"] });
-    },
-  });
-};
-
-export const useCookOrder = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, MutationVariables>({
-    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
-      await axiosInstance.put(`orders/${orderId}/cooked`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cooked"] });
-    },
   });
 };

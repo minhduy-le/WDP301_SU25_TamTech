@@ -11,8 +11,6 @@ const statusMap: Record<string, { bg: string; color: string; text: string }> = {
   cancelled: { bg: '#FFE6B0', color: '#F6A700', text: 'Hủy' },
 };
 
-const formatOrderId = (id: number) => `ORD${id.toString().padStart(3, '0')}`;
-
 const LatestOrders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +33,7 @@ const LatestOrders = () => {
       title: 'Mã',
       dataIndex: 'orderId',
       key: 'orderId',
-      render: (id: number) => formatOrderId(id),
+      render: (id: number) => `${id}`,
     },
     {
       title: 'Khách hàng',
@@ -147,7 +145,7 @@ const LatestOrders = () => {
               labelStyle={{ color: "#A05A2C", fontWeight: 600, background: '#FFF9F0', width: '160px' }}
               contentStyle={{ color: "#5D4037", background: '#FFFFFF' }}
             >
-              <Descriptions.Item label="Mã đơn hàng">{formatOrderId(selectedOrder.orderId)}</Descriptions.Item>
+              <Descriptions.Item label="Mã đơn hàng">{selectedOrder.orderId}</Descriptions.Item>
               <Descriptions.Item label="Khách hàng">{selectedOrder.fullName}</Descriptions.Item>
               <Descriptions.Item label="Ngày đặt">{dayjs(selectedOrder.order_create_at).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
