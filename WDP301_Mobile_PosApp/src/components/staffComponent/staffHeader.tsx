@@ -1,7 +1,9 @@
 import logo from "@/assets/data/logo.png";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 interface IStaff {
   staffName?: string;
@@ -18,10 +20,9 @@ const StaffHeader = (props: IStaff) => {
         alignItems: "center",
         backgroundColor: "rgb(0, 0, 0, 0.5)",
         borderRadius: 13,
-        paddingVertical: 10,
       }}
     >
-      <Image source={logo} style={{ width: 100, height: 70 }} />
+      <Image source={logo} style={{ width: 105, height: 70 }} />
       <View>
         <View style={styles.infoContent}>
           <MaterialIcons
@@ -40,8 +41,8 @@ const StaffHeader = (props: IStaff) => {
           </Text>
         </View>
       </View>
-      <Pressable onPress={() => console.log("logout")}>
-        <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+      <Pressable onPress={() => router.navigate("/(tabs)/notification")}>
+        <Ionicons name="notifications" size={30} color={APP_COLOR.BROWN} />
       </Pressable>
     </View>
   );
