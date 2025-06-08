@@ -11,8 +11,6 @@ import {
   SearchOutlined,
   BellOutlined,
   DownOutlined,
-  EyeOutlined,
-  CheckCircleOutlined,
   ShoppingFilled,
   TagOutlined,
   ShoppingOutlined,
@@ -39,21 +37,9 @@ const ManagerSidebar: React.FC = () => {
       label: "Tổng quan",
     },
     {
-      key: "orders",
+      key: "/manager/orders",
       icon: <ShoppingFilled/>,
       label: "Quản lý đơn hàng",
-      children: [
-        {
-          key: "/manager/orders",
-          icon: <EyeOutlined />,
-          label: "Xem đơn hàng",
-        },
-        {
-          key: "/manager/orders/confirm-orders",
-          icon: <CheckCircleOutlined />,
-          label: "Xác nhận đơn",
-        }
-      ],
     },
     {
       key: "/manager/products",
@@ -66,7 +52,7 @@ const ManagerSidebar: React.FC = () => {
       label: "Quản lý khuyến mãi",
     },
     {
-      key: "/manager/feedbacks",
+      key: "/manager/feedback",
       icon: <MessageOutlined />,
       label: "Quản lý phản hồi",
     },
@@ -96,9 +82,13 @@ const ManagerSidebar: React.FC = () => {
       key: "logout",
       label: "Đăng xuất",
       icon: <LogoutOutlined />,
-      onClick: () => navigate("/login"),
+      onClick: () => {
+        localStorage.removeItem("user");
+        navigate("/login");
+      },
     },
   ];
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -203,6 +193,10 @@ const ManagerSidebar: React.FC = () => {
               outline: "none",
               border: "none",
               background: "transparent",
+              position: 'absolute',
+              left: collapsed ? '-10px' : '15px',
+              top: '50%',
+              transform: 'translateY(-50%)',
             }}
           />
 
@@ -272,7 +266,7 @@ const ManagerSidebar: React.FC = () => {
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#A05A2C", fontWeight: 600 }}>Admin</span>
+                <span style={{ color: "#A05A2C", fontWeight: 600 }}>{user.fullName}</span>
                 <DownOutlined style={{ color: "#A05A2C" }} />
               </div>
             </Dropdown>

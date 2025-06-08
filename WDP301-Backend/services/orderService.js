@@ -9,6 +9,7 @@ const {
   PaymentMethod,
   ProductRecipe,
   Material,
+  Promotion,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -36,11 +37,27 @@ const createOrder = async (req, res) => {
     return res.status(400).send("Request body is missing or invalid");
   }
 
-  const { orderItems, order_discount_value, order_shipping_fee, payment_method_id, order_address, note } = req.body;
+  const {
+    orderItems,
+    order_discount_value,
+    promotion_code,
+    order_shipping_fee,
+    payment_method_id,
+    order_address,
+    note,
+  } = req.body;
   const userId = req.userId;
   const storeId = 1;
 
-  console.log("Destructured parameters:", { orderItems, userId, note, order_address, payment_method_id });
+  console.log("Destructured parameters:", {
+    orderItems,
+    userId,
+    note,
+    order_address,
+    payment_method_id,
+    promotion_code,
+    order_discount_value,
+  });
 
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
@@ -81,6 +98,68 @@ const createOrder = async (req, res) => {
     if (item.price < 0) {
       console.log("Invalid price:", item.price);
       return res.status(400).send("Price cannot be negative");
+    }
+  }
+
+  console.log("Starting promotion validation");
+  if (promotion_code || order_discount_value) {
+    if (!promotion_code) {
+      console.log("Missing promotion_code when order_discount_value is provided:", order_discount_value);
+      return res.status(400).send("Promotion code is required when a discount value is provided");
+    }
+    if (!order_discount_value) {
+      console.log("Missing order_discount_value when promotion_code is provided:", promotion_code);
+      return res.status(400).send("Discount value is required when a promotion code is provided");
+    }
+
+    const promotion = await Promotion.findOne({
+      where: { code: promotion_code, isActive: true },
+    });
+    if (!promotion) {
+      console.log("Promotion not found or inactive for code:", promotion_code);
+      return res.status(400).send(`Promotion code '${promotion_code}' not found or is not active`);
+    }
+
+    const currentDate = new Date();
+    if (currentDate < promotion.startDate || currentDate > promotion.endDate) {
+      console.log("Promotion is not active for current date:", {
+        promotion_code,
+        startDate: promotion.startDate,
+        endDate: promotion.endDate,
+        currentDate,
+      });
+      return res.status(400).send(`Promotion code '${promotion_code}' is not active for the current date`);
+    }
+
+    if (promotion.NumberCurrentUses >= promotion.maxNumberOfUses) {
+      console.log("Promotion has reached maximum uses:", {
+        promotion_code,
+        NumberCurrentUses: promotion.NumberCurrentUses,
+        maxNumberOfUses: promotion.maxNumberOfUses,
+      });
+      return res.status(400).send(`Promotion code '${promotion_code}' has reached its maximum usage limit`);
+    }
+
+    const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (order_amount < promotion.minOrderAmount) {
+      console.log("Order amount does not meet minimum requirement for promotion:", {
+        promotion_code,
+        order_amount,
+        minOrderAmount: promotion.minOrderAmount,
+      });
+      return res
+        .status(400)
+        .send(`Order amount does not meet the minimum requirement for promotion code '${promotion_code}'`);
+    }
+
+    if (parseFloat(order_discount_value) !== parseFloat(promotion.discountAmount)) {
+      console.log("Discount value does not match promotion:", {
+        order_discount_value,
+        promotion_discountAmount: promotion.discountAmount,
+      });
+      return res
+        .status(400)
+        .send(`Discount value does not match the promotion code '${promotion_code}' discount amount`);
     }
   }
 
@@ -199,6 +278,15 @@ const createOrder = async (req, res) => {
       },
       { transaction }
     );
+
+    if (promotion_code) {
+      const promotion = await Promotion.findOne({ where: { code: promotion_code }, transaction });
+      promotion.NumberCurrentUses += 1;
+      await promotion.save({ transaction });
+      console.log(
+        `Incremented NumberCurrentUses for promotion code '${promotion_code}' to ${promotion.NumberCurrentUses}`
+      );
+    }
 
     const orderItemData = orderItems.map((item) => ({
       orderId: order.orderId,
@@ -597,6 +685,7 @@ const getUserOrders = async (req, res) => {
         "order_shipping_fee",
         "order_discount_value",
         "order_amount",
+        "order_subtotal",
         "invoiceUrl",
         "order_point_earn",
         "note",
@@ -652,6 +741,7 @@ const getUserOrders = async (req, res) => {
       order_shipping_fee: order.order_shipping_fee,
       order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
+      order_subtotal: order.order_subtotal,
       invoiceUrl: order.invoiceUrl,
       order_point_earn: order.order_point_earn,
       note: order.note,
@@ -663,6 +753,71 @@ const getUserOrders = async (req, res) => {
   } catch (error) {
     console.error("Error in getUserOrders:", error.message, error.stack);
     res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+  }
+};
+
+const setOrderToApproved = async (req, res) => {
+  console.log("setOrderToApproved called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff", "Admin"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Admin can set orders to Approved");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 2) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Approved.`
+        );
+    }
+
+    order.status_id = 8; // Approved
+    order.approvedBy = userId; // Set approvedBy to the userId from verifyToken
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Approved for orderId:", parsedOrderId, "Approved by userId:", userId);
+
+    res.status(200).json({
+      message: "Order status updated to Approved",
+      orderId: parsedOrderId,
+      status: "Approved",
+      approvedBy: userId,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToApproved:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
   }
 };
 
@@ -700,14 +855,14 @@ const setOrderToPreparing = async (req, res) => {
       return res.status(404).send("Order not found");
     }
 
-    if (order.status_id !== 2) {
+    if (order.status_id !== 8) {
       const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
       console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
       await transaction.rollback();
       return res
         .status(400)
         .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Preparing.`
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Approved to transition to Preparing.`
         );
     }
 
@@ -724,6 +879,73 @@ const setOrderToPreparing = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in setOrderToPreparing:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
+const setOrderToCooked = async (req, res) => {
+  console.log("setOrderToCooked called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff can set orders to Cooked");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 6) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Cooked.`
+        );
+    }
+
+    order.status_id = 7; // Cooked
+    order.cookedBy = userId;
+    order.cookedTime = new Date();
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Cooked for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Cooked",
+      orderId: parsedOrderId,
+      status: "Cooked",
+      cookedBy: userId,
+      cookedTime: order.cookedTime,
+    });
+  } catch (error) {
+    console.error("Error in setOrderToCooked:", error.message, error.stack);
     await transaction.rollback();
     return res.status(500).send("Failed to update order status");
   }
@@ -763,14 +985,14 @@ const setOrderToDelivering = async (req, res) => {
       return res.status(404).send("Order not found");
     }
 
-    if (order.status_id !== 6) {
+    if (order.status_id !== 7) {
       const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
       console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
       await transaction.rollback();
       return res
         .status(400)
         .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Delivering.`
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Cooked to transition to Delivering.`
         );
     }
 
@@ -897,11 +1119,199 @@ const setOrderToDelivered = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  console.log("getAllOrders called at:", new Date().toISOString());
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const userRole = req.userRole;
+
+  try {
+    const orders = await Order.findAll({
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "userId",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]],
+    });
+
+    console.log("Fetched all orders:", orders.length);
+
+    const formattedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    }));
+
+    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
+    res.status(200).json(formattedOrders);
+  } catch (error) {
+    console.error("Error in getAllOrders:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+  }
+};
+
+const getPaidOrders = async (req, res) => {
+  console.log("getPaidOrders called at:", new Date().toISOString());
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const userRole = req.userRole;
+
+  if (!["Staff", "Admin"].includes(userRole)) {
+    console.log("Unauthorized access attempt by userId:", req.userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Admin can view Paid orders");
+  }
+
+  try {
+    const orders = await Order.findAll({
+      where: { status_id: 2 }, // Paid
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "userId",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]],
+    });
+
+    console.log("Fetched Paid orders:", orders.length);
+
+    const formattedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    }));
+
+    console.log("Returning formatted Paid orders:", formattedOrders.length);
+    res.status(200).json(formattedOrders);
+  } catch (error) {
+    console.error("Error in getPaidOrders:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve Paid orders", error: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
   getUserOrders,
+  setOrderToApproved,
   setOrderToPreparing,
+  setOrderToCooked,
   setOrderToDelivering,
   setOrderToDelivered,
+  getAllOrders,
+  getPaidOrders,
 };

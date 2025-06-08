@@ -9,6 +9,14 @@ const Promotion = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    promotionTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "promotion_types",
+        key: "promotionTypeId",
+      },
+    },
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -16,6 +24,11 @@ const Promotion = sequelize.define(
     description: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    code: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
     },
     startDate: {
       type: DataTypes.DATE,
@@ -46,6 +59,14 @@ const Promotion = sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    createBy: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
   },
   {

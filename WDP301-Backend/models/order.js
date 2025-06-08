@@ -116,6 +116,26 @@ const Order = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    cookedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    cookedTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    approvedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "orders",

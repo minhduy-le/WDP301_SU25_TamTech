@@ -125,7 +125,7 @@ const SearchVoucher = () => {
               <Text style={styles.text}>{currencyFormatter(100000)}</Text>
             </View>
             <View style={styles.discountLabel}>
-              <Text style={styles.textLabel}>Giảm tối thiểu</Text>
+              <Text style={styles.textLabel}>Giảm tối đa</Text>
               <Text style={styles.text}>{currencyFormatter(20000)}</Text>
             </View>
           </View>
