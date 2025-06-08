@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
   Dimensions,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -185,10 +186,16 @@ const ManageStore = () => {
                     borderWidth: 0.5,
                     borderRadius: 30,
                     paddingVertical: 3,
+                    ...Platform.select({
+                      ios: {
+                        paddingVertical: 10,
+                      },
+                    }),
                     backgroundColor: APP_COLOR.WHITE,
                     marginTop: 10,
                     width: "75%",
                     paddingHorizontal: 5,
+                    marginHorizontal: 7,
                   }}
                   onPress={() => console.log("hihi")}
                 >

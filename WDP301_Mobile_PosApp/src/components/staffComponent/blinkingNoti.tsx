@@ -4,7 +4,7 @@ import { Animated, StyleSheet, Text, View } from "react-native";
 
 interface IBlinkingNoti {
   count: number;
-  children: number;
+  children?: number;
 }
 const BlinkingBadge = (props: IBlinkingNoti) => {
   const opacityAnim = useRef(new Animated.Value(1)).current;

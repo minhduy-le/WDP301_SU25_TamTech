@@ -49,6 +49,107 @@ const Setting = () => {
             />
           </Pressable>
         </View>
+        <View>
+          <Pressable
+            onPress={() => console.log("hihi")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              justifyContent: "space-between",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons
+                name="password"
+                size={30}
+                color={APP_COLOR.BROWN}
+              />
+              <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
+            </View>
+
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+        </View>
+        <View>
+          <Pressable
+            onPress={() => console.log("hihi")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              justifyContent: "space-between",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons
+                name="report-problem"
+                size={30}
+                color={APP_COLOR.BROWN}
+              />
+              <Text style={styles.btnText}>Báo cáo kỹ thuật</Text>
+            </View>
+
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+        </View>
+        <View>
+          <Pressable
+            onPress={() => console.log("hihi")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              justifyContent: "space-between",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+              <Text style={styles.btnText}>Đăng xuất</Text>
+            </View>
+
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
