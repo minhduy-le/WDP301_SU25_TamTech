@@ -33,7 +33,7 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
-import { useRevenueStats, useTopProducts, useMonthlyRevenueComparison, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder } from "../../hooks/dashboardApi";
+import { useRevenueStats, useTopProducts, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder } from "../../hooks/dashboardApi";
 
 const { Title, Text } = Typography;
 
@@ -55,24 +55,6 @@ const chartData = days.map((day) => ({
   "Đơn hàng tháng trước": lastMonthData[day - 1].orders,
   "Đơn hàng tháng này": thisMonthData[day - 1].orders,
 }));
-const totalLastMonth = lastMonthData.reduce((sum, d) => sum + d.revenue, 0);
-const totalThisMonth = thisMonthData.reduce((sum, d) => sum + d.revenue, 0);
-const totalOrdersLastMonth = lastMonthData.reduce(
-  (sum, d) => sum + d.orders,
-  0
-);
-const totalOrdersThisMonth = thisMonthData.reduce(
-  (sum, d) => sum + d.orders,
-  0
-);
-const percentChangeRevenue =
-  ((totalThisMonth - totalLastMonth) / totalLastMonth) * 100;
-const percentChangeOrders =
-  ((totalOrdersThisMonth - totalOrdersLastMonth) / totalOrdersLastMonth) * 100;
-
-const totalProductsSold = 320;
-const percentChangeProducts = 8;
-
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
