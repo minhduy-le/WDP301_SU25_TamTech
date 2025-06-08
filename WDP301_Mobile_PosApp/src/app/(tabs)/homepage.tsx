@@ -1,5 +1,6 @@
 import AddToCart from "@/components/btnComponent/addToCart";
 import CollectionList from "@/components/headerComponent/collectionList";
+import HomepageHeader from "@/components/headerComponent/homepageHeader";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
@@ -15,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
@@ -33,8 +35,14 @@ const HomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
-    <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.WHITE,
+      }}
+    >
       <ScrollView>
+        <HomepageHeader />
         <SearchComponent />
         <TopList />
         <CollectionList
@@ -88,7 +96,7 @@ const HomePage = () => {
           </Animated.View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
