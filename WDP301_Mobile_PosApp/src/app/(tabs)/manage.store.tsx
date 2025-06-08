@@ -210,12 +210,18 @@ const ManageStore = () => {
                   </View>
                 </Pressable>
               </View>
-              <ScrollView showsHorizontalScrollIndicator={false}>
+              <ScrollView
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+              >
                 <ManageProducts />
               </ScrollView>
             </View>
           ) : (
-            <ScrollView showsHorizontalScrollIndicator={false}>
+            <ScrollView
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+            >
               <ManageProducts />
               <ManageProducts />
             </ScrollView>

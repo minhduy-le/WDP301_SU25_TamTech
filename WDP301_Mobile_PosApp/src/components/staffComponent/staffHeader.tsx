@@ -20,10 +20,9 @@ const StaffHeader = (props: IStaff) => {
         alignItems: "center",
         backgroundColor: "rgb(0, 0, 0, 0.5)",
         borderRadius: 13,
-        paddingVertical: 10,
       }}
     >
-      <Image source={logo} style={{ width: 100, height: 70 }} />
+      <Image source={logo} style={{ width: 105, height: 70 }} />
       <View>
         <View style={styles.infoContent}>
           <MaterialIcons

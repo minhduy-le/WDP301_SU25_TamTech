@@ -1,5 +1,6 @@
 import AddToCart from "@/components/btnComponent/addToCart";
 import CollectionList from "@/components/headerComponent/collectionList";
+import HomepageHeader from "@/components/headerComponent/homepageHeader";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
@@ -33,7 +34,13 @@ const HomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
-    <View style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.WHITE,
+      }}
+    >
+      <HomepageHeader />
       <ScrollView>
         <SearchComponent />
         <TopList />
