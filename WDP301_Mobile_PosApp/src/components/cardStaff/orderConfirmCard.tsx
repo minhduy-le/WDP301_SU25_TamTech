@@ -198,7 +198,7 @@ const OrderCard = () => {
 const styles = StyleSheet.create({
   cardShadow: {
     marginHorizontal: 10,
-    marginTop: 20,
+    marginTop: 5,
     borderRadius: 10,
     backgroundColor: APP_COLOR.WHITE,
     shadowColor: "#000",

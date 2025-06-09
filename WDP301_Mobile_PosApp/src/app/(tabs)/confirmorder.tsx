@@ -86,6 +86,7 @@ const ConfirmOrder = () => {
                 width: "75%",
                 paddingHorizontal: 5,
                 marginHorizontal: 7,
+                marginBottom: 10,
               }}
               onPress={() => console.log("hihi")}
             >
@@ -103,14 +104,16 @@ const ConfirmOrder = () => {
               </View>
             </Pressable>
           </View>
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
+          <View style={{ marginBottom: 10 }}>
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+            <OrderCard />
+          </View>
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
