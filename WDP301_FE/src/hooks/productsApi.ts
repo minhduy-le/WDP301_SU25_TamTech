@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import axios from "axios";
 
 interface GenericApiResponse<T> {
   status: number;
@@ -181,4 +182,16 @@ export const useGetProductByTypeId = (productTypeId: number) => {
     },
     enabled: !!productTypeId,
   });
+};
+
+export const useBestSellerProducts = () => {
+  return useQuery<ProductDto[], Error>({
+    queryKey: ["best-seller-products"],
+    queryFn: async () => {
+    const res = await axios.get(
+      "https://wdp-301-0fd32c261026.herokuapp.com/api/products/best-seller"
+    );
+    return res.data.products;
+  },
+});
 };

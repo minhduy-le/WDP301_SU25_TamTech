@@ -54,7 +54,7 @@ const BestSellers: React.FC = () => {
         </svg>
       </h2>
       <Row gutter={[32, 32]} justify="center">
-        {products.map((product) => (
+        {products.map((product: any) => (
           <Col key={product.id} xs={24} sm={12} md={8} lg={7}>
             <Card
               style={{
