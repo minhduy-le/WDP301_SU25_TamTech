@@ -3,7 +3,7 @@ name: Deploy Backend to GCP Ubuntu
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'WDP301-Backend/**'    
       - '.github/workflows/deploy-backend.yml'
