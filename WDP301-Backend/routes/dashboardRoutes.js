@@ -442,13 +442,13 @@ router.get("/current-month-products", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/dashboard/monthly-revenue:
  *   get:
- *     summary: Get revenue for current and previous month
+ *     summary: Get weekly revenue for current and previous month
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Monthly revenue statistics retrieved successfully
+ *         description: Weekly revenue statistics retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -459,14 +459,19 @@ router.get("/current-month-products", verifyToken, async (req, res, next) => {
  *                 message:
  *                   type: string
  *                 stats:
- *                   type: object
- *                   properties:
- *                     currentMonthRevenue:
- *                       type: number
- *                       description: Total revenue for current month
- *                     previousMonthRevenue:
- *                       type: number
- *                       description: Total revenue for previous month
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       week:
+ *                         type: integer
+ *                         description: Week number (1-5)
+ *                       currentMonthRevenue:
+ *                         type: number
+ *                         description: Revenue for the week in the current month
+ *                       previousMonthRevenue:
+ *                         type: number
+ *                         description: Revenue for the week in the previous month
  *       401:
  *         description: Unauthorized
  *       500:
@@ -477,7 +482,7 @@ router.get("/monthly-revenue", verifyToken, async (req, res, next) => {
     const stats = await dashboardService.getMonthlyRevenue();
     res.status(200).json({
       status: 200,
-      message: "Monthly revenue statistics retrieved successfully",
+      message: "Weekly revenue statistics retrieved successfully",
       stats,
     });
   } catch (error) {

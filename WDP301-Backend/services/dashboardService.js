@@ -295,37 +295,68 @@ const getMonthlyRevenue = async () => {
   const previousYear = previousMonthDate.getFullYear();
   const previousMonth = previousMonthDate.getMonth() + 1;
 
-  const [currentRevenueData] = await sequelize.query(
-    `SELECT SUM(order_amount) as revenue
+  const currentRevenueData = await sequelize.query(
+    `SELECT 
+      EXTRACT(WEEK FROM order_create_at) as week,
+      SUM(order_amount) as revenue
      FROM orders
      WHERE status_id NOT IN (1, 5)
      AND EXTRACT(YEAR FROM order_create_at) = :currentYear
-     AND EXTRACT(MONTH FROM order_create_at) = :currentMonth`,
+     AND EXTRACT(MONTH FROM order_create_at) = :currentMonth
+     GROUP BY EXTRACT(WEEK FROM order_create_at)`,
     {
       replacements: { currentYear, currentMonth },
       type: sequelize.QueryTypes.SELECT,
     }
   );
 
-  const [previousRevenueData] = await sequelize.query(
-    `SELECT SUM(order_amount) as revenue
+  const previousRevenueData = await sequelize.query(
+    `SELECT 
+      EXTRACT(WEEK FROM order_create_at) as week,
+      SUM(order_amount) as revenue
      FROM orders
      WHERE status_id NOT IN (1, 5)
      AND EXTRACT(YEAR FROM order_create_at) = :previousYear
-     AND EXTRACT(MONTH FROM order_create_at) = :previousMonth`,
+     AND EXTRACT(MONTH FROM order_create_at) = :previousMonth
+     GROUP BY EXTRACT(WEEK FROM order_create_at)`,
     {
       replacements: { previousYear, previousMonth },
       type: sequelize.QueryTypes.SELECT,
     }
   );
 
-  const currentMonthRevenue = parseFloat(currentRevenueData?.revenue) || 0;
-  const previousMonthRevenue = parseFloat(previousRevenueData?.revenue) || 0;
+  // Initialize stats array for 5 weeks
+  const stats = Array.from({ length: 5 }, (_, index) => ({
+    week: index + 1,
+    currentMonthRevenue: 0,
+    previousMonthRevenue: 0,
+  }));
 
-  return {
-    currentMonthRevenue,
-    previousMonthRevenue,
-  };
+  // Map current month data
+  const currentDataArray = Array.isArray(currentRevenueData) ? currentRevenueData : [];
+  currentDataArray.forEach((data) => {
+    const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const weekNumber = Math.ceil(
+      (new Date(currentYear, currentMonth - 1, data.week * 7).getDate() - firstDayOfMonth.getDate() + 1) / 7
+    );
+    if (weekNumber <= 5 && weekNumber > 0) {
+      stats[weekNumber - 1].currentMonthRevenue = parseFloat(data.revenue) || 0;
+    }
+  });
+
+  // Map previous month data
+  const previousDataArray = Array.isArray(previousRevenueData) ? previousRevenueData : [];
+  previousDataArray.forEach((data) => {
+    const firstDayOfMonth = new Date(previousYear, previousMonth - 1, 1);
+    const weekNumber = Math.ceil(
+      (new Date(previousYear, previousMonth - 1, data.week * 7).getDate() - firstDayOfMonth.getDate() + 1) / 7
+    );
+    if (weekNumber <= 5 && weekNumber > 0) {
+      stats[weekNumber - 1].previousMonthRevenue = parseFloat(data.revenue) || 0;
+    }
+  });
+
+  return stats;
 };
 
 module.exports = {
