@@ -10,6 +10,9 @@ import {
   Card,
   Modal,
   Descriptions,
+  Tooltip,
+  Popconfirm,
+  message,
 } from "antd";
 import {
   SearchOutlined,
@@ -17,12 +20,20 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
+  // CarOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
-import { useGetOrders, type OrderHistory } from "../hooks/ordersApi";
+import {
+  useGetOrders,
+  type OrderHistory,
+  useApproveOrder,
+  useCookOrder,
+  usePrepareOrder,
+} from "../hooks/ordersApi";
+import { AxiosError } from "axios";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,6 +54,49 @@ const StaffOrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
 
+  const approveOrderMutation = useApproveOrder();
+  const prepareOrderMutation = usePrepareOrder();
+  const cookOrderMutation = useCookOrder();
+
+  const handleApproveOrder = (orderId: number) => {
+    approveOrderMutation.mutate(
+      { orderId },
+      {
+        onSuccess: () => message.success("Đơn hàng đã được xác nhận!"),
+        onError: (error: AxiosError) =>
+          message.error(
+            error.response?.data?.toString() || "Xác nhận đơn hàng thất bại!"
+          ),
+      }
+    );
+  };
+
+  const handlePrepareOrder = (orderId: number) => {
+    prepareOrderMutation.mutate(
+      { orderId },
+      {
+        onSuccess: () => message.success("Đơn hàng đang được chuẩn bị!"),
+        onError: (error: AxiosError) =>
+          message.error(
+            error.response?.data?.toString() || "Chuẩn bị đơn hàng thất bại!"
+          ),
+      }
+    );
+  };
+
+  const handleCookOrder = (orderId: number) => {
+    cookOrderMutation.mutate(
+      { orderId },
+      {
+        onSuccess: () => message.success("Đơn hàng đã nấu xong!"),
+        onError: (error: AxiosError) =>
+          message.error(
+            error.response?.data?.toString() || "Hoàn thành nấu thất bại!"
+          ),
+      }
+    );
+  };
+
   const getStatusTheme = (
     status: string
   ): { tagBg: string; tagText: string; iconColor?: string } => {
@@ -50,6 +104,8 @@ const StaffOrderManagement = () => {
       case "Pending":
         return { tagBg: "#BFDBFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
       case "Paid":
+        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+      case "Approved":
         return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
       case "Preparing":
         return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
@@ -83,6 +139,8 @@ const StaffOrderManagement = () => {
       case "Pending":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
       case "Paid":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Approved":
         return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
       case "Preparing":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
@@ -131,20 +189,46 @@ const StaffOrderManagement = () => {
       title: "Ngày đặt",
       dataIndex: "order_create_at",
       key: "order_create_at",
-      width: 130,
+      width: 150,
       sorter: (a: OrderHistory, b: OrderHistory) =>
         dayjs(a.order_create_at).unix() - dayjs(b.order_create_at).unix(),
       render: (order_create_at: string) =>
-        dayjs(order_create_at).format("DD/MM/YYYY HH:mm"),
+        dayjs(order_create_at).format("DD/MM/YYYY HH:mm:ss"),
     },
     {
       title: "Tổng tiền",
-      dataIndex: "order_amount",
-      key: "order_amount",
+      // dataIndex: "order_amount",
+      // key: "order_amount",
+      // width: 120,
+      // sorter: (a: OrderHistory, b: OrderHistory) =>
+      //   a.order_amount - b.order_amount,
+      // render: (order_amount: number) => `${getFormattedPrice(order_amount)}`,
+      dataIndex: "orderItems",
+      key: "total_amount",
       width: 120,
-      sorter: (a: OrderHistory, b: OrderHistory) =>
-        a.order_amount - b.order_amount,
-      render: (order_amount: number) => `${getFormattedPrice(order_amount)}`,
+      align: "center" as const,
+      sorter: (a: OrderHistory, b: OrderHistory) => {
+        const totalA =
+          a.orderItems.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          ) + parseFloat(a.order_shipping_fee.toString());
+        const totalB =
+          b.orderItems.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          ) + parseFloat(b.order_shipping_fee.toString());
+        return totalA - totalB;
+      },
+      render: (_: any, record: OrderHistory) => {
+        const itemTotal = record.orderItems.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        const total =
+          itemTotal + parseFloat(record.order_shipping_fee.toString());
+        return `${getFormattedPrice(total)}`;
+      },
     },
     {
       title: "Trạng thái",
@@ -155,6 +239,7 @@ const StaffOrderManagement = () => {
       filters: [
         { text: "Chờ thanh toán", value: "Pending" },
         { text: "Đã thanh toán", value: "Paid" },
+        { text: "Xác nhận đơn", value: "Approved" },
         { text: "Đang nấu ăn", value: "Repairing" },
         { text: "Đã nấu xong", value: "Cooked" },
         { text: "Đang giao", value: "Delivering" },
@@ -175,11 +260,9 @@ const StaffOrderManagement = () => {
               borderColor: theme.tagBg,
               borderRadius: 12,
               padding: "2px 12px",
-              minWidth: "120px",
               textAlign: "center",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
             }}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -194,52 +277,117 @@ const StaffOrderManagement = () => {
       align: "center" as const,
       render: (_: any, record: OrderHistory) => (
         <Space size={12}>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedOrder(record);
-              setIsModalVisible(true);
-            }}
-            style={{
-              color: "#3B82F6",
-              fontWeight: 600,
-              padding: 0,
-              outline: "none",
-              boxShadow: "none",
-              border: "none",
-            }}
-          >
-            Chi tiết
-          </Button>
-          {record.status === "Paid" && (
+          <Tooltip title="Chi tiết">
             <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedOrder(record);
+                setIsModalVisible(true);
+              }}
               style={{
-                background: "#60A5FA",
-                borderColor: "#60A5FA",
-                color: "#fff",
+                color: "#3B82F6",
                 fontWeight: 600,
+                padding: 0,
                 outline: "none",
                 boxShadow: "none",
                 border: "none",
+                background: "#e8f5e9",
               }}
-              // onClick={() => handleConfirm(record)}
-            >
-              Bắt đầu nấu
-            </Button>
+            />
+          </Tooltip>
+          {record.status === "Paid" && (
+            <Tooltip title="Xác nhận">
+              <Popconfirm
+                title="Xác nhận"
+                description="Bạn có chắc muốn xác nhận đơn hàng này hay không?"
+                onConfirm={() => handleApproveOrder(record.orderId)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{
+                  danger: true,
+                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={
+                    <CheckCircleOutlined
+                      style={{ fontSize: 16, color: "#3B82F6" }}
+                    />
+                  }
+                  style={{
+                    outline: "none",
+                    boxShadow: "none",
+                    border: "none",
+                    background: "#e8f5e9",
+                  }}
+                />
+              </Popconfirm>
+            </Tooltip>
+          )}
+          {record.status === "Approved" && (
+            <Tooltip title="Chuẩn bị nấu">
+              <Popconfirm
+                title="Xác nhận chuẩn bị nấu"
+                description="Bạn có chắc muốn xác nhận chuẩn bị nấu hay không?"
+                onConfirm={() => handlePrepareOrder(record.orderId)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{
+                  danger: true,
+                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={
+                    <ClockCircleOutlined
+                      style={{ fontSize: 16, color: "#3B82F6" }}
+                    />
+                  }
+                  style={{
+                    outline: "none",
+                    boxShadow: "none",
+                    border: "none",
+                    background: "#e8f5e9",
+                  }}
+                />
+              </Popconfirm>
+            </Tooltip>
           )}
           {record.status === "Preparing" && (
-            <Button
-              type="default"
-              danger
-              icon={<CloseCircleOutlined />}
-              style={{ fontWeight: 600, outline: "none", boxShadow: "none" }}
-              // onClick={() => handleReject(record)}
-            >
-              Hoàn thành nấu
-            </Button>
+            <Tooltip title="Hoàn thành nấu">
+              <Popconfirm
+                title="Xác nhận hoàn thành nấu"
+                description="Bạn có chắc muốn xác nhận hoàn thành nấu hay không?"
+                onConfirm={() => handleCookOrder(record.orderId)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{
+                  danger: true,
+                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={
+                    <CheckCircleOutlined
+                      style={{ fontSize: 16, color: "#3B82F6" }}
+                    />
+                  }
+                  style={{
+                    outline: "none",
+                    boxShadow: "none",
+                    border: "none",
+                    background: "#e8f5e9",
+                  }}
+                />
+              </Popconfirm>
+            </Tooltip>
           )}
         </Space>
       ),
@@ -315,6 +463,12 @@ const StaffOrderManagement = () => {
         .order-search .ant-input-outlined input::placeholder {
            color: ${cellTextColor} !important;
         }
+        .ant-descriptions-item-content .ant-table-small{
+           border-radius: 8px;
+        }
+        .ant-descriptions-item-content .ant-table-small .ant-table-cell{
+           border-radius: 8px !important;
+        }
       `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
@@ -374,6 +528,7 @@ const StaffOrderManagement = () => {
                 <Option value="all">Tất cả trạng thái</Option>
                 <Option value="Pending">Chờ thanh toán</Option>
                 <Option value="Paid">Đã thanh toán</Option>
+                <Option value="Approved">Xác nhận đơn</Option>
                 <Option value="Repairing">Đang nấu ăn</Option>
                 <Option value="Cooked">Đã nấu xong</Option>
                 <Option value="Delivering">Đang giao</Option>
@@ -410,20 +565,21 @@ const StaffOrderManagement = () => {
           }
           open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
-          footer={[
-            <Button
-              key="back"
-              onClick={() => setIsModalVisible(false)}
-              style={{
-                borderRadius: 6,
-                borderColor: "#3B82F6",
-                color: "#3B82F6",
-              }}
-            >
-              Đóng
-            </Button>,
-          ]}
-          width={800}
+          // footer={[
+          //   <Button
+          //     key="back"
+          //     onClick={() => setIsModalVisible(false)}
+          //     style={{
+          //       borderRadius: 6,
+          //       borderColor: "#3B82F6",
+          //       color: "#3B82F6",
+          //     }}
+          //   >
+          //     Đóng
+          //   </Button>,
+          // ]}
+          footer={null}
+          width={1000}
           styles={{
             body: {
               background: "#E0E7FF",
@@ -432,8 +588,8 @@ const StaffOrderManagement = () => {
             },
             header: {
               borderBottom: `1px solid ${tableBorderColor}`,
-              paddingTop: 16,
               paddingBottom: 16,
+              marginBottom: 0,
             },
           }}
           style={{ borderRadius: 12, top: 20 }}
@@ -450,13 +606,13 @@ const StaffOrderManagement = () => {
             >
               <Descriptions
                 bordered
-                column={{ xxl: 2, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
+                column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
                 size="default"
                 labelStyle={{
                   color: "#1E40AF",
                   fontWeight: 600,
                   background: "#E0E7FF",
-                  width: "160px",
+                  // width: "160px",
                 }}
                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
@@ -497,7 +653,7 @@ const StaffOrderManagement = () => {
                     );
                   })()}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tổng tiền" span={2}>
+                <Descriptions.Item label="Tổng tiền">
                   <span
                     style={{
                       color: "#3B82F6",
@@ -505,9 +661,47 @@ const StaffOrderManagement = () => {
                       fontSize: "1.1em",
                     }}
                   >
-                    {getFormattedPrice(selectedOrder.order_amount)}
+                    {getFormattedPrice(
+                      selectedOrder.orderItems.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      ) +
+                        parseFloat(selectedOrder.order_shipping_fee.toString())
+                    )}
                   </span>
                 </Descriptions.Item>
+                <Descriptions.Item label="Phí vận chuyển">
+                  <span style={{ color: cellTextColor }}>
+                    {getFormattedPrice(selectedOrder.order_shipping_fee)}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Giảm giá">
+                  <span style={{ color: cellTextColor }}>
+                    {getFormattedPrice(selectedOrder.order_discount_value)}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Phương thức thanh toán">
+                  <span style={{ color: cellTextColor }}>
+                    {selectedOrder.payment_method}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ giao hàng">
+                  <span style={{ color: cellTextColor }}>
+                    {selectedOrder.order_address}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  <span style={{ color: cellTextColor }}>
+                    {selectedOrder.phone_number}
+                  </span>
+                </Descriptions.Item>
+                {selectedOrder.note && (
+                  <Descriptions.Item label="Ghi chú" span={2}>
+                    <span style={{ color: cellTextColor }}>
+                      {selectedOrder.note}
+                    </span>
+                  </Descriptions.Item>
+                )}
                 <Descriptions.Item label="Chi tiết sản phẩm" span={2}>
                   <Table
                     className="order-items-table"
@@ -534,7 +728,7 @@ const StaffOrderManagement = () => {
                         title: "Đơn giá",
                         dataIndex: "price",
                         key: "price",
-                        align: "right" as const,
+                        align: "center" as const,
                         render: (price: number) => (
                           <span style={{ color: cellTextColor }}>
                             {getFormattedPrice(price)}
@@ -544,7 +738,7 @@ const StaffOrderManagement = () => {
                       {
                         title: "Thành tiền",
                         key: "subtotal",
-                        align: "right" as const,
+                        align: "center" as const,
                         render: (
                           _: any,
                           item: { quantity: number; price: number }

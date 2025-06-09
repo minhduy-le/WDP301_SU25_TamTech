@@ -31,6 +31,9 @@ import { AuthGuardProvider } from "./contexts/AuthGuardContext";
 import Blog from "./pages/Blog";
 import AdminProfile from "./pages/admin/AdminProfile";
 import CustomerFeedbackManagement from "./pages/manager/feedbacks/CustomerFeedbackManagement";
+import StaffSidebar from "./components/staff/StaffSidebar";
+import StaffOrderManagement from "./pages/OrderManageStaff";
+import StaffProfile from "./pages/StaffProfile";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -50,6 +53,12 @@ const LayoutWithSidebarManager = () => (
 const LayoutWithSidebarAdmin = () => (
   <>
     <AdminSidebar />
+  </>
+);
+
+const LayoutWithSidebarStaff = () => (
+  <>
+    <StaffSidebar />
   </>
 );
 function App() {
@@ -93,6 +102,11 @@ function App() {
               element={<SystemIssuesReport />}
             />
             <Route path="/admin/profile" element={<AdminProfile />} />
+          </Route>
+
+          <Route element={<LayoutWithSidebarStaff />}>
+            <Route path="/staff/orders" element={<StaffOrderManagement />} />
+            <Route path="/staff/profile" element={<StaffProfile />} />
           </Route>
         </Routes>
       </AuthGuardProvider>
