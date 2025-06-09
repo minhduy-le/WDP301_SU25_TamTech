@@ -35,7 +35,7 @@ import CustomerFeedbackManagement from "./pages/manager/feedbacks/CustomerFeedba
 const LayoutWithNavFooter = () => (
   <>
     <Navbar />
-    <div style={{ paddingTop: "80px" }}>
+    <div style={{ paddingTop: "80px", overflow: "hidden" }}>
       <Outlet />
     </div>
     <Footer />
@@ -80,7 +80,10 @@ function App() {
               element={<PromotionManagement />}
             />
             <Route path="/manager/staffs" element={<EmployeeManagement />} />
-            <Route path="/manager/feedback" element={<CustomerFeedbackManagement />} />
+            <Route
+              path="/manager/feedback"
+              element={<CustomerFeedbackManagement />}
+            />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />

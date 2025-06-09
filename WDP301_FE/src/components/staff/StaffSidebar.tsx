@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Menu, Button, Input, Avatar, Dropdown, message } from "antd";
+import { Layout, Menu, Button, Avatar, Dropdown, message } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -8,7 +8,6 @@ import {
   ShoppingFilled,
   SettingOutlined,
   LogoutOutlined,
-  SearchOutlined,
   BellOutlined,
   DownOutlined,
   EyeOutlined,
@@ -226,18 +225,6 @@ const StaffSidebar = () => {
               gap: 24,
             }}
           >
-            <Input
-              placeholder="Tìm kiếm..."
-              prefix={<SearchOutlined style={{ color: "#3B82F6" }} />}
-              style={{
-                width: 200,
-                borderRadius: "25px",
-                background: "#BFDBFE",
-                color: "#3B82F6",
-                border: "1px solid #3B82F6",
-              }}
-            />
-
             <Button
               type="text"
               icon={<BellOutlined className="admin-bell-btn" />}

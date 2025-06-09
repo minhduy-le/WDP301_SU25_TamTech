@@ -113,6 +113,7 @@
   margin-top: 10px;
   background-color: #ff8c00 !important;
   border-color: #ff8c00 !important;
+  outline: none !important;
 }
 
 .order-summary {
@@ -134,7 +135,7 @@
   margin-top: 20px;
   background-color: #78a243 !important;
   border-color: #78a243 !important;
-  border-radius: 5px;
+  outline: none !important;
   height: 40px;
   font-size: 16px;
 }
