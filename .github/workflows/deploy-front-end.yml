@@ -27,6 +27,15 @@ jobs:
         npm install
         npm run build
 
+    - name: 🗑️ Cleanup target folder on server
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          rm -rf /var/www/myapp/*
+
     - name: 🚀 Upload Frontend to Server
       uses: appleboy/scp-action@v0.1.4
       with:
@@ -35,3 +44,4 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "WDP301_FE/dist/*"
         target: "/var/www/myapp"
+        
