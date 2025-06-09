@@ -6,7 +6,14 @@ import EvilIcons from "@expo/vector-icons/EvilIcons";
 import debounce from "debounce";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
-import { Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 interface IOrder {
   orderName: string;
@@ -52,7 +59,7 @@ const ConfirmOrder = () => {
         end={{ x: 0.5, y: 1 }}
       >
         <StaffHeader />
-        <View>
+        <ScrollView>
           <View
             style={{
               marginLeft: 5,
@@ -97,7 +104,14 @@ const ConfirmOrder = () => {
             </Pressable>
           </View>
           <OrderCard />
-        </View>
+          <OrderCard />
+          <OrderCard />
+          <OrderCard />
+          <OrderCard />
+          <OrderCard />
+          <OrderCard />
+          <OrderCard />
+        </ScrollView>
       </LinearGradient>
     </SafeAreaView>
   );
