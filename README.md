@@ -1,8 +1,9 @@
 
 # Dự án "Tấm Tắc" - WDP301\_SU25\_TamTech
 
-[](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-backend.yml)
-[](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-front-end.yml)
+[![Deploy Backend](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-backend.yml/badge.svg)](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-backend.yml)
+
+[![Deploy Frontend](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-front-end.yml/badge.svg)](https://github.com/minhduy-le/WDP301_SU25_TamTech/actions/workflows/deploy-front-end.yml)
 
 Chào mừng đến với **Tấm Tắc** - dự án cuối kỳ môn **WDP301** của team **TamTech**. Tấm Tắc là một hệ thống đặt và giao hàng Cơm Tấm trực tuyến, bao gồm một ứng dụng di động cho khách hàng và một trang web quản lý cho chủ cửa hàng.
 
