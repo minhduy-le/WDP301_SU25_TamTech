@@ -34,7 +34,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          rm -rf /var/www/myapp/*
+          sudo rm -rf /var/www/myapp/*
 
     - name: 🚀 Upload Frontend to Server
       uses: appleboy/scp-action@v0.1.4
