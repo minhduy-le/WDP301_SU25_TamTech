@@ -118,13 +118,13 @@ npx react-native run-ios
 | STT | Họ và Tên | MSSV | GitHub | Vai trò |
 |:---:|:---|:---|:---|:---|
 | 1 | Lê Minh Duy | `SE170571` | [minhduy-le](https://www.google.com/search?q=https://github.com/minhduy-le) | `Mobile Development` |
-| 2 | `[Tên thành viên 2]` | `[Điền MSSV]` | `[Link GitHub]` | `[Điền vai trò]` |
-| 3 | `[Tên thành viên 3]` | `[Điền MSSV]` | `[Link GitHub]` | `[Điền vai trò]` |
-| 4 | `[Tên thành viên 4]` | `[Điền MSSV]` | `[Link GitHub]` | `[Điền vai trò]` |
+| 2 | `Nguyễn Ngọc Bảo Trân` | `SE171264` | `[Link GitHub]` | `Front End Developer` |
+| 3 | `Tô Triều Vỹ` | `Se18` | `[Link GitHub]` | `Back End Developer` |
+| 4 | `Phạm Chu Chí Khang` | `SE18` | `[Link GitHub]` | `Front End Developer` |
 
 ## 👨‍🏫 Giảng viên hướng dẫn
 
-  * `Pham Thanh Tri`
+  * `Phạm Thanh Trí`
 
 ## 🙏 Lời cảm ơn
 
