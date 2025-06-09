@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 interface CreateOrder {
   orderItems: ProductItemDto[];
@@ -61,7 +61,7 @@ export interface OrderHistory {
 }
 
 interface MutationVariables {
-  orderId: string;
+  orderId: number;
 }
 
 export const useCreateOrder = () => {
@@ -126,15 +126,28 @@ export const useGetOrders = () => {
   });
 };
 
+export const useApproveOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`orders/${orderId}/approved`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
 export const usePrepareOrder = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, MutationVariables>({
+  return useMutation<void, AxiosError, MutationVariables>({
     mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`orders/${orderId}/preparing`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["preparing"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 };
@@ -142,12 +155,12 @@ export const usePrepareOrder = () => {
 export const useCookOrder = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, MutationVariables>({
+  return useMutation<void, AxiosError, MutationVariables>({
     mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`orders/${orderId}/cooked`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cooked"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 };
