@@ -34,6 +34,8 @@ import CustomerFeedbackManagement from "./pages/manager/feedbacks/CustomerFeedba
 import StaffSidebar from "./components/staff/StaffSidebar";
 import StaffOrderManagement from "./pages/OrderManageStaff";
 import StaffProfile from "./pages/StaffProfile";
+import StaffChat from "./pages/StaffChat";
+import ManagerChat from "./pages/ManagerChat";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -93,6 +95,7 @@ function App() {
               path="/manager/feedback"
               element={<CustomerFeedbackManagement />}
             />
+            <Route path="/manager/chat" element={<ManagerChat />} />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
@@ -107,6 +110,7 @@ function App() {
           <Route element={<LayoutWithSidebarStaff />}>
             <Route path="/staff/orders" element={<StaffOrderManagement />} />
             <Route path="/staff/profile" element={<StaffProfile />} />
+            <Route path="/staff/chat" element={<StaffChat />} />
           </Route>
         </Routes>
       </AuthGuardProvider>
