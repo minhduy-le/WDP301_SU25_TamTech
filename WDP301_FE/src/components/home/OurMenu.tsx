@@ -77,7 +77,8 @@ const OurMenu: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCartStore();
   const { user } = useAuthStore();
-  const { data: productTypes, isLoading: isProductTypesLoading } = useProductTypes();
+  const { data: productTypes, isLoading: isProductTypesLoading } =
+    useProductTypes();
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
   const [drinks, setDrinks] = useState<Product[]>([]);
   const [sideDishes, setSideDishes] = useState<Product[]>([]);
@@ -108,43 +109,63 @@ const OurMenu: React.FC = () => {
   >([]);
 
   useEffect(() => {
-    if (productTypes) {
+    if (productTypes && !isModalVisible) {
       const categories: AddOnCategory[] = productTypes
-        .filter(type => type.productTypeId !== 1)
-        .map(type => {
-          const matchingQuery = addOnProductQueries.find(q => q.typeId === type.productTypeId);
+        .filter((type) => type.productTypeId !== 1)
+        .map((type) => {
+          const matchingQuery = addOnProductQueries.find(
+            (q) => q.typeId === type.productTypeId
+          );
           return {
             id: `modal_type_${type.productTypeId}`,
             title: type.name,
             selectionText: "Tùy chọn",
             apiType: type.productTypeId,
-            items: matchingQuery?.query.data?.map(item => ({
-              ...item,
-              selectedQuantity: 0
-            })) || [],
-            loading: matchingQuery?.query.isLoading || false
+            items:
+              matchingQuery?.query.data?.map((item) => ({
+                ...item,
+                selectedQuantity: 0,
+              })) || [],
+            loading: matchingQuery?.query.isLoading || false,
           };
         });
       setModalAddonCategories(categories);
     }
-  }, [productTypes, addOnProductQueries]);
+  }, [productTypes, addOnProductQueries, isModalVisible]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!productTypes) return;
 
-        const mainType = productTypes.find(type => type.productTypeId === 1);
-        const drinkType = productTypes.find(type => type.productTypeId === 2);
-        const sideType = productTypes.find(type => type.productTypeId === 3);
-        const soupType = productTypes.find(type => type.productTypeId === 4);
+        const mainType = productTypes.find((type) => type.productTypeId === 1);
+        const drinkType = productTypes.find((type) => type.productTypeId === 2);
+        const sideType = productTypes.find((type) => type.productTypeId === 3);
+        const soupType = productTypes.find((type) => type.productTypeId === 4);
 
-        const [mainResponse, drinksResponse, sideResponse, soupResponse] = await Promise.all([
-          mainType ? axios.get(`https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${mainType.productTypeId}`) : Promise.resolve({ data: { products: [] } }),
-          drinkType ? axios.get(`https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${drinkType.productTypeId}`) : Promise.resolve({ data: { products: [] } }),
-          sideType ? axios.get(`https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${sideType.productTypeId}`) : Promise.resolve({ data: { products: [] } }),
-          soupType ? axios.get(`https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${soupType.productTypeId}`) : Promise.resolve({ data: { products: [] } }),
-        ]);
+        const [mainResponse, drinksResponse, sideResponse, soupResponse] =
+          await Promise.all([
+            mainType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${mainType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            drinkType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${drinkType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            sideType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${sideType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            soupType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${soupType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+          ]);
 
         const parseProductData = (data: any[]): Product[] =>
           data.map((item: any) => ({
@@ -230,9 +251,7 @@ const OurMenu: React.FC = () => {
 
   useEffect(() => {
     if (isModalVisible && selectedMainProductForModal) {
-      const freshCategories = JSON.parse(
-        JSON.stringify(modalAddonCategories)
-      );
+      const freshCategories = JSON.parse(JSON.stringify(modalAddonCategories));
       setModalAddonCategories(freshCategories);
       setModalTotalPrice(parseFloat(selectedMainProductForModal.price));
     }
@@ -246,15 +265,11 @@ const OurMenu: React.FC = () => {
         }
       });
     }
-  }, [
-    isModalVisible,
-    selectedMainProductForModal,
-    modalAddonCategories,
-    fetchModalCategoryItems,
-  ]);
+  }, [isModalVisible, selectedMainProductForModal, fetchModalCategoryItems]);
 
   useEffect(() => {
     if (!selectedMainProductForModal) return;
+    2;
     let currentTotal = parseFloat(selectedMainProductForModal.price);
     modalAddonCategories.forEach((category) => {
       category.items.forEach((item) => {
@@ -301,8 +316,7 @@ const OurMenu: React.FC = () => {
         .filter((item) => item.selectedQuantity > 0)
         .map((item) => ({
           productId: item.productId,
-          productTypeName: item.ProductType?.name || "Không xác định",
-          productName: item.name,
+          productTypeName: item.name ,
           quantity: item.selectedQuantity,
           price: parseFloat(item.price),
         }))
@@ -348,15 +362,7 @@ const OurMenu: React.FC = () => {
       activeTab === tabName ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
     outline: "none",
   });
-  // const style = {
-  //   menuTitleWrapper: {
-  //     '&::before, &::after': {
-  //       content: '""',
-  //       flex: 1,
-  //       borderBottom: '3px solid #ff7a1a'
-  //     }
-  //   }
-  // };
+ 
   return (
     <div style={{ padding: "5px 0 50px 0", background: "#fff7e6" }}>
       <div className="our-menu-title-wrapper">
@@ -563,7 +569,9 @@ const OurMenu: React.FC = () => {
                             handleOpenModal(item);
                           } else {
                             if (!user?.id) {
-                              message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                              message.error(
+                                "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!"
+                              );
                               return;
                             }
                             const cartItem = {
@@ -576,7 +584,9 @@ const OurMenu: React.FC = () => {
                               totalPrice: parseFloat(item.price),
                             };
                             addToCart(cartItem);
-                            message.success(`${item.name} đã được thêm vào giỏ hàng!`);
+                            message.success(
+                              `${item.name} đã được thêm vào giỏ hàng!`
+                            );
                           }
                         }}
                         onMouseEnter={(e) => {
@@ -770,7 +780,6 @@ const OurMenu: React.FC = () => {
                                 height: "30px",
                                 outline: "none",
                                 borderColor: "#d97706",
-
                               }}
                               disabled={item.selectedQuantity === 0}
                             />
