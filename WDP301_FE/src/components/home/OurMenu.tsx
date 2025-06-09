@@ -16,6 +16,10 @@ import { PlusOutlined, MinusOutlined, CloseOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
 import { useAuthStore } from "../../hooks/usersApi";
+import { useProductTypes } from "../../hooks/productTypesApi";
+import { useGetProductByTypeId } from "../../hooks/productsApi";
+import { type UseQueryResult } from "@tanstack/react-query";
+import "./OurMenu.css";
 const { Title, Text } = Typography;
 
 interface Product {
@@ -33,75 +37,135 @@ export interface AddOnProduct extends Product {
   selectedQuantity: number;
 }
 
-interface AddOnCategory {
-  id: string;
-  title: string;
-  apiType?: number;
-  selectionText: string;
-  items: AddOnProduct[];
-  loading: boolean;
-}
+const useAddOnProducts = () => {
+  const { data: productTypes } = useProductTypes();
+
+  const query2 = useGetProductByTypeId(2);
+  const query3 = useGetProductByTypeId(3);
+  const query4 = useGetProductByTypeId(4);
+
+  const queries: {
+    typeId: number;
+    query: UseQueryResult<any[], Error>;
+  }[] = [
+    { typeId: 2, query: query2 },
+    { typeId: 3, query: query3 },
+    { typeId: 4, query: query4 },
+  ];
+
+  const addOnProductQueries: {
+    typeId: number;
+    query: UseQueryResult<any[], Error>;
+  }[] = [];
+  if (productTypes) {
+    productTypes
+      .filter((type) => type.productTypeId !== 1)
+      .forEach((type) => {
+        const matchingQuery = queries.find(
+          (q) => q.typeId === type.productTypeId
+        );
+        if (matchingQuery) {
+          addOnProductQueries.push(matchingQuery);
+        }
+      });
+  }
+
+  return addOnProductQueries;
+};
 
 const OurMenu: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCartStore();
   const { user } = useAuthStore();
+  const { data: productTypes, isLoading: isProductTypesLoading } =
+    useProductTypes();
   const [mainDishes, setMainDishes] = useState<Product[]>([]);
   const [drinks, setDrinks] = useState<Product[]>([]);
   const [sideDishes, setSideDishes] = useState<Product[]>([]);
+  const [soup, setSoup] = useState<Product[]>([]);
   const [loadingMain, setLoadingMain] = useState(true);
   const [loadingDrinks, setLoadingDrinks] = useState(true);
   const [loadingSide, setLoadingSide] = useState(true);
+  const [loadingSoup, setLoadingSoup] = useState(true);
   const [activeTab, setActiveTab] = useState("mainDishes");
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMainProductForModal, setSelectedMainProductForModal] =
     useState<Product | null>(null);
-  const initialModalAddonCategories: AddOnCategory[] = [
-    {
-      id: "modal_drinks",
-      title: "Nước uống",
-      selectionText: "Tùy chọn",
-      apiType: 2,
-      items: [],
-      loading: true,
-    },
-    {
-      id: "modal_sideDishes",
-      title: "Món ăn kèm",
-      selectionText: "Tùy chọn",
-      apiType: 3,
-      items: [],
-      loading: true,
-    },
-    {
-      id: "modal_soups",
-      title: "Canh ăn kèm",
-      selectionText: "Tùy chọn",
-      apiType: 4,
-      items: [],
-      loading: true,
-    },
-  ];
+  const [modalTotalPrice, setModalTotalPrice] = useState<number>(0);
+
+  interface AddOnCategory {
+    id: string;
+    title: string;
+    apiType?: number;
+    selectionText: string;
+    items: AddOnProduct[];
+    loading: boolean;
+  }
+
+  const addOnProductQueries = useAddOnProducts();
   const [modalAddonCategories, setModalAddonCategories] = useState<
     AddOnCategory[]
-  >(JSON.parse(JSON.stringify(initialModalAddonCategories)));
-  const [modalTotalPrice, setModalTotalPrice] = useState<number>(0);
+  >([]);
+
+  useEffect(() => {
+    if (productTypes && !isModalVisible) {
+      const categories: AddOnCategory[] = productTypes
+        .filter((type) => type.productTypeId !== 1)
+        .map((type) => {
+          const matchingQuery = addOnProductQueries.find(
+            (q) => q.typeId === type.productTypeId
+          );
+          return {
+            id: `modal_type_${type.productTypeId}`,
+            title: type.name,
+            selectionText: "Tùy chọn",
+            apiType: type.productTypeId,
+            items:
+              matchingQuery?.query.data?.map((item) => ({
+                ...item,
+                selectedQuantity: 0,
+              })) || [],
+            loading: matchingQuery?.query.isLoading || false,
+          };
+        });
+      setModalAddonCategories(categories);
+    }
+  }, [productTypes, addOnProductQueries, isModalVisible]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [mainResponse, drinksResponse, sideResponse] = await Promise.all([
-          axios.get(
-            "https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/1"
-          ),
-          axios.get(
-            "https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/2"
-          ),
-          axios.get(
-            "https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/3"
-          ),
-        ]);
+        if (!productTypes) return;
+
+        const mainType = productTypes.find((type) => type.productTypeId === 1);
+        const drinkType = productTypes.find((type) => type.productTypeId === 2);
+        const sideType = productTypes.find((type) => type.productTypeId === 3);
+        const soupType = productTypes.find((type) => type.productTypeId === 4);
+
+        const [mainResponse, drinksResponse, sideResponse, soupResponse] =
+          await Promise.all([
+            mainType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${mainType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            drinkType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${drinkType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            sideType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${sideType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+            soupType
+              ? axios.get(
+                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${soupType.productTypeId}`
+                )
+              : Promise.resolve({ data: { products: [] } }),
+          ]);
 
         const parseProductData = (data: any[]): Product[] =>
           data.map((item: any) => ({
@@ -118,6 +182,7 @@ const OurMenu: React.FC = () => {
         setMainDishes(parseProductData(mainResponse.data.products));
         setDrinks(parseProductData(drinksResponse.data.products));
         setSideDishes(parseProductData(sideResponse.data.products));
+        setSoup(parseProductData(soupResponse.data.products));
       } catch (error) {
         console.error("Lỗi khi fetch dữ liệu menu chính:", error);
         message.error("Không thể tải thực đơn. Vui lòng thử lại!");
@@ -125,10 +190,14 @@ const OurMenu: React.FC = () => {
         setLoadingMain(false);
         setLoadingDrinks(false);
         setLoadingSide(false);
+        setLoadingSoup(false);
       }
     };
-    fetchData();
-  }, []);
+
+    if (!isProductTypesLoading && productTypes) {
+      fetchData();
+    }
+  }, [isProductTypesLoading, productTypes]);
 
   const fetchModalCategoryItems = useCallback(
     async (categoryIndex: number) => {
@@ -182,9 +251,7 @@ const OurMenu: React.FC = () => {
 
   useEffect(() => {
     if (isModalVisible && selectedMainProductForModal) {
-      const freshCategories = JSON.parse(
-        JSON.stringify(initialModalAddonCategories)
-      );
+      const freshCategories = JSON.parse(JSON.stringify(modalAddonCategories));
       setModalAddonCategories(freshCategories);
       setModalTotalPrice(parseFloat(selectedMainProductForModal.price));
     }
@@ -198,15 +265,11 @@ const OurMenu: React.FC = () => {
         }
       });
     }
-  }, [
-    isModalVisible,
-    selectedMainProductForModal,
-    modalAddonCategories,
-    fetchModalCategoryItems,
-  ]);
+  }, [isModalVisible, selectedMainProductForModal, fetchModalCategoryItems]);
 
   useEffect(() => {
     if (!selectedMainProductForModal) return;
+    2;
     let currentTotal = parseFloat(selectedMainProductForModal.price);
     modalAddonCategories.forEach((category) => {
       category.items.forEach((item) => {
@@ -253,8 +316,7 @@ const OurMenu: React.FC = () => {
         .filter((item) => item.selectedQuantity > 0)
         .map((item) => ({
           productId: item.productId,
-          productTypeName: item.ProductType?.name || "Không xác định",
-          productName: item.name,
+          productTypeName: item.name ,
           quantity: item.selectedQuantity,
           price: parseFloat(item.price),
         }))
@@ -282,6 +344,8 @@ const OurMenu: React.FC = () => {
       ? mainDishes
       : activeTab === "sideDishes"
       ? sideDishes
+      : activeTab === "soup"
+      ? soup
       : drinks;
 
   const tabButtonStyle = (tabName: string) => ({
@@ -298,22 +362,12 @@ const OurMenu: React.FC = () => {
       activeTab === tabName ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
     outline: "none",
   });
-
+ 
   return (
-    <div style={{ padding: "20px 0 50px 0", background: "#fff7e6" }}>
-      <Title
-        level={2}
-        style={{
-          color: "#f97316",
-          textAlign: "center",
-          marginBottom: "40px",
-          fontWeight: "700",
-          fontSize: "40px",
-        }}
-      >
-        ------------------------------THỰC ĐƠN CỦA CHÚNG
-        TÔI------------------------------
-      </Title>
+    <div style={{ padding: "5px 0 50px 0", background: "#fff7e6" }}>
+      <div className="our-menu-title-wrapper">
+        <span className="our-menu-title">THỰC ĐƠN CỦA CHÚNG TÔI</span>
+      </div>
 
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <Button
@@ -334,6 +388,12 @@ const OurMenu: React.FC = () => {
         >
           ĐỒ UỐNG
         </Button>
+        <Button
+          style={tabButtonStyle("soup")}
+          onClick={() => setActiveTab("soup")}
+        >
+          CANH
+        </Button>
       </div>
 
       <Row
@@ -343,7 +403,8 @@ const OurMenu: React.FC = () => {
       >
         {(activeTab === "mainDishes" && loadingMain) ||
         (activeTab === "drinks" && loadingDrinks) ||
-        (activeTab === "sideDishes" && loadingSide) ? (
+        (activeTab === "sideDishes" && loadingSide) ||
+        (activeTab === "soup" && loadingSoup) ? (
           <Col span={24} style={{ textAlign: "center", padding: "50px 0" }}>
             <Spin size="large" tip="Đang tải thực đơn..." />
           </Col>
@@ -508,7 +569,9 @@ const OurMenu: React.FC = () => {
                             handleOpenModal(item);
                           } else {
                             if (!user?.id) {
-                              message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+                              message.error(
+                                "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!"
+                              );
                               return;
                             }
                             const cartItem = {
@@ -521,7 +584,9 @@ const OurMenu: React.FC = () => {
                               totalPrice: parseFloat(item.price),
                             };
                             addToCart(cartItem);
-                            message.success(`${item.name} đã được thêm vào giỏ hàng!`);
+                            message.success(
+                              `${item.name} đã được thêm vào giỏ hàng!`
+                            );
                           }
                         }}
                         onMouseEnter={(e) => {
@@ -715,7 +780,6 @@ const OurMenu: React.FC = () => {
                                 height: "30px",
                                 outline: "none",
                                 borderColor: "#d97706",
-
                               }}
                               disabled={item.selectedQuantity === 0}
                             />
