@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   Tag,
@@ -22,96 +22,44 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
+import { useGetOrders, type OrderHistory } from "../hooks/ordersApi";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
+const getFormattedPrice = (price: string | number) => {
+  const priceStr = typeof price === "number" ? price.toString() : price;
+  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
+  return `${integerPart}đ`;
+};
+
 const { Option } = Select;
 
-interface OrderItem {
-  id: number;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: number;
-  customerName: string;
-  orderDate: string;
-  totalAmount: number;
-  status: "pending" | "processing" | "completed" | "cancelled";
-  items: OrderItem[];
-}
-
-const fakeData: Order[] = [
-  {
-    id: 1,
-    customerName: "Nguyễn Văn A",
-    orderDate: "2025-05-20T10:30:00Z",
-    totalAmount: 1500000,
-    status: "pending",
-    items: [
-      { id: 1, name: "Sản phẩm 1", quantity: 2, price: 500000 },
-      { id: 2, name: "Sản phẩm 2", quantity: 1, price: 500000 },
-    ],
-  },
-  {
-    id: 2,
-    customerName: "Trần Thị B",
-    orderDate: "2025-05-21T15:00:00Z",
-    totalAmount: 2300000,
-    status: "completed",
-    items: [
-      { id: 3, name: "Sản phẩm 3", quantity: 1, price: 1000000 },
-      { id: 4, name: "Sản phẩm 4", quantity: 2, price: 650000 },
-    ],
-  },
-  {
-    id: 3,
-    customerName: "Lê Văn C",
-    orderDate: "2025-05-22T09:15:00Z",
-    totalAmount: 850000,
-    status: "processing",
-    items: [{ id: 5, name: "Sản phẩm 5", quantity: 1, price: 850000 }],
-  },
-  {
-    id: 4,
-    customerName: "Phạm Thị D",
-    orderDate: "2025-05-19T11:00:00Z",
-    totalAmount: 1200000,
-    status: "cancelled",
-    items: [{ id: 6, name: "Sản phẩm 6", quantity: 3, price: 400000 }],
-  },
-];
-
 const StaffOrderManagement = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  useEffect(() => {
-    setTimeout(() => {
-      setOrders(fakeData);
-      setLoading(false);
-    }, 500);
-  }, []);
+  const { data: orders, isLoading: isOrderLoading } = useGetOrders();
 
   const getStatusTheme = (
     status: string
   ): { tagBg: string; tagText: string; iconColor?: string } => {
     switch (status) {
-      case "pending":
+      case "Pending":
         return { tagBg: "#BFDBFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "processing":
+      case "Paid":
         return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
-      case "completed":
+      case "Preparing":
+        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+      case "Cooked":
         return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
-      case "cancelled":
+      case "Delivering":
+        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+      case "Delivered":
+        return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
+      case "Canceled":
         return { tagBg: "#EF4444", tagText: "#fff", iconColor: "#fff" };
       default:
         return { tagBg: "#E0E7FF", tagText: "#1E40AF" };
@@ -132,13 +80,19 @@ const StaffOrderManagement = () => {
   const getStatusIcon = (status: string) => {
     const theme = getStatusTheme(status);
     switch (status) {
-      case "pending":
+      case "Pending":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "processing":
-        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "completed":
+      case "Paid":
         return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "cancelled":
+      case "Preparing":
+        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Cooked":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Delivering":
+        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Delivered":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Canceled":
         return <CloseCircleOutlined style={{ color: theme.iconColor }} />;
       default:
         return null;
@@ -156,53 +110,60 @@ const StaffOrderManagement = () => {
   const columns = [
     {
       title: "Mã ĐH",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "orderId",
+      key: "orderId",
       width: 100,
-      sorter: (a: Order, b: Order) => a.id - b.id,
+      sorter: (a: OrderHistory, b: OrderHistory) => a.orderId - b.orderId,
     },
     {
       title: "Khách hàng",
-      dataIndex: "customerName",
-      key: "customerName",
+      dataIndex: "fullName",
+      key: "fullName",
       width: 200,
       ellipsis: true,
-      sorter: (a: Order, b: Order) =>
-        a.customerName.localeCompare(b.customerName),
-      render: (name: string) => <span style={{ fontWeight: 500 }}>{name}</span>,
+      sorter: (a: OrderHistory, b: OrderHistory) =>
+        a.fullName.localeCompare(b.fullName),
+      render: (fullName: string) => (
+        <span style={{ fontWeight: 500 }}>{fullName}</span>
+      ),
     },
     {
       title: "Ngày đặt",
-      dataIndex: "orderDate",
-      key: "orderDate",
-      width: 180,
-      sorter: (a: Order, b: Order) =>
-        dayjs(a.orderDate).unix() - dayjs(b.orderDate).unix(),
-      render: (date: string) => dayjs(date).format("DD/MM/YYYY HH:mm"),
+      dataIndex: "order_create_at",
+      key: "order_create_at",
+      width: 130,
+      sorter: (a: OrderHistory, b: OrderHistory) =>
+        dayjs(a.order_create_at).unix() - dayjs(b.order_create_at).unix(),
+      render: (order_create_at: string) =>
+        dayjs(order_create_at).format("DD/MM/YYYY HH:mm"),
     },
     {
       title: "Tổng tiền",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      width: 150,
-      sorter: (a: Order, b: Order) => a.totalAmount - b.totalAmount,
-      render: (amount: number) => `${amount.toLocaleString()}đ`,
+      dataIndex: "order_amount",
+      key: "order_amount",
+      width: 120,
+      sorter: (a: OrderHistory, b: OrderHistory) =>
+        a.order_amount - b.order_amount,
+      render: (order_amount: number) => `${getFormattedPrice(order_amount)}`,
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: 180,
+      width: 140,
       align: "center" as const,
       filters: [
-        { text: "Chờ xử lý", value: "pending" },
-        { text: "Đang xử lý", value: "processing" },
-        { text: "Hoàn thành", value: "completed" },
-        { text: "Đã hủy", value: "cancelled" },
+        { text: "Chờ thanh toán", value: "Pending" },
+        { text: "Đã thanh toán", value: "Paid" },
+        { text: "Đang nấu ăn", value: "Repairing" },
+        { text: "Đã nấu xong", value: "Cooked" },
+        { text: "Đang giao", value: "Delivering" },
+        { text: "Đã giao", value: "Delivered" },
+        { text: "Đã hủy", value: "Canceled" },
       ],
-      onFilter: (value: string | number | boolean, record: Order) =>
+      onFilter: (value: string, record: OrderHistory) =>
         record.status === value,
-      render: (status: Order["status"]) => {
+      render: (status: OrderHistory["status"]) => {
         const theme = getStatusTheme(status);
         return (
           <Tag
@@ -231,7 +192,7 @@ const StaffOrderManagement = () => {
       key: "actions",
       width: 220,
       align: "center" as const,
-      render: (_: any, record: Order) => (
+      render: (_: any, record: OrderHistory) => (
         <Space size={12}>
           <Button
             type="link"
@@ -251,6 +212,35 @@ const StaffOrderManagement = () => {
           >
             Chi tiết
           </Button>
+          {record.status === "Paid" && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              style={{
+                background: "#60A5FA",
+                borderColor: "#60A5FA",
+                color: "#fff",
+                fontWeight: 600,
+                outline: "none",
+                boxShadow: "none",
+                border: "none",
+              }}
+              // onClick={() => handleConfirm(record)}
+            >
+              Bắt đầu nấu
+            </Button>
+          )}
+          {record.status === "Preparing" && (
+            <Button
+              type="default"
+              danger
+              icon={<CloseCircleOutlined />}
+              style={{ fontWeight: 600, outline: "none", boxShadow: "none" }}
+              // onClick={() => handleReject(record)}
+            >
+              Hoàn thành nấu
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -258,10 +248,10 @@ const StaffOrderManagement = () => {
 
   const filteredOrders = useMemo(
     () =>
-      orders.filter((order) => {
+      orders?.filter((order) => {
         const matchesSearch =
-          order.customerName.toLowerCase().includes(searchText.toLowerCase()) ||
-          order.id.toString().includes(searchText);
+          order.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
+          order.orderId.toString().includes(searchText);
         const matchesStatus =
           statusFilter === "all" || order.status === statusFilter;
         return matchesSearch && matchesStatus;
@@ -309,7 +299,7 @@ const StaffOrderManagement = () => {
            border-right: none;
         }
         .order-table-staff .ant-table-tbody > tr:hover > td {
-          background-color: #93C5FD !important;
+          background-color: #add4ff !important;
         }
         .order-table-staff .ant-table-tbody > tr.even-row-order > td.ant-table-cell-fix-right,
         .order-table-staff .ant-table-tbody > tr.odd-row-order > td.ant-table-cell-fix-right,
@@ -382,19 +372,22 @@ const StaffOrderManagement = () => {
                 onChange={(value) => setStatusFilter(value)}
               >
                 <Option value="all">Tất cả trạng thái</Option>
-                <Option value="pending">Chờ xử lý</Option>
-                <Option value="processing">Đang xử lý</Option>
-                <Option value="completed">Hoàn thành</Option>
-                <Option value="cancelled">Đã hủy</Option>
+                <Option value="Pending">Chờ thanh toán</Option>
+                <Option value="Paid">Đã thanh toán</Option>
+                <Option value="Repairing">Đang nấu ăn</Option>
+                <Option value="Cooked">Đã nấu xong</Option>
+                <Option value="Delivering">Đang giao</Option>
+                <Option value="Delivered">Đã giao</Option>
+                <Option value="Canceled">Đã hủy</Option>
               </Select>
             </Space>
           </div>
 
           <Table
             className="order-table-staff"
-            columns={columns as ColumnType<Order>[]}
+            columns={columns as ColumnType<OrderHistory>[]}
             dataSource={filteredOrders}
-            loading={loading}
+            loading={isOrderLoading}
             rowKey="id"
             style={{
               borderRadius: 8,
@@ -468,13 +461,15 @@ const StaffOrderManagement = () => {
                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
                 <Descriptions.Item label="Mã đơn hàng">
-                  {selectedOrder.id}
+                  {selectedOrder.orderId}
                 </Descriptions.Item>
                 <Descriptions.Item label="Khách hàng">
-                  {selectedOrder.customerName}
+                  {selectedOrder.fullName}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày đặt">
-                  {dayjs(selectedOrder.orderDate).format("DD/MM/YYYY HH:mm:ss")}
+                  {dayjs(selectedOrder.order_create_at).format(
+                    "DD/MM/YYYY HH:mm:ss"
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   {(() => {
@@ -510,13 +505,13 @@ const StaffOrderManagement = () => {
                       fontSize: "1.1em",
                     }}
                   >
-                    {selectedOrder.totalAmount.toLocaleString()}đ
+                    {getFormattedPrice(selectedOrder.order_amount)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Chi tiết sản phẩm" span={2}>
                   <Table
                     className="order-items-table"
-                    dataSource={selectedOrder.items}
+                    dataSource={selectedOrder.orderItems}
                     columns={[
                       {
                         title: "Tên sản phẩm",
@@ -542,7 +537,7 @@ const StaffOrderManagement = () => {
                         align: "right" as const,
                         render: (price: number) => (
                           <span style={{ color: cellTextColor }}>
-                            {price.toLocaleString()}đ
+                            {getFormattedPrice(price)}
                           </span>
                         ),
                       },
@@ -550,7 +545,10 @@ const StaffOrderManagement = () => {
                         title: "Thành tiền",
                         key: "subtotal",
                         align: "right" as const,
-                        render: (_: any, item: OrderItem) => (
+                        render: (
+                          _: any,
+                          item: { quantity: number; price: number }
+                        ) => (
                           <span
                             style={{ color: cellTextColor, fontWeight: 500 }}
                           >
@@ -560,7 +558,7 @@ const StaffOrderManagement = () => {
                       },
                     ]}
                     pagination={false}
-                    rowKey="id"
+                    rowKey="orderId"
                     size="small"
                     style={{
                       background: evenRowBgColor,
