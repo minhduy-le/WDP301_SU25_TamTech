@@ -1,9 +1,9 @@
 const DeliveryIcon = () => {
   return (
     <svg
-      fill="#000000"
-      width="30px"
-      height="30px"
+      fill="#3B82F6"
+      width="16px"
+      height="16px"
       viewBox="0 0 50 50"
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"

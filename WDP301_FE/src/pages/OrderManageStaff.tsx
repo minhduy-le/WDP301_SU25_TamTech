@@ -34,6 +34,8 @@ import {
   usePrepareOrder,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
+import { useGetShippers, useAssignShipper } from "../hooks/shipperApi";
+import DeliveryIcon from "../components/icon/DeliveryIcon";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -50,9 +52,12 @@ const { Option } = Select;
 const StaffOrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
+  const { data: shippers, isLoading: isShippersLoading } = useGetShippers();
+  const assignShipperMutation = useAssignShipper();
 
   const approveOrderMutation = useApproveOrder();
   const prepareOrderMutation = usePrepareOrder();
@@ -96,6 +101,24 @@ const StaffOrderManagement = () => {
       }
     );
   };
+
+  const handleAssignShipper = (orderId: number, shipperId: number) => {
+    assignShipperMutation.mutate(
+      { orderId, assignShipper: { shipperId } },
+      {
+        onSuccess: () => {
+          message.success("Đã gán shipper thành công!");
+          setIsAssignModalVisible(false); // Đóng modal sau khi gán thành công
+        },
+        onError: () => message.error("Gán shipper thất bại!"),
+      }
+    );
+  };
+
+  const [selectedShipperId, setSelectedShipperId] = useState<number | null>(
+    null
+  );
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
   const getStatusTheme = (
     status: string
@@ -317,12 +340,7 @@ const StaffOrderManagement = () => {
                       style={{ fontSize: 16, color: "#3B82F6" }}
                     />
                   }
-                  style={{
-                    outline: "none",
-                    boxShadow: "none",
-                    border: "none",
-                    background: "#e8f5e9",
-                  }}
+                  className="btn-action-status"
                 />
               </Popconfirm>
             </Tooltip>
@@ -348,12 +366,7 @@ const StaffOrderManagement = () => {
                       style={{ fontSize: 16, color: "#3B82F6" }}
                     />
                   }
-                  style={{
-                    outline: "none",
-                    boxShadow: "none",
-                    border: "none",
-                    background: "#e8f5e9",
-                  }}
+                  className="btn-action-status"
                 />
               </Popconfirm>
             </Tooltip>
@@ -379,14 +392,22 @@ const StaffOrderManagement = () => {
                       style={{ fontSize: 16, color: "#3B82F6" }}
                     />
                   }
-                  style={{
-                    outline: "none",
-                    boxShadow: "none",
-                    border: "none",
-                    background: "#e8f5e9",
-                  }}
+                  className="btn-action-status"
                 />
               </Popconfirm>
+            </Tooltip>
+          )}
+          {record.status === "Cooked" && (
+            <Tooltip title="Giao hàng">
+              <Button
+                type="text"
+                onClick={() => {
+                  setCurrentOrderId(record.orderId);
+                  setIsAssignModalVisible(true);
+                }}
+                icon={<DeliveryIcon />}
+                className="btn-action-status"
+              />
             </Tooltip>
           )}
         </Space>
@@ -468,6 +489,16 @@ const StaffOrderManagement = () => {
         }
         .ant-descriptions-item-content .ant-table-small .ant-table-cell{
            border-radius: 8px !important;
+        }
+        .ant-table-cell .btn-action-status {
+            outline: none;
+            box-shadow: none;
+            border: none;
+            background: #e8f5e9 !important;
+        }
+        .modal-assign-shipper .ant-modal-body {
+          background: none !important;
+          padding: 24px 0 !important;
         }
       `}</style>
 
@@ -764,6 +795,79 @@ const StaffOrderManagement = () => {
               </Descriptions>
             </Card>
           )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#3B82F6", fontWeight: 700, fontSize: 22 }}>
+              Chọn Shipper Giao Hàng
+            </span>
+          }
+          centered
+          open={isAssignModalVisible}
+          onCancel={() => setIsAssignModalVisible(false)}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => setIsAssignModalVisible(false)}
+              style={{
+                borderRadius: 6,
+                borderColor: "#3B82F6",
+                color: "#3B82F6",
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              disabled={!selectedShipperId}
+              onClick={() =>
+                currentOrderId &&
+                selectedShipperId &&
+                handleAssignShipper(currentOrderId, selectedShipperId)
+              }
+              style={{
+                background: "#60A5FA",
+                borderColor: "#60A5FA",
+                borderRadius: 6,
+              }}
+            >
+              Xác nhận
+            </Button>,
+          ]}
+          styles={{
+            body: {
+              background: "#E0E7FF",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid ${tableBorderColor}`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          className="modal-assign-shipper"
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          <Select
+            placeholder="Chọn shipper"
+            style={{
+              width: "100%",
+              border: "#4096ff",
+              background: "white",
+            }}
+            onChange={(value) => setSelectedShipperId(value)}
+            loading={isShippersLoading}
+            value={selectedShipperId}
+          >
+            {shippers?.map((shipper) => (
+              <Option key={shipper.id} value={shipper.id}>
+                {shipper.fullName}
+              </Option>
+            ))}
+          </Select>
         </Modal>
       </div>
     </div>
