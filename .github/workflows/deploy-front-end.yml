@@ -1,0 +1,37 @@
+name: Deploy Frontend to GCP Ubuntu
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'WDP301_FE/**'    
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧾 Checkout source code
+      uses: actions/checkout@v3
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: 📦 Install & Build Frontend
+      working-directory: ./WDP301_FE
+      run: |
+        npm install
+        npm run build
+
+    - name: 🚀 Upload Frontend to Server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "WDP301_FE/dist/*"
+        target: "/var/www/myapp"
