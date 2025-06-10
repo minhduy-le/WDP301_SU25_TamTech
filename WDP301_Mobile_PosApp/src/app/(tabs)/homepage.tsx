@@ -4,18 +4,19 @@ import HomepageHeader from "@/components/headerComponent/homepageHeader";
 import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
-import { currencyFormatter } from "@/constants/Function";
 import React, { useState } from "react";
 import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
@@ -34,7 +35,7 @@ const HomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: APP_COLOR.WHITE,
@@ -59,11 +60,6 @@ const HomePage = () => {
               style={modalStyles.closeBtn}
               onPress={() => setShowDetail(false)}
             >
-              <Image
-                source={selectedProduct.productImg}
-                style={modalStyles.img}
-                resizeMode="cover"
-              />
               <View
                 style={{
                   height: 5,
@@ -74,28 +70,59 @@ const HomePage = () => {
                   position: "absolute",
                   top: 5,
                 }}
-              ></View>
+              />
             </Pressable>
-            <Text style={modalStyles.name}>{selectedProduct.productName}</Text>
-            <Text style={modalStyles.description}>
-              {selectedProduct.productDes}
-            </Text>
-            <Text style={modalStyles.price}>
-              {currencyFormatter(selectedProduct.productPrice)} VND
-            </Text>
-            <AddToCart
-              product={{
-                productId: selectedProduct.id,
-                productName: selectedProduct.productName,
-                productPrice: selectedProduct.productPrice,
-                productImg: selectedProduct.productImg,
-                productQuantity: selectedProduct.productQuantity,
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{
+                paddingBottom: 20,
+                alignItems: "center",
               }}
-            />
+              showsVerticalScrollIndicator={false}
+            >
+              <Image
+                source={selectedProduct.productImg}
+                style={modalStyles.img}
+                resizeMode="cover"
+              />
+              <Text style={modalStyles.name}>
+                {selectedProduct.productName}
+              </Text>
+              <Text style={modalStyles.description}>
+                {selectedProduct.productDes}
+              </Text>
+              <AddToCart
+                product={{
+                  productId: selectedProduct.id,
+                  productName: selectedProduct.productName,
+                  productPrice: selectedProduct.productPrice,
+                  productImg: selectedProduct.productImg,
+                  productQuantity: selectedProduct.productQuantity,
+                }}
+              />
+              <AddToCart
+                product={{
+                  productId: selectedProduct.id,
+                  productName: selectedProduct.productName,
+                  productPrice: selectedProduct.productPrice,
+                  productImg: selectedProduct.productImg,
+                  productQuantity: selectedProduct.productQuantity,
+                }}
+              />
+              <AddToCart
+                product={{
+                  productId: selectedProduct.id,
+                  productName: selectedProduct.productName,
+                  productPrice: selectedProduct.productPrice,
+                  productImg: selectedProduct.productImg,
+                  productQuantity: selectedProduct.productQuantity,
+                }}
+              />
+            </ScrollView>
           </Animated.View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -114,10 +141,19 @@ const modalStyles = StyleSheet.create({
     width: screenWidth,
     height: screenHeight * 0.7,
     backgroundColor: APP_COLOR.WHITE,
-    borderRadius: 30,
-    alignItems: "center",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    ...Platform.select({
+      android: {
+        marginBottom: 40,
+      },
+    }),
   },
-  closeBtn: { alignItems: "center" },
+  closeBtn: {
+    alignItems: "center",
+    width: "100%",
+    zIndex: 1000,
+  },
   img: {
     width: screenWidth,
     height: 350,
@@ -130,7 +166,7 @@ const modalStyles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontFamily: APP_FONT.BOLD,
-    marginBottom: 10,
+    marginBottom: 5,
     marginTop: 5,
     color: APP_COLOR.BROWN,
   },
@@ -140,9 +176,7 @@ const modalStyles = StyleSheet.create({
     fontSize: 15,
     color: APP_COLOR.BROWN,
     textAlign: "center",
-    marginBottom: 10,
   },
-  price: { fontSize: 18, color: APP_COLOR.ORANGE, marginBottom: 20 },
 });
 
 export default HomePage;
