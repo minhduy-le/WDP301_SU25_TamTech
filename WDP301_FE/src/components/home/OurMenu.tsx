@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
 import { useAuthStore } from "../../hooks/usersApi";
 import { useProductTypes } from "../../hooks/productTypesApi";
-import { useGetProductByTypeId } from "../../hooks/productsApi";
 import AddOnModal from "./AddOnModal";
 import "./OurMenu.css";
 const { Title, Text } = Typography;
