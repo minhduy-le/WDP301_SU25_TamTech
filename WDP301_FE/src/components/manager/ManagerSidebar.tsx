@@ -55,11 +55,15 @@ const ManagerSidebar: React.FC = () => {
       icon: <MessageOutlined />,
       label: "Quản lý phản hồi",
     },
-
     {
       key: "/manager/staffs",
       icon: <UserOutlined />,
       label: "Quản lý nhân viên",
+    },
+    {
+      key: "/manager/chat",
+      icon: <MessageOutlined />,
+      label: "Chat",
     },
   ];
 
