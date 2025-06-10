@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -65,7 +66,6 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
       />
     </View>
   );
-
   const renderHiddenItem = (data: any) => (
     <View style={styles.rowBack}>
       <Pressable
@@ -116,6 +116,8 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
             previewOpenDelay={3000}
           />
         )}
+      </View>
+      <View style={styles.orderButtonContainer}>
         <ShareButton
           title="Tạo đơn hàng"
           onPress={() => console.log("Đặt hàng")}
@@ -185,10 +187,9 @@ const styles = StyleSheet.create({
   rowBack: {
     alignItems: "center",
     backgroundColor: APP_COLOR.CANCEL,
-    flex: 1,
+    flex: 0.8,
     flexDirection: "row",
     justifyContent: "flex-end",
-    paddingLeft: 15,
   },
   cartItemContainer: {
     backgroundColor: APP_COLOR.WHITE,
@@ -207,6 +208,15 @@ const styles = StyleSheet.create({
     color: APP_COLOR.WHITE,
     fontFamily: APP_FONT.MEDIUM,
     fontSize: 16,
+  },
+  orderButtonContainer: {
+    alignItems: "center",
+    backgroundColor: APP_COLOR.WHITE,
+    ...Platform.select({
+      android: {
+        marginBottom: 75,
+      },
+    }),
   },
 });
 
