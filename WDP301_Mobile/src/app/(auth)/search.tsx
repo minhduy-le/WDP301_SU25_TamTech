@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import axios from "axios";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import debounce from "debounce";
@@ -15,7 +15,6 @@ import {
 import { FontAwesome, AntDesign } from "@expo/vector-icons";
 import menu from "@/assets/Menu.png";
 import { FONTS } from "@/theme/typography";
-import { router } from "expo-router";
 import { useCurrentApp } from "@/context/app.context";
 
 interface IProduct {

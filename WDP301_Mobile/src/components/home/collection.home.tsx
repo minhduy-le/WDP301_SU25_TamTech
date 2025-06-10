@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     height: 700,
     overflow: "hidden",
   },
@@ -132,8 +132,8 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
               style={{
                 width: "100%",
                 height: 400,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
+                borderTopLeftRadius: 30,
+                borderTopRightRadius: 30,
                 borderBottomLeftRadius: 150,
                 borderBottomRightRadius: 150,
               }}

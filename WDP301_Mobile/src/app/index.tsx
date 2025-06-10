@@ -3,8 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { useCurrentApp } from "@/context/app.context";
 import * as SplashScreen from "expo-splash-screen";
-import { useFonts } from "expo-font";
-import { APP_FONT, BASE_URL } from "@/utils/constant";
+import { BASE_URL } from "@/utils/constant";
 import axios from "axios";
 SplashScreen.preventAutoHideAsync();
 
