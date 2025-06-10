@@ -29,6 +29,7 @@ import axios from "axios";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../config/firebase";
 import type { ColumnType } from "antd/es/table";
+import { useProductTypes } from "../../../hooks/productTypesApi";
 const { Option } = Select;
 
 interface ProductType {
@@ -94,6 +95,7 @@ const ProductManagement: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const { data: productTypes, isLoading: isProductTypesLoading } = useProductTypes();
 
   const fetchProducts = async () => {
     try {
@@ -744,7 +746,15 @@ const ProductManagement: React.FC = () => {
             <Space align="start" style={{display: 'flex', marginBottom: 0}} size="large">
               <Form.Item name="productTypeId" label={<span style={{ color: "#A05A2C" }}>Loại sản phẩm</span>} rules={[{ required: true, message: "Vui lòng chọn loại sản phẩm!" }]} style={{ flex: 1 }} >
                 <Select placeholder="Chọn loại sản phẩm" style={{borderRadius: 6}}>
-                  {productTypeApiOptions.map((type) => ( <Option key={type.productTypeId} value={type.productTypeId}> {type.name} </Option> ))}
+                  {isProductTypesLoading ? (
+                    <Option value="">Đang tải...</Option>
+                  ) : (
+                    productTypes?.map((type) => (
+                      <Option key={type.productTypeId} value={type.productTypeId}>
+                        {type.name}
+                      </Option>
+                    ))
+                  )}
                 </Select>
                 </Form.Item>
               </Space>

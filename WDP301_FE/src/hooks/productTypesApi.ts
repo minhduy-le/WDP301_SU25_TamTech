@@ -1,18 +1,20 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import axiosInstance from "../config/axios";
+import axios from "axios";
 
-export interface ProductTypeDto {
+export interface ProductType {
   productTypeId: number;
   name: string;
 }
 
-const fetchProductTypes = async (): Promise<ProductTypeDto[]> => {
-  const response = await axiosInstance.get<ProductTypeDto[]>("product-types");
+const fetchProductTypes = async (): Promise<ProductType[]> => {
+  const response = await axios.get<ProductType[]>(
+    "https://wdp-301-0fd32c261026.herokuapp.com/api/product-types"
+  );
   return response.data;
 };
 
 export const useProductTypes = () => {
-  return useQuery<ProductTypeDto[], Error>({
+  return useQuery<ProductType[], Error>({
     queryKey: ["product-types"],
     queryFn: fetchProductTypes,
   });
@@ -20,8 +22,8 @@ export const useProductTypes = () => {
 
 export const useCreateProductType = () => {
   return useMutation({
-    mutationFn: async (newProduct: ProductTypeDto) => {
-      const response = await axiosInstance.post(`product-types`, newProduct);
+    mutationFn: async (newProduct: ProductType) => {
+      const response = await axios.post(`https://wdp-301-0fd32c261026.herokuapp.com/api/product-types`, newProduct);
       return response.data;
     },
   });

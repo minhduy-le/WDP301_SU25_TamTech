@@ -22,7 +22,7 @@ export default function RootLayout() {
             },
           }}
         >
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)/welcome" />
         </Stack>
       </AppProvider>
     </GestureHandlerRootView>

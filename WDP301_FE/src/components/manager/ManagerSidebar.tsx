@@ -83,6 +83,7 @@ const ManagerSidebar: React.FC = () => {
       icon: <LogoutOutlined />,
       onClick: () => {
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         navigate("/login");
       },
     },

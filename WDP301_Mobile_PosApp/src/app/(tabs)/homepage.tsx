@@ -10,13 +10,77 @@ import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+const dataSample = [
+  {
+    id: "1",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm sườn",
+    productDes:
+      "Cơm tấm với miếng sườn nướng đậm đà, ăn kèm đồ chua và nước mắm.",
+    productQuantity: 10,
+    productPrice: 100000,
+  },
+  {
+    id: "2",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm chả",
+    productDes: "Cơm tấm thơm dẻo ăn cùng chả trứng hấp mềm, béo ngậy.",
+    productQuantity: 10,
+    productPrice: 90000,
+  },
+  {
+    id: "3",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm ba rọi",
+    productDes: "Cơm tấm nóng hổi với thịt ba rọi quay giòn rụm hoặc luộc mềm.",
+    productQuantity: 10,
+    productPrice: 95000,
+  },
+  {
+    id: "4",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm sườn bì chả",
+    productDes:
+      "Đĩa cơm tấm đầy đủ với sườn nướng, bì thái sợi và chả trứng hấp.",
+    productQuantity: 10,
+    productPrice: 120000,
+  },
+  {
+    id: "5",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm sườn chả",
+    productDes:
+      "Sự kết hợp tuyệt vời giữa sườn nướng thơm lừng và chả trứng béo ngậy.",
+    productQuantity: 10,
+    productPrice: 110000,
+  },
+  {
+    id: "6",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm bì chả",
+    productDes: "Cơm tấm dẻo thơm cùng bì heo thái sợi và chả trứng hấp.",
+    productQuantity: 10,
+    productPrice: 85000,
+  },
+  {
+    id: "7",
+    productImg: require("@/assets/data/comtam.jpg"),
+    productName: "Cơm tấm đặc biệt",
+    productDes:
+      "Thưởng thức trọn vẹn hương vị với sườn, bì, chả, trứng ốp la và đồ chua.",
+    productQuantity: 10,
+    productPrice: 150000,
+  },
+];
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
 
@@ -34,7 +98,7 @@ const HomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         backgroundColor: APP_COLOR.WHITE,
@@ -59,11 +123,6 @@ const HomePage = () => {
               style={modalStyles.closeBtn}
               onPress={() => setShowDetail(false)}
             >
-              <Image
-                source={selectedProduct.productImg}
-                style={modalStyles.img}
-                resizeMode="cover"
-              />
               <View
                 style={{
                   height: 5,
@@ -74,28 +133,57 @@ const HomePage = () => {
                   position: "absolute",
                   top: 5,
                 }}
-              ></View>
+              />
             </Pressable>
-            <Text style={modalStyles.name}>{selectedProduct.productName}</Text>
-            <Text style={modalStyles.description}>
-              {selectedProduct.productDes}
-            </Text>
-            <Text style={modalStyles.price}>
-              {currencyFormatter(selectedProduct.productPrice)} VND
-            </Text>
-            <AddToCart
-              product={{
-                productId: selectedProduct.id,
-                productName: selectedProduct.productName,
-                productPrice: selectedProduct.productPrice,
-                productImg: selectedProduct.productImg,
-                productQuantity: selectedProduct.productQuantity,
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{
+                paddingBottom: 20,
+                alignItems: "center",
               }}
-            />
+              showsVerticalScrollIndicator={false}
+            >
+              <Image
+                source={selectedProduct.productImg}
+                style={modalStyles.img}
+                resizeMode="cover"
+              />
+              <Text style={modalStyles.name}>
+                {selectedProduct.productName}
+              </Text>
+              <Text style={modalStyles.description}>
+                {selectedProduct.productDes}
+              </Text>
+              <Text style={modalStyles.price}>
+                {currencyFormatter(selectedProduct.productPrice)} VND
+              </Text>
+              <View
+                style={{
+                  ...Platform.select({
+                    android: {
+                      marginBottom: 40,
+                    },
+                  }),
+                }}
+              >
+                {dataSample.map((product) => (
+                  <AddToCart
+                    key={product.id}
+                    product={{
+                      productId: product.id,
+                      productName: product.productName,
+                      productPrice: product.productPrice,
+                      productImg: product.productImg,
+                      productQuantity: product.productQuantity,
+                    }}
+                  />
+                ))}
+              </View>
+            </ScrollView>
           </Animated.View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -117,7 +205,7 @@ const modalStyles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
   },
-  closeBtn: { alignItems: "center" },
+  closeBtn: { alignItems: "center", zIndex: 5 },
   img: {
     width: screenWidth,
     height: 350,

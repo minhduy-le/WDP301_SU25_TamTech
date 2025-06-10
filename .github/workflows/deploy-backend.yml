@@ -1,0 +1,49 @@
+name: Deploy Backend to GCP Ubuntu
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'WDP301-Backend/**'    
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧾 Checkout source code
+      uses: actions/checkout@v3
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: 📦 Prepare Backend Locally
+      working-directory: ./WDP301-Backend
+      run: |
+        npm install
+
+    - name: 🚀 Upload Backend to Server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "WDP301-Backend/*"
+        target: "/home/${{ secrets.SSH_USER }}/myapp/backend"
+
+    - name: 🔁 Restart Backend Service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && source $NVM_DIR/nvm.sh
+          cd ~/myapp/backend/WDP301-Backend
+          npm install
+          pm2 restart backend-app || pm2 start index.js --name backend-app

@@ -7,7 +7,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   }
   
-.menu-tab-button {
+.our-menu-tab-button {
   margin-right: 16px;
   border-radius: 25px;
   padding: 8px 24px;
@@ -18,17 +18,17 @@
   transition: all 0.3s ease;
 }
 
-.menu-tab-button:hover {
+.our-menu-tab-button:hover {
   transform: translateY(-2px);
 }
 
-.menu-tab-button.active {
+.our-menu-tab-button.active {
   background-color: #f97316;
   color: white;
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
-.menu-tab-button.active:hover {
+.our-menu-tab-button.active:hover {
   background-color: #ea580c;
   border-color: #ea580c;
 }
@@ -41,5 +41,39 @@
 .menu-tab-button:not(.active):hover {
   background-color: #fff3e6;
   border-color: #ea580c;
+}
+
+.our-menu-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 40px 0 32px 0;
+  width: 100%;
+}
+
+.our-menu-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ff7a1a;
+  letter-spacing: 0;
+  padding: 0 32px;
+  background: #fff8ec;
+  position: relative;
+  z-index: 1;
+}
+
+.our-menu-title-wrapper::before,
+.our-menu-title-wrapper::after {
+  content: "";
+  flex: 1;
+  border-bottom: 3px solid #ff7a1a;
+  margin: 0 16px;
+  height: 0;
+  opacity: 0.7;
+}
+
+.menu-title {
+  text-shadow: 1px 2px 8px #ffb36633;
+  border-radius: 8px;
 }
   

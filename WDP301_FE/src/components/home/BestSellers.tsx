@@ -1,62 +1,59 @@
-import React from "react";
-import { Row, Col, Button, InputNumber } from "antd";
+import React, { useState } from "react";
+import { Row, Col, Card, Button, Spin } from "antd";
+import { useBestSellerProducts } from "../../hooks/productsApi";
+import AddOnModal from "./AddOnModal";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
-  id: number;
+  productId: number;
+  name: string;
   image: string;
-  title: string;
-  description: string[];
-  price: number;
-  originalPrice: number;
+  description?: string;
+  price: string;
   quantity?: number;
+  isFavorite?: boolean;
+  ProductType?: { name?: string };
+  originalPrice: number;
+  sold: number;
 }
 
-const bestSellers: Product[] = [
-  {
-    id: 1,
-    image:
-      "https://congthucgiadinh.com/storage/47/01J2JHNWAAKNAJD3J8Z561DHA2.jpg",
-    title: "CƠM SƯỜN NƯỚNG MỀM",
-    description: ["Sườn nướng mềm mọng, dùng cùng cơm nóng và rau chua"],
-    price: 99000,
-    originalPrice: 123000,
-  },
-  {
-    id: 2,
-    image:
-      "https://daotaobep.com/wp-content/uploads/khoa-hoc-nau-com-tam-suon-bi-cha-de-mo-quan-kinh-doanh-7.jpg",
-    title: "COMBO - SƯỜN CHUNG",
-    description: [
-      "Cơm: sườn nướng, bì, chả trứng",
-      "Canh tùy chọn",
-      "Nước ngọt tùy chọn",
-    ],
-    price: 99000,
-    originalPrice: 123000,
-  },
-  {
-    id: 3,
-    image:
-      "https://comtamthuankieu.com.vn/wp-content/uploads/2020/12/IMG_0081-scaled.jpg",
-    title: "COMBO - SÀ BÌ CHƯỞNG",
-    description: [
-      "Cơm: sườn nướng, bì, chả trứng",
-      "Canh tùy chọn",
-      "Nước ngọt tùy chọn",
-    ],
-    price: 99000,
-    originalPrice: 123000,
-  },
-];
-
 const BestSellers: React.FC = () => {
+  const { data, isLoading, isError } = useBestSellerProducts();
+  const navigate = useNavigate();
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const products: Product[] = (data || [])
+    .map((item: any) => ({
+      productId: item.productId,
+      name: item.name,
+      image: item.image,
+      description: item.description,
+      price: item.price.toString(),
+      quantity: 1,
+      isFavorite: false,
+      ProductType: item.ProductType,
+      originalPrice: Number(item.price) + 24000,
+      sold: 1000,
+    }))
+    .slice(0, 3);
+
+  const handleOpenModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setSelectedProduct(null);
+  };
+
+  if (isLoading) return <Spin size="large" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }} />;
+  if (isError) return <div>Lỗi khi tải sản phẩm bán chạy!</div>;
+
   return (
-    <section
-      style={{
-        padding: "40px 0",
-        backgroundColor: "#da7339",
-      }}
-    >
+    <section style={{ padding: "20px 0 40px 0", background: "#da7339" }}>
       <h2
         style={{
           fontSize: "40px",
@@ -70,13 +67,10 @@ const BestSellers: React.FC = () => {
       >
         MÓN ĂN NỔI BẬT
         <svg
+          style={{ verticalAlign: "sub", marginLeft: "10px" }}
           xmlns="http://www.w3.org/2000/svg"
-          style={{
-            verticalAlign: "sub",
-            marginLeft: "10px",
-          }}
-          width="64"
-          height="64"
+          width="65"
+          height="65"
           viewBox="0 0 64 64"
         >
           <path
@@ -93,171 +87,125 @@ const BestSellers: React.FC = () => {
           />
         </svg>
       </h2>
-      <div>
-        <Row gutter={[16, 16]} justify="center">
-          {bestSellers.map((product) => (
-            <Col key={product.id} xs={24} sm={12} md={7}>
-              <div
-                style={{
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                  background: "#efe6db",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                  margin: "0 20px 0 20px",
-                  minHeight: 370,
-                }}
-              >
+      <Row gutter={[32, 32]} justify="center">
+        {products.map((product: any) => (
+          <Col key={product.id} xs={24} sm={12} md={8} lg={7}>
+            <Card
+              style={{
+                borderRadius: 24,
+                overflow: "hidden",
+                background: "#efe6db",
+                boxShadow: "0 4px 24px #0001",
+                border: "none",
+              }}
+              cover={
                 <div style={{ position: "relative" }}>
                   <img
                     src={product.image}
-                    alt={product.title}
+                    alt={product.name}
                     style={{
                       width: "100%",
-                      height: "180px",
+                      height: 200,
                       objectFit: "cover",
-                      borderRadius: "20px 20px 0 0",
+                      borderTopLeftRadius: 24,
+                      borderTopRightRadius: 24,
                     }}
                   />
-                  <div
+                  <span
                     style={{
                       position: "absolute",
-                      top: "12px",
-                      right: "12px",
+                      top: 12,
+                      right: 12,
                       background: "#fff",
                       color: "#78a243",
-                      padding: "2px 12px",
-                      borderRadius: "12px",
-                      fontSize: "14px",
                       fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
+                      borderRadius: 16,
+                      padding: "2px 12px",
+                      fontSize: 16,
+                      boxShadow: "0 2px 8px #0002",
                     }}
                   >
-                    <span
-                      style={{ color: "#78a243", fontSize: 16, marginRight: 4 }}
-                    >
-                      ★
-                    </span>{" "}
-                    1000+
-                  </div>
+                    ★ 1000+
+                  </span>
                 </div>
-                <div style={{ padding: "18px 18px 10px 18px" }}>
-                  <div
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      color: "#000",
-                      textAlign: "left",
-                      marginBottom: 6,
-                    }}
-                  >
-                    {product.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "15px",
-                      color: "#222",
-                      textAlign: "left",
-                      marginBottom: 12,
-                      minHeight: 60,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {product.description.map((line, i) => (
-                      <div key={i}>{line}</div>
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          background: "#f97316",
-                          color: "#fff",
-                          borderRadius: "8px",
-                          padding: "4px 16px",
-                          paddingBottom: "7px",
-                          fontWeight: 600,
-                          fontSize: 16,
-                          marginRight: 8,
-                        }}
-                      >
-                        {product.price.toLocaleString()}đ
-                      </span>
-                      <span
-                        style={{
-                          color: "#888",
-                          textDecoration: "line-through",
-                          fontSize: 15,
-                        }}
-                      >
-                        {product.originalPrice.toLocaleString()}đ
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      {product.quantity && product.quantity > 1 ? (
-                        <InputNumber
-                          min={1}
-                          max={99}
-                          defaultValue={product.quantity}
-                          style={{
-                            width: "55px",
-                            height: "36px",
-                            borderColor: "#f97316",
-                          }}
-                        />
-                      ) : null}
-                      <Button
-                        style={{
-                          backgroundColor: "#f97316",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "4px",
-                          width: "80px",
-                          height: "36px",
-                          transition: "all 0.3s ease",
-                          fontFamily: "Playfair Display, serif",
-                          fontWeight: "bold",
-                          outline: 'none',       
-                          boxShadow: 'none', 
-                        }}
-                        onMouseEnter={(e) => {
-                          (
-                            e.currentTarget as HTMLElement
-                          ).style.backgroundColor = "#fb923c";
-                          (e.currentTarget as HTMLElement).style.transform =
-                            "scale(1.05)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (
-                            e.currentTarget as HTMLElement
-                          ).style.backgroundColor = "#f97316";
-                          (e.currentTarget as HTMLElement).style.transform =
-                            "scale(1)";
-                        }}
-                      >
-                        Thêm
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+              }
+              bodyStyle={{ padding: 24 }}
+            >
+              <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, cursor: "pointer" }} onClick={() => navigate(`/product/${product.productId}`)}>
+                {product.name.toUpperCase()}
               </div>
-            </Col>
-          ))}
-        </Row>
-      </div>
+              <div style={{ color: "#444", marginBottom: 16, fontSize: 16 }}>
+                {product.description}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div
+                    style={{
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: 17,
+                      marginRight: 12,
+                      background: "#f97316",
+                      borderRadius: 5,
+                      padding: "2px 12px",
+                    }}
+                  >
+                    {parseFloat(product.price).toLocaleString()}đ
+                  </div>
+                  <div
+                    style={{
+                      color: "#888888",
+                      textDecoration: "line-through",
+                      fontSize: 15,
+                    }}
+                  >
+                    {product.originalPrice.toLocaleString()}đ
+                  </div>
+                </div>
+                <Button
+                  type="primary"
+                  style={{
+                    background: "#ff7a1a",
+                    border: "none",
+                    fontWeight: 700,
+                    borderRadius: 8,
+                    width: 90,
+                    outline: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    (
+                      e.currentTarget as HTMLElement
+                    ).style.backgroundColor = "#fb923c";
+                    (e.currentTarget as HTMLElement).style.transform =
+                      "scale(1.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (
+                      e.currentTarget as HTMLElement
+                    ).style.backgroundColor = "#f97316";
+                    (e.currentTarget as HTMLElement).style.transform =
+                      "scale(1)";
+                  }}
+                  onClick={() => handleOpenModal(product)}
+                >
+                  Thêm
+                </Button>
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+      <AddOnModal
+        open={isModalVisible}
+        onClose={handleCloseModal}
+        product={selectedProduct}
+      />
     </section>
   );
 };

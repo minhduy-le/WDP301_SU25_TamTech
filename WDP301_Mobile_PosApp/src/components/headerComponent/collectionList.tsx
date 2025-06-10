@@ -56,7 +56,7 @@ const dataSample = [
   {
     id: "7",
     productImg: require("@/assets/data/comtam.jpg"),
-    productName: "Cơm tấm đặc biệt (full topping)",
+    productName: "Cơm tấm đặc biệt",
     productDes:
       "Thưởng thức trọn vẹn hương vị với sườn, bì, chả, trứng ốp la và đồ chua.",
     productQuantity: 10,

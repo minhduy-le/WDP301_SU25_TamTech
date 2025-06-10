@@ -36,6 +36,7 @@ import StaffOrderManagement from "./pages/OrderManageStaff";
 import StaffProfile from "./pages/StaffProfile";
 import StaffChat from "./pages/StaffChat";
 import ManagerChat from "./pages/ManagerChat";
+import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -96,6 +97,10 @@ function App() {
               element={<CustomerFeedbackManagement />}
             />
             <Route path="/manager/chat" element={<ManagerChat />} />
+            <Route
+              path="/manager/staffs/staffid"
+              element={<DetailManageStaff />}
+            />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
