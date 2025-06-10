@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Row, Col, Card, Button, Spin } from "antd";
 import { useBestSellerProducts } from "../../hooks/productsApi";
 import AddOnModal from "./AddOnModal";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   productId: number;
@@ -18,6 +19,7 @@ interface Product {
 
 const BestSellers: React.FC = () => {
   const { data, isLoading, isError } = useBestSellerProducts();
+  const navigate = useNavigate();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -129,7 +131,7 @@ const BestSellers: React.FC = () => {
               }
               bodyStyle={{ padding: 24 }}
             >
-              <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8 }}>
+              <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, cursor: "pointer" }} onClick={() => navigate(`/product/${product.productId}`)}>
                 {product.name.toUpperCase()}
               </div>
               <div style={{ color: "#444", marginBottom: 16, fontSize: 16 }}>
