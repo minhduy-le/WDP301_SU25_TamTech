@@ -139,3 +139,25 @@ export const useCurrentMonthOrder = () => {
     },
   });
 };
+
+export interface WeeklyRevenueStat {
+  week: number;
+  currentMonthRevenue: number;
+  previousMonthRevenue: number;
+}
+
+export const useWeeklyRevenue = () => {
+  return useQuery<WeeklyRevenueStat[], Error>({
+    queryKey: ["weekly-revenue"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const res = await axiosInstance.get("/dashboard/monthly-revenue", {
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return Array.isArray(res.data.stats) ? res.data.stats : [];
+    },
+  });
+};

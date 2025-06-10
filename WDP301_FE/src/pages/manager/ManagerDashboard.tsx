@@ -99,13 +99,13 @@ const ManagerDashboard: React.FC = () => {
   const { data: currentMonthOrderStats } = useCurrentMonthOrder();
   const { data: weeklyRevenue = [] } = useWeeklyRevenue();
 
-  const weeklyChartData = weeklyRevenue.map((w) => ({
+  const weeklyChartData = weeklyRevenue.map((w: any) => ({
     week: `Tuần ${w.week}`,
     "Doanh thu tháng trước": w.previousMonthRevenue,
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
 
-  const weeklyBarData = weeklyRevenue.map((w) => ({
+  const weeklyBarData = weeklyRevenue.map((w: any) => ({
     week: `Tuần ${w.week}`,
     "Tháng này": w.currentMonthRevenue,
     "Tháng trước": w.previousMonthRevenue,
