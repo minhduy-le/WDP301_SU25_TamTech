@@ -10,8 +10,9 @@ import {
   checkBiometricAuth,
 } from "@/utils/biometric";
 import { StaffSignInSchema } from "@/utils/validate.schema";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import {
@@ -37,14 +38,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerText: {
-    bottom: 40,
-    fontSize: 20,
+    fontSize: 17,
     color: "#632713",
     fontFamily: APP_FONT.REGULAR,
+    textAlign: "center",
+    marginBottom: 10,
   },
   imgLogo: {
-    height: 230,
-    width: 400,
+    height: 150,
+    width: 250,
     marginTop: 70,
   },
   welcomeBtn: {
@@ -114,26 +116,7 @@ const WelcomePage = () => {
     resetForm: any
   ) => {
     try {
-      // setLoading(true);
-      // const res = await customerLoginAPI(email, password);
-      // setLoading(false);
-      // console.log(res.data.token);
-      // if (res.data) {
-      //   await AsyncStorage.setItem("access_token", res.data.token);
-      //   setAppState(res.data);
-      //   router.replace({
-      //     pathname: "/(tabs)/homepage",
-      //     params: { access_token: res.data.token, isLogin: 1 },
-      //   });
-      // } else {
-      //   setFogotPassword(true);
-      //   Toast.show("Đăng nhập không thành công", {
-      //     duration: Toast.durations.LONG,
-      //     textColor: "white",
-      //     backgroundColor: APP_COLOR.ORANGE,
-      //     opacity: 1,
-      //   });
-      // }
+      router.navigate("/(tabs)/homepage");
     } catch (error) {
       console.log("Lỗi khi đăng nhập", error);
       Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {
@@ -152,18 +135,6 @@ const WelcomePage = () => {
   useEffect(() => {
     async function prepare() {
       try {
-        // const refresh_token = await AsyncStorage.getItem("refresh_token");
-        // const res = await axios.post(
-        //   `${BASE_URL}/token/refresh?token=${refresh_token}`
-        // );
-        // if (res.data) {
-        //   await AsyncStorage.setItem("access_token", res.data.access_token);
-        //   setAppState({
-        //     access_token: await AsyncStorage.getItem("access_token"),
-        //   });
-        // } else {
-        //   Alert.alert("Hết hạn đăng nhập", "Hãy đăng nhập lại để sử dụng");
-        // }
       } catch (e) {}
     }
     prepare();
@@ -222,7 +193,9 @@ const WelcomePage = () => {
         <View style={styles.container}>
           <View style={styles.welcomeText}>
             <Image style={styles.imgLogo} source={logo} />
-            <Text style={styles.headerText}>Chào mừng bạn đến với Tấm Tắc</Text>
+            <Text style={styles.headerText}>
+              Đăng nhập bằng email được cấp!
+            </Text>
             <View style={styles.welcomeBtn}>
               <View>
                 <Formik
@@ -278,7 +251,7 @@ const WelcomePage = () => {
                         </Pressable>
                       )}
                       <View style={{ height: 10 }}></View>
-                      <View style={{ flexDirection: "row" }}>
+                      <View style={{ flexDirection: "row", marginTop: 10 }}>
                         <ShareButton
                           title="Đăng nhập"
                           onPress={handleSubmit}
@@ -299,12 +272,20 @@ const WelcomePage = () => {
                 </Formik>
               </View>
             </View>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Text style={styles.normalText}>Chưa có tài khoản?</Text>
-              <Link href={"/(tabs)/homepage"} style={styles.hrefLink}>
-                <Text style={styles.signUpText}>Đăng ký.</Text>
-              </Link>
-            </View>
+            <Pressable
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <MaterialIcons
+                name="report-problem"
+                size={24}
+                color={APP_COLOR.BROWN}
+              />
+              <Text
+                style={[styles.normalText, { textDecorationLine: "underline" }]}
+              >
+                Báo cáo kỹ thuật
+              </Text>
+            </Pressable>
           </View>
         </View>
         <Image
