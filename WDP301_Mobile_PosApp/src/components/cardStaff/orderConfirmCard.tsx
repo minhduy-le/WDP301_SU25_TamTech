@@ -10,11 +10,13 @@ import {
   LayoutAnimation,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   UIManager,
   View,
 } from "react-native";
+import ProductCard from "../products/productCard";
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -41,15 +43,13 @@ const OrderCard = () => {
     inputRange: [0, 1],
     outputRange: ["0deg", "180deg"],
   });
-  const toggleViewCart = () => {
-    console.log("hihi");
-  };
-  const toggleViewCard = () => {
+
+  const toggleDetails = () => {
     setDetails(!details);
   };
   return (
     <View style={styles.cardShadow}>
-      <Pressable onPress={toggleViewCard} style={styles.pressableContainer}>
+      <Pressable onPress={handleViewDetails} style={styles.pressableContainer}>
         <View style={styles.headerContent}>
           <Text style={styles.orderIdText}>Đơn hàng: ORD001</Text>
           <View style={styles.iconContainer}>
@@ -101,33 +101,35 @@ const OrderCard = () => {
               borderBottomWidth: 1,
             }}
           >
+            <View style={styles.sectionHeader}>
+              <AntDesign
+                name="shoppingcart"
+                size={24}
+                color={APP_COLOR.BROWN}
+              />
+              <Text style={styles.boldText}>Giỏ hàng</Text>
+            </View>
             <View
-              style={[
-                styles.sectionHeader,
-                { justifyContent: "space-between" },
-              ]}
+              style={{ height: 300, backgroundColor: "white", borderRadius: 8 }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <AntDesign
-                  name="shoppingcart"
-                  size={24}
-                  color={APP_COLOR.BROWN}
-                />
-                <Text style={[styles.boldText, { marginLeft: 5 }]}>
-                  Giỏ hàng
-                </Text>
-              </View>
-              <Pressable
-                style={{ flexDirection: "row", alignItems: "center" }}
-                onPress={toggleViewCart}
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                  paddingVertical: 8,
+                  gap: 8,
+                }}
+                showsVerticalScrollIndicator={true}
               >
-                <AntDesign name="right" size={10} color={APP_COLOR.BROWN} />
-                <AntDesign name="right" size={10} color={APP_COLOR.BROWN} />
-                <AntDesign name="right" size={10} color={APP_COLOR.BROWN} />
-                <Text style={[styles.text, { marginLeft: 5 }]}>
-                  Xem chi tiết
-                </Text>
-              </Pressable>
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+                <ProductCard />
+              </ScrollView>
             </View>
           </View>
           <View
@@ -198,7 +200,7 @@ const OrderCard = () => {
 const styles = StyleSheet.create({
   cardShadow: {
     marginHorizontal: 10,
-    marginTop: 5,
+    marginTop: 20,
     borderRadius: 10,
     backgroundColor: APP_COLOR.WHITE,
     shadowColor: "#000",
@@ -206,14 +208,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 1,
   },
   pressableContainer: {
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: APP_COLOR.WHITE,
     borderRadius: 10,
-    zIndex: 2,
+    zIndex: 10,
   },
   headerContent: {
     flexDirection: "row",
@@ -254,18 +255,23 @@ const styles = StyleSheet.create({
     color: "#065F46",
   },
   detailsView: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    overflow: "hidden",
+    borderRadius: 10,
     backgroundColor: APP_COLOR.WHITE,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
     paddingHorizontal: 15,
-    paddingTop: 10,
+    paddingTop: 100,
     paddingBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 3,
   },
   detailsSection: {
     paddingBottom: 10,

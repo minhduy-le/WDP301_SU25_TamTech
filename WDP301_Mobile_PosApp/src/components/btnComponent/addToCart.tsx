@@ -89,7 +89,7 @@ const AddToCart = ({ product }: AddToCartProps) => {
   };
   const screenWidth = Dimensions.get("screen").width;
   return (
-    <View>
+    <View style={{ marginBottom: 10 }}>
       <Text
         style={{
           color: APP_COLOR.BROWN,
@@ -111,10 +111,10 @@ const AddToCart = ({ product }: AddToCartProps) => {
           style={{
             color: APP_COLOR.BROWN,
             fontFamily: APP_FONT.MEDIUM,
-            fontSize: 17,
+            fontSize: 15,
           }}
         >
-          Cơm tấm chả
+          {product?.productName}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
           <Text
@@ -124,7 +124,7 @@ const AddToCart = ({ product }: AddToCartProps) => {
               opacity: 0.7,
             }}
           >
-            + {currencyFormatter(5000)}
+            + {currencyFormatter(product?.productPrice)}
           </Text>
           <View
             style={{
@@ -139,7 +139,7 @@ const AddToCart = ({ product }: AddToCartProps) => {
             }}
           >
             <Pressable onPress={() => handleQuantityChange("MINUS")}>
-              <AntDesign name="minuscircle" size={24} color={APP_COLOR.BROWN} />
+              <AntDesign name="minuscircle" size={20} color={APP_COLOR.BROWN} />
             </Pressable>
 
             <Text
@@ -161,7 +161,7 @@ const AddToCart = ({ product }: AddToCartProps) => {
             >
               <AntDesign
                 name="pluscircle"
-                size={24}
+                size={20}
                 color={APP_COLOR.BUTTON_YELLOW}
               />
             </Pressable>

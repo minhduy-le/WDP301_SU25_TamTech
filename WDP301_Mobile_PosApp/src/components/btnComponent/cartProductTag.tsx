@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
+    paddingHorizontal: 10,
     marginHorizontal: 10,
     alignItems: "center",
     shadowColor: "#000",
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
-    marginVertical: 8,
+    marginBottom: 5,
   },
   image: {
     width: 64,
@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: APP_FONT.BOLD,
     color: APP_COLOR.BROWN,
-    marginBottom: 2,
   },
   itemsText: {
     fontSize: 13,

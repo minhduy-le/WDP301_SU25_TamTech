@@ -8,11 +8,11 @@ import {
   Dimensions,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SwipeListView } from "react-native-swipe-list-view";
 
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
@@ -39,7 +39,44 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
-  const { cart } = useCurrentApp();
+  const { cart, setCart } = useCurrentApp();
+
+  const handleDeleteItem = (productId: string) => {
+    if (cart && cart.default && cart.default.items) {
+      const updatedItems = { ...cart.default.items };
+      delete updatedItems[productId];
+      setCart({
+        ...cart,
+        default: {
+          ...cart.default,
+          items: updatedItems,
+        },
+      });
+    }
+  };
+
+  const renderItem = (data: any) => (
+    <View style={styles.cartItemContainer}>
+      <CartProductTag
+        productImg={data.item.data.productImg}
+        productName={data.item.data.title}
+        productQuantity={data.item.quantity}
+        productPrice={data.item.data.basePrice}
+      />
+    </View>
+  );
+
+  const renderHiddenItem = (data: any) => (
+    <View style={styles.rowBack}>
+      <Pressable
+        style={styles.deleteButton}
+        onPress={() => handleDeleteItem(data.item.data.productId)}
+      >
+        <Text style={styles.deleteButtonText}>Xóa</Text>
+      </Pressable>
+    </View>
+  );
+
   return (
     <Animated.View
       style={[
@@ -55,43 +92,48 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
         </Pressable>
         <Text style={styles.sidebarText}>Giỏ hàng</Text>
       </View>
-      <View>
-        <ScrollView>
-          {cart &&
-            cart.default &&
-            Object.entries(cart.default.items).map(
-              ([key, item]: [string, CartItem]) => {
-                return (
-                  <View key={key}>
-                    <CartProductTag
-                      productImg={item.data.productImg}
-                      productName={item.data.title}
-                      productQuantity={item.quantity}
-                      productPrice={item.data.basePrice}
-                    />
-                  </View>
-                );
-              }
-            )}
-          <ShareButton
-            title="Tạo đơn hàng"
-            onPress={() => console.log("Đặt hàng")}
-            textStyle={{
-              textTransform: "uppercase",
-              color: APP_COLOR.WHITE,
-              paddingVertical: 5,
-              fontFamily: APP_FONT.MEDIUM,
-            }}
-            btnStyle={{
-              justifyContent: "center",
-              borderRadius: 30,
-              marginTop: 20,
-              paddingVertical: 10,
-              backgroundColor: APP_COLOR.ORANGE,
-              marginHorizontal: 70,
-            }}
+      <View style={{ flex: 1 }}>
+        {cart && cart.default && (
+          <SwipeListView
+            data={Object.entries(cart.default.items).map(([key, item]) => ({
+              key,
+              ...item,
+            }))}
+            renderItem={renderItem}
+            renderHiddenItem={renderHiddenItem}
+            rightOpenValue={-80}
+            disableRightSwipe
+            style={styles.listContainer}
+            closeOnRowBeginSwipe
+            closeOnRowPress
+            closeOnScroll
+            friction={10}
+            tension={40}
+            swipeToOpenPercent={20}
+            useNativeDriver
+            previewRowKey={Object.keys(cart.default.items)[0]}
+            previewOpenValue={-40}
+            previewOpenDelay={3000}
           />
-        </ScrollView>
+        )}
+        <ShareButton
+          title="Tạo đơn hàng"
+          onPress={() => console.log("Đặt hàng")}
+          textStyle={{
+            textTransform: "uppercase",
+            color: APP_COLOR.WHITE,
+            paddingVertical: 5,
+            fontFamily: APP_FONT.MEDIUM,
+          }}
+          btnStyle={{
+            justifyContent: "center",
+            borderRadius: 30,
+            marginTop: 20,
+            paddingVertical: 10,
+            backgroundColor: APP_COLOR.ORANGE,
+            marginHorizontal: 70,
+          }}
+        />
       </View>
     </Animated.View>
   );
@@ -136,6 +178,35 @@ const styles = StyleSheet.create({
   logo: {
     height: 70,
     width: 110,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  rowBack: {
+    alignItems: "center",
+    backgroundColor: APP_COLOR.CANCEL,
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingLeft: 15,
+  },
+  cartItemContainer: {
+    backgroundColor: APP_COLOR.WHITE,
+    padding: 10,
+  },
+  deleteButton: {
+    backgroundColor: APP_COLOR.CANCEL,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    height: "100%",
+    position: "absolute",
+    right: 0,
+  },
+  deleteButtonText: {
+    color: APP_COLOR.WHITE,
+    fontFamily: APP_FONT.MEDIUM,
+    fontSize: 16,
   },
 });
 
