@@ -69,7 +69,6 @@ declare global {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
-
     menu: IMenu[];
     isLike: boolean;
   }

@@ -1,7 +1,6 @@
 import LoadingOverlay from "@/components/loading/overlay";
 import { resendCodeAPI, verifyEmailCustomer } from "@/utils/api";
 import { APP_COLOR } from "@/utils/constant";
-import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
