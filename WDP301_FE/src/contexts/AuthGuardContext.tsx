@@ -98,6 +98,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/products",
         "/manager/promotions",
         "/manager/staffs",
+        "/manager/staffs/staffId"
       ],
       Admin: [
         "/admin/dashboard",

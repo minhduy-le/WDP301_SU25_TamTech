@@ -33,28 +33,12 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
-import { useRevenueStats, useTopProducts, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder } from "../../hooks/dashboardApi";
+import { useRevenueStats, useTopProducts, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder, useWeeklyRevenue } from "../../hooks/dashboardApi";
+
 
 const { Title, Text } = Typography;
 
-const days = Array.from({ length: 30 }, (_, i) => i + 1);
-const lastMonthData = days.map((day) => ({
-  day: `Ngày ${day}`,
-  revenue: Math.floor(800000 + Math.random() * 400000),
-  orders: Math.floor(20 + Math.random() * 10),
-}));
-const thisMonthData = days.map((day) => ({
-  day: `Ngày ${day}`,
-  revenue: Math.floor(1000000 + Math.random() * 500000),
-  orders: Math.floor(25 + Math.random() * 15),
-}));
-const chartData = days.map((day) => ({
-  day: `Ngày ${day}`,
-  "Doanh thu tháng trước": lastMonthData[day - 1].revenue,
-  "Doanh thu tháng này": thisMonthData[day - 1].revenue,
-  "Đơn hàng tháng trước": lastMonthData[day - 1].orders,
-  "Đơn hàng tháng này": thisMonthData[day - 1].orders,
-}));
+
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
@@ -82,6 +66,7 @@ const renderCustomerTypeLabel = ({ cx, cy, midAngle, outerRadius, value }: { cx:
     </text>
   );
 };
+
 
 const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
   const { active, payload } = props;
@@ -112,6 +97,19 @@ const ManagerDashboard: React.FC = () => {
   const { data: currentMonthProductStats } = useCurrentMonthProduct();
   const { data: currentMonthRevenueStats } = useCurrentMonthRevenue();
   const { data: currentMonthOrderStats } = useCurrentMonthOrder();
+  const { data: weeklyRevenue = [] } = useWeeklyRevenue();
+
+  const weeklyChartData = weeklyRevenue.map((w) => ({
+    week: `Tuần ${w.week}`,
+    "Doanh thu tháng trước": w.previousMonthRevenue,
+    "Doanh thu tháng này": w.currentMonthRevenue,
+  }));
+
+  const weeklyBarData = weeklyRevenue.map((w) => ({
+    week: `Tuần ${w.week}`,
+    "Tháng này": w.currentMonthRevenue,
+    "Tháng trước": w.previousMonthRevenue,
+  }));
   return (
     <div style={{ padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
       <div
@@ -296,11 +294,11 @@ const ManagerDashboard: React.FC = () => {
           >
             <ResponsiveContainer width="100%" height={350}>
               <LineChart
-                data={chartData}
+                data={weeklyChartData}
                 margin={{ top: 24, left: 0, bottom: 8 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                <XAxis dataKey="week" tick={{ fontSize: 12 }} />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(v) => v.toLocaleString()}
@@ -463,6 +461,28 @@ const ManagerDashboard: React.FC = () => {
       <Row style={{ marginTop: 32 }}>
         <Col xs={24}>
           <LatestOrders />
+        </Col>
+      </Row>
+
+      <Row gutter={[24, 24]} style={{ marginTop: 16 }}>
+        <Col xs={24} md={24} lg={24}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: 12, boxShadow: "0 4px 16px rgba(160,90,44,0.08)", marginBottom: 24 }}
+            title={<span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>Doanh thu theo tuần trong tháng</span>}
+          >
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={weeklyBarData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="week" style={{ fontWeight: 600, fill: "#A05A2C" }} />
+                <YAxis tickFormatter={v => v.toLocaleString()} style={{ fontWeight: 600, fill: "#A05A2C" }} />
+                <Tooltip formatter={(value: number) => value.toLocaleString() + "₫"} />
+                <Legend />
+                <Bar dataKey="Tháng này" fill="#D97B41" radius={[8, 8, 0, 0]} barSize={32} />
+                <Bar dataKey="Tháng trước" fill="#F9E4B7" radius={[8, 8, 0, 0]} barSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
         </Col>
       </Row>
     </div>
