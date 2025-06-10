@@ -1,19 +1,51 @@
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col, Card, Button, Spin } from "antd";
 import { useBestSellerProducts } from "../../hooks/productsApi";
+import AddOnModal from "./AddOnModal";
+
+interface Product {
+  productId: number;
+  name: string;
+  image: string;
+  description?: string;
+  price: string;
+  quantity?: number;
+  isFavorite?: boolean;
+  ProductType?: { name?: string };
+  originalPrice: number;
+  sold: number;
+}
 
 const BestSellers: React.FC = () => {
   const { data, isLoading, isError } = useBestSellerProducts();
 
-  const products = (data || []).map((item: any) => ({
-    id: item.productId,
-    image: item.image,
-    title: item.name,
-    description: item.description,
-    price: Number(item.price),
-    originalPrice: Number(item.price) + 24000,
-    sold: 1000,
-  })).slice(0, 3);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const products: Product[] = (data || [])
+    .map((item: any) => ({
+      productId: item.productId,
+      name: item.name,
+      image: item.image,
+      description: item.description,
+      price: item.price.toString(),
+      quantity: 1,
+      isFavorite: false,
+      ProductType: item.ProductType,
+      originalPrice: Number(item.price) + 24000,
+      sold: 1000,
+    }))
+    .slice(0, 3);
+
+  const handleOpenModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setSelectedProduct(null);
+  };
 
   if (isLoading) return <Spin size="large" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }} />;
   if (isError) return <div>Lỗi khi tải sản phẩm bán chạy!</div>;
@@ -68,7 +100,7 @@ const BestSellers: React.FC = () => {
                 <div style={{ position: "relative" }}>
                   <img
                     src={product.image}
-                    alt={product.title}
+                    alt={product.name}
                     style={{
                       width: "100%",
                       height: 200,
@@ -98,7 +130,7 @@ const BestSellers: React.FC = () => {
               bodyStyle={{ padding: 24 }}
             >
               <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8 }}>
-                {product.title.toUpperCase()}
+                {product.name.toUpperCase()}
               </div>
               <div style={{ color: "#444", marginBottom: 16, fontSize: 16 }}>
                 {product.description}
@@ -122,7 +154,7 @@ const BestSellers: React.FC = () => {
                       padding: "2px 12px",
                     }}
                   >
-                    {product.price.toLocaleString()}đ
+                    {parseFloat(product.price).toLocaleString()}đ
                   </div>
                   <div
                     style={{
@@ -142,6 +174,7 @@ const BestSellers: React.FC = () => {
                     fontWeight: 700,
                     borderRadius: 8,
                     width: 90,
+                    outline: "none",
                   }}
                   onMouseEnter={(e) => {
                     (
@@ -157,6 +190,7 @@ const BestSellers: React.FC = () => {
                     (e.currentTarget as HTMLElement).style.transform =
                       "scale(1)";
                   }}
+                  onClick={() => handleOpenModal(product)}
                 >
                   Thêm
                 </Button>
@@ -165,6 +199,11 @@ const BestSellers: React.FC = () => {
           </Col>
         ))}
       </Row>
+      <AddOnModal
+        open={isModalVisible}
+        onClose={handleCloseModal}
+        product={selectedProduct}
+      />
     </section>
   );
 };

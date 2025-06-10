@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
 import { Select, Input, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
-import "./HeroSection.css"; 
+import "./HeroSection.css";
 
 const { Option } = Select;
 
-// const carouselImages = [
-//   "/path/to/your/image1.jpg", 
-//   "/path/to/your/image2.jpg",
-//   "/path/to/your/image3.jpg",
-// ];
 const demoImages = [
-  "https://izitour.com/media/ckeditor/traditional-vietnamese-food-com-tam_2024-05-30_825.webp", 
-  "https://mia.vn/media/uploads/blog-du-lich/com-tam-sai-gon-12-1693583366.jpg", 
-  "https://cdn.tgdd.vn/2020/10/CookProduct/3-cach-lam-salad-ot-chuong-ngon-mieng-don-gian-de-lam-giup-CN-1200x676-1.jpg"  // And another one
+  "https://izitour.com/media/ckeditor/traditional-vietnamese-food-com-tam_2024-05-30_825.webp",
+  "https://mia.vn/media/uploads/blog-du-lich/com-tam-sai-gon-12-1693583366.jpg",
+  "https://cdn.tgdd.vn/2020/10/CookProduct/3-cach-lam-salad-ot-chuong-ngon-mieng-don-gian-de-lam-giup-CN-1200x676-1.jpg", // And another one
 ];
-
 
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -25,9 +19,9 @@ const HeroSection = () => {
       setCurrentImageIndex((prevIndex) =>
         prevIndex === demoImages.length - 1 ? 0 : prevIndex + 1
       );
-    }, 3000); 
+    }, 3000);
 
-    return () => clearInterval(timer); 
+    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -55,7 +49,10 @@ const HeroSection = () => {
         <p className="hero-desc">
           Thương hiệu cơm tấm hàng đầu dành cho sinh viên
         </p>
-        <div className="hero-form" style={{ display: "flex", gap: "10px", alignItems: "center"}}>
+        <div
+          className="hero-form"
+          style={{ display: "flex", gap: "10px", alignItems: "center" }}
+        >
           <Select
             defaultValue="Chọn cửa hàng"
             suffixIcon={<DownOutlined style={{ color: "#F9A14D" }} />}
@@ -69,7 +66,9 @@ const HeroSection = () => {
             popupClassName="custom-ant-select-dropdown"
             className="custom-ant-select"
           >
-            <Option disabled value="Chọn cửa hàng">Chọn cửa hàng</Option>
+            <Option disabled value="Chọn cửa hàng">
+              Chọn cửa hàng
+            </Option>
             <Option value="Cửa hàng 1">Cửa hàng 1</Option>
             <Option value="Cửa hàng 2">Cửa hàng 2</Option>
           </Select>
@@ -89,6 +88,18 @@ const HeroSection = () => {
               background: "#F9A14D",
               border: "none",
               color: "#fff",
+              alignItems: "center",
+              outline: "none",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "#fb923c";
+              (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "#f97316";
+              (e.currentTarget as HTMLElement).style.transform = "scale(1)";
             }}
           >
             Xác nhận

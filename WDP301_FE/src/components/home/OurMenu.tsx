@@ -1,24 +1,19 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Row,
   Col,
   Button,
   Card,
-  Tag,
-  Modal,
-  Typography,
-  Divider,
   Spin,
   message,
+  Typography,
 } from "antd";
 import axios from "axios";
-import { PlusOutlined, MinusOutlined, CloseOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
 import { useAuthStore } from "../../hooks/usersApi";
 import { useProductTypes } from "../../hooks/productTypesApi";
-import { useGetProductByTypeId } from "../../hooks/productsApi";
-import { type UseQueryResult } from "@tanstack/react-query";
+import AddOnModal from "./AddOnModal";
 import "./OurMenu.css";
 const { Title, Text } = Typography;
 
@@ -32,47 +27,6 @@ interface Product {
   isFavorite?: boolean;
   ProductType?: { name?: string };
 }
-
-export interface AddOnProduct extends Product {
-  selectedQuantity: number;
-}
-
-const useAddOnProducts = () => {
-  const { data: productTypes } = useProductTypes();
-
-  const query2 = useGetProductByTypeId(2);
-  const query3 = useGetProductByTypeId(3);
-  const query4 = useGetProductByTypeId(4);
-
-  const queries: {
-    typeId: number;
-    query: UseQueryResult<any[], Error>;
-  }[] = [
-    { typeId: 2, query: query2 },
-    { typeId: 3, query: query3 },
-    { typeId: 4, query: query4 },
-  ];
-
-  const addOnProductQueries: {
-    typeId: number;
-    query: UseQueryResult<any[], Error>;
-  }[] = [];
-  if (productTypes) {
-    productTypes
-      .filter((type) => type.productTypeId !== 1)
-      .forEach((type) => {
-        const matchingQuery = queries.find(
-          (q) => q.typeId === type.productTypeId
-        );
-        if (matchingQuery) {
-          addOnProductQueries.push(matchingQuery);
-        }
-      });
-  }
-
-  return addOnProductQueries;
-};
-
 const OurMenu: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCartStore();
@@ -92,46 +46,6 @@ const OurMenu: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMainProductForModal, setSelectedMainProductForModal] =
     useState<Product | null>(null);
-  const [modalTotalPrice, setModalTotalPrice] = useState<number>(0);
-
-  interface AddOnCategory {
-    id: string;
-    title: string;
-    apiType?: number;
-    selectionText: string;
-    items: AddOnProduct[];
-    loading: boolean;
-  }
-
-  const addOnProductQueries = useAddOnProducts();
-  const [modalAddonCategories, setModalAddonCategories] = useState<
-    AddOnCategory[]
-  >([]);
-
-  useEffect(() => {
-    if (productTypes && !isModalVisible) {
-      const categories: AddOnCategory[] = productTypes
-        .filter((type) => type.productTypeId !== 1)
-        .map((type) => {
-          const matchingQuery = addOnProductQueries.find(
-            (q) => q.typeId === type.productTypeId
-          );
-          return {
-            id: `modal_type_${type.productTypeId}`,
-            title: type.name,
-            selectionText: "Tùy chọn",
-            apiType: type.productTypeId,
-            items:
-              matchingQuery?.query.data?.map((item) => ({
-                ...item,
-                selectedQuantity: 0,
-              })) || [],
-            loading: matchingQuery?.query.isLoading || false,
-          };
-        });
-      setModalAddonCategories(categories);
-    }
-  }, [productTypes, addOnProductQueries, isModalVisible]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,86 +113,6 @@ const OurMenu: React.FC = () => {
     }
   }, [isProductTypesLoading, productTypes]);
 
-  const fetchModalCategoryItems = useCallback(
-    async (categoryIndex: number) => {
-      const categoryToFetch = modalAddonCategories[categoryIndex];
-      if (!categoryToFetch || !categoryToFetch.apiType) {
-        return;
-      }
-      let dataToUse: Product[] = [];
-      if (categoryToFetch.apiType === 2 && drinks.length > 0) {
-        dataToUse = drinks;
-      } else if (categoryToFetch.apiType === 3 && sideDishes.length > 0) {
-        dataToUse = sideDishes;
-      } else {
-        try {
-          const response = await axios.get(
-            `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${categoryToFetch.apiType}`
-          );
-          dataToUse = response.data.products;
-        } catch (error) {
-          console.error(
-            `Lỗi khi fetch ${categoryToFetch.title} cho modal:`,
-            error
-          );
-          setModalAddonCategories((prev) => {
-            const newCategories = [...prev];
-            if (newCategories[categoryIndex]) {
-              newCategories[categoryIndex].loading = false;
-              newCategories[categoryIndex].items = [];
-            }
-            return newCategories;
-          });
-          return;
-        }
-      }
-
-      setModalAddonCategories((prev) => {
-        const newCategories = JSON.parse(JSON.stringify(prev));
-        if (newCategories[categoryIndex]) {
-          newCategories[categoryIndex].items = dataToUse.map((p) => ({
-            ...p,
-            price: p.price,
-            selectedQuantity: 0,
-          }));
-          newCategories[categoryIndex].loading = false;
-        }
-        return newCategories;
-      });
-    },
-    [drinks, sideDishes, modalAddonCategories]
-  );
-
-  useEffect(() => {
-    if (isModalVisible && selectedMainProductForModal) {
-      const freshCategories = JSON.parse(JSON.stringify(modalAddonCategories));
-      setModalAddonCategories(freshCategories);
-      setModalTotalPrice(parseFloat(selectedMainProductForModal.price));
-    }
-  }, [isModalVisible, selectedMainProductForModal]);
-
-  useEffect(() => {
-    if (isModalVisible && selectedMainProductForModal) {
-      modalAddonCategories.forEach((cat, index) => {
-        if (cat.loading || (cat.items.length === 0 && cat.apiType)) {
-          fetchModalCategoryItems(index);
-        }
-      });
-    }
-  }, [isModalVisible, selectedMainProductForModal, fetchModalCategoryItems]);
-
-  useEffect(() => {
-    if (!selectedMainProductForModal) return;
-    2;
-    let currentTotal = parseFloat(selectedMainProductForModal.price);
-    modalAddonCategories.forEach((category) => {
-      category.items.forEach((item) => {
-        currentTotal += item.selectedQuantity * parseFloat(item.price);
-      });
-    });
-    setModalTotalPrice(currentTotal);
-  }, [modalAddonCategories, selectedMainProductForModal]);
-
   const handleOpenModal = (product: Product) => {
     setSelectedMainProductForModal(product);
     setIsModalVisible(true);
@@ -289,55 +123,6 @@ const OurMenu: React.FC = () => {
     setSelectedMainProductForModal(null);
   };
 
-  const handleModalQuantityChange = (
-    categoryIndex: number,
-    itemIndex: number,
-    change: number
-  ) => {
-    setModalAddonCategories((prevCategories) => {
-      const newCategories = JSON.parse(JSON.stringify(prevCategories));
-      const item = newCategories[categoryIndex].items[itemIndex];
-      let newItemQuantity = item.selectedQuantity + change;
-      if (newItemQuantity < 0) newItemQuantity = 0;
-      if (newItemQuantity > 10) newItemQuantity = 10;
-      item.selectedQuantity = newItemQuantity;
-      return newCategories;
-    });
-  };
-
-  const handleAddToCartFromModal = () => {
-    if (!selectedMainProductForModal || !user?.id) {
-      message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-      return;
-    }
-
-    const selectedAddonsForCart = modalAddonCategories.flatMap((cat) =>
-      cat.items
-        .filter((item) => item.selectedQuantity > 0)
-        .map((item) => ({
-          productId: item.productId,
-          productTypeName: item.name ,
-          quantity: item.selectedQuantity,
-          price: parseFloat(item.price),
-        }))
-    );
-
-    const cartItem = {
-      userId: user.id,
-      productId: selectedMainProductForModal.productId,
-      productName: selectedMainProductForModal.name,
-      addOns: selectedAddonsForCart,
-      quantity: 1,
-      price: parseFloat(selectedMainProductForModal.price),
-      totalPrice: modalTotalPrice,
-    };
-
-    addToCart(cartItem);
-    message.success(
-      `${selectedMainProductForModal.name} và các món kèm đã được thêm vào giỏ!`
-    );
-    handleCloseModal();
-  };
 
   const itemsToDisplay =
     activeTab === "mainDishes"
@@ -615,243 +400,11 @@ const OurMenu: React.FC = () => {
         )}
       </Row>
 
-      {selectedMainProductForModal && (
-        <Modal
-          centered
-          open={isModalVisible}
-          onCancel={handleCloseModal}
-          footer={null}
-          width={600}
-          bodyStyle={{ padding: 0, backgroundColor: "#F8F0E5" }}
-          closable={false}
-          destroyOnClose
-        >
-          <div style={{ padding: "20px" }}>
-            <Button
-              icon={<CloseOutlined />}
-              onClick={handleCloseModal}
-              style={{
-                position: "absolute",
-                top: 16,
-                right: 16,
-                zIndex: 10,
-                border: "none",
-                background: "transparent",
-                fontSize: "18px",
-                color: "#777",
-              }}
-            />
-            <Row gutter={16} align="middle" style={{ marginBottom: "20px" }}>
-              <Col>
-                <img
-                  src={selectedMainProductForModal.image}
-                  alt={selectedMainProductForModal.name}
-                  style={{
-                    width: "100px",
-                    height: "100px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                  }}
-                />
-              </Col>
-              <Col flex="auto">
-                <Title level={4} style={{ margin: 0, color: "#333" }}>
-                  {selectedMainProductForModal.name}
-                </Title>
-                {selectedMainProductForModal.description && (
-                  <Text type="secondary" style={{ fontSize: "13px" }}>
-                    {selectedMainProductForModal.description.length > 60
-                      ? selectedMainProductForModal.description.slice(0, 60) +
-                        "..."
-                      : selectedMainProductForModal.description}
-                  </Text>
-                )}
-              </Col>
-              <Col>
-                <Tag
-                  color="#f97316"
-                  style={{
-                    fontSize: "16px",
-                    padding: "6px 12px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {parseFloat(
-                    selectedMainProductForModal.price
-                  ).toLocaleString()}
-                  đ
-                </Tag>
-              </Col>
-            </Row>
-            <Divider style={{ margin: "0 0 20px 0" }} />
-            <div
-              style={{
-                maxHeight: "calc(100vh - 420px)",
-                overflowY: "auto",
-                paddingRight: "10px",
-              }}
-            >
-              {modalAddonCategories.map((category, catIndex) => (
-                <div key={category.id} style={{ marginBottom: "24px" }}>
-                  <Title
-                    level={5}
-                    style={{
-                      marginBottom: "4px",
-                      color: "#4A4A4A",
-                      fontWeight: "bold",
-                      marginTop: "6px",
-                    }}
-                  >
-                    {" "}
-                    {category.title}{" "}
-                    <Text
-                      type="secondary"
-                      style={{
-                        marginLeft: "8px",
-                        fontSize: "13px",
-                        fontWeight: "normal",
-                      }}
-                    >
-                      ({category.selectionText})
-                    </Text>{" "}
-                  </Title>
-                  <Divider style={{ margin: "8px 0 12px 0" }} />
-                  {category.loading ? (
-                    <div style={{ textAlign: "center", padding: "20px" }}>
-                      <Spin
-                        tip={`Đang tải ${category.title.toLowerCase()}...`}
-                      />
-                    </div>
-                  ) : category.items.length === 0 ? (
-                    <Text>Không có lựa chọn nào cho mục này.</Text>
-                  ) : (
-                    category.items.map((item, itemIndex) => (
-                      <Row
-                        key={item.productId}
-                        justify="space-between"
-                        align="middle"
-                        style={{
-                          marginBottom: "12px",
-                          padding: "8px",
-                          background: "#fff",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        <Col>
-                          {" "}
-                          <Text style={{ fontSize: "15px", color: "#333" }}>
-                            {item.name}
-                          </Text>{" "}
-                          <br />{" "}
-                          <Text
-                            style={{
-                              fontSize: "14px",
-                              color: "#f97316",
-                              fontWeight: 500,
-                            }}
-                          >
-                            {" "}
-                            + {parseFloat(item.price).toLocaleString()}đ{" "}
-                          </Text>{" "}
-                        </Col>
-                        <Col>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              border: "1px solid #d9d9d9",
-                              borderRadius: "6px",
-                              borderColor: "#f97316",
-                            }}
-                          >
-                            <Button
-                              icon={<MinusOutlined />}
-                              onClick={() =>
-                                handleModalQuantityChange(
-                                  catIndex,
-                                  itemIndex,
-                                  -1
-                                )
-                              }
-                              type="text"
-                              style={{
-                                borderRight: "1px solid #d9d9d9",
-                                padding: "0 10px",
-                                height: "30px",
-                                outline: "none",
-                                borderColor: "#d97706",
-                              }}
-                              disabled={item.selectedQuantity === 0}
-                            />
-                            <Text
-                              style={{
-                                padding: "0 12px",
-                                fontSize: "14px",
-                                height: "30px",
-                                lineHeight: "30px",
-                                minWidth: "20px",
-                                textAlign: "center",
-                              }}
-                            >
-                              {item.selectedQuantity}
-                            </Text>
-                            <Button
-                              icon={<PlusOutlined />}
-                              onClick={() =>
-                                handleModalQuantityChange(
-                                  catIndex,
-                                  itemIndex,
-                                  1
-                                )
-                              }
-                              type="text"
-                              style={{
-                                borderLeft: "1px solid #d9d9d9",
-                                borderRadius: "0 4px 4px 0",
-                                padding: "0 10px",
-                                height: "30px",
-                                outline: "none",
-                                borderColor: "#d97706",
-                              }}
-                              disabled={item.selectedQuantity >= 10}
-                            />
-                          </div>
-                        </Col>
-                      </Row>
-                    ))
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div
-            style={{
-              padding: "16px 20px",
-              borderTop: "1px solid #e8e8e8",
-              background: "#fff",
-              position: "sticky",
-              bottom: 0,
-              zIndex: 1,
-            }}
-          >
-            <Button
-              type="primary"
-              block
-              style={{
-                backgroundColor: "#6A994E",
-                borderColor: "#6A994E",
-                height: "48px",
-                fontSize: "16px",
-                fontWeight: "bold",
-              }}
-              onClick={handleAddToCartFromModal}
-            >
-              {" "}
-              {modalTotalPrice.toLocaleString()}đ - Thêm vào giỏ hàng{" "}
-            </Button>
-          </div>
-        </Modal>
-      )}
+      <AddOnModal
+        open={isModalVisible}
+        onClose={handleCloseModal}
+        product={selectedMainProductForModal}
+      />
     </div>
   );
 };
