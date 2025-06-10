@@ -34,6 +34,7 @@ import CustomerFeedbackManagement from "./pages/manager/feedbacks/CustomerFeedba
 import StaffSidebar from "./components/staff/StaffSidebar";
 import StaffOrderManagement from "./pages/OrderManageStaff";
 import StaffProfile from "./pages/StaffProfile";
+import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -93,6 +94,7 @@ function App() {
               path="/manager/feedback"
               element={<CustomerFeedbackManagement />}
             />
+            <Route path="/manager/staffs/staffid" element={<DetailManageStaff />} />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
