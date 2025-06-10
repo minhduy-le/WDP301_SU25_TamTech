@@ -5,6 +5,7 @@ import TopList from "@/components/headerComponent/topList";
 import SearchComponent from "@/components/headerComponent/topSearch";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { currencyFormatter } from "@/constants/Function";
+import { useCurrentApp } from "@/context/app.context";
 import React, { useState } from "react";
 import {
   Animated,
@@ -83,7 +84,6 @@ const dataSample = [
 ];
 const screenWidth = Dimensions.get("screen").width;
 const screenHeight = Dimensions.get("screen").height;
-
 interface IProduct {
   id: string;
   productImg: any;
@@ -96,6 +96,7 @@ interface IProduct {
 const HomePage = () => {
   const [selectedProduct, setSelectedProduct] = useState<IProduct>();
   const [showDetail, setShowDetail] = useState(false);
+  const { cart } = useCurrentApp();
 
   return (
     <SafeAreaView
@@ -154,16 +155,12 @@ const HomePage = () => {
               <Text style={modalStyles.description}>
                 {selectedProduct.productDes}
               </Text>
-              <Text style={modalStyles.price}>
-                {currencyFormatter(selectedProduct.productPrice)} VND
-              </Text>
               <View
                 style={{
-                  ...Platform.select({
-                    android: {
-                      marginBottom: 40,
-                    },
-                  }),
+                  paddingBottom: 10,
+                  borderBottomColor: APP_COLOR.GREY,
+                  borderBottomWidth: 0.5,
+                  marginBottom: 10,
                 }}
               >
                 {dataSample.map((product) => (
@@ -178,6 +175,40 @@ const HomePage = () => {
                     }}
                   />
                 ))}
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 10,
+                  alignItems: "center",
+                  ...Platform.select({
+                    android: {
+                      marginBottom: 40,
+                    },
+                  }),
+                }}
+              >
+                <Text
+                  style={{
+                    color: APP_COLOR.BROWN,
+                    fontFamily: APP_FONT.BOLD,
+                    fontSize: 20,
+                  }}
+                >
+                  Tổng cộng:
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 25,
+                    color: APP_COLOR.ORANGE,
+                    fontFamily: APP_FONT.BOLD,
+                  }}
+                >
+                  {cart.default
+                    ? currencyFormatter(cart.default.sum)
+                    : currencyFormatter(0)}{" "}
+                  VND
+                </Text>
               </View>
             </ScrollView>
           </Animated.View>
@@ -218,7 +249,6 @@ const modalStyles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontFamily: APP_FONT.BOLD,
-    marginBottom: 10,
     marginTop: 5,
     color: APP_COLOR.BROWN,
   },
@@ -230,7 +260,6 @@ const modalStyles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
-  price: { fontSize: 18, color: APP_COLOR.ORANGE, marginBottom: 20 },
 });
 
 export default HomePage;
