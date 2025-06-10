@@ -3,6 +3,7 @@ import CartProductTag from "@/components/btnComponent/cartProductTag";
 import ShareButton from "@/components/btnComponent/shareBtn";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { useCurrentApp } from "@/context/app.context";
+import { router } from "expo-router";
 import {
   Animated,
   Dimensions,
@@ -120,7 +121,7 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
       <View style={styles.orderButtonContainer}>
         <ShareButton
           title="Tạo đơn hàng"
-          onPress={() => console.log("Đặt hàng")}
+          onPress={() => router.navigate("/(staff)/order/placeOrder")}
           textStyle={{
             textTransform: "uppercase",
             color: APP_COLOR.WHITE,
@@ -130,7 +131,7 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
           btnStyle={{
             justifyContent: "center",
             borderRadius: 30,
-            marginTop: 20,
+            marginTop: 10,
             paddingVertical: 10,
             backgroundColor: APP_COLOR.ORANGE,
             marginHorizontal: 70,
@@ -184,16 +185,19 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
   },
+  cartItemContainer: {
+    backgroundColor: APP_COLOR.WHITE,
+    height: 100,
+    justifyContent: "center",
+    position: "relative",
+    top: -7,
+  },
   rowBack: {
     alignItems: "center",
     backgroundColor: APP_COLOR.CANCEL,
     flex: 0.8,
     flexDirection: "row",
     justifyContent: "flex-end",
-  },
-  cartItemContainer: {
-    backgroundColor: APP_COLOR.WHITE,
-    padding: 10,
   },
   deleteButton: {
     backgroundColor: APP_COLOR.CANCEL,
