@@ -4,7 +4,7 @@
     "slug": "WDP301_Mobile_PosApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/assets/images/icon.png",
+    "icon": "./src/assets/assets/icon.png",
     "scheme": "wdp301mobileposapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

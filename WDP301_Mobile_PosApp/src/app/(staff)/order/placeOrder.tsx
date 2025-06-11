@@ -622,22 +622,14 @@ const PlaceOrderPage = () => {
                               style={{
                                 color: APP_COLOR.ORANGE,
                                 fontFamily: APP_FONT.REGULAR,
-                                textDecorationLine: "underline",
+                                textDecorationLine: values.promotionCode
+                                  ? "none"
+                                  : "underline",
                                 marginVertical: "auto",
+                                fontSize: values.promotionCode ? 18 : 16,
                               }}
                             >
-                              {values.promotionCode ? (
-                                <Text
-                                  style={{
-                                    textDecorationLine: "none",
-                                    fontSize: 18,
-                                  }}
-                                >
-                                  {values.promotionCode}
-                                </Text>
-                              ) : (
-                                "Áp dụng mã khuyến mãi"
-                              )}
+                              {values.promotionCode || "Áp dụng mã khuyến mãi"}
                             </Text>
                           </Pressable>
                         </View>
@@ -657,7 +649,9 @@ const PlaceOrderPage = () => {
                               color: APP_COLOR.BROWN,
                             }}
                           >
-                            {currencyFormatter(cart.default.sum)}
+                            {cart?.default?.sum
+                              ? currencyFormatter(cart.default.sum)
+                              : currencyFormatter(0)}
                           </Text>
                         </View>
                         <View style={styles.textInputView}>
@@ -676,7 +670,9 @@ const PlaceOrderPage = () => {
                               color: APP_COLOR.BROWN,
                             }}
                           >
-                            {currencyFormatter(cart.default.sum * 0.08)}
+                            {cart?.default?.sum
+                              ? currencyFormatter(cart.default.sum * 0.08)
+                              : currencyFormatter(0)}
                           </Text>
                         </View>
                         <View style={styles.textInputView}>
@@ -714,9 +710,11 @@ const PlaceOrderPage = () => {
                               color: APP_COLOR.ORANGE,
                             }}
                           >
-                            {currencyFormatter(
-                              cart.default.sum - cart.default.sum * 0.08
-                            )}
+                            {cart?.default?.sum
+                              ? currencyFormatter(
+                                  cart.default.sum - cart.default.sum * 0.08
+                                )
+                              : currencyFormatter(0)}
                           </Text>
                         </View>
                       </View>
@@ -801,23 +799,11 @@ const PlaceOrderPage = () => {
                       loading={loading}
                       title="Tạo đơn hàng"
                       onPress={() => {
-                        router.navigate("/(staff)/order/orderSuccess");
+                        setCart(0);
+                        router.push("/(staff)/order/orderSuccess");
                         Linking.openURL(
                           "https://pay.payos.vn/web/e9626a7662d94e4b86ec69a8efad072e"
                         );
-                        // handleCreateOrder(
-                        //   values.promotionCode,
-                        //   values.note,
-                        //   values.address,
-                        //   values.phoneNumber,
-                        //   values.branchId,
-                        //   values.pointUsed,
-                        //   values.pointEarned,
-                        //   values.paymentMethodId,
-                        //   values.orderItems,
-                        //   values.pickUp
-                        // );
-                        // router.navigate("/(auth)/order.success");
                       }}
                       textStyle={{
                         textTransform: "uppercase",
