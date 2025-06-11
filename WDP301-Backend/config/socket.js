@@ -1,20 +1,26 @@
 const socketIo = require("socket.io");
 const jwt = require("jsonwebtoken");
-const Message = require("./message");
-const ChatRoomUser = require("./ChatRoomUser");
+const Message = require("../models/message");
+const ChatRoomUser = require("../models/ChatRoomUser");
+const User = require("../models/user");
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {
     cors: {
-      origin: "*", // Adjust this in production to specific origins
+      origin: ["http://localhost:5173", "http://localhost:3000", "https://wdp301-su25.space"],
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
+  // Track all connected users
+  const connectedUsers = new Map(); // userId -> Set of socketIds
+  const socketToUser = new Map(); // socketId -> userId
+
   io.on("connection", (socket) => {
-    // Verify JWT token on connection
     const token = socket.handshake.auth.token;
     if (!token) {
+      console.error("❌ No token provided for socket connection");
       socket.emit("error", { message: "No token provided" });
       socket.disconnect();
       return;
@@ -22,40 +28,55 @@ const initializeSocket = (server) => {
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err || !decoded.id) {
+        console.error("❌ Invalid token:", {
+          error: err?.message || "No user ID in token",
+          token, // Log token for debugging (be cautious with sensitive data)
+        });
         socket.emit("error", { message: "Invalid token" });
         socket.disconnect();
         return;
       }
-      socket.userId = decoded.id; // Store userId on socket
-      console.log(`User connected: ${socket.userId} (Socket ID: ${socket.id})`);
 
-      // Join user-specific room for direct messages
-      socket.join(`user_${socket.userId}`);
-    });
+      socket.userId = decoded.id;
+      socketToUser.set(socket.id, decoded.id);
 
-    // Join a chat room
-    socket.on("joinRoom", async ({ chatRoomId }) => {
-      try {
-        const userId = socket.userId;
-        // Verify user is part of the chat room
-        const chatRoomUser = await ChatRoomUser.findOne({
-          where: { chatRoomId, userId },
-        });
-        if (!chatRoomUser) {
-          socket.emit("error", { message: "User not in chat room" });
-          return;
-        }
-        socket.join(`room_${chatRoomId}`);
-        socket.emit("message", { message: `Joined room ${chatRoomId}` });
-      } catch (error) {
-        socket.emit("error", { message: "Error joining room", error });
+      console.log(`✅ User connected: ${socket.userId} (Socket ID: ${socket.id})`);
+
+      // Track this connection
+      if (!connectedUsers.has(socket.userId)) {
+        connectedUsers.set(socket.userId, new Set());
       }
+      connectedUsers.get(socket.userId).add(socket.id);
+
+      socket.join(`user_${socket.userId}`);
+
+      // Join all chat rooms the user is part of
+      ChatRoomUser.findAll({ where: { userId: socket.userId } }).then((chatRoomUsers) => {
+        chatRoomUsers.forEach((chatRoomUser) => {
+          socket.join(`room_${chatRoomUser.chatRoomId}`);
+          console.log(`✅ User ${socket.userId} joined room_${chatRoomUser.chatRoomId}`);
+        });
+      });
+
+      // Log current connections
+      console.log(`👥 Total connections for user ${socket.userId}:`, connectedUsers.get(socket.userId).size);
+      console.log(`👥 All connected users:`, Array.from(connectedUsers.keys()));
+      const totalSocketConnections = Array.from(connectedUsers.values()).reduce(
+        (sum, socketSet) => sum + socketSet.size,
+        0
+      );
+      console.log(`👥 Total socket connections:`, totalSocketConnections);
     });
 
-    // Handle sending a message
-    socket.on("sendMessage", async ({ chatRoomId, receiverId, content }) => {
+    socket.on("sendMessage", async ({ chatRoomId, receiverId, content }, callback) => {
       try {
         const senderId = socket.userId;
+        if (!senderId) {
+          throw new Error("User not authenticated");
+        }
+
+        console.log(`📤 Sending message from ${senderId} to ${receiverId || "room " + chatRoomId}:`, content);
+
         const message = await Message.create({
           chatRoomId,
           senderId,
@@ -63,39 +84,93 @@ const initializeSocket = (server) => {
           content,
         });
 
-        // Emit to chat room or specific receiver
+        const sender = await User.findByPk(senderId, { attributes: ["id", "fullName"] });
+        const receiver = receiverId ? await User.findByPk(receiverId, { attributes: ["id", "fullName"] }) : null;
+
+        const messageData = {
+          id: message.id,
+          chatRoomId: message.chatRoomId || null,
+          senderId,
+          receiverId,
+          content,
+          createdAt: message.createdAt,
+          Sender: sender ? { id: sender.id, fullName: sender.fullName } : { id: senderId, fullName: "Unknown" },
+          Receiver: receiver
+            ? { id: receiver.id, fullName: receiver.fullName }
+            : receiverId
+            ? { id: receiverId, fullName: "Unknown" }
+            : null,
+        };
+
+        console.log("📤 Emitting message:", {
+          id: messageData.id,
+          senderId: messageData.senderId,
+          receiverId: messageData.receiverId,
+          content: messageData.content,
+        });
+
         if (chatRoomId) {
-          io.to(`room_${chatRoomId}`).emit("message", {
-            id: message.id,
-            chatRoomId,
-            senderId,
-            content,
-            createdAt: message.createdAt,
-          });
+          console.log(`📤 Emitting to room_${chatRoomId}`);
+          io.to(`room_${chatRoomId}`).emit("message", messageData);
         } else if (receiverId) {
-          // For direct messages, emit to sender and receiver
-          socket.emit("message", {
-            id: message.id,
-            senderId,
-            receiverId,
-            content,
-            createdAt: message.createdAt,
-          });
-          socket.to(`user_${receiverId}`).emit("message", {
-            id: message.id,
-            senderId,
-            receiverId,
-            content,
-            createdAt: message.createdAt,
-          });
+          const senderConnections = connectedUsers.get(senderId) || new Set();
+          const receiverConnections = connectedUsers.get(receiverId) || new Set();
+
+          console.log(`📤 Sender connections (${senderId}):`, Array.from(senderConnections));
+          console.log(`📤 Receiver connections (${receiverId}):`, Array.from(receiverConnections));
+          console.log(
+            `📤 Found ${senderConnections.size} sender sockets and ${receiverConnections.size} receiver sockets`
+          );
+
+          io.to(`user_${senderId}`).emit("message", messageData);
+          io.to(`user_${receiverId}`).emit("message", messageData);
+
+          const senderRoom = io.sockets.adapter.rooms.get(`user_${senderId}`);
+          const receiverRoom = io.sockets.adapter.rooms.get(`user_${receiverId}`);
+
+          console.log(`📤 Sender room size: ${senderRoom?.size || 0}`);
+          console.log(`📤 Receiver room size: ${receiverRoom?.size || 0}`);
+
+          if (!receiverRoom || receiverRoom.size === 0) {
+            console.log(`⚠️ Receiver ${receiverId} is not connected to receive the message`);
+          } else {
+            console.log(`✅ Message emitted to receiver ${receiverId}`);
+          }
         }
+
+        if (callback) callback({ success: true, message: "Message sent" });
       } catch (error) {
-        socket.emit("error", { message: "Error sending message", error });
+        console.error("❌ Error sending message:", error.message);
+        socket.emit("error", { message: "Error sending message", error: error.message });
+        if (callback) callback({ success: false, error: error.message });
       }
     });
 
     socket.on("disconnect", () => {
-      console.log(`User disconnected: ${socket.userId} (Socket ID: ${socket.id})`);
+      const userId = socketToUser.get(socket.id);
+      console.log(`❌ User disconnected: ${userId} (Socket ID: ${socket.id})`);
+
+      // Remove from tracking
+      if (userId && connectedUsers.has(userId)) {
+        connectedUsers.get(userId).delete(socket.id);
+        if (connectedUsers.get(userId).size === 0) {
+          connectedUsers.delete(userId);
+        }
+        console.log(`👥 Remaining connections for user ${userId}:`, connectedUsers.get(userId)?.size || 0);
+      }
+
+      socketToUser.delete(socket.id);
+      const totalSocketConnections = Array.from(connectedUsers.values()).reduce(
+        (sum, socketSet) => sum + socketSet.size,
+        0
+      );
+      console.log(`👥 Total socket connections:`, totalSocketConnections);
+    });
+
+    // Add a ping endpoint to check connectivity
+    socket.on("ping", (callback) => {
+      console.log(`🏓 Ping from user ${socket.userId}`);
+      if (callback) callback({ success: true, userId: socket.userId, socketId: socket.id });
     });
   });
 
