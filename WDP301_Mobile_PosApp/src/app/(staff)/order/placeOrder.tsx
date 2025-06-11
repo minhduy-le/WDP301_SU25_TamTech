@@ -10,6 +10,7 @@ import { useCurrentApp } from "@/context/app.context";
 import { ChangePasswordSchema } from "@/utils/validate.schema";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
+import { router } from "expo-router";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import {
@@ -800,6 +801,10 @@ const PlaceOrderPage = () => {
                       loading={loading}
                       title="Tạo đơn hàng"
                       onPress={() => {
+                        router.navigate("/(staff)/order/orderSuccess");
+                        Linking.openURL(
+                          "https://pay.payos.vn/web/e9626a7662d94e4b86ec69a8efad072e"
+                        );
                         // handleCreateOrder(
                         //   values.promotionCode,
                         //   values.note,
