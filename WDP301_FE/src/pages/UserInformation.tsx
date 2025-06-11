@@ -361,19 +361,19 @@ const UserInfomation = () => {
                     className="qr-code"
                   />
                   <div className="qr-text">
-                    <p>0902346789</p>
-                    <p>
+                    <p>{userProfile?.phone_number || "0902346789"}</p>
+                    {/* <p>
                       <strong>Hạng thành viên:</strong> Vàng
-                    </p>
+                    </p> */}
                     <p>
                       <strong>Điểm tích lũy:</strong>{" "}
-                      {userProfile?.member_point || "100 điểm"}
+                      {userProfile?.member_point || "0"} điểm
                     </p>
                     <p>
                       <strong>Điểm đã sử dụng:</strong> 0 điểm
                     </p>
                     <p>
-                      <strong>Điểm còn lại:</strong> 100 điểm
+                      <strong>Điểm còn lại:</strong> 0 điểm
                     </p>
                   </div>
                 </div>

@@ -60,6 +60,26 @@ const getFormattedPrice = (price: string) => {
   return `${integerPart}đ`;
 };
 
+const statusMap: { [key: string]: string } & {
+  Pending: string;
+  Paid: string;
+  Approved: string;
+  Preparing: string;
+  Cooked: string;
+  Delivering: string;
+  Delivered: string;
+  Canceled: string;
+} = {
+  Pending: "Chờ thanh toán",
+  Paid: "Đã thanh toán",
+  Approved: "Xác nhận đơn",
+  Preparing: "Đang nấu ăn",
+  Cooked: "Đã nấu xong",
+  Delivering: "Đang giao",
+  Delivered: "Đã giao",
+  Canceled: "Đã hủy",
+};
+
 const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
   console.log("OrderTracking received order:", order);
   const originalPrice = order?.orderItems
@@ -145,8 +165,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
                       : "#2d1e1a",
                 }}
               >
-                {" "}
-                {order.status}
+                {statusMap[order.status] || order.status}
               </div>
             </div>
             <p className="shipping-info">
