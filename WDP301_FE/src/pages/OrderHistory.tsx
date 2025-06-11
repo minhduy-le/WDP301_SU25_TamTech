@@ -41,6 +41,26 @@ const getFormattedPrice = (price: string | number) => {
   return `${integerPart}đ`;
 };
 
+const statusMap: { [key: string]: string } & {
+  Pending: string;
+  Paid: string;
+  Approved: string;
+  Repairing: string;
+  Cooked: string;
+  Delivering: string;
+  Delivered: string;
+  Canceled: string;
+} = {
+  Pending: "Chờ thanh toán",
+  Paid: "Đã thanh toán",
+  Approved: "Xác nhận đơn",
+  Repairing: "Đang nấu ăn",
+  Cooked: "Đã nấu xong",
+  Delivering: "Đang giao",
+  Delivered: "Đã giao",
+  Canceled: "Đã hủy",
+};
+
 const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{
@@ -63,6 +83,15 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   >({});
 
   const { mutate: createFeedback } = useCreateFeedback();
+
+  const calculateTotal = (order: OrderHistory) => {
+    const itemTotal = order.orderItems.reduce(
+      (sum, item) => sum + parseFloat(item.price.toString()) * item.quantity,
+      0
+    );
+    const order_shipping_fee = parseFloat(order.order_shipping_fee.toString());
+    return itemTotal + order_shipping_fee;
+  };
 
   const showModal = (order: OrderHistory) => {
     setLoadingButtons((prev) => ({ ...prev, [order.orderId]: true }));
@@ -188,13 +217,21 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   };
 
   const statusTabs = [
-    "Pending",
-    "Paid",
-    "Delivering",
-    "Delivered",
-    "Canceled",
-    "Preparing",
+    { text: "Chờ thanh toán", value: "Pending" },
+    { text: "Đã thanh toán", value: "Paid" },
+    { text: "Xác nhận đơn", value: "Approved" },
+    { text: "Đang nấu ăn", value: "Repairing" },
+    { text: "Đã nấu xong", value: "Cooked" },
+    { text: "Đang giao", value: "Delivering" },
+    { text: "Đã giao", value: "Delivered" },
+    { text: "Đã hủy", value: "Canceled" },
   ];
+
+  const sortedOrderHistory = orderHistory
+    ? [...orderHistory].sort((a, b) =>
+        dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
+      )
+    : [];
 
   return (
     <div className="order-history-container">
@@ -205,12 +242,13 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         <Tabs.TabPane tab="Tất cả" key="all">
           {isOrderHistoryLoading ? (
             <Skeleton active style={{ padding: "0 34px" }} />
-          ) : orderHistory && orderHistory.length > 0 ? (
-            orderHistory.map((order) => {
+          ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
+            sortedOrderHistory.map((order) => {
               const actions = getActionsForStatus(order.status);
               const itemCount = order.orderItems ? order.orderItems.length : 0;
               const isLoading = loadingButtons[order.orderId] || false;
               const isSubmitting = submittingFeedback[order.orderId] || false;
+              const total = calculateTotal(order);
               return (
                 <Col
                   key={order.orderId}
@@ -246,8 +284,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                             className="order-price"
                             style={{ fontFamily: "Montserrat, sans-serif" }}
                           >
-                            {getFormattedPrice(order.order_amount)} ({itemCount}{" "}
-                            món)
+                            {getFormattedPrice(total)} ({itemCount} món)
                           </Text>
                         </div>
                       </Row>
@@ -272,7 +309,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                 : "#2d1e1a",
                           }}
                         >
-                          {order.status}
+                          {statusMap[order.status] || order.status}
                         </div>
                         <div className="order-actions">
                           <Button
@@ -328,13 +365,13 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
           )}
         </Tabs.TabPane>
 
-        {statusTabs.map((status) => (
-          <Tabs.TabPane tab={status} key={status}>
+        {statusTabs.map(({ text, value }) => (
+          <Tabs.TabPane tab={text} key={value}>
             {isOrderHistoryLoading ? (
               <Skeleton active style={{ padding: "0 34px" }} />
-            ) : orderHistory && orderHistory.length > 0 ? (
-              orderHistory
-                .filter((order) => order.status === status)
+            ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
+              sortedOrderHistory
+                .filter((order) => order.status === value)
                 .map((order) => {
                   const actions = getActionsForStatus(order.status);
                   const itemCount = order.orderItems
@@ -343,6 +380,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                   const isLoading = loadingButtons[order.orderId] || false;
                   const isSubmitting =
                     submittingFeedback[order.orderId] || false;
+                  const total = calculateTotal(order);
                   return (
                     <Col
                       key={order.orderId}
@@ -352,7 +390,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                       lg={24}
                       style={{
                         backgroundColor: "transparent",
-                        marginBottom: 16,
                       }}
                     >
                       <Card className="order-card">
@@ -381,8 +418,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                 className="order-price"
                                 style={{ fontFamily: "Montserrat, sans-serif" }}
                               >
-                                {getFormattedPrice(order.order_amount)} (
-                                {itemCount} món)
+                                {getFormattedPrice(total)} ({itemCount} món)
                               </Text>
                             </div>
                           </Row>
@@ -407,7 +443,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                     : "#2d1e1a",
                               }}
                             >
-                              {order.status}
+                              {statusMap[order.status] || order.status}
                             </div>
                             <div className="order-actions">
                               <Button

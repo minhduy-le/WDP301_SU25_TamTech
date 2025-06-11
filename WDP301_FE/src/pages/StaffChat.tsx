@@ -207,8 +207,20 @@ const StaffChat = () => {
                     }`}
                   >
                     {chat.content}
-                    <div style={{ marginBottom: "5px", textAlign: "right" }}>
-                      <small style={{ color: "white", fontSize: "12px" }}>
+                    <div
+                      style={{
+                        marginBottom: "5px",
+                        textAlign:
+                          chat.senderId === authUser?.id ? "right" : "left",
+                      }}
+                    >
+                      <small
+                        style={{
+                          color:
+                            chat.senderId === authUser?.id ? "white" : "black",
+                          fontSize: "12px",
+                        }}
+                      >
                         {formatChatTime(chat.createdAt)}
                       </small>
                     </div>
