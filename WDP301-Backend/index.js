@@ -1,6 +1,8 @@
 const express = require("express");
+const http = require("http");
 const sequelize = require("./config/database");
 const setupSwagger = require("./config/swagger");
+const initializeSocket = require("./config/socket");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -25,12 +27,21 @@ const promotionRoutes = require("./routes/promotionRoutes");
 require("./models/associations");
 
 const app = express();
-const port = 3000;
+const server = http.createServer(app); // Create HTTP server
+const port = process.env.PORT || 3000;
+
+// Initialize Socket.IO
+const io = initializeSocket(server);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000", "https://wdp301-su25.space"], // Match socket.js CORS
+    credentials: true,
+  })
+);
 
 setupSwagger(app);
 
@@ -69,7 +80,7 @@ sequelize
     console.error("Lỗi:", err);
   });
 
-app.listen(process.env.PORT || 3000, () => {
+server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
   console.log(`API docs available at http://localhost:${port}/api-docs`);
 });
