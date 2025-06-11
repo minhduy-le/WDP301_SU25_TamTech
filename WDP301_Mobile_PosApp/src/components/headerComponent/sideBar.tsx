@@ -56,27 +56,6 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
     }
   };
 
-  const renderItem = (data: any) => (
-    <View style={styles.cartItemContainer}>
-      <CartProductTag
-        productImg={data.item.data.productImg}
-        productName={data.item.data.title}
-        productQuantity={data.item.quantity}
-        productPrice={data.item.data.basePrice}
-      />
-    </View>
-  );
-  const renderHiddenItem = (data: any) => (
-    <View style={styles.rowBack}>
-      <Pressable
-        style={styles.deleteButton}
-        onPress={() => handleDeleteItem(data.item.data.productId)}
-      >
-        <Text style={styles.deleteButtonText}>Xóa</Text>
-      </Pressable>
-    </View>
-  );
-
   return (
     <Animated.View
       style={[
@@ -99,8 +78,26 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
               key,
               ...item,
             }))}
-            renderItem={renderItem}
-            renderHiddenItem={renderHiddenItem}
+            renderItem={(data) => (
+              <View style={styles.cartItemContainer}>
+                <CartProductTag
+                  productImg={data.item.data.productImg}
+                  productName={data.item.data.title}
+                  productQuantity={data.item.quantity}
+                  productPrice={data.item.data.basePrice}
+                />
+              </View>
+            )}
+            renderHiddenItem={(data) => (
+              <View style={styles.rowBack}>
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteItem(data.item.data.productId)}
+                >
+                  <Text style={styles.deleteButtonText}>Xóa</Text>
+                </Pressable>
+              </View>
+            )}
             rightOpenValue={-80}
             disableRightSwipe
             style={styles.listContainer}
@@ -111,9 +108,6 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
             tension={40}
             swipeToOpenPercent={20}
             useNativeDriver
-            previewRowKey={Object.keys(cart.default.items)[0]}
-            previewOpenValue={-40}
-            previewOpenDelay={3000}
           />
         )}
       </View>
@@ -130,7 +124,7 @@ const Sidebar = ({ sidebarAnimation, toggleSidebar }: SidebarProps) => {
           btnStyle={{
             justifyContent: "center",
             borderRadius: 30,
-            marginTop: 10,
+            marginTop: 20,
             paddingVertical: 10,
             backgroundColor: APP_COLOR.ORANGE,
             marginHorizontal: 70,
