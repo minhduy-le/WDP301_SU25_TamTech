@@ -86,7 +86,7 @@ const Menu = () => {
     data: productDetail,
     isLoading: isProductDetailLoading,
     isError: isProductDetailError,
-  } = useGetProductById(String(selectedProductId || 0));
+  } = useGetProductById(String(selectedProductId));
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
