@@ -1,7 +1,8 @@
 import logo from "@/assets/data/logo.png";
 import footerFrame from "@/assets/frame_footer.png";
+import ShareButton from "@/components/btnComponent/shareBtn";
 import ShareInput from "@/components/btnComponent/shareInput";
-import ShareButton from "@/components/btnComponent/welcomeBtn";
+
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import { useCurrentApp } from "@/context/app.context";
 import { typography } from "@/themes/typography";
