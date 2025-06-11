@@ -38,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000", "https://wdp301-su25.space/"], // Match socket.js CORS
+    origin: ["http://localhost:5173", "http://localhost:3000", "https://wdp301-su25.space"], // Match socket.js CORS
     credentials: true,
   })
 );
