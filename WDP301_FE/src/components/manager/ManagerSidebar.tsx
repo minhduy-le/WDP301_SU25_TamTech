@@ -71,7 +71,7 @@ const ManagerSidebar: React.FC = () => {
 
   const userMenuItems: MenuProps["items"] = [
     {
-      key: "profile",
+      key: "/manager/profile",
       label: "Thông tin cá nhân",
       icon: <UserOutlined />,
     },
