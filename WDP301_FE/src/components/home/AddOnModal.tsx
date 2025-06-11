@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Modal,
   Row,
@@ -50,31 +50,24 @@ const useAddOnProducts = () => {
   const query2 = useGetProductByTypeId(2);
   const query3 = useGetProductByTypeId(3);
   const query4 = useGetProductByTypeId(4);
-
-  const queries: {
-    typeId: number;
-    query: UseQueryResult<any[], Error>;
-  }[] = [
-    { typeId: 2, query: query2 },
-    { typeId: 3, query: query3 },
-    { typeId: 4, query: query4 },
-  ];
-
-  const addOnProductQueries: {
-    typeId: number;
-    query: UseQueryResult<any[], Error>;
-  }[] = [];
-
-  if (productTypes) {
-    productTypes
+  const queries = useMemo(
+    () => [
+      { typeId: 2, query: query2 },
+      { typeId: 3, query: query3 },
+      { typeId: 4, query: query4 },
+    ],
+    [query2, query3, query4],
+  );
+  const addOnProductQueries = useMemo(() => {
+    if (!productTypes) return [] as { typeId: number; query: UseQueryResult<any[], Error> }[];
+    return productTypes
       .filter((type) => type.productTypeId !== 1)
-      .forEach((type) => {
+      .map((type) => {
         const matchingQuery = queries.find((q) => q.typeId === type.productTypeId);
-        if (matchingQuery) {
-          addOnProductQueries.push(matchingQuery);
-        }
-      });
-  }
+        return matchingQuery as { typeId: number; query: UseQueryResult<any[], Error> };
+      })
+      .filter(Boolean);
+  }, [productTypes, queries]);
 
   return addOnProductQueries;
 };
@@ -96,28 +89,39 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
 
   useEffect(() => {
     if (productTypes && open) {
-      const categories: AddOnCategory[] = productTypes
-        .filter((type) => type.productTypeId !== 1)
-        .map((type) => {
-          const matchingQuery = addOnProductQueries.find(
-            (q) => q.typeId === type.productTypeId,
-          );
-          return {
-            id: `modal_type_${type.productTypeId}`,
-            title: type.name,
-            selectionText: "Tùy chọn", 
-            apiType: type.productTypeId,
-            items:
-              matchingQuery?.query.data?.map((item) => ({
-                ...item,
-                selectedQuantity: 0,
-              })) || [],
-            loading: matchingQuery?.query.isLoading || false,
-          } as AddOnCategory;
-        });
-      setModalAddonCategories(categories);
+      setModalAddonCategories((prevCategories) => {
+        const categories: AddOnCategory[] = productTypes
+          .filter((type) => type.productTypeId !== 1)
+          .map((type) => {
+            const matchingQuery = addOnProductQueries.find(
+              (q) => q.typeId === type.productTypeId,
+            );
+            const prevCat = prevCategories.find(
+              (cat) => cat.id === `modal_type_${type.productTypeId}`,
+            );
+            const items =
+              matchingQuery?.query.data?.map((item) => {
+                const prevItem = prevCat?.items.find(
+                  (p) => p.productId === item.productId,
+                );
+                return {
+                  ...item,
+                  selectedQuantity: prevItem?.selectedQuantity ?? 0,
+                };
+              }) || [];
+            return {
+              id: `modal_type_${type.productTypeId}`,
+              title: type.name,
+              selectionText: "Tùy chọn",
+              apiType: type.productTypeId,
+              items,
+              loading: matchingQuery?.query.isLoading || false,
+            } as AddOnCategory;
+          });
+        return categories;
+      });
     }
-  }, [productTypes, addOnProductQueries]);
+  }, [productTypes, addOnProductQueries, open]);
 
   const fetchModalCategoryItems = useCallback(
     async (categoryIndex: number) => {
@@ -131,11 +135,17 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
         setModalAddonCategories((prev) => {
           const newCategories = JSON.parse(JSON.stringify(prev));
           if (newCategories[categoryIndex]) {
-            newCategories[categoryIndex].items = dataToUse.map((p) => ({
-              ...p,
-              price: p.price,
-              selectedQuantity: 0,
-            }));
+            const prevItems = newCategories[categoryIndex].items || [];
+            newCategories[categoryIndex].items = dataToUse.map((p) => {
+              const prevItem = prevItems.find(
+                (item: any) => item.productId === p.productId,
+              );
+              return {
+                ...p,
+                price: p.price,
+                selectedQuantity: prevItem?.selectedQuantity ?? 0,
+              };
+            });
             newCategories[categoryIndex].loading = false;
           }
           return newCategories;
