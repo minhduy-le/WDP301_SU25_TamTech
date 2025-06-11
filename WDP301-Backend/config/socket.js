@@ -6,12 +6,12 @@ const User = require("../models/user");
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {
-    cors: {
-      origin: ["http://localhost:5173", "http://localhost:3000", "https://wdp301-su25.space"],
-      methods: ["GET", "POST"],
-      credentials: true,
-    },
-  });
+  cors: {
+    origin: "*", // Cho phép tất cả các nguồn gốc
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
   // Track all connected users
   const connectedUsers = new Map(); // userId -> Set of socketIds
