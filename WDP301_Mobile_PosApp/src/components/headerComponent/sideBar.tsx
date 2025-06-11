@@ -8,7 +8,6 @@ import {
   Animated,
   Dimensions,
   Image,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -216,11 +215,7 @@ const styles = StyleSheet.create({
   orderButtonContainer: {
     alignItems: "center",
     backgroundColor: APP_COLOR.WHITE,
-    ...Platform.select({
-      android: {
-        marginBottom: 75,
-      },
-    }),
+    marginBottom: 75,
   },
 });
 

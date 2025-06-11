@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
   },
   itemQuantity: {
     color: APP_COLOR.GREY,
+    fontFamily: APP_FONT.REGULAR,
     opacity: 0.8,
     fontSize: 13,
     marginLeft: 5,

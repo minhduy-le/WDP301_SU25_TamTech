@@ -10,6 +10,7 @@ import { useCurrentApp } from "@/context/app.context";
 import { ChangePasswordSchema } from "@/utils/validate.schema";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
+import { router } from "expo-router";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import {
@@ -46,7 +47,7 @@ const PlaceOrderPage = () => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const dropdownItems = [
     { id: "1", title: "COD" },
-    { id: "2", title: "VietQR" },
+    { id: "2", title: "Chuyển khoản" },
   ];
   const [orderDetails, setOrderDetails] = useState<
     { productId: number; quantity: number }[]
@@ -262,20 +263,20 @@ const PlaceOrderPage = () => {
     textInputView: {
       flexDirection: "row",
       justifyContent: "space-between",
+      alignItems: "center",
     },
     textInputText: {
       color: APP_COLOR.BROWN,
       fontFamily: APP_FONT.BOLD,
-      fontSize: 20,
+      fontSize: 17,
       marginVertical: "auto",
     },
     dropdownContainer: {
       marginBottom: 15,
-      marginHorizontal: 5,
     },
     dropdownLabel: {
       fontFamily: APP_FONT.REGULAR,
-      fontSize: 17,
+      fontSize: 15,
       marginBottom: 8,
       color: APP_COLOR.BROWN,
     },
@@ -454,8 +455,8 @@ const PlaceOrderPage = () => {
             >
               <Text
                 style={{
-                  fontFamily: APP_FONT.SEMIBOLD,
-                  fontSize: 17,
+                  fontFamily: APP_FONT.BOLD,
+                  fontSize: 19,
                   color: APP_COLOR.BROWN,
                   position: "relative",
                   top: 5,
@@ -481,7 +482,7 @@ const PlaceOrderPage = () => {
                     fontFamily: APP_FONT.MEDIUM,
                   }}
                 >
-                  Số điện thoại:
+                  Họ và tên:
                 </Text>
                 <Text
                   style={{
@@ -490,7 +491,7 @@ const PlaceOrderPage = () => {
                     fontFamily: APP_FONT.REGULAR,
                   }}
                 >
-                  0889679511
+                  Lê Minh Duy
                 </Text>
               </View>
               <View style={{ flexDirection: "row", gap: 5, marginTop: 5 }}>
@@ -514,16 +515,7 @@ const PlaceOrderPage = () => {
                 </Text>
               </View>
             </View>
-            <Text
-              style={{
-                fontFamily: APP_FONT.SEMIBOLD,
-                fontSize: 17,
-                color: APP_COLOR.BROWN,
-                marginBottom: 5,
-              }}
-            >
-              Chi tiết đơn hàng
-            </Text>
+            <Text style={styles.textInputText}>Chi tiết đơn hàng</Text>
             {orderItems.map((item: any, index: any) => {
               return (
                 <View
@@ -611,7 +603,7 @@ const PlaceOrderPage = () => {
                     {orderItems?.length > 0 && (
                       <View
                         style={{
-                          marginVertical: 15,
+                          marginTop: 15,
                           borderTopWidth: 0.5,
                           borderTopColor: APP_COLOR.BROWN,
                           paddingTop: 10,
@@ -653,7 +645,7 @@ const PlaceOrderPage = () => {
                           <Text
                             style={[
                               styles.textInputText,
-                              { fontFamily: APP_FONT.REGULAR, fontSize: 17 },
+                              { fontFamily: APP_FONT.REGULAR, fontSize: 15 },
                             ]}
                           >
                             Thành tiền
@@ -672,10 +664,10 @@ const PlaceOrderPage = () => {
                           <Text
                             style={[
                               styles.textInputText,
-                              { fontFamily: APP_FONT.REGULAR, fontSize: 17 },
+                              { fontFamily: APP_FONT.REGULAR, fontSize: 15 },
                             ]}
                           >
-                            Phí giao hàng
+                            Thuế (8%)
                           </Text>
                           <Text
                             style={{
@@ -684,14 +676,14 @@ const PlaceOrderPage = () => {
                               color: APP_COLOR.BROWN,
                             }}
                           >
-                            {currencyFormatter(20000)}
+                            {currencyFormatter(cart.default.sum * 0.08)}
                           </Text>
                         </View>
                         <View style={styles.textInputView}>
                           <Text
                             style={[
                               styles.textInputText,
-                              { fontFamily: APP_FONT.REGULAR, fontSize: 17 },
+                              { fontFamily: APP_FONT.REGULAR, fontSize: 15 },
                             ]}
                           >
                             Giảm giá
@@ -710,7 +702,7 @@ const PlaceOrderPage = () => {
                           <Text
                             style={[
                               styles.textInputText,
-                              { fontFamily: APP_FONT.BOLD, fontSize: 17 },
+                              { fontFamily: APP_FONT.BOLD, fontSize: 15 },
                             ]}
                           >
                             Số tiền thanh toán
@@ -719,16 +711,19 @@ const PlaceOrderPage = () => {
                             style={{
                               fontFamily: APP_FONT.BOLD,
                               fontSize: 17,
-                              color: APP_COLOR.BROWN,
+                              color: APP_COLOR.ORANGE,
                             }}
                           >
-                            {currencyFormatter(200000)}
+                            {currencyFormatter(
+                              cart.default.sum - cart.default.sum * 0.08
+                            )}
                           </Text>
                         </View>
                       </View>
                     )}
                     {couponStatus && (
                       <CustomerInforInput
+                        title="Mã khuyến mãi: "
                         onChangeText={handleChange("promotionCode")}
                         onBlur={handleBlur("promotionCode")}
                         value={values.promotionCode}
@@ -738,7 +733,7 @@ const PlaceOrderPage = () => {
                       />
                     )}
                     <CustomerInforInput
-                      title="Sử dụng điểm"
+                      title="Sử dụng điểm: "
                       onChangeText={(text: any) => {
                         const numericValue = Number(text) || 0;
                         if (numericValue >= 0) {
@@ -750,6 +745,21 @@ const PlaceOrderPage = () => {
                       error={errors.pointUsed}
                       touched={touched.pointUsed}
                       keyboardType="numeric"
+                    />
+                    <CustomerInforInput
+                      title="Ghi chú:"
+                      onChangeText={handleChange("note")}
+                      onBlur={handleBlur("note")}
+                      value={values.note}
+                      error={errors.note}
+                      touched={touched.note}
+                      placeholder="Nhập ghi chú..."
+                    />
+                    <CustomerInforInput
+                      title="Mang đi"
+                      value={values.pickUp}
+                      setValue={(v: any) => setFieldValue("pickUp", v)}
+                      isBoolean={true}
                     />
                     <View style={styles.dropdownContainer}>
                       <Text style={styles.dropdownLabel}>
@@ -786,24 +796,15 @@ const PlaceOrderPage = () => {
                         </Text>
                       )}
                     </View>
-                    <CustomerInforInput
-                      title="Mang đi"
-                      value={values.pickUp}
-                      setValue={(v: any) => setFieldValue("pickUp", v)}
-                      isBoolean={true}
-                    />
-                    <CustomerInforInput
-                      onChangeText={handleChange("note")}
-                      onBlur={handleBlur("note")}
-                      value={values.note}
-                      error={errors.note}
-                      touched={touched.note}
-                      placeholder="Ghi chú"
-                    />
+
                     <ShareButton
                       loading={loading}
                       title="Tạo đơn hàng"
                       onPress={() => {
+                        router.navigate("/(staff)/order/orderSuccess");
+                        Linking.openURL(
+                          "https://pay.payos.vn/web/e9626a7662d94e4b86ec69a8efad072e"
+                        );
                         // handleCreateOrder(
                         //   values.promotionCode,
                         //   values.note,

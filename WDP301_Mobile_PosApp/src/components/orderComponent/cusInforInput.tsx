@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   FlatList,
   KeyboardTypeOptions,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -11,9 +12,9 @@ import {
   View,
 } from "react-native";
 const styles = StyleSheet.create({
-  inputGroup: {
-    padding: 5,
-    gap: 7,
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   text: {
     fontSize: 15,
@@ -21,11 +22,16 @@ const styles = StyleSheet.create({
     color: APP_COLOR.BROWN,
   },
   input: {
-    borderWidth: 1,
+    borderBottomWidth: 0.5,
     paddingHorizontal: 10,
-    borderRadius: 10,
-    height: 40,
-    width: "100%",
+    paddingBottom: 2,
+    maxWidth: 250,
+    ...Platform.select({
+      android: {
+        position: "relative",
+        top: -5,
+      },
+    }),
   },
   eye: {
     position: "absolute",
@@ -45,7 +51,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
-    borderColor: APP_COLOR.BROWN,
+    borderBottomColor: APP_COLOR.BROWN,
     marginVertical: "auto",
   },
   checkboxChecked: {
@@ -117,7 +123,7 @@ const CustomerInforInput = (props: IProps) => {
 
   if (isBoolean) {
     return (
-      <View style={styles.inputGroup}>
+      <View style={styles.container}>
         <View style={styles.checkboxContainer}>
           {title && <Text style={styles.text}>{title}</Text>}
           <View style={{ flexDirection: "row" }}>
@@ -130,11 +136,11 @@ const CustomerInforInput = (props: IProps) => {
             <Text
               style={{
                 fontFamily: APP_FONT.MEDIUM,
-                fontSize: 17,
-                color: APP_COLOR.BROWN,
+                fontSize: 15,
+                color: APP_COLOR.ORANGE,
               }}
             >
-              {value ? "Có" : "Không"}
+              {value ? "Có" : "Dùng tại cửa hàng"}
             </Text>
           </View>
         </View>
@@ -146,7 +152,7 @@ const CustomerInforInput = (props: IProps) => {
   }
 
   return (
-    <View style={styles.inputGroup}>
+    <View style={styles.container}>
       {title && <Text style={styles.text}>{title}</Text>}
       {dropdownItems ? (
         <>
@@ -190,8 +196,8 @@ const CustomerInforInput = (props: IProps) => {
             style={[
               styles.input,
               {
-                borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
-                color: APP_COLOR.BROWN,
+                borderBottomColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
+                color: APP_COLOR.ORANGE,
                 fontFamily: APP_FONT.REGULAR,
               },
             ]}

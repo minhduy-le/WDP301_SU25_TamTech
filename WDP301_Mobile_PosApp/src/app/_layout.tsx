@@ -23,7 +23,8 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(auth)/welcome" />
-          <Stack.Screen name="(staff)/order.placeOrder" />
+          <Stack.Screen name="(staff)/order/placeOrder" />
+          <Stack.Screen name="(staff)/order/orderSuccess" />
         </Stack>
       </AppProvider>
     </GestureHandlerRootView>

@@ -46,13 +46,13 @@ const ShareUnderlineInput = () => {
           fontFamily: APP_FONT.MEDIUM,
         }}
       >
-        Tên khách hàng
+        SĐT khách hàng
       </Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
         <View style={styles.container}>
           <TextInput
             style={{ fontFamily: APP_FONT.REGULAR }}
-            placeholder="Nhập tên khách hàng"
+            placeholder="Nhập sdt khách hàng"
             placeholderTextColor={APP_COLOR.ORANGE}
             onChangeText={handleChangeText}
             value={searchTerm}
