@@ -36,6 +36,7 @@ import {
 import { AxiosError } from "axios";
 import { useGetShippers, useAssignShipper } from "../hooks/shipperApi";
 import DeliveryIcon from "../components/icon/DeliveryIcon";
+import PrintIcon from "../components/icon/PrintIcon";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -410,6 +411,21 @@ const StaffOrderManagement = () => {
               />
             </Tooltip>
           )}
+          <Tooltip title="In hóa đơn">
+            <Button
+              type="link"
+              icon={<PrintIcon />}
+              style={{
+                color: "#3B82F6",
+                fontWeight: 600,
+                padding: 0,
+                outline: "none",
+                boxShadow: "none",
+                border: "none",
+                background: "#e8f5e9",
+              }}
+            />
+          </Tooltip>
         </Space>
       ),
     },
