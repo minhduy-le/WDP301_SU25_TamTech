@@ -95,7 +95,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
   const [modalTotalPrice, setModalTotalPrice] = useState<number>(0);
 
   useEffect(() => {
-    if (productTypes && !open) {
+    if (productTypes && open) {
       const categories: AddOnCategory[] = productTypes
         .filter((type) => type.productTypeId !== 1)
         .map((type) => {
@@ -105,7 +105,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
           return {
             id: `modal_type_${type.productTypeId}`,
             title: type.name,
-            selectionText: "Tùy chọn",
+            selectionText: "Tùy chọn", 
             apiType: type.productTypeId,
             items:
               matchingQuery?.query.data?.map((item) => ({
@@ -117,7 +117,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
         });
       setModalAddonCategories(categories);
     }
-  }, [productTypes, addOnProductQueries, open]);
+  }, [productTypes, addOnProductQueries]);
 
   const fetchModalCategoryItems = useCallback(
     async (categoryIndex: number) => {
