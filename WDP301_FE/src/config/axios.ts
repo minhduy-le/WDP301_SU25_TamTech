@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://wdp-301-0fd32c261026.herokuapp.com/api/",
+  baseURL: "https://wdp301-su25.space/api/",
   headers: {
     "Content-Type": "application/json",
     Accept: "*/*",
@@ -16,22 +16,22 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log("Request Config:", config);
+    // console.log("Request Config:", config);
     return config;
   },
   (error) => {
-    console.error("Request Error:", error);
+    // console.error("Request Error:", error);
     return Promise.reject(error);
   }
 );
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log("Response:", response);
+    // console.log("Response:", response);
     return response;
   },
   (error) => {
-    console.error("Response Error:", error);
+    // console.error("Response Error:", error);
     return Promise.reject(error);
   }
 );
