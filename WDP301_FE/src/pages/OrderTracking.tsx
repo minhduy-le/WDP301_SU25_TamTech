@@ -37,12 +37,14 @@ const getStepIndex = (status: string) => {
     case "Paid":
     case "Preparing":
       return 1;
-    case "Delivering":
+    case "Cooked":
       return 2;
-    case "Delivered":
+    case "Delivering":
       return 3;
-    case "Canceled":
+    case "Delivered":
       return 4;
+    case "Canceled":
+      return 5;
     default:
       return 0;
   }
@@ -245,7 +247,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
             </div>
             <div className="button-group">
               <Button className="view-order">Hủy đơn</Button>
-              <Button className="track-order">Theo dõi đơn hàng</Button>
+              {/* <Button className="track-order">Theo dõi đơn hàng</Button> */}
             </div>
           </div>
         </Col>
