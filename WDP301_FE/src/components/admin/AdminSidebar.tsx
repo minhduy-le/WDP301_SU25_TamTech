@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown } from "antd";
+import { Layout, Menu, Button, Avatar, Dropdown, message } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -16,9 +16,9 @@ import {
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
 import logo from "../../assets/logo-footer.png";
+import { useAuthStore } from "../../hooks/usersApi";
 
 const { Header, Sider, Content } = Layout;
-const user = JSON.parse(localStorage.getItem("user") || "{}");
 
 const AdminSidebarGreenStyles = () => (
   <style>{`
@@ -52,6 +52,7 @@ const AdminSidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: authUser, logout } = useAuthStore();
 
   const siderWidth = 250;
   const siderCollapsedWidth = 80;
@@ -118,8 +119,8 @@ const AdminSidebar: React.FC = () => {
       label: "Đăng xuất",
       icon: <LogoutOutlined />,
       onClick: () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        logout();
+        message.success("Đăng xuất thành công");
         navigate("/login");
       },
     },
@@ -290,7 +291,7 @@ const AdminSidebar: React.FC = () => {
                   }}
                 />
                 <span style={{ color: "#1B5E20", fontWeight: 600 }}>
-                  {user.fullName}
+                  {authUser?.fullName}
                 </span>
                 <DownOutlined style={{ color: "#1B5E20" }} />
               </div>
