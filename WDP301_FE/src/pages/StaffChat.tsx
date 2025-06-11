@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
-import { useCreateChat } from "../hooks/chatsApi";
+import { useCreateChat, useGetChats } from "../hooks/chatsApi";
 import io, { Socket } from "socket.io-client";
-import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
@@ -50,6 +49,7 @@ const StaffChat = () => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const context = useOutletContext<OutletContext>();
   const setParentSocket = context?.setSocket; // Safe access to setSocket
+  const { data: initialChats, isLoading: isChatsLoading } = useGetChats();
 
   // Scroll to the latest message
   const scrollToBottom = () => {
@@ -71,7 +71,7 @@ const StaffChat = () => {
     }
 
     console.log("🔌 Initializing socket connection for user:", authUser.id);
-    const newSocket = io("https://wdp301-su25.space/", {
+    const newSocket = io("https://wdp301-su25.space", {
       auth: { token },
       reconnection: true,
       reconnectionDelay: 1000,
@@ -193,46 +193,29 @@ const StaffChat = () => {
   }, [authUser?.id, token, setParentSocket]);
 
   useEffect(() => {
-    if (!authUser || !selectedUser) {
+    if (!authUser || !selectedUser || !initialChats) {
       setChats([]);
       return;
     }
 
-    const fetchInitialMessages = async () => {
-      setIsLoadingChats(true);
-      try {
-        const response = await axiosInstance.get<Chat[]>("/chat/messages", {
-          params: {
-            limit: 50,
-            offset: 0,
-          },
-        });
-        const filteredChats = response.data.filter(
-          (chat) =>
-            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
-        );
-        setChats(
-          filteredChats
-            .map((chat) => ({
-              ...chat,
-              createdAt: new Date(chat.createdAt),
-              Sender: chat.Sender,
-              Receiver: chat.Receiver,
-            }))
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        );
-        setTimeout(scrollToBottom, 0);
-      } catch (error: any) {
-        console.error("❌ Failed to fetch messages:", error.message);
-        message.error("Không thể tải tin nhắn");
-      } finally {
-        setIsLoadingChats(false);
-      }
-    };
-
-    fetchInitialMessages();
-  }, [selectedUser, authUser, accounts]);
+    setIsLoadingChats(isChatsLoading);
+    const filteredChats = initialChats.filter(
+      (chat) =>
+        (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
+        (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
+    );
+    setChats(
+      filteredChats
+        .map((chat) => ({
+          ...chat,
+          createdAt: new Date(chat.createdAt),
+          Sender: chat.Sender,
+          Receiver: chat.Receiver,
+        }))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    );
+    setTimeout(scrollToBottom, 0);
+  }, [selectedUser, authUser, initialChats, isChatsLoading]);
 
   useEffect(() => {
     scrollToBottom();

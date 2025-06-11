@@ -54,8 +54,7 @@ const ManagerChat = () => {
   // Scroll to the latest message
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
       console.log("🔄 Scrolled to bottom");
     }
   };
@@ -85,9 +84,7 @@ const ManagerChat = () => {
       setParentSocket(newSocket);
       console.log("🔌 Registered socket with parent context");
     } else {
-      console.warn(
-        "⚠️ No setParentSocket available; socket not registered with parent"
-      );
+      console.warn("⚠️ No setParentSocket available; socket not registered with parent");
     }
 
     newSocket.on("connect", () => {
@@ -113,13 +110,8 @@ const ManagerChat = () => {
       setConnectionAttempts((prev) => prev + 1);
 
       if (connectionAttempts < 5) {
-        message.warning(
-          `Kết nối thất bại: ${error.message}. Đang thử lại... (${
-            connectionAttempts + 1
-          }/5)`
-        );
-        if (reconnectTimeoutRef.current)
-          clearTimeout(reconnectTimeoutRef.current);
+        message.warning(`Kết nối thất bại: ${error.message}. Đang thử lại... (${connectionAttempts + 1}/5)`);
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log("🔄 Attempting to reconnect...");
           connectSocket();
@@ -149,9 +141,7 @@ const ManagerChat = () => {
         createdAt: receivedMessage.createdAt,
       });
 
-      const isRelevant =
-        receivedMessage.senderId === authUser?.id ||
-        receivedMessage.receiverId === authUser?.id;
+      const isRelevant = receivedMessage.senderId === authUser?.id || receivedMessage.receiverId === authUser?.id;
       if (!isRelevant) {
         console.log("📨 Message not for me, ignoring");
         return;
@@ -170,8 +160,7 @@ const ManagerChat = () => {
           Receiver: receivedMessage.Receiver,
         };
         const updatedChats = [...prevChats, newMessage].sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
         return updatedChats;
       });
@@ -182,9 +171,7 @@ const ManagerChat = () => {
 
   useEffect(() => {
     if (!authUser?.id || !token) {
-      console.log(
-        "❌ Skipping socket connection: missing authUser.id or token"
-      );
+      console.log("❌ Skipping socket connection: missing authUser.id or token");
       return;
     }
 
@@ -192,8 +179,7 @@ const ManagerChat = () => {
 
     return () => {
       console.log("🔌 Cleaning up socket connection");
-      if (reconnectTimeoutRef.current)
-        clearTimeout(reconnectTimeoutRef.current);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       if (socketInstance) {
         socketInstance.disconnect();
@@ -215,8 +201,7 @@ const ManagerChat = () => {
     setIsLoadingChats(isChatsLoading);
     const filteredChats = initialChats.filter(
       (chat) =>
-        (chat.senderId === authUser.id &&
-          chat.receiverId === selectedUser.id) ||
+        (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
         (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
     );
     setChats(
@@ -227,10 +212,7 @@ const ManagerChat = () => {
           Sender: chat.Sender,
           Receiver: chat.Receiver,
         }))
-        .sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        )
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     );
     setTimeout(scrollToBottom, 0);
   }, [selectedUser, authUser, initialChats, isChatsLoading]);
@@ -251,10 +233,8 @@ const ManagerChat = () => {
     authUser && selectedUser
       ? chats.filter(
           (chat) =>
-            (chat.senderId === authUser.id &&
-              chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id &&
-              chat.receiverId === authUser.id)
+            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
+            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
         )
       : [];
 
@@ -371,23 +351,16 @@ const ManagerChat = () => {
           dataSource={filteredAccounts}
           renderItem={(account) => (
             <List.Item
-              onClick={() =>
-                setSelectedUser({ id: account.id, fullName: account.fullName })
-              }
+              onClick={() => setSelectedUser({ id: account.id, fullName: account.fullName })}
               style={{ cursor: "pointer", padding: "8px", borderRadius: "8px" }}
               className={selectedUser?.id === account.id ? "active-user" : ""}
             >
               <List.Item.Meta
-                avatar={
-                  <Avatar style={{ backgroundColor: "#1890ff" }}>
-                    {account.fullName[0]}
-                  </Avatar>
-                }
+                avatar={<Avatar style={{ backgroundColor: "#1890ff" }}>{account.fullName[0]}</Avatar>}
                 title={
                   <span
                     style={{
-                      fontWeight:
-                        selectedUser?.id === account.id ? "bold" : "normal",
+                      fontWeight: selectedUser?.id === account.id ? "bold" : "normal",
                       fontSize: 16,
                     }}
                   >
@@ -439,26 +412,16 @@ const ManagerChat = () => {
               }}
             >
               {isLoadingChats ? (
-                <p
-                  style={{ textAlign: "center", color: "#888", margin: "auto" }}
-                >
-                  Đang tải tin nhắn...
-                </p>
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Đang tải tin nhắn...</p>
               ) : userChats.length ? (
                 userChats.map((chat) => (
                   <div
                     key={chat.id}
-                    className={`message-bubble ${
-                      chat.senderId === authUser?.id ? "sent" : "received"
-                    }`}
+                    className={`message-bubble ${chat.senderId === authUser?.id ? "sent" : "received"}`}
                     style={{
-                      backgroundColor:
-                        chat.senderId === authUser?.id ? "#2196f3" : "#fff",
+                      backgroundColor: chat.senderId === authUser?.id ? "#2196f3" : "#fff",
                       color: chat.senderId === authUser?.id ? "#fff" : "#000",
-                      margin:
-                        chat.senderId === authUser?.id
-                          ? "5px 10px 5px auto"
-                          : "5px auto 5px 10px",
+                      margin: chat.senderId === authUser?.id ? "5px 10px 5px auto" : "5px auto 5px 10px",
                       padding: "10px 15px",
                       maxWidth: "70%",
                       borderRadius: "10px",
@@ -468,14 +431,12 @@ const ManagerChat = () => {
                     <div
                       style={{
                         marginTop: "5px",
-                        textAlign:
-                          chat.senderId === authUser?.id ? "right" : "left",
+                        textAlign: chat.senderId === authUser?.id ? "right" : "left",
                       }}
                     >
                       <small
                         style={{
-                          color:
-                            chat.senderId === authUser?.id ? "#e6f0ff" : "#888",
+                          color: chat.senderId === authUser?.id ? "#e6f0ff" : "#888",
                           fontSize: "12px",
                         }}
                       >
@@ -485,11 +446,7 @@ const ManagerChat = () => {
                   </div>
                 ))
               ) : (
-                <p
-                  style={{ textAlign: "center", color: "#888", margin: "auto" }}
-                >
-                  Chưa có tin nhắn với người này.
-                </p>
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Chưa có tin nhắn với người này.</p>
               )}
             </div>
             <div
