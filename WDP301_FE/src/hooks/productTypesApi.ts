@@ -8,7 +8,7 @@ export interface ProductType {
 
 const fetchProductTypes = async (): Promise<ProductType[]> => {
   const response = await axios.get<ProductType[]>(
-    "https://wdp-301-0fd32c261026.herokuapp.com/api/product-types"
+    "https://wdp301-su25.space/api/product-types"
   );
   return response.data;
 };
@@ -23,7 +23,7 @@ export const useProductTypes = () => {
 export const useCreateProductType = () => {
   return useMutation({
     mutationFn: async (newProduct: ProductType) => {
-      const response = await axios.post(`https://wdp-301-0fd32c261026.herokuapp.com/api/product-types`, newProduct);
+      const response = await axios.post(`https://wdp301-su25.space/api/product-types`, newProduct);
       return response.data;
     },
   });
