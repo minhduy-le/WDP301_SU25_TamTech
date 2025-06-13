@@ -102,7 +102,7 @@ const PromotionManagement: React.FC = () => {
         return;
       }
       const response = await axios.get<ApiPromotion[]>(
-        'https://wdp-301-0fd32c261026.herokuapp.com/api/promotions',
+        'https://wdp301-su25.space/api/promotions',
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const mappedPromotions: Promotion[] = response.data.map(p => {
@@ -132,7 +132,7 @@ const PromotionManagement: React.FC = () => {
     fetchPromotions();
   }, [fetchPromotions]); 
   useEffect(() => {
-    axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/promotion-types', {
+    axios.get('https://wdp301-su25.space/api/promotion-types', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       }
@@ -146,7 +146,7 @@ const PromotionManagement: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `https://wdp-301-0fd32c261026.herokuapp.com/api/promotions/${promotionId}`,
+        `https://wdp301-su25.space/api/promotions/${promotionId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       message.success("Đã ngừng hoạt động khuyến mãi thành công!");
@@ -215,14 +215,14 @@ const PromotionManagement: React.FC = () => {
     try {
         if (modalMode === 'edit' && editingPromotion) {
             await axios.put(
-                `https://wdp-301-0fd32c261026.herokuapp.com/api/promotions/${editingPromotion.promotionId}`,
+                `https://wdp301-su25.space/api/promotions/${editingPromotion.promotionId}`,
                 payload,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );
             message.success('Cập nhật khuyến mãi thành công!');
         } else {
             await axios.post(
-                'https://wdp-301-0fd32c261026.herokuapp.com/api/promotions',
+                'https://wdp301-su25.space/api/promotions',
                 payload,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );

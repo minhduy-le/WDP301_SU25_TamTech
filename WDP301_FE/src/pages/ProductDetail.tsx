@@ -97,7 +97,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(
-          `https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`
+          `https://wdp301-su25.space/api/products/${productId}`
         );
         setProduct(res.data.product);
       } catch (err) {
@@ -110,7 +110,7 @@ const ProductDetail = () => {
     const fetchFeedbacks = async () => {
       try {
         const res = await axios.get(
-          `https://wdp-301-0fd32c261026.herokuapp.com/api/feedback/${productId}`
+          `https://wdp301-su25.space/api/feedback/${productId}`
         );
         setFeedbacks(res.data.feedbacks);
       } catch (err) {
@@ -127,7 +127,7 @@ const ProductDetail = () => {
       if (!product) return;
       try {
         const res = await axios.get(
-          `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${product.productTypeId}`
+          `https://wdp301-su25.space/api/products/type/${product.productTypeId}`
         );
         // Exclude the current product
         setRelatedProducts(

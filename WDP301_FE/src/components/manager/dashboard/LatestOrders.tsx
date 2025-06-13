@@ -18,7 +18,7 @@ const LatestOrders = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
-    axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/orders', {
+    axios.get('https://wdp301-su25.space/api/orders', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }

@@ -101,7 +101,7 @@ const ProductManagement: React.FC = () => {
     try {
       setTableLoading(true);
       const response = await axios.get<{ products?: Product[], data?: Product[], results?: Product[] } | Product[]>(
-        "https://wdp-301-0fd32c261026.herokuapp.com/api/products"
+        "https://wdp301-su25.space/api/products"
       );
       let productData: Product[] = [];
       if (Array.isArray(response.data)) {
@@ -131,7 +131,7 @@ const ProductManagement: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get<{ data?: Material[]; materials?: Material[]; results?: Material[] } | Material[]>(
-        "https://wdp-301-0fd32c261026.herokuapp.com/api/materials",
+        "https://wdp301-su25.space/api/materials",
         {
           headers: {
             accept: "application/json",
@@ -159,7 +159,7 @@ const ProductManagement: React.FC = () => {
   const createProductApiCall = async (payload: any) => {
     const token = localStorage.getItem("token");
     const response = await axios.post(
-      "https://wdp-301-0fd32c261026.herokuapp.com/api/products",
+      "https://wdp301-su25.space/api/products",
       payload,
       {
         headers: {
@@ -175,7 +175,7 @@ const ProductManagement: React.FC = () => {
   const updateProductApiCall = async (productId: number, payload: any) => {
     const token = localStorage.getItem("token");
     const response = await axios.put(
-      `https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`,
+      `https://wdp301-su25.space/api/products/${productId}`,
       payload,
       {
         headers: {
@@ -191,7 +191,7 @@ const ProductManagement: React.FC = () => {
   const deleteProductApiCall = async (productId: number) => {
     const token = localStorage.getItem("token");
     const response = await axios.delete(
-      `https://wdp-301-0fd32c261026.herokuapp.com/api/products/${productId}`,
+      `https://wdp301-su25.space/api/products/${productId}`,
       {
         headers: {
           accept: "application/json",
