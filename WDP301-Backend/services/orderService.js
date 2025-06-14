@@ -322,7 +322,7 @@ const createOrder = async (req, res) => {
       orderCode: order.orderId,
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
-      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}&code={code}&status={status}`,
+      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
       cancelUrl: `${YOUR_DOMAIN}/api/orders/cancel?orderId=${order.orderId}`,
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
