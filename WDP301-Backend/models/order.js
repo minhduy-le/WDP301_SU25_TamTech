@@ -136,6 +136,19 @@ const Order = sequelize.define(
         key: "id",
       },
     },
+    isDatHo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    tenNguoiDatHo: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    soDienThoaiNguoiDatHo: {
+      type: DataTypes.STRING(15),
+      allowNull: true,
+    },
   },
   {
     tableName: "orders",
@@ -144,3 +157,5 @@ const Order = sequelize.define(
 );
 
 module.exports = Order;
+
+//tôi mới thêm isDatHo, tenNguoiDatHo, soDienThoaiNguoiDatHo vào model Order, hãy chỉnh lại route và service của post order, với torng invoice đang hiện chưa được đẹp và chưa hỗ trợ tiếng việt, hãy chỉnh lại để hiện cho đẹp luôn và trong invoice thay vì hiện productId thì hãy hiện name của nó

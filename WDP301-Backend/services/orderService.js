@@ -24,8 +24,8 @@ const payos = new PayOS(
   "f638f7e1-6366-4198-b17b-5c09139f1be3",
   "b4162d82b524a0c54bd674ff0a02ec57983b326fb9a07d0dce4878bbff5f62ce"
 );
-const YOUR_DOMAIN = process.env.SERVER_URL || "https://wdp-301-0fd32c261026.herokuapp.com";
-const FRONTEND_DOMAIN = "https://wdp-301-su-25-tam-tech.vercel.app";
+const YOUR_DOMAIN = "https://wdp301-su25.space";
+const FRONTEND_DOMAIN = "https://wdp301-su25.space";
 
 const createOrder = async (req, res) => {
   console.log("createOrder called at:", new Date().toISOString());
@@ -45,6 +45,9 @@ const createOrder = async (req, res) => {
     payment_method_id,
     order_address,
     note,
+    isDatHo,
+    tenNguoiDatHo,
+    soDienThoaiNguoiDatHo,
   } = req.body;
   const userId = req.userId;
   const storeId = 1;
@@ -57,6 +60,9 @@ const createOrder = async (req, res) => {
     payment_method_id,
     promotion_code,
     order_discount_value,
+    isDatHo,
+    tenNguoiDatHo,
+    soDienThoaiNguoiDatHo,
   });
 
   if (orderItems === undefined) {
@@ -258,6 +264,9 @@ const createOrder = async (req, res) => {
       order_create_at: new Date(),
       order_address,
       note: note || null,
+      isDatHo: isDatHo || false,
+      tenNguoiDatHo: tenNguoiDatHo || null,
+      soDienThoaiNguoiDatHo: soDienThoaiNguoiDatHo || null,
     });
 
     const order = await Order.create(
@@ -275,6 +284,9 @@ const createOrder = async (req, res) => {
         order_create_at: new Date(),
         order_address,
         note: note || null,
+        isDatHo: isDatHo || false,
+        tenNguoiDatHo: tenNguoiDatHo || null,
+        soDienThoaiNguoiDatHo: soDienThoaiNguoiDatHo || null,
       },
       { transaction }
     );
@@ -369,7 +381,8 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
   try {
     const orderItems = await OrderItem.findAll({
       where: { orderId },
-      attributes: ["productId", "quantity", "price"],
+      include: [{ model: Product, as: "Product", attributes: ["name"] }],
+      attributes: ["quantity", "price"],
       transaction,
     });
     console.log("Fetched order items:", JSON.stringify(orderItems, null, 2));
@@ -379,7 +392,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       attributes: ["id", "fullName"],
       transaction,
     });
-    console.log("Fetched user:", user ? user.fullName : "Guest user");
+    console.log("Fetched user:", user ? user.fullName : "Khách hàng");
 
     const qrCodeUrl = await QRCode.toDataURL(`${FRONTEND_DOMAIN}/order/${order.orderId}`);
     console.log("Generated QR code for URL:", qrCodeUrl.slice(0, 50) + "...");
@@ -389,10 +402,10 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       size: [216, 600],
       margin: 10,
       info: {
-        Title: `Receipt #${order.orderId}`,
+        Title: `Hóa đơn #${order.orderId}`,
         Author: "ABC Company Limited",
-        Subject: "Sales Receipt",
-        Keywords: "receipt, order",
+        Subject: "Hóa đơn bán hàng",
+        Keywords: "hóa đơn, đơn hàng",
       },
     });
 
@@ -418,11 +431,11 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     doc.font("Helvetica-Bold").fontSize(12).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
     currentY += lineSpacing;
     doc.font("Helvetica").fontSize(8);
-    doc.text("123 Business Street, District 1", { align: "center" });
+    doc.text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
     currentY += lineSpacing;
-    doc.text("Ho Chi Minh City", { align: "center" });
+    doc.text("TP. Hồ Chí Minh", { align: "center" });
     currentY += lineSpacing;
-    doc.text("Phone: +84 909 123 456", { align: "center" });
+    doc.text("Điện thoại: +84 909 123 456", { align: "center" });
     currentY += lineSpacing;
 
     drawDashedLine(currentY);
@@ -431,30 +444,34 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     doc
       .font("Helvetica-Bold")
       .fontSize(10)
-      .text(`RECEIPT #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
+      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
     currentY += lineSpacing;
     doc.font("Helvetica").fontSize(8);
-    doc.text(`Date: ${new Date(order.order_create_at).toLocaleDateString("en-GB")}`, { align: "left" });
+    doc.text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
     currentY += lineSpacing;
-    doc.text(`Time: ${new Date(order.payment_time || new Date()).toLocaleTimeString("en-GB")}`, { align: "left" });
+    doc.text(`Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`, { align: "left" });
     currentY += lineSpacing;
-    doc.text(`Customer: ${user ? user.fullName || "Guest Customer" : "Guest Customer"}`, { align: "left" });
+    doc.text(`Khách hàng: ${user ? user.fullName || "Khách lẻ" : "Khách lẻ"}`, { align: "left" });
+    if (order.isDatHo && order.tenNguoiDatHo && order.soDienThoaiNguoiDatHo) {
+      currentY += lineSpacing;
+      doc.text(`Đặt hộ: ${order.tenNguoiDatHo} - SĐT: ${order.soDienThoaiNguoiDatHo}`, { align: "left" });
+    }
     currentY += lineSpacing;
 
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
-    doc.font("Helvetica-Bold").fontSize(8).text("Items", { align: "left" });
+    doc.font("Helvetica-Bold").fontSize(8).text("Sản phẩm", { align: "left" });
     currentY += lineSpacing;
     doc.font("Helvetica").fontSize(8);
-    doc.text("Qty x Price = Total", { align: "right" });
+    doc.text("Số lượng x Giá = Tổng", { align: "right" });
     currentY += lineSpacing;
 
     orderItems.forEach((item) => {
       const itemTotal = item.quantity * item.price;
-      doc.text(`Product ${item.productId}`, { align: "left" });
+      doc.text(`${item.Product.name}`, { align: "left" });
       currentY += lineSpacing;
-      doc.text(`${item.quantity} x ${item.price.toLocaleString("en-US")} = ${itemTotal.toLocaleString("en-US")} VND`, {
+      doc.text(`${item.quantity} x ${item.price.toLocaleString("vi-VN")} = ${itemTotal.toLocaleString("vi-VN")} VND`, {
         align: "right",
       });
       currentY += lineSpacing;
@@ -464,20 +481,20 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     currentY += lineSpacing;
 
     if (order.note) {
-      doc.font("Helvetica-Bold").fontSize(8).text("Note:", { align: "left" });
+      doc.font("Helvetica-Bold").fontSize(8).text("Ghi chú:", { align: "left" });
       currentY += lineSpacing;
       doc.font("Helvetica").fontSize(8).text(order.note, { align: "left", width: 190 });
       currentY += lineSpacing * 2;
     }
 
     doc.font("Helvetica").fontSize(8);
-    doc.text(`Subtotal: ${order.order_amount.toLocaleString("en-US")} VND`, { align: "right" });
+    doc.text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, { align: "right" });
     currentY += lineSpacing;
-    doc.text(`Shipping Fee: ${order.order_shipping_fee.toLocaleString("en-US")} VND`, { align: "right" });
+    doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, { align: "right" });
     currentY += lineSpacing;
 
     if (order.order_discount_value > 0) {
-      doc.text(`Discount: -${order.order_discount_value.toLocaleString("en-US")} VND`, { align: "right" });
+      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, { align: "right" });
       currentY += lineSpacing;
     }
 
@@ -486,13 +503,13 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     doc.font("Helvetica-Bold").fontSize(10);
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
-    doc.text(`Total: ${totalAmount.toLocaleString("en-US")} VND`, { align: "right" });
+    doc.text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, { align: "right" });
     currentY += lineSpacing;
 
     doc.font("Helvetica").fontSize(8);
-    doc.text("Payment: Online Payment", { align: "left" });
+    doc.text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
     currentY += lineSpacing;
-    doc.text("Status: PAID", { align: "left" });
+    doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
     currentY += lineSpacing;
 
     drawDashedLine(currentY);
@@ -501,16 +518,16 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
     doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
     currentY += 110;
-    doc.fontSize(6).text("Scan to view order details", { align: "center" });
+    doc.fontSize(6).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
     currentY += lineSpacing;
 
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
     doc.font("Helvetica").fontSize(8);
-    doc.text("Thank you for shopping with us!", { align: "center" });
+    doc.text("Cảm ơn bạn đã mua sắm cùng chúng tôi!", { align: "center" });
     currentY += lineSpacing;
-    doc.text(`Generated on ${new Date().toLocaleString("en-GB")}`, { align: "center" });
+    doc.text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
     currentY += lineSpacing;
 
     doc.page.height = currentY + doc.page.margins.bottom;

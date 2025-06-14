@@ -104,7 +104,19 @@ const standardizeProvince = (province) => {
  *                 type: string
  *                 description: Optional note for the order (e.g., special delivery instructions)
  *                 nullable: true
- *                 example: "Please deliver after 5 PM"
+ *                 example: "Vui lòng giao sau 5 giờ chiều"
+ *               isDatHo:
+ *                 type: boolean
+ *                 description: Indicates if the order is placed on behalf
+ *                 default: false
+ *               tenNguoiDatHo:
+ *                 type: string
+ *                 description: Name of the person placing the order on behalf
+ *                 nullable: true
+ *               soDienThoaiNguoiDatHo:
+ *                 type: string
+ *                 description: Phone number of the person placing the order on behalf
+ *                 nullable: true
  *     responses:
  *       201:
  *         description: Order created successfully
