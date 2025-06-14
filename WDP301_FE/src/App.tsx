@@ -37,6 +37,7 @@ import StaffProfile from "./pages/StaffProfile";
 import StaffChat from "./pages/StaffChat";
 import ManagerChat from "./pages/ManagerChat";
 import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
+import MaterialManagement from "./pages/MaterialManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -86,6 +87,7 @@ function App() {
           <Route element={<LayoutWithSidebarManager />}>
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/orders" element={<OrderManagement />} />
+            <Route path="/manager/materials" element={<MaterialManagement />} />
             <Route path="/manager/products" element={<ProductManagement />} />
             <Route
               path="/manager/promotions"

@@ -43,6 +43,11 @@ const ManagerSidebar: React.FC = () => {
       label: "Quản lý đơn hàng",
     },
     {
+      key: "/manager/materials",
+      icon: <ShoppingOutlined />,
+      label: "Quản lý nguyên liệu",
+    },
+    {
       key: "/manager/products",
       icon: <ShoppingOutlined />,
       label: "Quản lý sản phẩm",
