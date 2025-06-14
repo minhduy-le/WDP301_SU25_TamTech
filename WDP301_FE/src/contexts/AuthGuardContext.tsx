@@ -94,6 +94,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/products",
         "/manager/promotions",
         "/manager/staffs",
+        "/manager/feedback",
         "/manager/chat",
         "/manager/staffs/staffId",
       ],
