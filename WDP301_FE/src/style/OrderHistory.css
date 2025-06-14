@@ -6,6 +6,10 @@
   background-color: #ebd187;
 }
 
+.order-history-container .ant-tabs-top .ant-tabs-nav::before {
+  border-bottom: none;
+}
+
 .order-history-title {
   text-align: center;
   color: #2d1e1a !important;

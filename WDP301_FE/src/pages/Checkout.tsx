@@ -132,7 +132,16 @@ const Checkout = () => {
             message.success("Phí giao hàng đã được cập nhật.");
           },
           onError: (error: any) => {
-            message.error(error.response.data?.message);
+            if (
+              error.response.data?.message ===
+              "Delivery address must be in the format: street name, ward, district, city"
+            ) {
+              message.error(
+                "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+              );
+            } else {
+              message.error(error.response.data?.message);
+            }
             setDeliveryFee(22000);
           },
         }
@@ -247,7 +256,15 @@ const Checkout = () => {
       },
       onError: (error) => {
         const errorMessage = error.response.data;
-        message.error(errorMessage);
+        if (errorMessage === "Order address is required") {
+          message.error("Địa chỉ chi tiết chưa được nhập");
+        } else if (
+          errorMessage === "Valid payment method ID is required (1-4)"
+        ) {
+          message.error("Vui lòng chọn phương thức thanh toán");
+        } else {
+          message.error(errorMessage);
+        }
       },
     });
   };
