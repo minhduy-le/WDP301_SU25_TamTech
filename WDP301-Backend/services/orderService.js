@@ -621,7 +621,7 @@ const handlePaymentSuccess = async (req, res) => {
       }
       await transaction.commit();
       console.log("Transaction committed successfully for already processed order");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}}`);
+      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}`);
     }
 
     const user = await User.findOne({
