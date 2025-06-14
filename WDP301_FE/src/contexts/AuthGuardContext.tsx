@@ -120,7 +120,9 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     //   }
     // }
     const matchDynamicRoute = (route: string, path: string) => {
-      const dynamicRoutePattern = route.replace(/:productId/, "[0-9]+");
+      const dynamicRoutePattern = route
+        .replace(/:productId/, "[0-9]+")
+        .replace(/:orderId/, "[0-9]+");
       const regex = new RegExp(`^${dynamicRoutePattern}$`);
       return regex.test(path);
     };
@@ -131,7 +133,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     const isAllowed =
       publicPages.includes(location.pathname) ||
       allowedPages.some((route) => {
-        if (route.includes(":productId")) {
+        if (route.includes(":productId") || route.includes(":orderId")) {
           return matchDynamicRoute(route, location.pathname);
         }
         return route === location.pathname;
