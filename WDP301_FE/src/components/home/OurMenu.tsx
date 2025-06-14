@@ -61,22 +61,22 @@ const OurMenu: React.FC = () => {
           await Promise.all([
             mainType
               ? axios.get(
-                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${mainType.productTypeId}`
+                  `https://wdp301-su25.space/api/products/type/${mainType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             drinkType
               ? axios.get(
-                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${drinkType.productTypeId}`
+                  `https://wdp301-su25.space/api/products/type/${drinkType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             sideType
               ? axios.get(
-                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${sideType.productTypeId}`
+                  `https://wdp301-su25.space/api/products/type/${sideType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             soupType
               ? axios.get(
-                  `https://wdp-301-0fd32c261026.herokuapp.com/api/products/type/${soupType.productTypeId}`
+                  `https://wdp301-su25.space/api/products/type/${soupType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
           ]);

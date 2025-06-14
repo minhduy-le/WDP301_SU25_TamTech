@@ -26,7 +26,7 @@ interface PromotionType {
   usageCount: number; 
 }
 
-const API_URL = "https://wdp-301-0fd32c261026.herokuapp.com/api/promotion-types";
+const API_URL = "https://wdp301-su25.space/api/promotion-types";
 
 // --- Component ---
 const PromotionTypeManagement: React.FC = () => {

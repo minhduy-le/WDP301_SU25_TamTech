@@ -69,7 +69,7 @@ const OrderManagement: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('https://wdp-301-0fd32c261026.herokuapp.com/api/orders',
+      const response = await axios.get('https://wdp301-su25.space/api/orders',
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

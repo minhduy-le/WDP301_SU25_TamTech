@@ -189,7 +189,7 @@ export const useBestSellerProducts = () => {
     queryKey: ["best-seller-products"],
     queryFn: async () => {
     const res = await axios.get(
-      "https://wdp-301-0fd32c261026.herokuapp.com/api/products/best-seller"
+      "https://wdp301-su25.space/api/products/best-seller"
     );
     return res.data.products;
   },
