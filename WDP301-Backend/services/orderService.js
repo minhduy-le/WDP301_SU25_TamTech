@@ -322,7 +322,7 @@ const createOrder = async (req, res) => {
       orderCode: order.orderId,
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
-      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}&code={code}&status={status}`,
+      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
       cancelUrl: `${YOUR_DOMAIN}/api/orders/cancel?orderId=${order.orderId}`,
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
@@ -428,10 +428,9 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       }
     };
 
-    // Sử dụng font hỗ trợ tiếng Việt (ví dụ: Arial hoặc một font Unicode)
-    doc.font("Arial").fontSize(12).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
+    doc.font("Helvetica-Bold").fontSize(12).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
     currentY += lineSpacing;
-    doc.fontSize(8);
+    doc.font("Helvetica").fontSize(8);
     doc.text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
     currentY += lineSpacing;
     doc.text("TP. Hồ Chí Minh", { align: "center" });
@@ -442,9 +441,12 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
-    doc.fontSize(10).text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
     currentY += lineSpacing;
-    doc.fontSize(8);
+    doc.font("Helvetica").fontSize(8);
     doc.text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
     currentY += lineSpacing;
     doc.text(`Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`, { align: "left" });
@@ -459,8 +461,9 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
-    doc.fontSize(8).text("Sản phẩm", { align: "left" });
+    doc.font("Helvetica-Bold").fontSize(8).text("Sản phẩm", { align: "left" });
     currentY += lineSpacing;
+    doc.font("Helvetica").fontSize(8);
     doc.text("Số lượng x Giá = Tổng", { align: "right" });
     currentY += lineSpacing;
 
@@ -478,13 +481,13 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     currentY += lineSpacing;
 
     if (order.note) {
-      doc.fontSize(8).text("Ghi chú:", { align: "left" });
+      doc.font("Helvetica-Bold").fontSize(8).text("Ghi chú:", { align: "left" });
       currentY += lineSpacing;
-      doc.text(order.note, { align: "left", width: 190 });
+      doc.font("Helvetica").fontSize(8).text(order.note, { align: "left", width: 190 });
       currentY += lineSpacing * 2;
     }
 
-    doc.fontSize(8);
+    doc.font("Helvetica").fontSize(8);
     doc.text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, { align: "right" });
     currentY += lineSpacing;
     doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, { align: "right" });
@@ -498,12 +501,12 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
-    doc.fontSize(10);
+    doc.font("Helvetica-Bold").fontSize(10);
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
     doc.text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, { align: "right" });
     currentY += lineSpacing;
 
-    doc.fontSize(8);
+    doc.font("Helvetica").fontSize(8);
     doc.text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
     currentY += lineSpacing;
     doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
@@ -521,7 +524,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     drawDashedLine(currentY);
     currentY += lineSpacing;
 
-    doc.fontSize(8);
+    doc.font("Helvetica").fontSize(8);
     doc.text("Cảm ơn bạn đã mua sắm cùng chúng tôi!", { align: "center" });
     currentY += lineSpacing;
     doc.text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
@@ -618,7 +621,7 @@ const handlePaymentSuccess = async (req, res) => {
       }
       await transaction.commit();
       console.log("Transaction committed successfully for already processed order");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}`);
+      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}}`);
     }
 
     const user = await User.findOne({
@@ -657,8 +660,12 @@ const handlePaymentSuccess = async (req, res) => {
 
       await transaction.commit();
       console.log("Transaction committed successfully for orderId:", parsedOrderId);
-      console.log("Payment processed, redirecting to frontend");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}`);
+      console.log("Payment processed, redirecting to frontend with invoiceUrl:", invoiceUrl);
+      return res.redirect(
+        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${
+          status || ""
+        }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
+      );
     } else {
       console.log("Payment failed for orderId:", parsedOrderId, { code, status });
       await transaction.rollback();
