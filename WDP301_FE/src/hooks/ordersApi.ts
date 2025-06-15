@@ -11,6 +11,9 @@ interface CreateOrder {
   order_address: string;
   note: string;
   promotion_code: string;
+  isDatHo?: boolean;
+  tenNguoiDatHo?: string;
+  soDienThoaiNguoiDatHo?: string;
 }
 
 interface ProductItemDto {

@@ -64,6 +64,8 @@ const Checkout = () => {
   const [note, setNote] = useState("");
   const [promotionCode, setPromotionCode] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
+  const [nguoiDatHo, setNguoiDatHo] = useState("");
+  const [sdtNguoiDatHo, setSdtNguoiDatHo] = useState("");
   const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
@@ -241,6 +243,11 @@ const Checkout = () => {
       order_address: orderAddress,
       note: note || "",
       promotion_code: appliedPromotion ? promotionCode : "",
+      ...(isProxyOrder && {
+        isDatHo: true,
+        tenNguoiDatHo: nguoiDatHo,
+        soDienThoaiNguoiDatHo: sdtNguoiDatHo,
+      }),
     };
 
     createOrder(orderData, {
@@ -405,6 +412,8 @@ const Checkout = () => {
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
+                    value={nguoiDatHo}
+                    onChange={(e) => setNguoiDatHo(e.target.value)}
                   />
                   <Input
                     placeholder="Số điện thoại người nhận"
@@ -412,6 +421,8 @@ const Checkout = () => {
                       background: "transparent",
                       fontFamily: "'Montserrat', sans-serif",
                     }}
+                    value={sdtNguoiDatHo}
+                    onChange={(e) => setSdtNguoiDatHo(e.target.value)}
                   />
                   <Row style={{ justifyContent: "space-between" }}>
                     <Col span={11}>
