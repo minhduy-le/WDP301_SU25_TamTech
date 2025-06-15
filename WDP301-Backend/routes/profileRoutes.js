@@ -3,8 +3,7 @@ const express = require("express");
 const router = express.Router();
 const profileService = require("../services/profileService");
 const verifyToken = require("../middlewares/verifyToken");
-
-// API xem profile theo ID
+const QRCode = require("qrcode");
 /**
  * @swagger
  * /api/profiles/{id}:
@@ -50,16 +49,17 @@ const verifyToken = require("../middlewares/verifyToken");
  *                       format: date
  *                     member_point:
  *                       type: integer
+ *                 qrCode:
+ *                   type: string
+ *                   description: Base64 encoded QR code image pointing to the user profile URL
  *       400:
  *         description: Invalid user ID
- *       403:
- *         description: Unauthorized to view this profile
  *       404:
  *         description: User not found
  *       500:
  *         description: Server error
  */
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
     if (isNaN(userId) || userId < 1) {
@@ -69,20 +69,22 @@ router.get("/:id", verifyToken, async (req, res) => {
       });
     }
 
-    // Kiểm tra quyền truy cập: Chỉ cho phép xem profile của chính mình
-    if (userId !== req.userId) {
-      return res.status(403).json({
-        status: 403,
-        message: "You can only view your own profile",
-      });
-    }
-
     const user = await profileService.getUserProfile(userId);
+
+    // Tạo URL cho profile với domain của bạn
+    const profileUrl = `https://wdp301-su25.space/api/profiles/${userId}`;
+
+    // Tạo QR code dưới dạng base64
+    const qrCode = await QRCode.toDataURL(profileUrl, {
+      width: 200, // Kích thước QR code
+      color: { dark: "#000000", light: "#ffffff" }, // Màu QR code
+    });
 
     res.status(200).json({
       status: 200,
       message: "User profile retrieved successfully",
       user,
+      qrCode, // Trả về QR code trong response
     });
   } catch (error) {
     console.error("Error retrieving user profile:", error);
