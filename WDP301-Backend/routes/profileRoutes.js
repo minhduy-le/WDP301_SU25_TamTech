@@ -4,6 +4,7 @@ const router = express.Router();
 const profileService = require("../services/profileService");
 const verifyToken = require("../middlewares/verifyToken");
 const QRCode = require("qrcode");
+
 /**
  * @swagger
  * /api/profiles/{id}:
@@ -72,7 +73,7 @@ router.get("/:id", async (req, res) => {
     const user = await profileService.getUserProfile(userId);
 
     // Tạo URL cho profile với domain của bạn
-    const profileUrl = `https://wdp301-su25.space/api/profiles/${userId}`;
+    const profileUrl = `https://wdp301-su25.space/public-profiles/${userId}`;
 
     // Tạo QR code dưới dạng base64
     const qrCode = await QRCode.toDataURL(profileUrl, {
@@ -98,6 +99,66 @@ router.get("/:id", async (req, res) => {
       status: 500,
       message: error.message || "Internal Server Error",
     });
+  }
+});
+
+router.get("/public/:id", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId) || userId < 1) {
+      return res.status(400).send(`
+        <html>
+          <body>
+            <h1>Error</h1>
+            <p>Invalid user ID</p>
+          </body>
+        </html>
+      `);
+    }
+
+    const user = await profileService.getUserProfile(userId);
+
+    // Trả về trang HTML hiển thị thông tin user
+    res.status(200).send(`
+      <html>
+        <head>
+          <title>User Profile</title>
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; }
+            h1 { color: #333; }
+            p { font-size: 16px; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>User Profile</h1>
+          <p><strong>Full Name:</strong> ${user.fullName}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>Phone Number:</strong> ${user.phone_number || "N/A"}</p>
+          <p><strong>Date of Birth:</strong> ${user.date_of_birth || "N/A"}</p>
+          <p><strong>Member Points:</strong> ${user.member_point}</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error retrieving public profile:", error);
+    if (error.message === "User not found") {
+      return res.status(404).send(`
+        <html>
+          <body>
+            <h1>Error</h1>
+            <p>User not found</p>
+          </body>
+        </html>
+      `);
+    }
+    res.status(500).send(`
+      <html>
+        <body>
+          <h1>Error</h1>
+          <p>Internal Server Error</p>
+        </body>
+      </html>
+    `);
   }
 });
 
