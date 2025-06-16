@@ -125,7 +125,7 @@ const ManagerChat = () => {
     const cleanToken = token.replace(/^Bearer\s+/i, "");
     console.log("🔑 Using token (first 20 chars):", cleanToken.substring(0, 20) + "...");
 
-    const socketUrl = "https://wdp301-su25.space"; // Hoặc thử "wss://wdp301-su25.space"
+    const socketUrl = "wss://wdp301-su25.space"; // Hoặc thử "wss://wdp301-su25.space"
 
     const newSocket = io(socketUrl, {
       auth: {
