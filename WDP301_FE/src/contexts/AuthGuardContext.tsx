@@ -82,7 +82,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       Staff: ["/staff/orders", "/staff/profile", "/staff/chat"],
       User: [
         "/checkout",
-        "/api/orders/success",
+        "/payment-success",
         "/user-information",
         "/product/:productId",
       ],

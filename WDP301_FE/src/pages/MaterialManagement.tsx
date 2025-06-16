@@ -9,14 +9,20 @@ import {
   Modal,
   Descriptions,
   Tooltip,
+  message,
+  Form,
   //   message,
 } from "antd";
-import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
+import { SearchOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
-import { useMaterials, type MaterialDto } from "../hooks/materialsApi";
+import {
+  useMaterials,
+  type MaterialDto,
+  useCreateMaterials,
+} from "../hooks/materialsApi";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -26,9 +32,13 @@ const MaterialManagement = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
     null
   );
+  const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
+  const { mutate: createMaterial, isPending: isCreating } =
+    useCreateMaterials();
 
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
@@ -44,7 +54,8 @@ const MaterialManagement = () => {
       dataIndex: "materialId",
       key: "materialId",
       width: 100,
-      sorter: (a: MaterialDto, b: MaterialDto) => a.materialId - b.materialId,
+      sorter: (a: MaterialDto, b: MaterialDto) =>
+        (a.materialId ?? 0) - (b.materialId ?? 0),
     },
     {
       title: "Tên nguyên liệu",
@@ -91,6 +102,26 @@ const MaterialManagement = () => {
       ),
     },
   ];
+
+  const handleAddMaterial = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        createMaterial(values, {
+          onSuccess: () => {
+            message.success("Tạo nguyên liệu thành công!");
+            setIsAddModalVisible(false);
+            form.resetFields();
+          },
+          onError: (error: any) => {
+            message.error(error.message || "Tạo nguyên liệu thất bại!");
+          },
+        });
+      })
+      .catch((info) => {
+        console.log("Validate Failed:", info);
+      });
+  };
 
   return (
     <div
@@ -191,6 +222,21 @@ const MaterialManagement = () => {
                 allowClear
               />
             </Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                fontWeight: 600,
+                borderRadius: 6,
+                boxShadow: "0 2px 0 rgba(0,0,0,0.043)",
+                outline: "none",
+              }}
+              onClick={() => setIsAddModalVisible(true)}
+            >
+              Thêm nguyên liệu
+            </Button>
           </div>
 
           <Table
@@ -261,7 +307,7 @@ const MaterialManagement = () => {
             >
               <Descriptions
                 bordered
-                column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
+                column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
                 size="default"
                 labelStyle={{
                   color: "#A05A2C",
@@ -283,6 +329,101 @@ const MaterialManagement = () => {
               </Descriptions>
             </Card>
           )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Thêm nguyên liệu
+            </span>
+          }
+          open={isAddModalVisible}
+          onCancel={() => {
+            setIsAddModalVisible(false);
+            form.resetFields();
+          }}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => {
+                setIsAddModalVisible(false);
+                form.resetFields();
+              }}
+              style={{
+                borderRadius: 6,
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="create"
+              type="primary"
+              onClick={handleAddMaterial}
+              loading={isCreating}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                borderRadius: 6,
+              }}
+            >
+              Tạo
+            </Button>,
+          ]}
+          width={500}
+          styles={{
+            body: {
+              background: "#FFF9F0",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid ${tableBorderColor}`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          <Form
+            form={form}
+            name="addMaterialForm"
+            layout="vertical"
+            style={{
+              background: "#fff",
+              padding: "24px",
+              borderRadius: "8px",
+              border: "1px solid #f0f0f0",
+            }}
+            initialValues={{ name: "", quantity: 0 }}
+            onFinish={handleAddMaterial}
+          >
+            <Form.Item
+              name="name"
+              label="Tên nguyên liệu"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
+              ]}
+            >
+              <Input placeholder="Nhập tên nguyên liệu" />
+            </Form.Item>
+            <Form.Item
+              name="quantity"
+              label="Số lượng"
+              rules={[
+                { required: true, message: "Vui lòng nhập số lượng!" },
+                {
+                  validator: (_, value) =>
+                    value > 0
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
+                        ),
+                },
+              ]}
+            >
+              <Input type="number" placeholder="Nhập số lượng" />
+            </Form.Item>
+          </Form>
         </Modal>
       </div>
     </div>

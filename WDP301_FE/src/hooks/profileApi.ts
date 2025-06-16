@@ -5,6 +5,7 @@ interface GenericApiResponse<T> {
   status: number;
   message: string;
   user?: T;
+  qrCode?: string;
 }
 
 export interface UserDto {
@@ -18,13 +19,18 @@ export interface UserDto {
   member_point: number;
 }
 
+export interface ProfileResponse {
+  user: UserDto;
+  qrCode: string;
+}
+
 interface MutationVariables {
   id: number;
   data: Partial<UserDto>;
 }
 
 export const useGetProfileUser = (id: number) => {
-  return useQuery<UserDto, Error>({
+  return useQuery<ProfileResponse, Error>({
     queryKey: ["profiles", id],
     queryFn: async () => {
       const response = await axiosInstance.get(`profiles/${id}`);
@@ -32,10 +38,11 @@ export const useGetProfileUser = (id: number) => {
         status,
         message: responseMessage,
         user,
+        qrCode,
       } = response.data as GenericApiResponse<UserDto>;
 
-      if (status >= 200 && status < 300 && user) {
-        return user;
+      if (status >= 200 && status < 300 && user && qrCode) {
+        return { user, qrCode };
       }
       throw new Error(responseMessage || "Không thể tải thông tin người dùng");
     },
