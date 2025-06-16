@@ -95,7 +95,7 @@ const ManagerChat = () => {
     if (isConnectingRef.current) return;
 
     if (!token || !authUser?.id) {
-      console.error("Missing token or user ID");
+      console.error("Missing token or user ID:", { token, authUser });
       return;
     }
 
@@ -108,12 +108,12 @@ const ManagerChat = () => {
 
     const socketUrl = "wss://wdp301-su25.space";
     const newSocket = io(socketUrl, {
-      transports: ["websocket", "polling"],
-      upgrade: false,
+      transports: ["polling", "websocket"], // Thử polling trước
+      upgrade: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
       timeout: 10000,
-      auth: { token }, // Gửi token trong auth
+      auth: { token },
     });
 
     setSocket(newSocket);
@@ -145,15 +145,15 @@ const ManagerChat = () => {
       }, 30000);
     });
 
-    newSocket.on("connect_error", (error) => {
-      const err = error as any;
+    newSocket.on("connect_error", (error: any) => {
       console.error("Connection failed:", {
-        message: err.message,
-        type: err.type,
-        description: err.description,
-        code: err.code,
+        message: error.message,
+        description: error.description,
+        code: error.code,
+        context: error.context,
+        stack: error.stack,
       });
-      message.error(`Kết nối thất bại: ${err.message || "Lỗi không xác định"}`);
+      message.error(`Kết nối thất bại: ${error.message || "Lỗi không xác định"}`);
       setIsConnected(false);
       setIsReconnecting(false);
       isConnectingRef.current = false;
@@ -164,7 +164,7 @@ const ManagerChat = () => {
       if (currentAttempts < 5) {
         const delay = Math.min(1000 * Math.pow(2, currentAttempts - 1), 10000);
         message.warning(
-          `Kết nối thất bại: ${err.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
+          `Kết nối thất bại: ${error.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
         );
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -238,7 +238,7 @@ const ManagerChat = () => {
 
   useEffect(() => {
     if (!authUser?.id || !token) {
-      console.log("❌ Skipping socket connection: missing authUser.id or token");
+      console.log("❌ Skipping socket connection: missing authUser.id or token", { authUser, token });
       return;
     }
 
@@ -590,4 +590,4 @@ const ManagerChat = () => {
   );
 };
 
-export default ManagerChat; 
+export default ManagerChat;

@@ -13,7 +13,7 @@ const initializeSocket = (server) => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"], // Thử polling trước
     allowEIO3: true,
   });
 
