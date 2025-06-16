@@ -30,15 +30,6 @@ interface OutletContext {
   setSocket?: (socket: Socket | null) => void;
 }
 
-<<<<<<< HEAD
-=======
-// interface SocketError extends Error {
-//   type?: string;
-//   description?: string;
-//   context?: any;
-// }
-
->>>>>>> 9ae9d52a2e0f3551cd29ccbda1308ae73065b0ce
 const ManagerChat = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<{
@@ -115,7 +106,6 @@ const ManagerChat = () => {
       socket.disconnect();
     }
 
-<<<<<<< HEAD
     const socketUrl = "wss://wdp301-su25.space";
     const newSocket = io(socketUrl, {
       transports: ["websocket", "polling"],
@@ -124,16 +114,6 @@ const ManagerChat = () => {
       reconnectionDelay: 2000,
       timeout: 10000,
       auth: { token }, // Gửi token trong auth
-=======
-    // Sử dụng URL phù hợp với môi trường
-    const socketUrl = window.location.protocol === "https:" ? "https://wdp301-su25.space" : "http://wdp301-su25.space";
-    const newSocket = io(socketUrl, {
-      transports: ["websocket", "polling"], // Thử cả websocket và polling
-      upgrade: false, // Tắt nâng cấp kết nối
-      reconnectionAttempts: 3, // Giảm số lần thử kết nối lại
-      reconnectionDelay: 1000, // Khoảng cách giữa các lần thử
-      timeout: 5000, // Giảm thời gian chờ
->>>>>>> 9ae9d52a2e0f3551cd29ccbda1308ae73065b0ce
     });
 
     setSocket(newSocket);
@@ -165,49 +145,26 @@ const ManagerChat = () => {
       }, 30000);
     });
 
-<<<<<<< HEAD
-    newSocket.on("connect_error", (error: any) => {
+    newSocket.on("connect_error", (error) => {
+      const err = error as any;
       console.error("Connection failed:", {
-        message: error.message,
-        type: error.type,
-        description: error.description,
-        code: error.code,
+        message: err.message,
+        type: err.type,
+        description: err.description,
+        code: err.code,
       });
-      message.error(`Kết nối thất bại: ${error.message || "Lỗi không xác định"}`);
+      message.error(`Kết nối thất bại: ${err.message || "Lỗi không xác định"}`);
       setIsConnected(false);
       setIsReconnecting(false);
       isConnectingRef.current = false;
-=======
-    // Connection error
-    newSocket.on(
-      "connect_error",
-      (
-        error: Error & {
-          type?: string;
-          description?: string;
-        }
-      ) => {
-        console.error("Connection failed:", {
-          message: error.message,
-          type: error.type || "Unknown",
-          description: error.description || "No description",
-          code: (error as any).code, // Một số error có thêm code
-        });
-        message.error(`Kết nối thất bại: ${error.message || "Lỗi không xác định"}`);
 
-        setIsConnected(false);
-        setIsReconnecting(false);
-        isConnectingRef.current = false;
->>>>>>> 9ae9d52a2e0f3551cd29ccbda1308ae73065b0ce
+      const currentAttempts = connectionAttempts + 1;
+      setConnectionAttempts(currentAttempts);
 
-        const currentAttempts = connectionAttempts + 1;
-        setConnectionAttempts(currentAttempts);
-
-<<<<<<< HEAD
       if (currentAttempts < 5) {
         const delay = Math.min(1000 * Math.pow(2, currentAttempts - 1), 10000);
         message.warning(
-          `Kết nối thất bại: ${error.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
+          `Kết nối thất bại: ${err.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
         );
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -217,25 +174,8 @@ const ManagerChat = () => {
       } else {
         message.error("Không thể kết nối sau 5 lần thử. Vui lòng kiểm tra kết nối mạng.");
         cleanupSocket();
-=======
-        if (currentAttempts < 5) {
-          const delay = Math.min(1000 * Math.pow(2, currentAttempts - 1), 10000); // Exponential backoff
-          message.warning(
-            `Kết nối thất bại: ${error.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
-          );
-
-          if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            console.log(`🔄 Attempting to reconnect... (attempt ${currentAttempts + 1})`);
-            connectSocket();
-          }, delay);
-        } else {
-          message.error("Không thể kết nối sau 5 lần thử. Vui lòng kiểm tra kết nối mạng.");
-          cleanupSocket();
-        }
->>>>>>> 9ae9d52a2e0f3551cd29ccbda1308ae73065b0ce
       }
-    );
+    });
 
     newSocket.on("disconnect", (reason) => {
       console.log("❌ Disconnected from WebSocket server. Reason:", reason);
@@ -650,4 +590,4 @@ const ManagerChat = () => {
   );
 };
 
-export default ManagerChat;
+export default ManagerChat; 
