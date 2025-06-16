@@ -9,17 +9,14 @@ const User = require("../models/user");
 const initializeSocket = (server) => {
   const io = socketIo(server, {
     cors: {
-      origin: "https://wdp301-su25.space" || "http://localhost:3000", // Thay đổi thành URL cụ thể
+      origin: ["https://wdp301-su25.space", "http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
-      allowedHeaders: ["Authorization"],
     },
-    transports: ["websocket", "polling"], // Đảm bảo hỗ trợ cả hai transport
-    pingTimeout: 60000,
-    pingInterval: 25000,
+    transports: ["websocket", "polling"],
+    allowEIO3: true,
   });
 
-  // Middleware để xác thực token cho mỗi kết nối Socket.IO
   io.use((socket, next) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace("Bearer ", "");
@@ -29,7 +26,6 @@ const initializeSocket = (server) => {
         return next(new Error("Authentication error: No token provided"));
       }
 
-      // Sử dụng environment variable cho JWT secret
       const jwtSecret = process.env.JWT_SECRET || "abc1b062fb4d5b0543294a9999dc4a9c3f0996be1044b5dd6389eb3dda8331f8";
 
       jwt.verify(token, jwtSecret, (err, decoded) => {
@@ -43,10 +39,9 @@ const initializeSocket = (server) => {
           return next(new Error("Authentication error: No user ID"));
         }
 
-        // Gắn thông tin user vào đối tượng socket để sử dụng sau này
         socket.userId = decoded.id;
         console.log(`🔐 Socket authenticated for user: ${decoded.id}`);
-        next(); // Cho phép kết nối
+        next();
       });
     } catch (error) {
       console.error("❌ Socket Auth Error:", error.message);
@@ -55,17 +50,13 @@ const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    // Từ đây trở đi, mọi socket đã được xác thực
     const userId = socket.userId;
     console.log(`✅ User connected: ${userId} (Socket ID: ${socket.id})`);
 
-    // Mỗi user sẽ join vào một "phòng" riêng của mình
     socket.join(`user_${userId}`);
 
-    // Join vào các chat rooms mà user tham gia
     socket.on("joinChatRoom", async (chatRoomId) => {
       try {
-        // Kiểm tra user có trong chat room không
         const chatRoomUser = await ChatRoomUser.findOne({
           where: { chatRoomId, userId },
         });
@@ -88,7 +79,6 @@ const initializeSocket = (server) => {
         const senderId = socket.userId;
         console.log(`📤 Message from ${senderId} to ${receiverId || "room " + chatRoomId}:`, content);
 
-        // Validate input
         if (!content || content.trim() === "") {
           const error = "Message content cannot be empty";
           console.error("❌", error);
@@ -96,7 +86,6 @@ const initializeSocket = (server) => {
           return;
         }
 
-        // Kiểm tra authorization nếu gửi đến chat room
         if (chatRoomId) {
           const chatRoomUser = await ChatRoomUser.findOne({
             where: { chatRoomId, userId: senderId },
@@ -116,7 +105,6 @@ const initializeSocket = (server) => {
           content: content.trim(),
         });
 
-        // Lấy thông tin người gửi và người nhận để gửi kèm tin nhắn
         const sender = await User.findByPk(senderId, { attributes: ["id", "fullName"] });
         const receiver = receiverId ? await User.findByPk(receiverId, { attributes: ["id", "fullName"] }) : null;
 
@@ -132,10 +120,8 @@ const initializeSocket = (server) => {
         };
 
         if (chatRoomId) {
-          // Gửi đến một phòng chat cụ thể
           io.to(`room_${chatRoomId}`).emit("message", messageData);
         } else if (receiverId) {
-          // Gửi trực tiếp cho người nhận và cả người gửi (để đồng bộ trên các thiết bị)
           io.to(`user_${senderId}`).to(`user_${receiverId}`).emit("message", messageData);
         }
 
@@ -154,13 +140,11 @@ const initializeSocket = (server) => {
       if (callback) callback({ success: true, userId: socket.userId, timestamp: new Date().toISOString() });
     });
 
-    // Error handling
     socket.on("error", (error) => {
       console.error(`❌ Socket error for user ${socket.userId}:`, error);
     });
   });
 
-  // Global error handling
   io.engine.on("connection_error", (err) => {
     console.error("❌ Connection error:", {
       message: err.message,
