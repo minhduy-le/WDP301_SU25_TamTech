@@ -1,7 +1,14 @@
 import { APP_COLOR } from "@/constants/Colors";
 import { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Calendar } from "react-native-calendars";
+import SlotRegister from "./slotRegister";
 
 interface IProps {
   date: string[];
@@ -30,7 +37,7 @@ const CalendarComponent = (props: IProps) => {
   }
 
   return (
-    <View>
+    <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.calendarContainer}>
         <Calendar
           onDayPress={(day) => setSelectedDate(day.dateString)}
@@ -81,8 +88,16 @@ const CalendarComponent = (props: IProps) => {
           </Text>
         </TouchableOpacity>
       </View>
-      {activeTab === "history" && <View></View>}
-    </View>
+      {activeTab === "register" && (
+        <View>
+          <SlotRegister />
+          <SlotRegister />
+          <SlotRegister />
+          <SlotRegister />
+          <SlotRegister />
+        </View>
+      )}
+    </ScrollView>
   );
 };
 

@@ -13,8 +13,11 @@ import {
   Text,
   View,
 } from "react-native";
-
-const OrderCard = () => {
+import ShareButton from "../btnComponent/shareBtn";
+interface IConfirmOrder {
+  isShipper?: boolean;
+}
+const OrderCard = (props: IConfirmOrder) => {
   const [details, setDetails] = useState(false);
   const handleViewDetails = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
@@ -178,10 +181,45 @@ const OrderCard = () => {
               </View>
             </View>
           </View>
-          <View style={{ marginTop: 5 }}>
+          <View
+            style={{
+              marginTop: 5,
+              paddingBottom: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              marginBottom: 10,
+            }}
+          >
             <Text style={styles.text}>Ghi chú:</Text>
             <Text style={styles.text}>Ít dưa chua</Text>
           </View>
+        </View>
+      )}
+      {props.isShipper && (
+        <View
+          style={{ flexDirection: "row", justifyContent: "center", gap: 20 }}
+        >
+          <ShareButton
+            onPress={() => console.log("Confirm")}
+            title="Xác nhận đơn"
+            textStyle={{ color: APP_COLOR.WHITE, fontFamily: APP_FONT.REGULAR }}
+            btnStyle={{
+              marginVertical: 5,
+              width: 130,
+              justifyContent: "center",
+            }}
+          />
+          <ShareButton
+            onPress={() => console.log("Confirm")}
+            title="Từ chối đơn"
+            textStyle={{ color: APP_COLOR.WHITE, fontFamily: APP_FONT.REGULAR }}
+            btnStyle={{
+              marginVertical: 5,
+              width: 130,
+              justifyContent: "center",
+              backgroundColor: APP_COLOR.CANCEL,
+            }}
+          />
         </View>
       )}
     </View>
@@ -251,12 +289,7 @@ const styles = StyleSheet.create({
     borderBottomStartRadius: 10,
     paddingHorizontal: 15,
     paddingTop: 10,
-    paddingBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+
     zIndex: 3,
   },
   detailsSection: {
