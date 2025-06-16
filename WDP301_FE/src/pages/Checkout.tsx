@@ -352,7 +352,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.fullName}
+                value={userProfile?.user.fullName}
                 disabled
               />
               <Input
@@ -362,7 +362,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.phone_number}
+                value={userProfile?.user.phone_number}
                 disabled
               />
               <Input
@@ -372,7 +372,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.email}
+                value={userProfile?.user.email}
                 disabled
               />
               {!isDatHo && (

@@ -30,12 +30,12 @@ const StaffProfile = () => {
   const handleEdit = () => {
     setEditMode(true);
     form.setFieldsValue({
-      fullName: userProfile?.fullName || "",
-      date_of_birth: userProfile?.date_of_birth
-        ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+      fullName: userProfile?.user.fullName || "",
+      date_of_birth: userProfile?.user.date_of_birth
+        ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
         : null,
-      phone_number: userProfile?.phone_number || "",
-      email: userProfile?.email || "",
+      phone_number: userProfile?.user.phone_number || "",
+      email: userProfile?.user.email || "",
     });
   };
 
@@ -117,7 +117,7 @@ const StaffProfile = () => {
         {!editMode ? (
           <>
             <Title level={2} style={{ marginBottom: 0, textAlign: "center" }}>
-              {userProfile?.fullName}
+              {userProfile?.user.fullName}
             </Title>
             <Text
               type="secondary"
@@ -127,21 +127,21 @@ const StaffProfile = () => {
                 marginBottom: 24,
               }}
             >
-              {userProfile?.email}
+              {userProfile?.user.email}
             </Text>
             <div
               style={{ fontSize: 18, marginBottom: 24, textAlign: "center" }}
             >
               <div>
                 <b>Số điện thoại:</b>{" "}
-                {userProfile?.phone_number || (
+                {userProfile?.user.phone_number || (
                   <Text type="secondary">Chưa cập nhật</Text>
                 )}
               </div>
               <div>
                 <b>Ngày sinh:</b>{" "}
-                {userProfile?.date_of_birth ? (
-                  dayjs(userProfile?.date_of_birth).format("DD/MM/YYYY")
+                {userProfile?.user.date_of_birth ? (
+                  dayjs(userProfile?.user.date_of_birth).format("DD/MM/YYYY")
                 ) : (
                   <Text type="secondary">Chưa cập nhật</Text>
                 )}
@@ -180,12 +180,12 @@ const StaffProfile = () => {
             form={form}
             layout="vertical"
             initialValues={{
-              fullName: userProfile?.fullName || "",
-              date_of_birth: userProfile?.date_of_birth
-                ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+              fullName: userProfile?.user.fullName || "",
+              date_of_birth: userProfile?.user.date_of_birth
+                ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
                 : null,
-              phone_number: userProfile?.phone_number || "",
-              email: userProfile?.email || "",
+              phone_number: userProfile?.user.phone_number || "",
+              email: userProfile?.user.email || "",
             }}
           >
             <Form.Item
@@ -196,7 +196,7 @@ const StaffProfile = () => {
               <Input size="large" />
             </Form.Item>
             <Form.Item label="Email">
-              <Input value={userProfile?.email} disabled size="large" />
+              <Input value={userProfile?.user.email} disabled size="large" />
             </Form.Item>
             <Form.Item
               name="phone_number"
