@@ -35,6 +35,10 @@ export const APP_COLOR = {
   CANCEL: "#D71616",
   PENDING: "rgba(17, 21, 248, 0.97)",
   DELIVERY: "rgba(155, 160, 12, 0.97)",
+  SOFT_BLUE: "#4B8FFB",
+  WARNING_ORANGE: "#F28C38",
+  AMBER: "#FFB300",
+  ALERT_RED: "#E63946",
 };
 
 export const APP_FONT = {
