@@ -9,14 +9,12 @@ const User = require("../models/user");
 const initializeSocket = (server) => {
   const io = socketIo(server, {
     cors: {
-      origin: "https://wdp301-su25.space" || "http://localhost:3000", // Thay đổi thành URL cụ thể
+      origin: ["https://wdp301-su25.space", "http://wdp301-su25.space", "http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
-      allowedHeaders: ["Authorization"],
     },
-    transports: ["websocket", "polling"], // Đảm bảo hỗ trợ cả hai transport
-    pingTimeout: 60000,
-    pingInterval: 25000,
+    transports: ["websocket", "polling"],
+    allowEIO3: true, // Cho phép cả phiên bản Engine.IO 3
   });
 
   // Middleware để xác thực token cho mỗi kết nối Socket.IO
