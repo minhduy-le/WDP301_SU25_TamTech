@@ -3,7 +3,9 @@ import StaffHeader from "@/components/staffComponent/staffHeader";
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import NetInfo from "@react-native-community/netinfo";
 import { LinearGradient } from "expo-linear-gradient";
+
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -42,6 +44,14 @@ const Attendance = () => {
     ];
     return days[now.getDay()];
   };
+
+  const checkIpAddress = async () => {
+    const state = await NetInfo.fetch();
+    if (state.type === "wifi" && state.details.ipAddress) {
+      const ip = state.details.ipAddress;
+      console.log("IP hiện tại:", ip);
+    }
+  };
   const getCurrentTime = () => {
     const now = new Date();
     const hour = now.getHours();
@@ -73,6 +83,7 @@ const Attendance = () => {
     return () => clearInterval(interval);
   }, []);
   const handleAttendance = () => {
+    checkIpAddress();
     if (pressCount >= 2) return;
     const currentTime = getCurrentTime();
     if (pressCount === 0) {
@@ -164,20 +175,20 @@ const Attendance = () => {
             </Text>
           </Pressable>
           <View style={styles.dashedLine} />
-          <View style={{ flexDirection: "row", gap: 30 }}>
+          <View style={{ flexDirection: "row", gap: 10 }}>
             <View style={styles.timeLog}>
               <Fontisto name="clock" size={24} color={APP_COLOR.BROWN} />
               <Text style={styles.timeLogValue}>
                 {clockInTime || "--:--:--"}
               </Text>
-              <Text style={styles.timeLogLabel}>Clock In</Text>
+              <Text style={styles.timeLogLabel}>Thời gian vào</Text>
             </View>
             <View style={styles.timeLog}>
               <Fontisto name="clock" size={24} color={APP_COLOR.BROWN} />
               <Text style={styles.timeLogValue}>
                 {clockOutTime || "--:--:--"}
               </Text>
-              <Text style={styles.timeLogLabel}>Clock Out</Text>
+              <Text style={styles.timeLogLabel}>Thời gian ra</Text>
             </View>
             <View style={styles.timeLog}>
               <Fontisto name="clock" size={24} color={APP_COLOR.BROWN} />
@@ -186,7 +197,7 @@ const Attendance = () => {
                   ? calculateTotalHours(clockInTime, clockOutTime)
                   : "--:--"}
               </Text>
-              <Text style={styles.timeLogLabel}>Total Hours</Text>
+              <Text style={styles.timeLogLabel}>Tổng thời gian</Text>
             </View>
           </View>
         </View>
@@ -265,7 +276,7 @@ const styles = StyleSheet.create({
   },
   timeLogLabel: {
     fontFamily: APP_FONT.BOLD,
-    fontSize: 16,
+    fontSize: 15,
     color: APP_COLOR.ORANGE,
   },
 });
