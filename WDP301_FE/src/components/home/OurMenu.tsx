@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Button,
-  Card,
-  Spin,
-  message,
-  Typography,
-} from "antd";
+import { Row, Col, Button, Card, Spin, message, Typography } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
@@ -123,7 +115,6 @@ const OurMenu: React.FC = () => {
     setSelectedMainProductForModal(null);
   };
 
-
   const itemsToDisplay =
     activeTab === "mainDishes"
       ? mainDishes
@@ -146,8 +137,9 @@ const OurMenu: React.FC = () => {
     boxShadow:
       activeTab === tabName ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
     outline: "none",
+    fontFamily: "'Montserrat', sans-serif",
   });
- 
+
   return (
     <div style={{ padding: "5px 0 50px 0", background: "#fff7e6" }}>
       <div className="our-menu-title-wrapper">
@@ -293,6 +285,7 @@ const OurMenu: React.FC = () => {
                         WebkitBoxOrient: "vertical",
                         marginTop: "10px",
                         cursor: "pointer",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                       title={item.name}
                       onClick={() => navigate(`/product/${item.productId}`)}
@@ -312,6 +305,7 @@ const OurMenu: React.FC = () => {
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         marginBottom: "12px",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                     >
                       {displayDescription}
@@ -330,6 +324,7 @@ const OurMenu: React.FC = () => {
                           fontSize: "1.25rem",
                           fontWeight: "bold",
                           color: "#e67e22",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
                         {parseFloat(item.price).toLocaleString()}đ
@@ -348,6 +343,7 @@ const OurMenu: React.FC = () => {
                           boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
                           fontWeight: "bold",
                           outline: "none",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                         onClick={() => {
                           if (activeTab === "mainDishes") {
