@@ -117,7 +117,8 @@ const WelcomePage = () => {
     resetForm: any
   ) => {
     try {
-      router.navigate("/(tabs)/homepage");
+      // router.navigate("/(tabs)/homepage");
+      router.navigate("/(shippers)");
     } catch (error) {
       console.log("Lỗi khi đăng nhập", error);
       Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {

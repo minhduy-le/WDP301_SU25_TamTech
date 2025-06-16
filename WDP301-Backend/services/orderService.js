@@ -564,24 +564,28 @@ const handlePaymentSuccess = async (req, res) => {
   console.log("Request headers:", JSON.stringify(req.headers, null, 2));
   console.log("Request query:", JSON.stringify(req.query, null, 2));
   console.log("Request body:", JSON.stringify(req.body, null, 2));
+  console.log("All request parameters:", {
+    query: req.query,
+    body: req.body,
+    url: req.originalUrl,
+    method: req.method,
+  });
 
   const { orderId, code, id: paymentId, status, cancel, orderCode } = req.method === "GET" ? req.query : req.body;
   console.log("Extracted parameters:", { orderId, code, paymentId, status, cancel, orderCode });
 
   if (!orderId) {
     console.log("Missing orderId in request");
-    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?error=missing_order_id`);
+    return res.status(400).json({ message: "Order ID is required" });
   }
 
   const parsedOrderId = parseInt(orderId, 10);
   if (isNaN(parsedOrderId)) {
     console.log("Invalid orderId format:", orderId);
-    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?error=invalid_order_id`);
+    return res.status(400).json({ message: "Invalid order ID" });
   }
 
   const transaction = await sequelize.transaction();
-  console.log("Transaction started for orderId:", parsedOrderId);
-
   try {
     let order = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -598,30 +602,24 @@ const handlePaymentSuccess = async (req, res) => {
     if (!order) {
       console.log("Order not found after retries for orderId:", parsedOrderId);
       await transaction.rollback();
-      console.log("Transaction rolled back due to order not found");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=order_not_found`);
+      return res.status(404).json({ message: "Order not found" });
     }
 
-    console.log("Current order details:", {
-      orderId: order.orderId,
-      status_id: order.status_id,
-      payment_time: order.payment_time,
-      created_at: order.order_create_at,
-    });
-
+    // Check if order is already paid (possibly updated by webhook)
     if (order.status_id === 2) {
       console.log(`Order ${parsedOrderId} already processed with status_id: 2`);
       let invoiceUrl = order.invoiceUrl;
       if (!invoiceUrl) {
         console.log("No invoiceUrl, generating PDF for orderId:", parsedOrderId);
         invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
-        console.log("Generated invoiceUrl:", invoiceUrl || "Failed to generate invoice");
-      } else {
-        console.log("Invoice already exists for orderId:", parsedOrderId, "URL:", invoiceUrl);
       }
       await transaction.commit();
-      console.log("Transaction committed successfully for already processed order");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}`);
+      console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
+      return res.redirect(
+        `${FRONTEND_DOMAIN}/payment-success?orderId=${parsedOrderId}&code=00&status=PAID&invoiceUrl=${encodeURIComponent(
+          invoiceUrl || ""
+        )}`
+      );
     }
 
     const user = await User.findOne({
@@ -632,51 +630,80 @@ const handlePaymentSuccess = async (req, res) => {
     if (!user) {
       console.log("User not found for userId:", order.userId);
       await transaction.rollback();
-      console.log("Transaction rolled back due to user not found");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=user_not_found`);
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const isPaymentSuccessful = code === "00" || status === "PAID" || status === "success";
-    console.log("Payment success check:", { isPaymentSuccessful, code, status });
+    // Validate payment status
+    let paymentStatus = { code: code || "unknown", status: status || "unknown" };
+    console.log("Initial paymentStatus:", paymentStatus);
+
+    if (!code || !status || paymentStatus.code === "unknown" || paymentStatus.status === "unknown") {
+      console.log("Missing or unknown code/status, fetching from PayOS for orderId:", parsedOrderId);
+      try {
+        const paymentInfo = await payos.getPaymentLinkInformation(paymentId || orderCode || parsedOrderId);
+        console.log("PayOS payment info:", JSON.stringify(paymentInfo, null, 2));
+        paymentStatus = {
+          code: paymentInfo.data?.code || paymentInfo.code || "unknown",
+          status: paymentInfo.data?.status || paymentInfo.status || "unknown",
+        };
+        console.log("Updated paymentStatus from PayOS:", paymentStatus);
+      } catch (payosError) {
+        console.error("Failed to fetch PayOS payment info:", payosError.message, payosError.stack);
+        await transaction.rollback();
+        return res.status(500).json({ message: "Failed to verify payment status", error: payosError.message });
+      }
+    }
+
+    const isPaymentSuccessful = paymentStatus.code === "00" || paymentStatus.status.toUpperCase() === "PAID";
+    console.log("Payment success check:", { isPaymentSuccessful, paymentStatus });
 
     if (isPaymentSuccessful) {
       console.log("Payment successful for orderId:", parsedOrderId);
-      order.status_id = 2;
+      order.status_id = 2; // Paid
       order.payment_time = new Date();
 
       const currentMemberPoint = user.member_point || 0;
       const orderPointEarn = order.order_point_earn || 0;
       user.member_point = currentMemberPoint + orderPointEarn;
-      console.log(
-        `Updating user ${user.id} member_point from ${currentMemberPoint} to ${user.member_point} by adding ${orderPointEarn}`
-      );
-      await user.save({ transaction });
+      console.log(`Updating user ${user.id} member_point to ${user.member_point}`);
 
-      await order.save({ transaction });
-      console.log("Order saved with updated status and payment_time");
+      try {
+        await user.save({ transaction });
+        console.log("User saved successfully");
+        await order.save({ transaction });
+        console.log("Order saved successfully with status_id: 2");
+      } catch (saveError) {
+        console.error("Failed to save user or order:", saveError.message, saveError.stack);
+        await transaction.rollback();
+        return res.status(500).json({ message: "Failed to update order status", error: saveError.message });
+      }
 
       const invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
-      console.log("Generated invoiceUrl:", invoiceUrl || "Failed to generate invoice");
+      console.log("Invoice generated:", invoiceUrl);
 
-      await transaction.commit();
-      console.log("Transaction committed successfully for orderId:", parsedOrderId);
-      console.log("Payment processed, redirecting to frontend with invoiceUrl:", invoiceUrl);
+      try {
+        await transaction.commit();
+        console.log("Transaction committed successfully for orderId:", parsedOrderId);
+      } catch (commitError) {
+        console.error("Failed to commit transaction:", commitError.message, commitError.stack);
+        return res.status(500).json({ message: "Failed to commit transaction", error: commitError.message });
+      }
+
+      console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
       return res.redirect(
-        `${FRONTEND_DOMAIN}/api/orders/success?orderId=${parsedOrderId}&code=${code || ""}&status=${
-          status || ""
+        `${FRONTEND_DOMAIN}/payment-success?orderId=${parsedOrderId}&code=${paymentStatus.code}&status=${
+          paymentStatus.status
         }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
       );
     } else {
-      console.log("Payment failed for orderId:", parsedOrderId, { code, status });
+      console.log("Payment failed for orderId:", parsedOrderId, paymentStatus);
       await transaction.rollback();
-      console.log("Transaction rolled back due to payment failure");
-      return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=payment_failed`);
+      return res.status(400).json({ message: "Payment not successful", paymentStatus });
     }
   } catch (error) {
     console.error("Error in handlePaymentSuccess:", error.message, error.stack);
     await transaction.rollback();
-    console.log("Transaction rolled back due to error");
-    return res.redirect(`${FRONTEND_DOMAIN}/api/orders/error?orderId=${parsedOrderId}&error=server_error`);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
