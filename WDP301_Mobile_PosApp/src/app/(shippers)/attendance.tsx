@@ -5,9 +5,9 @@ import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import NetInfo from "@react-native-community/netinfo";
 import { LinearGradient } from "expo-linear-gradient";
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Dimensions,
   Pressable,
   ScrollView,
@@ -24,6 +24,8 @@ const Attendance = () => {
   const [clockOutTime, setClockOutTime] = useState("");
   const [pressCount, setPressCount] = useState(0);
   const [lastDate, setLastDate] = useState("");
+  const rippleAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
   const getCurrentDate = () => {
     const now = new Date();
     const day = now.getDate().toString().padStart(2, "0");
@@ -31,6 +33,7 @@ const Attendance = () => {
     const year = now.getFullYear().toString().padStart(2, "0");
     return `${day}/${month}/${year}`;
   };
+
   const getDayOfWeek = () => {
     const now = new Date();
     const days = [
@@ -52,6 +55,7 @@ const Attendance = () => {
       console.log("IP hiện tại:", ip);
     }
   };
+
   const getCurrentTime = () => {
     const now = new Date();
     const hour = now.getHours();
@@ -67,6 +71,7 @@ const Attendance = () => {
         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}${" "}PM`;
     }
   };
+
   useEffect(() => {
     const interval = setInterval(() => {
       const newDate = getCurrentDate();
@@ -82,9 +87,45 @@ const Attendance = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!isButtonDisabled) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, []);
+
   const handleAttendance = () => {
     checkIpAddress();
     if (pressCount >= 2) return;
+
+    Animated.sequence([
+      Animated.timing(rippleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rippleAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     const currentTime = getCurrentTime();
     if (pressCount === 0) {
       setClockInTime(currentTime);
@@ -93,7 +134,9 @@ const Attendance = () => {
     }
     setPressCount((prev) => prev + 1);
   };
+
   const isButtonDisabled = pressCount >= 2;
+
   const calculateTotalHours = (clockIn: any, clockOut: any) => {
     const parseTime = (timeStr: any) => {
       const [time, period] = timeStr.split(" ");
@@ -112,6 +155,27 @@ const Attendance = () => {
       .toString()
       .padStart(2, "0")}:${seconds}`;
   };
+
+  const rippleScale = rippleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.3],
+  });
+
+  const rippleOpacity = rippleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.4, 0],
+  });
+
+  const pulseScale = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.2],
+  });
+
+  const pulseOpacity = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.1],
+  });
+
   return (
     <ScrollView style={{ flex: 1 }}>
       <LinearGradient
@@ -141,39 +205,62 @@ const Attendance = () => {
           >
             {currentDayOfWeek} - {currentDate}
           </Text>
-          <Pressable
-            style={({ pressed }) => [
-              {
-                height: 150,
-                width: 150,
-                backgroundColor: isButtonDisabled
-                  ? APP_COLOR.GREY
-                  : APP_COLOR.ORANGE,
-                borderRadius: 75,
-                justifyContent: "center",
-                alignItems: "center",
-                opacity: pressed && !isButtonDisabled ? 0.7 : 1,
-              },
-            ]}
-            onPress={handleAttendance}
-            disabled={isButtonDisabled}
-          >
-            <MaterialIcons
-              name="touch-app"
-              size={70}
-              color={APP_COLOR.WHITE}
-              style={{ marginBottom: 10 }}
+          <View style={styles.buttonContainer}>
+            {!isButtonDisabled && (
+              <Animated.View
+                style={[
+                  styles.pulse,
+                  {
+                    transform: [{ scale: pulseScale }],
+                    opacity: pulseOpacity,
+                  },
+                ]}
+              />
+            )}
+            <Animated.View
+              style={[
+                styles.ripple,
+                {
+                  transform: [{ scale: rippleScale }],
+                  opacity: rippleOpacity,
+                },
+              ]}
             />
-            <Text
-              style={{
-                color: APP_COLOR.WHITE,
-                fontFamily: APP_FONT.MEDIUM,
-                fontSize: 17,
-              }}
+            <Pressable
+              style={({ pressed }) => [
+                {
+                  height: 150,
+                  width: 150,
+                  backgroundColor: isButtonDisabled
+                    ? APP_COLOR.GREY
+                    : APP_COLOR.ORANGE,
+                  borderRadius: 75,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  opacity: pressed && !isButtonDisabled ? 0.7 : 1,
+                  marginBottom: 10,
+                },
+              ]}
+              onPress={handleAttendance}
+              disabled={isButtonDisabled}
             >
-              Chấm công
-            </Text>
-          </Pressable>
+              <MaterialIcons
+                name="touch-app"
+                size={70}
+                color={APP_COLOR.WHITE}
+                style={{ marginBottom: 10 }}
+              />
+              <Text
+                style={{
+                  color: APP_COLOR.WHITE,
+                  fontFamily: APP_FONT.MEDIUM,
+                  fontSize: 17,
+                }}
+              >
+                Chấm công
+              </Text>
+            </Pressable>
+          </View>
           <View style={styles.dashedLine} />
           <View style={{ flexDirection: "row", gap: 10 }}>
             <View style={styles.timeLog}>
@@ -236,6 +323,7 @@ const Attendance = () => {
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,
@@ -260,6 +348,27 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: "center",
   },
+  buttonContainer: {
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ripple: {
+    position: "absolute",
+    width: 150,
+    height: 150,
+    borderRadius: 85,
+    backgroundColor: APP_COLOR.ORANGE,
+    opacity: 0.4,
+  },
+  pulse: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: APP_COLOR.ORANGE,
+    opacity: 0.3,
+  },
   dashedLine: {
     borderStyle: "dashed",
     borderWidth: 1,
@@ -280,4 +389,5 @@ const styles = StyleSheet.create({
     color: APP_COLOR.ORANGE,
   },
 });
+
 export default Attendance;
