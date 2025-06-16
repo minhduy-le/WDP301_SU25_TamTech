@@ -1,12 +1,12 @@
 .menu-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .menu-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  }
-  
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
 .our-menu-tab-button {
   margin-right: 16px;
   border-radius: 25px;
@@ -60,6 +60,7 @@
   background: #fff8ec;
   position: relative;
   z-index: 1;
+  font-family: "Montserrat", sans-serif;
 }
 
 .our-menu-title-wrapper::before,
@@ -76,4 +77,3 @@
   text-shadow: 1px 2px 8px #ffb36633;
   border-radius: 8px;
 }
-  

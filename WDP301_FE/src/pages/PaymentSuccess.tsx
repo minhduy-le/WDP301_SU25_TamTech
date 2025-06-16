@@ -9,7 +9,6 @@ const PaymentSuccess = () => {
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
 
-  console.log("location.search:", location.search); // Kiểm tra query string
   console.log("orderId:", orderId); // Kiểm tra giá trị orderId
 
   const handleTrackOrder = () => {

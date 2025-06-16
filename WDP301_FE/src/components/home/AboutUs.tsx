@@ -69,12 +69,18 @@ const AboutUs = () => {
                   marginBottom: 16,
                   fontSize: 50,
                   fontWeight: "700",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 Về Tấm Tắc
               </Title>
               <Paragraph
-                style={{ color: "#efe6db", fontSize: 16, lineHeight: 1.8 }}
+                style={{
+                  color: "#efe6db",
+                  fontSize: 16,
+                  lineHeight: 1.8,
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
               >
                 Cơm tấm là linh hồn của ẩm thực Sài Gòn – và tụi mình đem hương
                 vị ấy vào từng dĩa cơm. Với bí quyết riêng trong cách ướp sườn,
@@ -82,7 +88,12 @@ const AboutUs = () => {
                 muốn mang đến cho bạn một bữa ăn thật trọn vẹn và đậm đà.{" "}
               </Paragraph>
               <Paragraph
-                style={{ color: "#efe6db", fontSize: 16, lineHeight: 1.8 }}
+                style={{
+                  color: "#efe6db",
+                  fontSize: 16,
+                  lineHeight: 1.8,
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
               >
                 Không chỉ là món ăn, tụi mình còn phục vụ bằng cả tấm lòng, vì
                 "Ngon thôi chưa đủ, phải vui vẻ nữa mới đúng vị!"{" "}
@@ -104,19 +115,25 @@ const AboutUs = () => {
                 outline: "none",
                 boxShadow: "0 4px 16px rgba(120, 162, 67, 0.10)",
                 cursor: "pointer",
-                transition: "transform 0.2s, box-shadow 0.2s, background-position 0.5s",
+                transition:
+                  "transform 0.2s, box-shadow 0.2s, background-position 0.5s",
                 animation: "gradientMove 2s linear infinite",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                fontFamily: "'Montserrat', sans-serif",
               }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.07)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 24px #b7e4c7";
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform =
+                  "scale(1.07)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  "0 8px 24px #b7e4c7";
               }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(120, 162, 67, 0.10)";
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform =
+                  "scale(1)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  "0 4px 16px rgba(120, 162, 67, 0.10)";
               }}
               onClick={() => navigate("/menu")}
             >

@@ -62,6 +62,7 @@ const HeroSection = () => {
               background: "#fff",
               borderColor: "#F9A14D",
               color: "#a05a13",
+              fontFamily: "'Montserrat', sans-serif",
             }}
             popupClassName="custom-ant-select-dropdown"
             className="custom-ant-select"
@@ -80,6 +81,7 @@ const HeroSection = () => {
               borderColor: "#F9A14D",
               background: "#fff",
               color: "#a05a13",
+              fontFamily: "'Montserrat', sans-serif",
             }}
           />
           <Button
@@ -90,6 +92,7 @@ const HeroSection = () => {
               color: "#fff",
               alignItems: "center",
               outline: "none",
+              fontFamily: "'Montserrat', sans-serif",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.backgroundColor =
