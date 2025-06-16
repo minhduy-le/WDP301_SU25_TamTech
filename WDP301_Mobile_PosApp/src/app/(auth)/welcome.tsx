@@ -26,98 +26,26 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-root-toast";
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 10,
-    marginTop: 30,
-    zIndex: 9999,
-  },
-  welcomeText: {
-    flex: 0.4,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerText: {
-    fontSize: 17,
-    color: "#632713",
-    fontFamily: APP_FONT.REGULAR,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  imgLogo: {
-    height: 150,
-    width: 250,
-    marginTop: 70,
-  },
-  welcomeBtn: {
-    paddingHorizontal: 30,
-    flex: 0.3,
-    gap: 20,
-  },
-  signUpText: {
-    textDecorationLine: "underline",
-    color: APP_COLOR.BROWN,
-    fontFamily: APP_FONT.BOLD,
-  },
-  welcomeLoginBtn: {
-    flexDirection: "row",
-    marginHorizontal: "auto",
-  },
-  loginBtn: {
-    width: 200,
-    justifyContent: "center",
-    borderRadius: 30,
-    paddingVertical: 10,
-    backgroundColor: "#EC6426",
-    marginHorizontal: "auto",
-  },
-  loginBtnFast: {
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    paddingVertical: 10,
-    marginLeft: 20,
-    backgroundColor: "#EC6426",
-  },
-  normalText: {
-    ...typography.bodyMedium,
-    color: "#632713",
-  },
-  hrefLink: { marginTop: 5 },
-  loginBtnText: {
-    ...typography.labelLarge,
-    color: APP_COLOR.WHITE,
-    paddingVertical: 5,
-    fontFamily: APP_FONT.MEDIUM,
-  },
-  quickLoginButton: {
-    backgroundColor: APP_COLOR.ORANGE,
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-  },
-  quickLoginText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
 
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
   const [loading, setLoading] = useState<boolean>(false);
   const [fogotPasword, setFogotPassword] = useState(false);
+
+  const options = [
+    { label: "Nhân viên", value: "option1" },
+    { label: "Giao hàng", value: "option2" },
+  ];
+
   const handleLogin = async (
     email: string,
     password: string,
+    option: string,
     resetForm: any
   ) => {
+    setLoading(true);
     try {
-      // router.navigate("/(tabs)/homepage");
+      console.log("Logging in with:", { email, password, option });
       router.navigate("/(shippers)");
     } catch (error) {
       console.log("Lỗi khi đăng nhập", error);
@@ -137,10 +65,14 @@ const WelcomePage = () => {
   useEffect(() => {
     async function prepare() {
       try {
-      } catch (e) {}
+        // Any initialization logic
+      } catch (e) {
+        console.error("Initialization error:", e);
+      }
     }
     prepare();
   }, []);
+
   const handleQuickLogin = async () => {
     try {
       const token = await AsyncStorage.getItem("access_token");
@@ -166,8 +98,10 @@ const WelcomePage = () => {
       console.error("Lỗi đăng nhập vân tay:", error);
     }
   };
+
   const handleForgotPassword = async (email: string) => {
     try {
+      // Uncomment and implement your forgot password API
       // const res = await forgotPasswordAPI(email);
       // if (res.data) {
       //   Toast.show("Đã gửi email khôi phục mật khẩu", {
@@ -199,80 +133,95 @@ const WelcomePage = () => {
               Đăng nhập bằng email được cấp!
             </Text>
             <View style={styles.welcomeBtn}>
-              <View>
-                <Formik
-                  validationSchema={StaffSignInSchema}
-                  initialValues={{ email: "", password: "" }}
-                  onSubmit={(values, { resetForm }) =>
-                    handleLogin(values.email, values.password, resetForm)
-                  }
-                >
-                  {({
-                    handleChange,
-                    handleBlur,
-                    values,
-                    errors,
-                    touched,
-                    handleSubmit,
-                  }) => (
-                    <View>
-                      <ShareInput
-                        placeholder="Đăng nhập bằng email"
-                        keyboardType="ascii-capable"
-                        onChangeText={handleChange("email")}
-                        onBlur={handleBlur("email")}
-                        value={values.email}
-                        error={errors.email}
-                        touched={touched.email}
-                      />
-                      <View style={{ height: 10 }}></View>
-                      <ShareInput
-                        placeholder="Mật khẩu"
-                        keyboardType="ascii-capable"
-                        onChangeText={handleChange("password")}
-                        onBlur={handleBlur("password")}
-                        value={values.password}
-                        error={errors.password}
-                        touched={touched.password}
-                      />
-                      {fogotPasword && (
-                        <Pressable
-                          style={{ alignItems: "center", marginTop: 10 }}
-                          onPress={() => handleForgotPassword(values.email)}
+              <Formik
+                validationSchema={StaffSignInSchema}
+                initialValues={{ email: "", password: "", option: "" }}
+                onSubmit={(values, { resetForm }) =>
+                  handleLogin(
+                    values.email,
+                    values.password,
+                    values.option,
+                    resetForm
+                  )
+                }
+              >
+                {({
+                  handleChange,
+                  handleBlur,
+                  values,
+                  errors,
+                  touched,
+                  handleSubmit,
+                }) => (
+                  <View>
+                    <ShareInput
+                      placeholder="Đăng nhập bằng email"
+                      keyboardType="ascii-capable"
+                      onChangeText={handleChange("email")}
+                      onBlur={handleBlur("email")}
+                      value={values.email}
+                      error={errors.email}
+                      touched={touched.email}
+                    />
+                    <View style={{ height: 10 }} />
+                    <ShareInput
+                      placeholder="Mật khẩu"
+                      keyboardType="ascii-capable"
+                      secureTextEntry
+                      onChangeText={handleChange("password")}
+                      onBlur={handleBlur("password")}
+                      value={values.password}
+                      error={errors.password}
+                      touched={touched.password}
+                    />
+                    <View style={{ height: 10 }} />
+                    <ShareInput
+                      placeholder="Chọn một tùy chọn"
+                      isDropdown
+                      dropdownOptions={options}
+                      onChangeText={handleChange("option")}
+                      onBlur={handleBlur("option")}
+                      value={values.option}
+                      error={errors.option}
+                      touched={touched.option}
+                    />
+                    {fogotPasword && (
+                      <Pressable
+                        style={{ alignItems: "center", marginTop: 10 }}
+                        onPress={() => handleForgotPassword(values.email)}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: APP_FONT.SEMIBOLD,
+                            color: APP_COLOR.CANCEL,
+                            fontSize: 16,
+                            textDecorationLine: "underline",
+                          }}
                         >
-                          <Text
-                            style={{
-                              fontFamily: APP_FONT.SEMIBOLD,
-                              color: APP_COLOR.CANCEL,
-                              fontSize: 16,
-                              textDecorationLine: "underline",
-                            }}
-                          >
-                            Quên mật khẩu?
-                          </Text>
-                        </Pressable>
-                      )}
-                      <View style={{ height: 10 }}></View>
-                      <View style={{ flexDirection: "row", marginTop: 10 }}>
-                        <ShareButton
-                          title="Đăng nhập"
-                          onPress={handleSubmit}
-                          textStyle={styles.loginBtnText}
-                          btnStyle={styles.loginBtn}
-                          pressStyle={{ alignSelf: "stretch" }}
-                        />
-                        <ShareButton
-                          title=" "
-                          onPress={handleQuickLogin}
-                          textStyle={styles.loginBtnText}
-                          btnStyle={styles.loginBtnFast}
-                          pressStyle={{ alignSelf: "stretch" }}
-                        />
-                      </View>
+                          Quên mật khẩu?
+                        </Text>
+                      </Pressable>
+                    )}
+                    <View style={{ height: 10 }} />
+                    <View style={{ flexDirection: "row", marginTop: 10 }}>
+                      <ShareButton
+                        title="Đăng nhập"
+                        onPress={handleSubmit}
+                        textStyle={styles.loginBtnText}
+                        btnStyle={styles.loginBtn}
+                        pressStyle={{ alignSelf: "stretch" }}
+                      />
+                      <ShareButton
+                        title=" "
+                        onPress={handleQuickLogin}
+                        textStyle={styles.loginBtnText}
+                        btnStyle={styles.loginBtnFast}
+                        pressStyle={{ alignSelf: "stretch" }}
+                      />
                     </View>
-                  )}
-                </Formik>
-              </View>
+                  </View>
+                )}
+              </Formik>
             </View>
             <Pressable
               style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
@@ -305,5 +254,62 @@ const WelcomePage = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 10,
+    marginTop: 30,
+    zIndex: 9999,
+  },
+  welcomeText: {
+    flex: 0.4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerText: {
+    fontSize: 17,
+    color: "#632713",
+    fontFamily: APP_FONT.REGULAR,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  imgLogo: {
+    height: 150,
+    width: 250,
+    marginTop: 70,
+  },
+  welcomeBtn: {
+    paddingHorizontal: 30,
+    flex: 0.3,
+    gap: 20,
+  },
+  loginBtn: {
+    width: 200,
+    justifyContent: "center",
+    borderRadius: 30,
+    paddingVertical: 10,
+    backgroundColor: "#EC6426",
+    marginHorizontal: "auto",
+  },
+  loginBtnFast: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginLeft: 20,
+    backgroundColor: "#EC6426",
+  },
+  normalText: {
+    ...typography.bodyMedium,
+    color: "#632713",
+  },
+  loginBtnText: {
+    ...typography.labelLarge,
+    color: APP_COLOR.WHITE,
+    paddingVertical: 5,
+    fontFamily: APP_FONT.MEDIUM,
+  },
+});
 
 export default WelcomePage;

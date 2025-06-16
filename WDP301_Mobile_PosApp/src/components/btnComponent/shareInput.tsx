@@ -1,5 +1,6 @@
 import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
 import {
   KeyboardTypeOptions,
@@ -10,29 +11,6 @@ import {
   View,
 } from "react-native";
 import DatePicker from "react-native-date-picker";
-
-const styles = StyleSheet.create({
-  inputGroup: {
-    gap: 5,
-  },
-  text: {
-    fontSize: 20,
-    fontFamily: APP_FONT.REGULAR,
-    color: APP_COLOR.BROWN,
-  },
-  input: {
-    borderWidth: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 10,
-    color: APP_COLOR.BROWN,
-  },
-  eye: {
-    position: "absolute",
-    right: 15,
-    top: 11,
-  },
-});
 
 interface IProps {
   title?: string;
@@ -49,6 +27,8 @@ interface IProps {
   placeholder?: string;
   placeholderTextColor?: string;
   isDatePicker?: boolean;
+  isDropdown?: boolean;
+  dropdownOptions?: { label: string; value: any }[];
 }
 
 const ShareInput = (props: IProps) => {
@@ -72,6 +52,8 @@ const ShareInput = (props: IProps) => {
     placeholder,
     placeholderTextColor,
     isDatePicker = false,
+    isDropdown = false,
+    dropdownOptions = [],
   } = props;
 
   useEffect(() => {
@@ -79,14 +61,15 @@ const ShareInput = (props: IProps) => {
       setValue("");
     }
   }, [resetForm, setValue]);
+
   useEffect(() => {
-    if (value && typeof value === "string") {
+    if (value && typeof value === "string" && isDatePicker) {
       const parsedDate = new Date(value);
       if (!isNaN(parsedDate.getTime())) {
         setDate(parsedDate);
       }
     }
-  }, [value]);
+  }, [value, isDatePicker]);
 
   const handleDateConfirm = (selectedDate: Date) => {
     setShowDatePicker(false);
@@ -101,11 +84,50 @@ const ShareInput = (props: IProps) => {
     setShowDatePicker(false);
   };
 
+  const handleDropdownChange = (itemValue: any) => {
+    if (onChangeText) {
+      onChangeText(itemValue);
+    }
+  };
+
   return (
     <View style={styles.inputGroup}>
       {title && <Text style={styles.text}>{title}</Text>}
       <View>
-        {isDatePicker ? (
+        {isDropdown ? (
+          <View
+            style={[
+              styles.pickerContainer,
+              {
+                borderColor: isFocus ? APP_COLOR.ORANGE : APP_COLOR.BROWN,
+              },
+            ]}
+          >
+            <Picker
+              selectedValue={value}
+              onValueChange={handleDropdownChange}
+              onFocus={() => setIsFocus(true)}
+              onBlur={() => setIsFocus(false)}
+              style={styles.picker}
+              enabled={editable}
+            >
+              {placeholder && (
+                <Picker.Item
+                  label={placeholder}
+                  value=""
+                  color={placeholderTextColor || APP_COLOR.BROWN}
+                />
+              )}
+              {dropdownOptions.map((option) => (
+                <Picker.Item
+                  key={option.value}
+                  label={option.label}
+                  value={option.value}
+                />
+              ))}
+            </Picker>
+          </View>
+        ) : isDatePicker ? (
           <TouchableWithoutFeedback onPress={() => setShowDatePicker(true)}>
             <View>
               <TextInput
@@ -179,5 +201,37 @@ const ShareInput = (props: IProps) => {
     </View>
   );
 };
-
+const styles = StyleSheet.create({
+  inputGroup: {
+    gap: 5,
+  },
+  text: {
+    fontSize: 20,
+    fontFamily: APP_FONT.REGULAR,
+    color: APP_COLOR.BROWN,
+  },
+  input: {
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 10,
+    color: APP_COLOR.BROWN,
+  },
+  pickerContainer: {
+    height: 44,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: APP_COLOR.BROWN,
+    justifyContent: "center",
+  },
+  picker: {
+    color: APP_COLOR.BROWN,
+    fontFamily: APP_FONT.REGULAR,
+  },
+  eye: {
+    position: "absolute",
+    right: 15,
+    top: 11,
+  },
+});
 export default ShareInput;
