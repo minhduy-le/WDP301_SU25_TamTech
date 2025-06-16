@@ -30,6 +30,12 @@ interface OutletContext {
   setSocket?: (socket: Socket | null) => void;
 }
 
+interface SocketError extends Error {
+  type?: string;
+  description?: string;
+  context?: any;
+}
+
 const ManagerChat = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<{
@@ -54,7 +60,7 @@ const ManagerChat = () => {
   const isConnectingRef = useRef(false);
 
   const context = useOutletContext<OutletContext>();
-  const setParentSocket = context?.setSocket;
+  const setParentSocket = context?.setSocket || (() => {}); // Thêm fallback function
 
   // Scroll to the latest message
   const scrollToBottom = () => {
@@ -96,46 +102,33 @@ const ManagerChat = () => {
   // WebSocket connection
   const connectSocket = () => {
     // Prevent multiple connection attempts
-    if (isConnectingRef.current) {
-      console.log("🔄 Connection already in progress, skipping...");
-      return;
-    }
+    if (isConnectingRef.current) return;
 
     if (!token || !authUser?.id) {
-      console.error("❌ No token or user ID available", {
-        token: !!token,
-        userId: authUser?.id,
-      });
-      message.error("Vui lòng đăng nhập để chat");
+      console.error("Missing token or user ID");
       return;
     }
 
     isConnectingRef.current = true;
     setIsReconnecting(true);
 
-    console.log("🔌 Initializing socket connection for user:", authUser.id);
-
-    // Clean up existing socket first
+    // Clean up existing socket
     if (socket) {
-      socket.removeAllListeners();
       socket.disconnect();
     }
 
-    // Kiểm tra token format
     const cleanToken = token.replace(/^Bearer\s+/i, "");
-    console.log("🔑 Using token (first 20 chars):", cleanToken.substring(0, 20) + "...");
 
-    const socketUrl = "wss://wdp301-su25.space"; // Hoặc thử "wss://wdp301-su25.space"
+    // Sử dụng URL phù hợp với môi trường
+    const socketUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://wdp301-su25.space";
 
     const newSocket = io(socketUrl, {
-      auth: {
-        token: cleanToken, // Gửi token đã clean
-      },
-      transports: ["websocket", "polling"], // Thử cả hai transport
-      upgrade: true,
-      reconnection: false, // Tắt auto reconnection để tự xử lý
+      path: "/socket.io", // Đảm bảo path đúng
+      auth: { token: cleanToken },
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
       timeout: 20000,
-      forceNew: true,
     });
 
     setSocket(newSocket);
@@ -175,8 +168,11 @@ const ManagerChat = () => {
 
     // Connection error
     newSocket.on("connect_error", (error) => {
-      console.error("❌ Connection error:", {
-        message: error.message,
+      const socketError = error as SocketError;
+      console.error("Connection failed:", {
+        error: socketError.message,
+        type: socketError.type, // OK
+        description: socketError.description, // OK
       });
 
       setIsConnected(false);
