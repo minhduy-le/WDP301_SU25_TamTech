@@ -13,19 +13,7 @@ const RootPage = () => {
   useEffect(() => {
     async function prepare() {
       try {
-        const refresh_token = await AsyncStorage.getItem("refresh_token");
-        const res = await axios.post(
-          `${BASE_URL}/token/refresh?token=${refresh_token}`
-        );
-        if (res.data) {
-          await AsyncStorage.setItem("access_token", res.data.access_token);
-          setAppState({
-            access_token: await AsyncStorage.getItem("access_token"),
-          });
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/welcome");
-        }
+        router.replace("/(tabs)");
       } catch (e) {
         setState(() => {
           throw new Error("Không thể kết tới API Backend...");

@@ -19,8 +19,10 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { FONTS } from "@/theme/typography";
+import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
+import ShareButton from "@/components/button/share.button";
+
 const sampleData = {
   name: "Lê Minh Duy",
   phone: "0889679561",
@@ -41,23 +43,7 @@ const getCurrentDateTime = (): string => {
   }
 };
 
-const realTime = getCurrentDateTime();
 const AccountPage = () => {
-  const styles = StyleSheet.create({
-    text: { color: APP_COLOR.BROWN, fontSize: 17, fontFamily: FONTS.regular },
-    img: {
-      height: 100,
-      width: 150,
-      position: "absolute",
-      right: -5,
-      top: -25,
-    },
-    btnText: {
-      color: APP_COLOR.BROWN,
-      fontFamily: FONTS.semiBold,
-      fontSize: 17,
-    },
-  });
   const insets = useSafeAreaInsets();
   const [decodeToken, setDecodeToken] = useState<any>("");
   const { appState } = useCurrentApp();
@@ -82,6 +68,7 @@ const AccountPage = () => {
     };
     getAccessToken();
   }, []);
+
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn chắc chắn đăng xuất người dùng ?", [
       {
@@ -97,27 +84,22 @@ const AccountPage = () => {
       },
     ]);
   };
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
     >
-      <View style={{ flex: 1, marginTop: Platform.OS === "android" ? 15 : 0 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginHorizontal: 10,
-            marginVertical: "auto",
-            borderBottomColor: APP_COLOR.BROWN,
-            borderBottomWidth: 0.5,
-            paddingBottom: 10,
-          }}
-        >
-          <View style={{ width: "50%" }}>
+      <View
+        style={{
+          flex: 1,
+        }}
+      >
+        <View style={styles.headerContainer}>
+          <View>
             <Text
               style={[
                 styles.text,
-                { fontFamily: FONTS.medium, fontSize: 19, width: 300 },
+                { fontFamily: FONTS.medium, fontSize: 19, textAlign: "center" },
               ]}
             >
               {time}
@@ -128,6 +110,7 @@ const AccountPage = () => {
                 {
                   fontFamily: FONTS.bold,
                   color: APP_COLOR.ORANGE,
+                  textAlign: "center",
                 },
               ]}
             >
@@ -136,141 +119,208 @@ const AccountPage = () => {
           </View>
           <Image source={logo} style={styles.img} />
         </View>
-
-        <Pressable
-          onPress={() => router.navigate("/(user)/account/info")}
-          style={{
-            paddingVertical: 15,
-            paddingHorizontal: 10,
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            justifyContent: "space-between",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <Feather name="user-check" size={30} color={APP_COLOR.BROWN} />
-            <Text style={styles.btnText}>Cập nhật thông tin</Text>
-          </View>
-
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={APP_COLOR.BROWN}
-          />
-        </Pressable>
-
-        <Pressable
-          onPress={() => router.navigate("/(user)/account/password")}
-          style={{
-            paddingVertical: 15,
-            paddingHorizontal: 10,
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            justifyContent: "space-between",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <MaterialIcons name="password" size={30} color={APP_COLOR.BROWN} />
-            <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
-          </View>
-
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={APP_COLOR.BROWN}
-          />
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 2.0")
-          }
-          style={{
-            paddingVertical: 15,
-            paddingHorizontal: 10,
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            justifyContent: "space-between",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <MaterialIcons
-              name="info-outline"
-              size={30}
-              color={APP_COLOR.BROWN}
-            />
-            <Text style={styles.btnText}>Về ứng dụng</Text>
-          </View>
-
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={APP_COLOR.BROWN}
-          />
-        </Pressable>
-        <Pressable
-          onPress={() => handleLogout()}
-          style={{
-            paddingVertical: 15,
-            paddingHorizontal: 10,
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            justifyContent: "space-between",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
-            <Text style={styles.btnText}>Đăng xuất</Text>
-          </View>
-
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={APP_COLOR.BROWN}
-          />
-        </Pressable>
         <View
           style={{
-            flex: 1,
-            justifyContent: "flex-end",
-            gap: 10,
-            paddingBottom: 15,
+            flexDirection: "row",
+            marginBottom: 10,
+            marginHorizontal: 10,
+            justifyContent: "space-around",
           }}
-        ></View>
+        >
+          <ShareButton
+            title="Đăng Nhập"
+            onPress={() => router.push("/(auth)/welcome")}
+            textStyle={styles.loginBtnText}
+            btnStyle={styles.loginBtn}
+          />
+          <ShareButton
+            title="Đăng Ký"
+            onPress={() => router.push("/(auth)/customer.signup")}
+            textStyle={styles.loginBtnText}
+            btnStyle={styles.loginBtn}
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Pressable
+            onPress={() => router.navigate("/(user)/account/info")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <Feather name="user-check" size={30} color={APP_COLOR.BROWN} />
+              <Text style={styles.btnText}>Cập nhật thông tin</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.navigate("/(user)/account/password")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons
+                name="password"
+                size={30}
+                color={APP_COLOR.BROWN}
+              />
+              <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={() =>
+              Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 2.0")
+            }
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons
+                name="info-outline"
+                size={30}
+                color={APP_COLOR.BROWN}
+              />
+              <Text style={styles.btnText}>Về ứng dụng</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={() => handleLogout()}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+              <Text style={styles.btnText}>Đăng xuất</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
 };
-
+const styles = StyleSheet.create({
+  text: { color: APP_COLOR.BROWN, fontSize: 17, fontFamily: FONTS.regular },
+  img: {
+    height: 100,
+    width: 150,
+    marginTop: 10,
+    alignSelf: "center",
+  },
+  btnText: {
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.semiBold,
+    fontSize: 17,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    marginHorizontal: 10,
+    paddingBottom: 5,
+    marginBottom: 10,
+    borderBottomColor: APP_COLOR.BROWN,
+    borderBottomWidth: 0.5,
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  loginBtnText: {
+    ...typography.labelLarge,
+    color: APP_COLOR.WHITE,
+    paddingVertical: 5,
+    fontFamily: FONTS.medium,
+  },
+  loginBtn: {
+    width: 150,
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 10,
+    backgroundColor: "#EC6426",
+    marginHorizontal: "auto",
+  },
+  buttonContainer: {
+    marginHorizontal: 10,
+    backgroundColor: APP_COLOR.WHITE,
+    padding: 10,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+});
 export default AccountPage;
