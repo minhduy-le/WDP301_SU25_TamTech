@@ -79,11 +79,11 @@
   gap: 20px;
 }
 
-.qr-code {
+/* .qr-code {
   width: 150px;
   height: 150px;
   object-fit: contain;
-}
+} */
 
 .qr-text {
   font-size: 15px;

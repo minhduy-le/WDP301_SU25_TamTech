@@ -12,7 +12,7 @@ interface MaterialDetailApiResponse {
 }
 
 export interface MaterialDto {
-  materialId: number;
+  materialId?: number;
   name: string;
   quantity: number;
 }

@@ -79,7 +79,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/api/orders/success" element={<PaymentSuccess />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/user-information" element={<UserInfomation />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/blog" element={<Blog />} />

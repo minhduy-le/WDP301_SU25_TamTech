@@ -194,12 +194,12 @@ const UserInfomation = () => {
 
   const showModal = () => {
     form.setFieldsValue({
-      fullName: userProfile?.fullName || "",
-      date_of_birth: userProfile?.date_of_birth
-        ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+      fullName: userProfile?.user.fullName || "",
+      date_of_birth: userProfile?.user.date_of_birth
+        ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
         : null,
-      phone_number: userProfile?.phone_number || "",
-      email: userProfile?.email || "",
+      phone_number: userProfile?.user.phone_number || "",
+      email: userProfile?.user.email || "",
     });
     setIsModalVisible(true);
   };
@@ -295,13 +295,13 @@ const UserInfomation = () => {
         <Sider className="user-sider">
           <div className="user-details">
             <p className="user-name">
-              {userProfile?.fullName || "Dummy Tester VietNamese"}
+              {userProfile?.user.fullName || "Dummy Tester VietNamese"}
             </p>
             <p className="user-email">
-              {userProfile?.phone_number || "0902346789"}
+              {userProfile?.user.phone_number || "0902346789"}
             </p>
             <p className="user-email">
-              {userProfile?.email || "dummytestervietnamese@gmail.com"}
+              {userProfile?.user.email || "dummytestervietnamese@gmail.com"}
             </p>
             <div className="edit" onClick={showModal}>
               <EditOutlined style={{ color: "#da7339" }} />
@@ -356,18 +356,18 @@ const UserInfomation = () => {
                 <div className="content-header">Thông tin thành viên</div>
                 <div className="qr-code-section">
                   <img
-                    src="https://via.placeholder.com/150x150"
+                    src={userProfile?.qrCode}
                     alt="QR Code"
                     className="qr-code"
                   />
                   <div className="qr-text">
-                    <p>{userProfile?.phone_number || "0902346789"}</p>
+                    <p>{userProfile?.user.phone_number || "0902346789"}</p>
                     {/* <p>
                       <strong>Hạng thành viên:</strong> Vàng
                     </p> */}
                     <p>
                       <strong>Điểm tích lũy:</strong>{" "}
-                      {userProfile?.member_point || "0"} điểm
+                      {userProfile?.user.member_point || "0"} điểm
                     </p>
                     <p>
                       <strong>Điểm đã sử dụng:</strong> 0 điểm
@@ -490,12 +490,12 @@ const UserInfomation = () => {
           layout="vertical"
           name="updateProfile"
           initialValues={{
-            fullName: userProfile?.fullName || "",
-            date_of_birth: userProfile?.date_of_birth
-              ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+            fullName: userProfile?.user.fullName || "",
+            date_of_birth: userProfile?.user.date_of_birth
+              ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
               : null,
-            phone_number: userProfile?.phone_number || "",
-            email: userProfile?.email || "",
+            phone_number: userProfile?.user.phone_number || "",
+            email: userProfile?.user.email || "",
           }}
         >
           <div className="edit-title">Thông tin thành viên</div>
