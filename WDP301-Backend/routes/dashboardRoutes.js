@@ -547,4 +547,75 @@ router.get("/product-type-sales", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dashboard/staff-productivity:
+ *   get:
+ *     summary: Get productivity statistics for staff users based on orders created or approved
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Staff productivity statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       fullName:
+ *                         type: string
+ *                         description: Full name of the staff member
+ *                       totalRevenue:
+ *                         type: number
+ *                         description: Total revenue from orders created or approved by the staff
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ */
+router.get("/staff-productivity", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getStaffProductivity();
+    res.status(200).json({
+      status: 200,
+      message: "Staff productivity statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving staff productivity stats:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
 module.exports = router;
