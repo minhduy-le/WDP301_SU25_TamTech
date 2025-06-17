@@ -361,42 +361,42 @@ const getMonthlyRevenue = async () => {
 };
 
 const getProductTypeSales = async () => {
-  const productTypeSales = await OrderItem.findAll({
-    attributes: [
-      [sequelize.col("Product.ProductType.name"), "productType"],
-      [sequelize.fn("SUM", sequelize.col("quantity")), "totalQuantity"],
-    ],
-    include: [
-      {
-        model: Product,
-        as: "Product",
-        attributes: [],
-        include: [
-          {
-            model: productType,
-            as: "ProductType",
-            attributes: [],
-          },
-        ],
-      },
-      {
-        model: Order,
-        as: "Order",
-        attributes: [],
-        where: {
-          status_id: { [Op.notIn]: [1, 5] },
-        },
-      },
-    ],
-    group: ["Product.ProductType.productTypeId", "Product.ProductType.name"],
-    order: [[sequelize.fn("SUM", sequelize.col("quantity")), "DESC"]],
+  // Fetch all product types
+  const allProductTypes = await ProductType.findAll({
+    attributes: ["name"],
     raw: true,
   });
 
-  return productTypeSales.map((item) => ({
-    productType: item.productType,
-    totalQuantity: parseInt(item.totalQuantity) || 0,
-  }));
+  // Fetch sales data with LEFT JOIN to include product types with no sales
+  const productTypeSales = await sequelize.query(
+    `SELECT 
+      pt.name as productType,
+      COALESCE(SUM(oi.quantity), 0) as totalQuantity
+     FROM product_types pt
+     LEFT JOIN products p ON pt.productTypeId = p.productTypeId
+     LEFT JOIN order_items oi ON p.productId = oi.productId
+     LEFT JOIN orders o ON oi.orderId = o.orderId
+     WHERE o.orderId IS NULL OR o.status_id NOT IN (1, 5)
+     GROUP BY pt.productTypeId, pt.name
+     ORDER BY totalQuantity DESC`,
+    {
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // Map results to ensure all product types are included
+  const stats = allProductTypes.map((pt) => {
+    const sale = productTypeSales.find((sale) => sale.productType === pt.name) || {
+      productType: pt.name,
+      totalQuantity: 0,
+    };
+    return {
+      productType: pt.name,
+      totalQuantity: parseInt(sale.totalQuantity) || 0,
+    };
+  });
+
+  return stats;
 };
 
 module.exports = {
