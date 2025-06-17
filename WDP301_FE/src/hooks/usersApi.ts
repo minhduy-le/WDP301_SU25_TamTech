@@ -37,6 +37,11 @@ export interface VerifyOTPDto {
   otp: string;
 }
 
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
+
 interface User {
   id: number;
   fullName: string;
@@ -215,11 +220,47 @@ export const useRegister = () => {
 export const useForgotPassword = () => {
   return useMutation({
     mutationFn: async (verifyAccount: ForgorPasswordDto) => {
-      const response = await axiosInstance.post(
-        `auth/forgot-password`,
-        verifyAccount
-      );
-      return response.data;
+      try {
+        const response = await axiosInstance.post(
+          `auth/forgot-password`,
+          verifyAccount
+        );
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          throw new Error(errorMessage);
+        }
+      }
+    },
+  });
+};
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: async (changePassword: ChangePasswordDto) => {
+      try {
+        const response = await axiosInstance.post(
+          `auth/change-password`,
+          changePassword
+        );
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          throw new Error(errorMessage);
+        }
+      }
     },
   });
 };

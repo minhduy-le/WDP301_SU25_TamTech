@@ -108,6 +108,9 @@ const Login = () => {
             >
               <Input.Password placeholder="Mật khẩu" className="input-field" />
             </Form.Item>
+            <Link to="/forgot-password" className="link-forgot-password">
+              Quên mật khẩu
+            </Link>
             <Form.Item style={{ marginBottom: 0 }}>
               <Button className="login-button" htmlType="submit">
                 Đăng nhập

@@ -55,6 +55,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/verify-otp",
       "/menu",
       "/blog",
+      "/forgot-password",
     ];
 
     if (!user || !user.role) {
