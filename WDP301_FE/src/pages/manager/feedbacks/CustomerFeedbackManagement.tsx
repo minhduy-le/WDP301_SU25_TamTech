@@ -15,7 +15,8 @@ import {
 import {
   SearchOutlined,
   EyeOutlined,
-  SendOutlined, 
+  SendOutlined,
+  CommentOutlined, 
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -162,7 +163,7 @@ const CustomerFeedbackManagement: React.FC = () => {
         replyContent: values.replyContent,
         status: values.status,
         repliedDate: dayjs().toISOString(),
-        repliedBy: "Admin", // Hoặc lấy từ user đang đăng nhập
+        repliedBy: "Admin", 
       };
 
       setFeedbackList((prev) =>
@@ -308,12 +309,6 @@ const CustomerFeedbackManagement: React.FC = () => {
           {FEEDBACK_STATUS_MAP[status]}
         </Tag>
       ),
-      filters: ALL_FEEDBACK_STATUSES.map((fs) => ({
-        text: FEEDBACK_STATUS_MAP[fs],
-        value: fs,
-      })),
-      onFilter: (value: string | number | boolean, record: Feedback) =>
-        record.status === value,
     },
     {
       title: "Hành động",
@@ -345,41 +340,48 @@ const CustomerFeedbackManagement: React.FC = () => {
       style={{
         minHeight: "100vh",
         background: "#FFF9F0",
-        padding: "20px 30px 30px 60px",
+        padding: "5px 30px 30px 60px",
       }}
     >
       <style>{`
-        .feedback-table .ant-table-thead > tr > th,
-        .feedback-table .ant-table-thead > tr > th.ant-table-cell-fix-right,
-        .feedback-table .ant-table-thead > tr > th.ant-table-cell-fix-left {
-          background-color: ${headerBgColor} !important;
-          color: ${headerColor} !important;
-          font-weight: bold !important;
-          border-right: 1px solid ${borderColor} !important;
-          border-bottom: 2px solid ${tableBorderColor} !important;
+        /* Your CSS styles remain the same */
+        .ant-table-thead > tr > th { background-color: ${headerBgColor} !important; color: ${headerColor} !important; font-weight: bold !important; border-right: 1px solid ${borderColor} !important; border-bottom: 2px solid ${tableBorderColor} !important; }
+        .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { border-right: none !important; }
+        .promo-table .ant-table-tbody > tr.even-row-promo > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr.odd-row-promo > td { background-color: ${oddRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { border-right: none; }
+        .promo-table .ant-table-tbody > tr:hover > td { background-color: #FDEBC8 !important; }
+        .promo-table .ant-table-cell-fix-right { background: inherit !important; }
+        .promo-table .ant-table-thead > tr > th.ant-table-cell-fix-right { background-color: ${headerBgColor} !important; }
+        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
+        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
+        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
+        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
+          border-color: #D97B41 !important; box-shadow: none !important;
         }
-        .feedback-table .ant-table-thead > tr > th:last-child { border-right: none !important; }
-        .feedback-table .ant-table-thead > tr > th.ant-table-cell-fix-right.ant-table-cell-fix-right-last { border-right: none !important; }
-        .feedback-table .ant-table-tbody > tr.even-row-feedback > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
-        .feedback-table .ant-table-tbody > tr.odd-row-feedback > td { background-color: ${oddRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
-        .feedback-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { border-right: none; }
-        .feedback-table .ant-table-tbody > tr:hover > td { background-color: #FDEBC8 !important; }
-        .feedback-table .ant-table-tbody > tr.even-row-feedback > td.ant-table-cell-fix-right,
-        .feedback-table .ant-table-tbody > tr.odd-row-feedback > td.ant-table-cell-fix-right,
-        .feedback-table .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right { background: inherit !important; }
+        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
+        .ant-select-selector { border-color: #E9C97B !important; }
+        .ant-select-selector:hover { border-color: #D97B41 !important; }
+        .ant-table-column-sorter-up.active svg,
+        .ant-table-column-sorter-down.active svg {
+          color: #D97B41 !important;
+          fill: #D97B41 !important;
+        }
       `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
         <h1
           style={{
-            fontWeight: 800,
+            fontWeight: 700,
             color: "#A05A2C",
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
+            paddingTop: 0,  
+            marginTop: 15,
           }}
         >
-          Phản hồi Khách hàng
+          Phản hồi Khách hàng <CommentOutlined />
         </h1>
         <Card
           style={{

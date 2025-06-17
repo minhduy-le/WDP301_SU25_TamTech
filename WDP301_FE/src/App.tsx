@@ -37,8 +37,8 @@ import StaffProfile from "./pages/StaffProfile";
 import StaffChat from "./pages/StaffChat";
 import ManagerChat from "./pages/ManagerChat";
 import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
-import MaterialManagement from "./pages/MaterialManagement";
-import ForgotPassword from "./pages/ForgotPassword";
+import MaterialManagement from "./pages/manager/materials/MaterialManagement";
+import ManagerProfile from "./pages/manager/ManagerProfile";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -78,7 +78,6 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -91,6 +90,7 @@ function App() {
             <Route path="/manager/orders" element={<OrderManagement />} />
             <Route path="/manager/materials" element={<MaterialManagement />} />
             <Route path="/manager/products" element={<ProductManagement />} />
+            <Route path="/manager/profile" element={<ManagerProfile />} />
             <Route
               path="/manager/promotions"
               element={<PromotionManagement />}
