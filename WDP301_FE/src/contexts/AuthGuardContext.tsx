@@ -54,14 +54,17 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/verify-email",
       "/verify-otp",
       "/menu",
+      "/product/:productId",
       "/blog",
-      "/forgot-password",
     ];
 
     if (!user || !user.role) {
+      if (location.pathname.startsWith('/product/')) {
+        return;
+      }
+      
       if (!publicPages.includes(location.pathname)) {
         navigate("/login", { replace: true });
-        // message.error("Bạn phải đăng nhập để chuyển tới trang này");
       }
       return;
     }
@@ -85,7 +88,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/checkout",
         "/payment-success",
         "/user-information",
-        "/product/:productId",
       ],
       Shipper: [],
       Manager: [
@@ -99,6 +101,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/chat",
         "/manager/staffs/staffId",
         "/manager/materials",
+        "/manager/profile",
       ],
       Admin: [
         "/admin/dashboard",
@@ -108,18 +111,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       ],
     };
 
-    // const currentPage = location.pathname;
-
-    // if (
-    //   !publicPages.includes(currentPage) &&
-    //   restrictedPages[user.role as UserRole]?.length
-    // ) {
-    //   const allowedPages = restrictedPages[user.role as UserRole] || [];
-
-    //   if (!allowedPages.includes(currentPage)) {
-    //     navigate("/forbidden", { replace: true });
-    //   }
-    // }
     const matchDynamicRoute = (route: string, path: string) => {
       const dynamicRoutePattern = route
         .replace(/:productId/, "[0-9]+")
@@ -128,7 +119,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       return regex.test(path);
     };
 
-    // Check if the current path is allowed for the user's role
     const userRole = user.role as UserRole;
     const allowedPages = restrictedPages[userRole] || [];
     const isAllowed =
