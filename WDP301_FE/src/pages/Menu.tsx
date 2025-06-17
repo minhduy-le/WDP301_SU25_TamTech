@@ -26,11 +26,6 @@ const useAddOnProducts = () => {
   const query3 = useGetProductByTypeId(3);
   const query4 = useGetProductByTypeId(4);
   const query5 = useGetProductByTypeId(5);
-  // const query6 = useGetProductByTypeId(6);
-  // const query7 = useGetProductByTypeId(7);
-  // const query8 = useGetProductByTypeId(8);
-  // const query9 = useGetProductByTypeId(9);
-  // const query10 = useGetProductByTypeId(10);
 
   const queries: {
     typeId: number;
@@ -40,11 +35,6 @@ const useAddOnProducts = () => {
     { typeId: 3, query: query3 },
     { typeId: 4, query: query4 },
     { typeId: 5, query: query5 },
-    // { typeId: 6, query: query6 },
-    // { typeId: 7, query: query7 },
-    // { typeId: 8, query: query8 },
-    // { typeId: 9, query: query9 },
-    // { typeId: 10, query: query10 },
   ];
 
   const addOnProductQueries: {
@@ -97,6 +87,8 @@ const Menu = () => {
   const addOnProductQueries = useAddOnProducts();
   const { user } = useAuthStore();
   const { addToCart } = useCartStore();
+
+  const [visibleProducts, setVisibleProducts] = useState(9);
 
   const getProductTypeName = (id: number) => {
     return (
@@ -200,6 +192,11 @@ const Menu = () => {
 
   const handleCategoryClick = (productTypeId: number) => {
     setProductTypeId(productTypeId);
+    setVisibleProducts(9); // Reset số sản phẩm hiển thị khi chuyển danh mục
+  };
+
+  const handleShowMore = () => {
+    setVisibleProducts((prev) => prev + 9); // Thêm 9 sản phẩm mỗi lần nhấn
   };
 
   const totalPrice = productDetail
@@ -257,7 +254,7 @@ const Menu = () => {
             <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
             <Row gutter={[24, 16]} className="menu-card-row">
-              {mainProducts.map((product) => (
+              {mainProducts.slice(0, visibleProducts).map((product) => (
                 <Col span={8} className="menu-column" key={product.productId}>
                   <Card className="menu-card">
                     <div className="card-image-container">
@@ -291,11 +288,15 @@ const Menu = () => {
                   </Card>
                 </Col>
               ))}
-              <Col className="button-show-more">
-                <Button className="custom-button">
-                  Hiển Thị Thêm {mainProducts.length} Sản Phẩm
-                </Button>
-              </Col>
+              {visibleProducts < mainProducts.length && (
+                <Col className="button-show-more">
+                  <Button className="custom-button" onClick={handleShowMore}>
+                    Hiển Thị Thêm{" "}
+                    {Math.min(9, mainProducts.length - visibleProducts)} Sản
+                    Phẩm
+                  </Button>
+                </Col>
+              )}
             </Row>
           ) : (
             <div>Không có món nào trong danh mục này.</div>
