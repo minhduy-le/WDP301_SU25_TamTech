@@ -193,6 +193,7 @@ const ProductDetail = () => {
               src={product.image}
               alt={product.name}
               height={450}
+              width={570}
               style={{ objectFit: "cover", borderRadius: "30px" }}
               preview={{
                 style: {

@@ -2,11 +2,10 @@ import { APP_COLOR, APP_FONT } from "@/constants/Colors";
 import AppProvider from "@/context/app.context";
 import useCustomFonts from "@/hooks/useFonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Tabs } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function TabLayout() {
   const { fontsLoaded, fontError, onLayoutRootView } = useCustomFonts();
 
@@ -46,7 +45,7 @@ export default function TabLayout() {
               options={{
                 title: "Nhận đơn",
                 tabBarIcon: ({ color, size }) => (
-                  <AntDesign name="filetext1" size={size} color={color} />
+                  <AntDesign name="filetext1" size={size - 1} color={color} />
                 ),
               }}
             />
@@ -55,7 +54,7 @@ export default function TabLayout() {
               options={{
                 title: "Chấm công",
                 tabBarIcon: ({ color, size }) => (
-                  <MaterialIcons name="history" color={color} size={size} />
+                  <FontAwesome6 name="check" size={size} color={color} />
                 ),
               }}
             />

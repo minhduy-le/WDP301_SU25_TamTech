@@ -385,7 +385,7 @@ const OurMenu: React.FC = () => {
                             "scale(1)";
                         }}
                       >
-                        Thêm vào giỏ
+                        Thêm
                       </Button>
                     </div>
                   </div>

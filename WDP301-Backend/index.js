@@ -22,6 +22,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const districtsRoutes = require("./routes/districtsRoutes");
 const promotionTypeRoutes = require("./routes/promotionTypeRoutes");
 const promotionRoutes = require("./routes/promotionRoutes");
+const posOrderRoutes = require("./routes/orderRoutesPosApp");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
@@ -53,6 +54,7 @@ app.use("/api/materials", materialRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/pos/orders", posOrderRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/feedback", feedbackRoutes);

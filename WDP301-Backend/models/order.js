@@ -106,7 +106,8 @@ const Order = sequelize.define(
     },
     order_address: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
+      defaultValue: "",
     },
     invoiceUrl: {
       type: DataTypes.STRING(1000),
@@ -148,6 +149,19 @@ const Order = sequelize.define(
     soDienThoaiNguoiDatHo: {
       type: DataTypes.STRING(15),
       allowNull: true,
+    },
+    isMangDi: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    createByStaffId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
   },
   {
