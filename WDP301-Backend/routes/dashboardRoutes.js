@@ -494,4 +494,57 @@ router.get("/monthly-revenue", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dashboard/product-type-sales:
+ *   get:
+ *     summary: Get total quantity sold per product type for orders with status not Pending or Canceled
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product type sales retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productType:
+ *                         type: string
+ *                         description: Name of the product type
+ *                       totalQuantity:
+ *                         type: integer
+ *                         description: Total quantity sold
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/product-type-sales", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getProductTypeSales();
+    res.status(200).json({
+      status: 200,
+      message: "Product type statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving product type stats:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
 module.exports = router;

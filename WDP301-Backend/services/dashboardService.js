@@ -4,6 +4,7 @@ const Product = require("../models/product");
 const User = require("../models/user");
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
+const ProductType = require("../models/productType");
 
 const getProductStats = async () => {
   const [results] = await sequelize.query(
@@ -359,6 +360,45 @@ const getMonthlyRevenue = async () => {
   return stats;
 };
 
+const getProductTypeSales = async () => {
+  const productTypeSales = await OrderItem.findAll({
+    attributes: [
+      [sequelize.col("Product.ProductType.name"), "productType"],
+      [sequelize.fn("SUM", sequelize.col("quantity")), "totalQuantity"],
+    ],
+    include: [
+      {
+        model: Product,
+        as: "Product",
+        attributes: [],
+        include: [
+          {
+            model: productType,
+            as: "ProductType",
+            attributes: [],
+          },
+        ],
+      },
+      {
+        model: Order,
+        as: "Order",
+        attributes: [],
+        where: {
+          status_id: { [Op.notIn]: [1, 5] },
+        },
+      },
+    ],
+    group: ["Product.ProductType.productTypeId", "Product.ProductType.name"],
+    order: [[sequelize.fn("SUM", sequelize.col("quantity")), "DESC"]],
+    raw: true,
+  });
+
+  return productTypeSales.map((item) => ({
+    productType: item.productType,
+    totalQuantity: parseInt(item.totalQuantity) || 0,
+  }));
+};
+
 module.exports = {
   getProductStats,
   getUserStats,
@@ -368,4 +408,5 @@ module.exports = {
   getCurrentMonthOrders,
   getCurrentMonthProducts,
   getMonthlyRevenue,
+  getProductTypeSales,
 };
