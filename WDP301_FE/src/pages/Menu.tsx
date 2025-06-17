@@ -192,11 +192,11 @@ const Menu = () => {
 
   const handleCategoryClick = (productTypeId: number) => {
     setProductTypeId(productTypeId);
-    setVisibleProducts(9); // Reset số sản phẩm hiển thị khi chuyển danh mục
+    setVisibleProducts(9);
   };
 
   const handleShowMore = () => {
-    setVisibleProducts((prev) => prev + 9); // Thêm 9 sản phẩm mỗi lần nhấn
+    setVisibleProducts((prev) => prev + 9);
   };
 
   const totalPrice = productDetail
