@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX } from "react";
 import { useCustomFlatListHook } from "./hooks/useCustomFlatListHook";
 import { Animated, FlatListProps, View } from "react-native";
 

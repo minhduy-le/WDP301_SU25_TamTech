@@ -119,6 +119,18 @@ const AccountPage = () => {
           </View>
           <Image source={logo} style={styles.img} />
         </View>
+        <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
+          <Text
+            style={{
+              color: APP_COLOR.BROWN,
+              fontSize: 17,
+              fontFamily: FONTS.regular,
+              textAlign: "center",
+            }}
+          >
+            Hày đăng nhập để nhận được các thông tin ưu đã từ Tấm Tắc nhé.
+          </Text>
+        </View>
         <View
           style={{
             flexDirection: "row",
@@ -127,6 +139,7 @@ const AccountPage = () => {
             justifyContent: "space-around",
           }}
         >
+          <View></View>
           <ShareButton
             title="Đăng Nhập"
             onPress={() => router.push("/(auth)/welcome")}
