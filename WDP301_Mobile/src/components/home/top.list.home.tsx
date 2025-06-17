@@ -1,127 +1,134 @@
-import { FlatList, Image, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import BannerHome from "./banner.home";
 import { APP_COLOR } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
+import { useNavigation } from "@react-navigation/native";
 const data1 = [
   {
     key: 1,
-    name: "Hot Deal",
-    source: require("@/assets/icons/flash-deals.png"),
+    name: "Best Seller",
+    source: require("@/assets/icons/com-tam.png"),
+    targetScreen: "search",
   },
   {
     key: 2,
-    name: "Quán Ngon",
-    source: require("@/assets/icons/nice-shop.png"),
-  },
-  { key: 3, name: "Tích Điểm", source: require("@/assets/icons/points.png") },
-  { key: 4, name: "Ngọt Xỉu", source: require("@/assets/icons/rice.png") },
-  {
-    key: 5,
-    name: "Quán Tiền Bối",
-    source: require("@/assets/icons/noodles.png"),
+    name: "Cửa hàng",
+    source: require("@/assets/icons/cua-hang.png"),
+    targetScreen: "store",
   },
   {
-    key: 6,
-    name: "Bún, Mì, Phở",
-    source: require("@/assets/icons/bun-pho.png"),
-  },
-  { key: 7, name: "BBQ", source: require("@/assets/icons/bbq.png") },
-  { key: 8, name: "Fast Food", source: require("@/assets/icons/fastfood.png") },
-  { key: 9, name: "Pizza", source: require("@/assets/icons/pizza.png") },
-  { key: 10, name: "Burger", source: require("@/assets/icons/burger.png") },
-  {
-    key: 11,
-    name: "Sống Khỏe",
-    source: require("@/assets/icons/egg-cucmber.png"),
-  },
-  { key: 12, name: "Giảm 50k", source: require("@/assets/icons/moi-moi.png") },
-  {
-    key: 13,
-    name: "99k Off",
-    source: require("@/assets/icons/fried-chicken.png"),
+    key: 3,
+    name: "Ưu Đãi",
+    source: require("@/assets/icons/qua-tang.png"),
+    targetScreen: "voucher",
   },
   {
-    key: 14,
-    name: "No Bụng",
-    source: require("@/assets/icons/korean-food.png"),
+    key: 4,
+    name: "Đơn Hàng",
+    source: require("@/assets/icons/don-hang.png"),
+    targetScreen: "order",
   },
-  { key: 15, name: "Freeship", source: require("@/assets/icons/steak.png") },
-  { key: 16, name: "Deal 0Đ", source: require("@/assets/icons/tomato.png") },
-  { key: 17, name: "Món 1Đ", source: require("@/assets/icons/elipse.png") },
-  { key: 18, name: "Ăn chiều", source: require("@/assets/icons/chowmein.png") },
-  { key: 19, name: "Combo 199k", source: require("@/assets/icons/notif.png") },
-  { key: 20, name: "Milk Tea", source: require("@/assets/icons/salad.png") },
 ];
-
-const groupDataIntoRows = (data: any, itemsPerRow: number) => {
-  const rows = [];
-  for (let i = 0; i < data.length; i += itemsPerRow) {
-    rows.push(data.slice(i, i + itemsPerRow));
-  }
-  return rows;
+const IconItem = ({ item }: any) => {
+  const navigation = useNavigation<any>();
+  const handlePress = () => {
+    navigation.navigate(item.targetScreen, {
+      itemName: item.name,
+    });
+  };
+  return (
+    <TouchableOpacity style={styles.iconWrapper} onPress={handlePress}>
+      <TouchableOpacity style={styles.iconWrapper} onPress={handlePress}>
+        <View style={styles.iconCircle}>
+          <Image source={item.source} style={styles.iconImage} />
+        </View>
+        <Text style={styles.iconText} numberOfLines={1}>
+          {item.name}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
 };
 
 const TopListHome = () => {
-  const rows = groupDataIntoRows(data1, 2);
+  const topRowData = data1.filter((_, index) => index % 2 === 0);
+  const bottomRowData = data1.filter((_, index) => index % 2 !== 0);
   return (
     <View>
       <BannerHome />
-      <FlatList
+      <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        data={rows}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={{ marginHorizontal: 5 }}>
-            {item.map((child: any, idx: number) => (
-              <View
-                key={idx}
-                style={{
-                  marginTop: 10,
-                  paddingHorizontal: 3,
-                  borderRadius: 50,
-                  alignItems: "center",
-                  backgroundColor: APP_COLOR.YELLOW,
-                  flexDirection: "row",
-                  alignSelf: "flex-start",
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: APP_COLOR.DARK_YELLOW,
-                    height: 50,
-                    width: 50,
-                    borderRadius: 50,
-                    margin: 6,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Image
-                    source={child.source}
-                    style={{
-                      height: 40,
-                      width: 40,
-                    }}
-                  />
-                </View>
-                <Text
-                  style={{
-                    textAlign: "center",
-                    padding: 7,
-                    fontFamily: FONTS.semiBold,
-                    color: APP_COLOR.BROWN,
-                  }}
-                >
-                  {child.name}
-                </Text>
-              </View>
+        contentContainerStyle={styles.container}
+      >
+        <View>
+          <View style={styles.row}>
+            {topRowData.map((item) => (
+              <IconItem key={item.key} item={item} />
             ))}
           </View>
-        )}
-      />
+          <View style={[styles.row, styles.staggeredRow]}>
+            {bottomRowData.map((item) => (
+              <IconItem key={item.key} item={item} />
+            ))}
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 10,
+    paddingLeft: 5,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  staggeredRow: {
+    marginTop: 10,
+    marginLeft: 15,
+  },
+  iconWrapper: {
+    marginHorizontal: 8,
+    alignItems: "center",
+    backgroundColor: APP_COLOR.YELLOW,
+    borderRadius: 50,
+    flexDirection: "row",
+    alignSelf: "flex-start",
+    height: 62,
+  },
+  iconCircle: {
+    backgroundColor: APP_COLOR.DARK_YELLOW,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    margin: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconImage: {
+    height: 50,
+    width: 50,
+    resizeMode: "contain",
+  },
+  iconText: {
+    textAlign: "center",
+    paddingRight: 15,
+    paddingLeft: 5,
+    fontFamily: FONTS.semiBold,
+    color: APP_COLOR.BROWN,
+    maxWidth: 100,
+  },
+});
 
 export default TopListHome;
