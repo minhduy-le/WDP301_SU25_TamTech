@@ -15,6 +15,11 @@ export interface MaterialDto {
   materialId?: number;
   name: string;
   quantity: number;
+  storeId: number;
+  Store?: {
+    name: string;
+    address: string;
+  };
 }
 
 interface MutationVariables {
