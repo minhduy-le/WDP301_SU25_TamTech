@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { API_URL, APP_COLOR } from "@/utils/constant";
 import debounce from "debounce";
@@ -72,12 +72,10 @@ const SearchPage = () => {
     }, 500),
     []
   );
-
   const handleChangeText = (text: string) => {
     setSearchTerm(text);
     fetchProducts(text);
   };
-
   const handleQuantityChange = (item: any, action: "MINUS" | "PLUS") => {
     if (!restaurant?._id) return;
 
@@ -107,7 +105,6 @@ const SearchPage = () => {
         quantity: 0,
       };
     }
-
     const currentQuantity =
       (newCart[restaurant._id].items[item.productId].quantity || 0) + total;
 
@@ -128,12 +125,20 @@ const SearchPage = () => {
     }
     setCart(newCart);
   };
-
   const getItemQuantity = (itemId: string) => {
     if (!restaurant?._id) return 0;
     return cart[restaurant._id]?.items[itemId]?.quantity || 0;
   };
-
+  const handleFilterByProductName = async (productName: string) => {
+    try {
+      const res = await axios.get(
+        `https://wdp301-su25.space/api/products/search-by-type-name?typeName=${productName}`
+      );
+      setProducts(res.data.products);
+    } catch (error) {
+      console.log("Error", error);
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ backgroundColor: APP_COLOR.BROWN }}>
@@ -164,7 +169,7 @@ const SearchPage = () => {
                   alignItems: "center",
                 }}
                 onPress={() => {
-                  console.log(item);
+                  handleFilterByProductName(item);
                 }}
               >
                 <Text
