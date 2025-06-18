@@ -33,6 +33,7 @@ export const customerLoginAPI = (email: string, password: string) => {
   const url = `${API_URL}/api/auth/login`;
   return axios.post(url, { email, password });
 };
+
 export const registerAPI = (email: string, password: string, name: string) => {
   const url = `/api/v1/auth/register`;
   return axios.post<IBackendRes<IRegister>>(url, { email, password, name });
@@ -41,14 +42,10 @@ export const forgotPasswordAPI = (email: string) => {
   const url = `${API_URL}/api/auth/forgot-password`;
   return axios.post(url, { email });
 };
-export const loginAPI = (email: string, password: string) => {
-  const url = `/api/v1/auth/login`;
-  return axios.post<IBackendRes<IUserLogin>>(url, {
-    username: email,
-    password,
-  });
+export const getBestSellerAPI = () => {
+  const url = `${API_URL}/api/products/best-seller`;
+  return axios.get(url);
 };
-
 export const getAccountAPI = () => {
   const url = `/api/v1/auth/account`;
   return axios.get<IBackendRes<IUserLogin>>(url);

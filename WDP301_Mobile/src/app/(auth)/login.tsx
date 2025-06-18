@@ -1,8 +1,6 @@
 import ShareButton from "@/components/button/share.button";
-import SocialButton from "@/components/button/social.button";
 import ShareInput from "@/components/input/share.input";
 import { useCurrentApp } from "@/context/app.context";
-import { loginAPI } from "@/utils/api";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import { LoginSchema } from "@/utils/validate.schema";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -44,7 +42,7 @@ const LoginPage = () => {
           res.data.data.refresh_token
         );
         setAppState(res.data.data);
-        router.replace("/(employee)");
+        // router.replace("/(employee)");
       } else {
         Toast.show("Lỗi khi đăng nhập", {
           duration: Toast.durations.LONG,

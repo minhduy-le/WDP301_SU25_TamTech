@@ -168,8 +168,9 @@ const RestaurantsPage = () => {
           {restaurants[0].productType}
         </Text>
       )}
-      <View style={{ flex: 1, marginTop: 20 }}>
+      <View style={{ flex: 1, marginTop: 10 }}>
         <FlatList
+          showsVerticalScrollIndicator={false}
           data={restaurants}
           keyExtractor={(item) => item.productId}
           renderItem={({ item }) => {

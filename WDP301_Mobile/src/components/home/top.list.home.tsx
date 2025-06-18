@@ -10,13 +10,13 @@ import {
 import BannerHome from "./banner.home";
 import { APP_COLOR } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 const data1 = [
   {
     key: 1,
     name: "Best Seller",
     source: require("@/assets/icons/com-tam.png"),
-    targetScreen: "search",
+    targetScreen: "bestseller",
   },
   {
     key: 2,
@@ -38,11 +38,9 @@ const data1 = [
   },
 ];
 const IconItem = ({ item }: any) => {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const handlePress = () => {
-    navigation.navigate(item.targetScreen, {
-      itemName: item.name,
-    });
+    router.push(item.targetScreen);
   };
   return (
     <TouchableOpacity style={styles.iconWrapper} onPress={handlePress}>
