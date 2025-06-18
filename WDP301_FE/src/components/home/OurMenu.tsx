@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Button, Card, Spin, message, Typography } from "antd";
+import { Row, Col, Button, Card, message, Typography } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
@@ -181,11 +181,8 @@ const OurMenu: React.FC = () => {
         {(activeTab === "mainDishes" && loadingMain) ||
         (activeTab === "drinks" && loadingDrinks) ||
         (activeTab === "sideDishes" && loadingSide) ||
-        (activeTab === "soup" && loadingSoup) ? (
-          <Col span={24} style={{ textAlign: "center", padding: "50px 0" }}>
-            <Spin size="large" tip="Đang tải thực đơn..." />
-          </Col>
-        ) : itemsToDisplay.length === 0 ? (
+        (activeTab === "soup" && loadingSoup) ||
+        itemsToDisplay.length === 0 ? (
           <Col span={24}>
             <p style={{ textAlign: "center", fontSize: 16, color: "#666" }}>
               Không có món nào trong danh mục này.
@@ -214,6 +211,8 @@ const OurMenu: React.FC = () => {
                     display: "flex",
                     flexDirection: "column",
                     height: "100%",
+                    width: "100%",
+                    border: "1px solid #e67e22",
                   }}
                   bodyStyle={{
                     padding: "0",

@@ -104,14 +104,13 @@ const HeroSection = () => {
         >
           <AutoComplete
             style={{
-              width: "450px",
+              width: "470px",
               height: 40,
               background: "#fdf7f2",
               color: "#5c3d00",
               fontFamily: "'Montserrat', sans-serif",
               border: "1.5px solid #ffa94d",
               borderRadius: "8px",
-              paddingLeft: "10px",
               boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}
             dropdownStyle={{

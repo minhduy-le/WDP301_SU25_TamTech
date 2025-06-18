@@ -64,14 +64,14 @@ const BestSellers: React.FC = () => {
   if (isError) return <div>Lỗi khi tải sản phẩm bán chạy!</div>;
 
   return (
-    <section style={{ padding: "20px 0 40px 0", background: "#da7339" }}>
+    <section style={{ padding: "20px 0 120px 0", background: "linear-gradient(to bottom, #f97316, #fff7e6)" }}>
       <h2
         style={{
           fontSize: "40px",
           fontWeight: "bold",
           textAlign: "center",
           marginBottom: "30px",
-          color: "#efe6db",
+          color: "#fff7e6",
           letterSpacing: "1px",
           marginTop: "0px",
           fontFamily: "'Montserrat', sans-serif",
@@ -106,7 +106,7 @@ const BestSellers: React.FC = () => {
               style={{
                 borderRadius: 24,
                 overflow: "hidden",
-                background: "#efe6db",
+                background: "#fff7e6",
                 boxShadow: "0 4px 24px #0001",
                 border: "none",
               }}
@@ -131,14 +131,14 @@ const BestSellers: React.FC = () => {
                       background: "#fff",
                       color: "#78a243",
                       fontWeight: 600,
-                      borderRadius: 16,
-                      padding: "2px 12px",
-                      fontSize: 16,
+                      borderRadius: 15,
+                      padding: "1px 10px",
+                      fontSize: 20,
                       fontFamily: "'Montserrat', sans-serif",
                       boxShadow: "0 2px 8px #0002",
                     }}
                   >
-                    ★ 1000+
+                    ★
                   </span>
                 </div>
               }
