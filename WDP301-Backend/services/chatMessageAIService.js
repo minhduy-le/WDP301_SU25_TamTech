@@ -5,7 +5,7 @@ const Material = require("../models/material");
 const ProductRecipe = require("../models/ProductRecipe");
 const User = require("../models/user");
 
-const genAI = new GoogleGenerativeAI("AIzaSyC_mEsbT-IJDMESjDk05NCfIBx60_USwXA");
+const genAI = new GoogleGenerativeAI("AIzaSyAEFmFzAX6E6QzhwcAtm2qSjRkzhhqA7-c");
 
 async function createChatMessageAI({ message, senderId }) {
   try {
@@ -54,7 +54,7 @@ Please provide a helpful response based on the product information above.`;
     console.log("User Message:", message, "Length:", message.length);
 
     // Call Gemini API with the correct format
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Use the correct format - just pass the combined prompt as text
     const result = await model.generateContent(systemPrompt);
