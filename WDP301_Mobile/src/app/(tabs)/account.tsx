@@ -7,7 +7,7 @@ import {
   Pressable,
   Alert,
   StyleSheet,
-  Platform,
+  Dimensions,
 } from "react-native";
 import {
   SafeAreaView,
@@ -22,7 +22,7 @@ import { jwtDecode } from "jwt-decode";
 import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
-
+import icon from "@/assets/icons/loi-chuc.png";
 const sampleData = {
   name: "Lê Minh Duy",
   phone: "0889679561",
@@ -42,7 +42,7 @@ const getCurrentDateTime = (): string => {
     return "Buổi tối thư giãn!";
   }
 };
-
+const ScreenWidth = Dimensions.get("screen").width;
 const AccountPage = () => {
   const insets = useSafeAreaInsets();
   const [decodeToken, setDecodeToken] = useState<any>("");
@@ -157,6 +157,49 @@ const AccountPage = () => {
               />
             </View>
           </>
+        )}
+        {appState && (
+          <View
+            style={{
+              position: "relative",
+              bottom: -25,
+              backgroundColor: APP_COLOR.ORANGE,
+              marginHorizontal: 10,
+              padding: 5,
+              borderRadius: 10,
+              width: ScreenWidth * 0.85,
+              alignSelf: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 10,
+                backgroundColor: APP_COLOR.ORANGE,
+                borderWidth: 1,
+                borderColor: APP_COLOR.WHITE,
+                borderRadius: 10,
+                paddingTop: 15,
+                paddingBottom: 20,
+              }}
+            >
+              <Text
+                style={[
+                  styles.text,
+                  {
+                    marginLeft: 10,
+                    color: APP_COLOR.WHITE,
+                    fontFamily: FONTS.medium,
+                  },
+                ]}
+              >
+                {decodeToken.fullName}
+              </Text>
+              <Image source={icon} style={{ height: 39, width: 80 }} />
+            </View>
+          </View>
         )}
         <View style={styles.buttonContainer}>
           <Pressable
