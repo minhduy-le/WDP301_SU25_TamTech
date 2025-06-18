@@ -67,6 +67,7 @@ const PopupSalePage = () => {
               position: "relative",
               top: -25,
             })}
+            onPress={() => router.push("/(auth)/search")}
           >
             <Text
               style={{

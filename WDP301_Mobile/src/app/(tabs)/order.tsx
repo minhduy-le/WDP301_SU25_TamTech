@@ -1,6 +1,6 @@
 import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { APP_COLOR, APP_FONT, BASE_URL } from "@/utils/constant";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -26,82 +26,6 @@ const OrderPage = () => {
   const [orderId, setOrderid] = useState();
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-
-  const styles = StyleSheet.create({
-    deliveryText: {
-      fontFamily: FONTS.bold,
-      fontSize: 17,
-    },
-    dateText: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-      color: APP_COLOR.BROWN,
-      position: "absolute",
-      left: 180,
-    },
-    text: {
-      fontFamily: FONTS.bold,
-      fontSize: 17,
-      color: APP_COLOR.BROWN,
-      marginLeft: 5,
-      marginBottom: 5,
-      marginTop: 5,
-    },
-    earnPoint: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-      color: APP_COLOR.BROWN,
-    },
-    statusLayout: {
-      width: 120,
-      height: 35,
-    },
-    statusText: {
-      fontFamily: FONTS.bold,
-      fontSize: 10,
-      marginHorizontal: "auto",
-      marginVertical: "auto",
-    },
-    container: {
-      marginHorizontal: "auto",
-      flexDirection: "row",
-      gap: 10,
-    },
-    button: {
-      backgroundColor: APP_COLOR.WHITE,
-      borderWidth: 0.5,
-      borderColor: APP_COLOR.BROWN,
-      paddingVertical: 9,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      width: 150,
-      height: 42,
-    },
-    buttonText: {
-      color: APP_COLOR.BROWN,
-      fontSize: 17,
-      fontFamily: FONTS.bold,
-      marginHorizontal: "auto",
-    },
-    paginationContainer: {
-      flexDirection: "row",
-      justifyContent: "center",
-      marginVertical: 10,
-    },
-    paginationButton: {
-      backgroundColor: APP_COLOR.ORANGE,
-      paddingVertical: 8,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      marginHorizontal: 10,
-    },
-    orderText: {
-      fontFamily: FONTS.regular,
-      color: APP_COLOR.BROWN,
-      fontSize: 17,
-      marginVertical: 5,
-    },
-  });
 
   function formatDateToDDMMYYYY(isoDate: string): string {
     const date = new Date(isoDate);
@@ -323,7 +247,6 @@ const OrderPage = () => {
                   >
                     <View
                       style={{
-                        flexDirection: "row",
                         paddingVertical: "auto",
                         borderBottomWidth: 0.5,
                         borderColor: APP_COLOR.BROWN,
@@ -331,167 +254,205 @@ const OrderPage = () => {
                         paddingBottom: 5,
                       }}
                     >
-                      <Text style={styles.deliveryText}>
-                        <Text style={{ color: APP_COLOR.BROWN }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text style={styles.orderText}>{item.orderId}</Text>
+                        <Text
+                          style={{
+                            color: APP_COLOR.BROWN,
+                            fontSize: 15,
+                            fontFamily: FONTS.medium,
+                          }}
+                        >
                           {item.deliveryStatus}
                         </Text>
-                      </Text>
+                      </View>
+
                       <Text style={styles.dateText}>
                         {formatDateToDDMMYYYY(item.createdAt)}
                       </Text>
                     </View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <View>
-                        <Text style={styles.text}>{item.address}</Text>
-                        <Text style={styles.text}>
-                          {currencyFormatter(item.amount)}
+                    <View>
+                      <View style={styles.statusLayout}>
+                        <Text>
+                          {(() => {
+                            switch (item.orderStatus) {
+                              case "Đang chuẩn bị":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: APP_COLOR.BROWN,
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              case "Đang giao":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: APP_COLOR.DELIVERY,
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              case "Đã giao":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: APP_COLOR.DONE,
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              case "Đã hủy":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: APP_COLOR.CANCEL,
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              case "Đặt hàng thành công":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: APP_COLOR.PENDING,
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              case "Chờ thanh toán":
+                                return (
+                                  <View
+                                    style={[
+                                      styles.statusLayout,
+                                      {
+                                        backgroundColor: "orange",
+                                        borderRadius: 50,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.statusText,
+                                        { color: APP_COLOR.WHITE },
+                                      ]}
+                                    >
+                                      {item.orderStatus}
+                                    </Text>
+                                  </View>
+                                );
+                              default:
+                                return null;
+                            }
+                          })()}
                         </Text>
                       </View>
-                      <View style={{ marginLeft: 15 }}>
-                        <Text style={styles.orderText}>{item.orderId}</Text>
-                        <View style={styles.statusLayout}>
-                          <Text>
-                            {(() => {
-                              switch (item.orderStatus) {
-                                case "Đang chuẩn bị":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: APP_COLOR.BROWN,
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                case "Đang giao":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: APP_COLOR.DELIVERY,
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                case "Đã giao":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: APP_COLOR.DONE,
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                case "Đã hủy":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: APP_COLOR.CANCEL,
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                case "Đặt hàng thành công":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: APP_COLOR.PENDING,
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                case "Chờ thanh toán":
-                                  return (
-                                    <View
-                                      style={[
-                                        styles.statusLayout,
-                                        {
-                                          backgroundColor: "orange",
-                                          borderRadius: 50,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.statusText,
-                                          { color: APP_COLOR.WHITE },
-                                        ]}
-                                      >
-                                        {item.orderStatus}
-                                      </Text>
-                                    </View>
-                                  );
-                                default:
-                                  return null;
-                              }
-                            })()}
+                      <View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            marginTop: 5,
+                          }}
+                        >
+                          <Text style={styles.text}>{item.address}</Text>
+                          <Text
+                            style={[styles.text, { color: APP_COLOR.ORANGE }]}
+                          >
+                            +{item.pointEarned} điểm
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Text style={styles.text}>X1 Sản phẩm</Text>
+                          <Text
+                            style={[
+                              styles.text,
+                              {
+                                fontSize: 20,
+                                fontFamily: FONTS.bold,
+                                alignSelf: "flex-end",
+                              },
+                            ]}
+                          >
+                            {currencyFormatter(item.amount)}
                           </Text>
                         </View>
                       </View>
                     </View>
+
                     <View style={{ flexDirection: "row" }}>
                       <View style={styles.container}>
                         {item.orderStatus === "Đã giao" ? (
@@ -596,5 +557,73 @@ const OrderPage = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  dateText: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+    color: APP_COLOR.BROWN,
+  },
+  text: {
+    fontFamily: FONTS.medium,
+    fontSize: 15,
+    color: APP_COLOR.BROWN,
+    marginLeft: 5,
+  },
+  earnPoint: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+    color: APP_COLOR.BROWN,
+  },
+  statusLayout: {
+    width: 120,
+    height: 35,
+  },
+  statusText: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    marginHorizontal: "auto",
+    marginVertical: "auto",
+  },
+  container: {
+    marginHorizontal: "auto",
+    flexDirection: "row",
+    gap: 10,
+  },
+  button: {
+    backgroundColor: APP_COLOR.WHITE,
+    borderWidth: 0.5,
+    borderColor: APP_COLOR.BROWN,
+    paddingVertical: 9,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: 150,
+    height: 42,
+  },
+  buttonText: {
+    color: APP_COLOR.BROWN,
+    fontSize: 17,
+    fontFamily: FONTS.bold,
+    marginHorizontal: "auto",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  paginationButton: {
+    backgroundColor: APP_COLOR.ORANGE,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginHorizontal: 10,
+  },
+  orderText: {
+    fontFamily: FONTS.regular,
+    color: APP_COLOR.BROWN,
+    fontSize: 17,
+    marginVertical: 5,
+  },
+});
 
 export default OrderPage;

@@ -1,4 +1,4 @@
-import { APP_COLOR, APP_FONT, BASE_URL } from "@/utils/constant";
+import { APP_COLOR } from "@/utils/constant";
 import {
   Image,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   View,
   FlatList,
   Pressable,
+  Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
@@ -13,7 +14,9 @@ import { FONTS } from "@/theme/typography";
 import { currencyFormatter, getBestSellerAPI } from "@/utils/api";
 import { useCurrentApp } from "@/context/app.context";
 import AntDesign from "@expo/vector-icons/AntDesign";
-
+import logo from "@/assets/logo.png";
+import ShareButton from "@/components/button/share.button";
+import { router } from "expo-router";
 interface IProduct {
   productId: string;
   name: string;
@@ -98,7 +101,10 @@ const BestSellerPage = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Món Ăn Bán Chạy</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Món Ăn Bán Chạy</Text>
+        <Image style={styles.img} source={logo} />
+      </View>
       <FlatList
         data={products}
         keyExtractor={(item) => item.productId}
@@ -169,6 +175,20 @@ const BestSellerPage = () => {
           );
         }}
       />
+      <View style={styles.btnContainer}>
+        <ShareButton
+          title="Trang chủ"
+          onPress={() => router.navigate("/(tabs)")}
+          textStyle={styles.btnText}
+          btnStyle={styles.btnView}
+        />
+        <ShareButton
+          title="Đặt hàng"
+          onPress={() => router.navigate("/(user)/product/place.order")}
+          textStyle={styles.btnText}
+          btnStyle={styles.btnView}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -178,13 +198,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
   },
+  headerContainer: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
   header: {
-    fontSize: 24,
+    fontSize: 19,
     fontFamily: FONTS.bold,
     color: APP_COLOR.BROWN,
     textAlign: "center",
     marginVertical: 20,
   },
+  img: { height: 100, width: 150 },
   listContainer: {
     padding: 10,
   },
@@ -274,6 +301,27 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     alignItems: "center",
+  },
+  btnText: {
+    textTransform: "uppercase",
+    color: "#fff",
+    paddingVertical: 5,
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+  },
+  btnView: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+    paddingVertical: 10,
+    backgroundColor: APP_COLOR.ORANGE,
+    width: 175,
+  },
+  btnContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 10,
+    marginHorizontal: 10,
   },
 });
 
