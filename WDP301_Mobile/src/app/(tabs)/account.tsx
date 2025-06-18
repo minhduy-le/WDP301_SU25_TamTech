@@ -115,7 +115,7 @@ const AccountPage = () => {
                 },
               ]}
             >
-              {sampleData.name}
+              {decodeToken.fullName}
             </Text>
           </View>
           <Image source={logo} style={styles.img} />

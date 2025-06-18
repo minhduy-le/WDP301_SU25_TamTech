@@ -134,37 +134,30 @@ declare global {
     updatedAt: Date;
   }
   interface IOrderHistoryCus {
-    id: number;
-    subTotal: number;
-    promotionCode: string;
-    discountValue: number;
-    discountPercent: number;
-    amount: number;
-    shipping_fee: number;
-    isPickUp: boolean;
-    delivery_at: string;
-    note: string;
-    payment_code: string;
-    address: string;
-    phone: number;
-    pointUsed: number;
-    pointEarned: number;
-    orderStatus: string;
-    createdAt: string;
+    orderId: number,
+    payment_time: string,
+    order_create_at: string,
+    order_address: string,
+    status: string,
+    fullName: string,
+    phone_number: string,
     orderItems: [
       {
-        productId: number;
-        orderId: number;
-        quantity: number;
-        price: number;
-        note: string;
-        feedback: string | null;
-        feedbackPoint: number;
-        expiredFeedbackTime: string | null;
-        feedBackYet: boolean;
+        productId: number,
+        name: string,
+        quantity: number,
+        price: string
       }
-    ];
-  }
+    ],
+    order_shipping_fee: string,
+    order_discount_value: string,
+    order_amount: string,
+    order_subtotal: string,
+    invoiceUrl: string,
+    order_point_earn: number,
+    note: string,
+    payment_method: string
+  },
   interface IOrderDetails {
     id: string;
     customerName: string | null;
