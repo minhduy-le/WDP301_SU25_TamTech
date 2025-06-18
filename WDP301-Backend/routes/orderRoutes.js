@@ -197,9 +197,6 @@ router.post("/", verifyToken, createOrder);
  *                   phone_number:
  *                     type: string
  *                     nullable: true
- * *                 orderItemsCount:
- *                     type: integer
- *                     description: Total number of order items in the order
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -214,6 +211,9 @@ router.post("/", verifyToken, createOrder);
  *                           type: integer
  *                         price:
  *                           type: number
+ *                   orderItemsCount:
+ *                     type: integer
+ *                     description: Total number of order items in the order
  *                   order_shipping_fee:
  *                     type: number
  *                   order_discount_value:
