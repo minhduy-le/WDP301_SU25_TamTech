@@ -106,9 +106,9 @@ const ManagerChat = () => {
       socket.disconnect();
     }
 
-    const socketUrl = "wss://wdp301-su25.space";
+    const socketUrl = "https://wdp301-su25.space";
     const newSocket = io(socketUrl, {
-      transports: ["polling", "websocket"], // Thử polling trước
+      transports: ["websocket", "polling"],
       upgrade: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -133,7 +133,7 @@ const ManagerChat = () => {
       setConnectionAttempts(0);
       setIsReconnecting(false);
       isConnectingRef.current = false;
-      message.success(`Kết nối thành công với ID ${authUser.id}`);
+      message.success(`Connected successfully with ID ${authUser.id}`);
 
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = setInterval(() => {
@@ -153,7 +153,7 @@ const ManagerChat = () => {
         context: error.context,
         stack: error.stack,
       });
-      message.error(`Kết nối thất bại: ${error.message || "Lỗi không xác định"}`);
+      message.error(`Connection failed: ${error.message || "Unknown error"}`);
       setIsConnected(false);
       setIsReconnecting(false);
       isConnectingRef.current = false;
@@ -163,16 +163,14 @@ const ManagerChat = () => {
 
       if (currentAttempts < 5) {
         const delay = Math.min(1000 * Math.pow(2, currentAttempts - 1), 10000);
-        message.warning(
-          `Kết nối thất bại: ${error.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
-        );
+        message.warning(`Connection failed: ${error.message}. Retrying in ${delay / 1000}s... (${currentAttempts}/5)`);
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log(`🔄 Attempting to reconnect... (attempt ${currentAttempts + 1})`);
           connectSocket();
         }, delay);
       } else {
-        message.error("Không thể kết nối sau 5 lần thử. Vui lòng kiểm tra kết nối mạng.");
+        message.error("Failed to connect after 5 attempts. Please check your network.");
         cleanupSocket();
       }
     });
@@ -203,13 +201,6 @@ const ManagerChat = () => {
         content: receivedMessage.content,
         createdAt: receivedMessage.createdAt,
       });
-
-      const isRelevant = receivedMessage.senderId === authUser?.id || receivedMessage.receiverId === authUser?.id;
-
-      if (!isRelevant) {
-        console.log("📨 Message not for current user, ignoring");
-        return;
-      }
 
       setChats((prevChats) => {
         if (prevChats.some((chat) => chat.id === receivedMessage.id)) {
@@ -261,19 +252,14 @@ const ManagerChat = () => {
       try {
         const response = await axiosInstance.get<Chat[]>("/chat/messages", {
           params: {
+            receiverId: selectedUser.id,
             limit: 50,
             offset: 0,
           },
         });
 
-        const filteredChats = response.data.filter(
-          (chat) =>
-            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
-        );
-
         setChats(
-          filteredChats
+          response.data
             .map((chat) => ({
               ...chat,
               createdAt: new Date(chat.createdAt),
@@ -286,7 +272,7 @@ const ManagerChat = () => {
         setTimeout(scrollToBottom, 100);
       } catch (error: any) {
         console.error("❌ Failed to fetch messages:", error.message);
-        message.error("Không thể tải tin nhắn");
+        message.error("Failed to load messages");
       } finally {
         setIsLoadingChats(false);
       }
@@ -307,23 +293,14 @@ const ManagerChat = () => {
         account.id !== authUser?.id
     ) || [];
 
-  const userChats =
-    authUser && selectedUser
-      ? chats.filter(
-          (chat) =>
-            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
-        )
-      : [];
-
   const handleSendMessage = () => {
     if (!selectedUser || !messageInput.trim() || !authUser) {
-      message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
+      message.error("Please select a recipient and enter a message.");
       return;
     }
 
     if (!isConnected) {
-      message.error("Không kết nối được với server chat. Vui lòng thử lại.");
+      message.error("Not connected to chat server. Please try again.");
       return;
     }
 
@@ -333,28 +310,28 @@ const ManagerChat = () => {
     };
 
     createChat(messageData, {
-      onSuccess: () => {
-        console.log("✅ Message created via API");
+      onSuccess: (data) => {
+        console.log("✅ Message created via API:", data);
         setMessageInput("");
 
         if (socket?.connected) {
           socket.emit("sendMessage", messageData, (response: any) => {
             console.log("📤 Socket emit response:", response);
             if (response?.error) {
-              message.error(response.error || "Gửi tin nhắn qua socket thất bại");
+              message.error(response.error || "Failed to send message via socket");
             } else if (response?.success) {
               console.log("✅ Socket message sent successfully");
-              message.success("Tin nhắn đã được gửi!");
+              message.success("Message sent successfully!");
             }
           });
         } else {
           console.warn("⚠️ Socket not connected, message sent via API only");
-          message.success("Tin nhắn đã được gửi!");
+          message.success("Message sent successfully!");
         }
       },
       onError: (error: any) => {
         console.error("❌ Failed to create message:", error.message);
-        message.error(error.message || "Gửi tin nhắn thất bại!");
+        message.error(error.message || "Failed to send message!");
       },
     });
   };
@@ -367,7 +344,7 @@ const ManagerChat = () => {
     if (messageDate.isSame(today, "day")) {
       return messageDate.format("HH:mm");
     } else if (messageDate.isSame(yesterday, "day")) {
-      return `Hôm qua ${messageDate.format("HH:mm")}`;
+      return `Yesterday ${messageDate.format("HH:mm")}`;
     }
     return messageDate.format("HH:mm DD/MM/YYYY");
   };
@@ -403,11 +380,11 @@ const ManagerChat = () => {
             fontSize: "12px",
           }}
         >
-          {isConnected ? `🟢 Kết nối (ID ${authUser?.id})` : isReconnecting ? "🟡 Đang kết nối..." : "🔴 Ngắt kết nối"}
+          {isConnected ? `🟢 Connected (ID ${authUser?.id})` : isReconnecting ? "🟡 Connecting..." : "🔴 Disconnected"}
         </div>
         {!isConnected && !isReconnecting && (
           <Button size="small" onClick={handleReconnect}>
-            Kết nối lại
+            Reconnect
           </Button>
         )}
       </div>
@@ -422,7 +399,7 @@ const ManagerChat = () => {
         }}
       >
         <Input
-          placeholder="Tìm kiếm tên người dùng..."
+          placeholder="Search user name..."
           prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -477,7 +454,7 @@ const ManagerChat = () => {
                 borderTopRightRadius: "12px",
               }}
             >
-              Chat với: {selectedUser.fullName}
+              Chat with: {selectedUser.fullName}
             </div>
 
             <div
@@ -495,9 +472,9 @@ const ManagerChat = () => {
               }}
             >
               {isLoadingChats ? (
-                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Đang tải tin nhắn...</p>
-              ) : userChats.length ? (
-                userChats.map((chat) => (
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Loading messages...</p>
+              ) : chats.length ? (
+                chats.map((chat) => (
                   <div
                     key={chat.id}
                     className={`message-bubble ${chat.senderId === authUser?.id ? "sent" : "received"}`}
@@ -530,7 +507,7 @@ const ManagerChat = () => {
                   </div>
                 ))
               ) : (
-                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Chưa có tin nhắn với người này.</p>
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>No messages with this user yet.</p>
               )}
             </div>
 
@@ -547,7 +524,7 @@ const ManagerChat = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onPressEnter={handleSendMessage}
-                placeholder="Nhập tin nhắn..."
+                placeholder="Type a message..."
                 disabled={!isConnected || isSending}
                 suffix={
                   <Button
@@ -582,7 +559,7 @@ const ManagerChat = () => {
               justifyContent: "center",
             }}
           >
-            Chọn một người dùng để bắt đầu chat.
+            Select a user to start chatting.
           </div>
         )}
       </Card>
