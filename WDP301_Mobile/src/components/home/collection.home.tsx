@@ -7,7 +7,7 @@ import {
   Pressable,
   Dimensions,
 } from "react-native";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState, createContext, useContext } from "react";
 import { router } from "expo-router";
 import ContentLoader, { Rect } from "react-content-loader/native";
@@ -28,59 +28,11 @@ interface IProps {
 }
 interface IPropsProduct {
   productId: string;
-  productImage: string;
-  productName: string;
-  productPrice: number;
+  image: string;
+  description: string;
+  price: number;
 }
-const styles = StyleSheet.create({
-  container: {
-    padding: 10,
-    backgroundColor: APP_COLOR.YELLOW,
-  },
-  sale: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: APP_COLOR.ORANGE,
-    padding: 3,
-    borderRadius: 3,
-    alignSelf: "flex-start",
-  },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "flex-end",
-    zIndex: 1000,
-  },
-  modalBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    height: 700,
-    overflow: "hidden",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    padding: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.bold,
-    color: APP_COLOR.BROWN,
-  },
-});
+
 interface ModalContextType {
   showProductModal: (item: IPropsProduct) => void;
   hideProductModal: () => void;
@@ -125,42 +77,19 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
               size={24}
               color={APP_COLOR.WHITE}
               onPress={hideProductModal}
-              style={{ position: "absolute", right: 10, top: 10, zIndex: 1000 }}
+              style={styles.modalCloseIcon}
             />
             <Image
-              source={{ uri: selectedItem?.productImage }}
-              style={{
-                width: "100%",
-                height: 400,
-                borderTopLeftRadius: 30,
-                borderTopRightRadius: 30,
-                borderBottomLeftRadius: 150,
-                borderBottomRightRadius: 150,
-              }}
+              source={{ uri: selectedItem?.image }}
+              style={styles.modalImage}
               resizeMode="cover"
             />
-            <View style={{ padding: 15 }}>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontFamily: FONTS.bold,
-                  color: APP_COLOR.BROWN,
-                  marginTop: 15,
-                  textAlign: "center",
-                }}
-              >
-                {selectedItem?.productName}
+            <View style={styles.modalTextContainer}>
+              <Text style={styles.modalProductName}>
+                {selectedItem?.description}
               </Text>
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontFamily: FONTS.bold,
-                  color: APP_COLOR.ORANGE,
-                  marginTop: 10,
-                  textAlign: "center",
-                }}
-              >
-                {currencyFormatter(selectedItem?.productPrice || 0)}
+              <Text style={styles.modalProductPrice}>
+                {currencyFormatter(selectedItem?.price || 0)}
               </Text>
             </View>
           </Animated.View>
@@ -183,10 +112,8 @@ const CollectionHome = (props: IProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/products/branch/${branchId}?page=0&size=10&typeId=${id}&quantityStart=0&quantityEnd=9999999`
-        );
-        setRestaurants(res.data.data.content);
+        const res = await axios.get(`${API_URL}/api/products/type/${props.id}`);
+        setRestaurants(res.data.products);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -200,14 +127,11 @@ const CollectionHome = (props: IProps) => {
       setRestaurant(mockRestaurant);
     }
   }, []);
-
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState<boolean>(false);
-
   const handlePressItem = (item: IPropsProduct) => {
     showProductModal(item);
   };
-
   const handleQuantityChange = (item: any, action: "MINUS" | "PLUS") => {
     if (!restaurant?._id) return;
 
@@ -222,7 +146,6 @@ const CollectionHome = (props: IProps) => {
         items: {},
       };
     }
-
     newCart[restaurant._id].sum =
       (newCart[restaurant._id].sum || 0) + priceChange;
     newCart[restaurant._id].quantity =
@@ -260,15 +183,15 @@ const CollectionHome = (props: IProps) => {
 
     setCart(newCart);
   };
+
   const getItemQuantity = (itemId: string) => {
     if (!restaurant?._id) return 0;
     return cart[restaurant._id]?.items[itemId]?.quantity || 0;
   };
+
   return (
     <>
-      <View
-        style={{ height: 10, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
-      ></View>
+      <View style={styles.spacer} />
       {loading === false ? (
         <View style={styles.container}>
           <Pressable
@@ -278,38 +201,16 @@ const CollectionHome = (props: IProps) => {
                 params: { id },
               })
             }
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
+            style={styles.headerContainer}
           >
-            <Text
-              style={{
-                color: APP_COLOR.ORANGE,
-                fontWeight: "600",
-                fontFamily: FONTS.medium,
-                fontSize: 17,
-              }}
-            >
-              {name}
-            </Text>
-            <View
-              style={{ position: "absolute", flexDirection: "row", right: 3 }}
-            >
-              <Text
-                style={{
-                  color: APP_COLOR.BROWN,
-                  fontFamily: FONTS.medium,
-                  fontSize: 17,
-                }}
-              >
-                Xem tất cả
-              </Text>
+            <Text style={styles.headerText}>{name}</Text>
+            <View style={styles.viewAllContainer}>
+              <Text style={styles.viewAllText}>Xem tất cả</Text>
               <MaterialIcons
                 name="navigate-next"
                 size={20}
                 color={APP_COLOR.BROWN}
-                style={{ marginTop: 2 }}
+                style={styles.navigateIcon}
               />
             </View>
           </Pressable>
@@ -317,11 +218,7 @@ const CollectionHome = (props: IProps) => {
           <FlatList
             data={restaurants}
             horizontal
-            contentContainerStyle={{
-              gap: 7,
-              paddingRight: 10,
-              marginBottom: 10,
-            }}
+            contentContainerStyle={styles.flatListContent}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             renderItem={({
@@ -336,98 +233,36 @@ const CollectionHome = (props: IProps) => {
               return (
                 <Pressable onPress={() => handlePressItem(item)}>
                   <View
-                    style={{
-                      backgroundColor: APP_COLOR.DARK_YELLOW,
-                      borderRadius: 10,
-                      marginTop: 10,
-                      gap: 5,
-                      marginHorizontal: 5,
-                      marginRight: isLastItem ? 10 : 5,
-                      shadowColor: "#000",
-                      shadowOffset: {
-                        width: 0,
-                        height: 2,
-                      },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 3.84,
-                    }}
+                    style={[
+                      styles.itemContainer,
+                      { marginRight: isLastItem ? 10 : 5 },
+                    ]}
                   >
                     <Image
-                      style={{
-                        height: 130,
-                        width: 140,
-                        borderRadius: 10,
-                        opacity: 0.85,
-                      }}
-                      source={{ uri: item.productImage }}
+                      style={styles.itemImage}
+                      source={{ uri: item.image }}
                     />
-                    <View
-                      style={{
-                        position: "absolute",
-                        bottom: 105,
-                        right: 10,
-                        flexDirection: "row",
-                        gap: 5,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: APP_COLOR.BUTTON_YELLOW,
-                          fontFamily: FONTS.semiBold,
-                          fontSize: 22,
-                          position: "relative",
-                          top: -5,
-                        }}
-                      >
-                        5
-                      </Text>
+                    <View style={styles.ratingContainer}>
+                      <Text style={styles.ratingText}>5</Text>
                       <AntDesign
                         name="star"
                         size={20}
                         color={APP_COLOR.BUTTON_YELLOW}
                       />
                     </View>
-                    <View style={{ padding: 5 }}>
+                    <View style={styles.itemTextContainer}>
                       <Text
                         numberOfLines={1}
                         ellipsizeMode="tail"
-                        style={{
-                          fontWeight: "600",
-                          maxWidth: 130,
-                          fontFamily: FONTS.medium,
-                          fontSize: 15,
-                          color: APP_COLOR.BROWN,
-                          marginBottom: 5,
-                        }}
+                        style={styles.itemName}
                       >
-                        {item.productName}
+                        {item.description}
                       </Text>
-                      <Text
-                        style={{
-                          color: APP_COLOR.BROWN,
-                          fontFamily: FONTS.bold,
-                          fontSize: 15,
-                          position: "relative",
-                          left: 50,
-                        }}
-                      >
-                        {currencyFormatter(item.productPrice)}
+                      <Text style={styles.itemPrice}>
+                        {currencyFormatter(item.price)}
                       </Text>
                     </View>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        paddingVertical: 3,
-                        paddingHorizontal: 5,
-                        borderRadius: 50,
-                        marginBottom: 7,
-                        borderWidth: 0.5,
-                        borderColor: APP_COLOR.BROWN,
-                        marginHorizontal: "auto",
-                      }}
-                    >
+                    <View style={styles.quantityContainer}>
                       <Pressable
                         onPress={() => handleQuantityChange(item, "MINUS")}
                         style={({ pressed }) => ({
@@ -445,18 +280,7 @@ const CollectionHome = (props: IProps) => {
                           }
                         />
                       </Pressable>
-
-                      <Text
-                        style={{
-                          minWidth: 25,
-                          textAlign: "center",
-                          fontFamily: FONTS.medium,
-                          color: APP_COLOR.BROWN,
-                        }}
-                      >
-                        {quantity}
-                      </Text>
-
+                      <Text style={styles.quantityText}>{quantity}</Text>
                       <Pressable
                         onPress={() => handleQuantityChange(item, "PLUS")}
                         style={({ pressed }) => ({
@@ -483,7 +307,7 @@ const CollectionHome = (props: IProps) => {
           height={230}
           backgroundColor="#f3f3f3"
           foregroundColor="#ecebeb"
-          style={{ width: "100%" }}
+          style={styles.loader}
         >
           <Rect x="10" y="10" rx="5" ry="5" width={150} height="200" />
           <Rect x="170" y="10" rx="5" ry="5" width={150} height="200" />
@@ -493,5 +317,172 @@ const CollectionHome = (props: IProps) => {
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 10,
+    backgroundColor: APP_COLOR.YELLOW,
+  },
+  spacer: {
+    height: 10,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerText: {
+    color: APP_COLOR.ORANGE,
+    fontWeight: "600",
+    fontFamily: FONTS.medium,
+    fontSize: 17,
+  },
+  viewAllContainer: {
+    position: "absolute",
+    flexDirection: "row",
+    right: 3,
+  },
+  viewAllText: {
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.medium,
+    fontSize: 17,
+  },
+  navigateIcon: {
+    marginTop: 2,
+  },
+  flatListContent: {
+    gap: 7,
+    paddingRight: 10,
+    marginBottom: 10,
+  },
+  itemContainer: {
+    backgroundColor: APP_COLOR.DARK_YELLOW,
+    borderRadius: 10,
+    marginTop: 10,
+    gap: 5,
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  itemImage: {
+    height: 130,
+    width: 140,
+    borderRadius: 10,
+    opacity: 0.85,
+  },
+  ratingContainer: {
+    position: "absolute",
+    bottom: 105,
+    right: 10,
+    flexDirection: "row",
+    gap: 5,
+  },
+  ratingText: {
+    color: APP_COLOR.BUTTON_YELLOW,
+    fontFamily: FONTS.semiBold,
+    fontSize: 22,
+    position: "relative",
+    top: -5,
+  },
+  itemTextContainer: {
+    padding: 5,
+  },
+  itemName: {
+    fontWeight: "600",
+    maxWidth: 130,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
+    color: APP_COLOR.BROWN,
+    marginBottom: 5,
+  },
+  itemPrice: {
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    position: "relative",
+    left: 50,
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 5,
+    borderRadius: 50,
+    marginBottom: 7,
+    borderWidth: 0.5,
+    borderColor: APP_COLOR.BROWN,
+    marginHorizontal: "auto",
+  },
+  quantityText: {
+    minWidth: 25,
+    textAlign: "center",
+    fontFamily: FONTS.medium,
+    color: APP_COLOR.BROWN,
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "flex-end",
+    zIndex: 1000,
+  },
+  modalBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    height: 700,
+    overflow: "hidden",
+  },
+  modalCloseIcon: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    zIndex: 1000,
+  },
+  modalImage: {
+    width: "100%",
+    height: 400,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    borderBottomLeftRadius: 150,
+    borderBottomRightRadius: 150,
+  },
+  modalTextContainer: {
+    padding: 15,
+  },
+  modalProductName: {
+    fontSize: 18,
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.BROWN,
+    marginTop: 15,
+    textAlign: "center",
+  },
+  modalProductPrice: {
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: APP_COLOR.ORANGE,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  loader: {
+    width: "100%",
+  },
+});
 
 export default CollectionHome;

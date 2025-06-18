@@ -109,6 +109,22 @@ const ShareButton = (props: IProps) => {
                   />
                 </>
               );
+            case "Trang chủ":
+              return (
+                <>
+                  <FontAwesome5 name="home" size={24} color={APP_COLOR.WHITE} />
+                </>
+              );
+            case "Đặt hàng":
+              return (
+                <>
+                  <Feather
+                    name="shopping-cart"
+                    size={24}
+                    color={APP_COLOR.WHITE}
+                  />
+                </>
+              );
             case " ":
               return (
                 <>

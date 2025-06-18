@@ -9,18 +9,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Pressable, Text, View, ScrollView } from "react-native";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
-import { currencyFormatter } from "@/utils/api";
+import { currencyFormatter, getTypeProductAPI } from "@/utils/api";
 import Animated, {
   FadeIn,
   SlideInDown,
   FadeOut,
 } from "react-native-reanimated";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
-import { SafeAreaView } from "react-native-safe-area-context";
 const HomeTab = () => {
   const [mounted, setMounted] = useState(false);
   const [showCart, setShowCart] = useState(false);
@@ -48,7 +46,7 @@ const HomeTab = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/product-type`);
+        const res = await getTypeProductAPI();
         setCollectionData(res.data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -68,17 +66,6 @@ const HomeTab = () => {
     }, 1000);
   }, [mounted]);
 
-  const handlePressItem = (item: IMenuItem, action: "MINUS" | "PLUS") => {
-    if (item.options.length) {
-      router.navigate({
-        pathname:
-          action === "PLUS"
-            ? "/(user)/product/create.modal"
-            : "/(user)/product/update.modal",
-        params: { menuItemId: item._id },
-      });
-    }
-  };
   const handleQuantityChange = (amount: number) => {
     setPriceUpdateAmount(amount);
     setShowPriceUpdate(true);
@@ -97,7 +84,7 @@ const HomeTab = () => {
     : [];
   interface ITem {
     name: string;
-    id: number;
+    productTypeId: number;
   }
   return (
     <View
@@ -110,7 +97,11 @@ const HomeTab = () => {
         data={collectionData}
         style={styles.list}
         renderItem={({ item }: { item: ITem }) => (
-          <CollectionHome name={item.name} id={item.id} branchId={branchId} />
+          <CollectionHome
+            name={item.name}
+            id={item.productTypeId}
+            branchId={branchId}
+          />
         )}
         HeaderComponent={<HeaderHome onBranchSelect={handleBranchSelect} />}
         StickyElementComponent={<SearchHome />}

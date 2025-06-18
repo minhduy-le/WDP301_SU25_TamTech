@@ -46,6 +46,10 @@ export const getBestSellerAPI = () => {
   const url = `${API_URL}/api/products/best-seller`;
   return axios.get(url);
 };
+export const getTypeProductAPI = () => {
+  const url = `${API_URL}/api/product-types`;
+  return axios.get(url);
+};
 export const getAccountAPI = () => {
   const url = `/api/v1/auth/account`;
   return axios.get<IBackendRes<IUserLogin>>(url);
