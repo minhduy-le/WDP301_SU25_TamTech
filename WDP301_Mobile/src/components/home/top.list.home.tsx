@@ -36,6 +36,12 @@ const data1 = [
     source: require("@/assets/icons/don-hang.png"),
     targetScreen: "order",
   },
+  {
+    key: 5,
+    name: "Thông tin",
+    source: require("@/assets/icons/thong-tin.png"),
+    targetScreen: "information",
+  },
 ];
 const IconItem = ({ item }: any) => {
   const router = useRouter();

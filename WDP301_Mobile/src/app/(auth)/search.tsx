@@ -18,6 +18,7 @@ import menu from "@/assets/Menu.png";
 import { FONTS } from "@/theme/typography";
 import { useCurrentApp } from "@/context/app.context";
 import { currencyFormatter } from "@/utils/api";
+import Toast from "react-native-root-toast";
 
 interface IProduct {
   productId: string;
@@ -136,7 +137,7 @@ const SearchPage = () => {
       );
       setProducts(res.data.products);
     } catch (error) {
-      console.log("Error", error);
+      Toast.show("Lỗi khi lọc sản phẩm");
     }
   };
   return (

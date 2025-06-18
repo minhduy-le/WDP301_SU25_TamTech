@@ -15,7 +15,7 @@ import {
 } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from "@expo/vector-icons/Feather";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -220,7 +220,34 @@ const AccountPage = () => {
               color={APP_COLOR.BROWN}
             />
           </Pressable>
-
+          <Pressable
+            onPress={() => router.navigate("/(user)/account/password")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <Feather name="gift" size={25} color={APP_COLOR.BROWN} />
+              <Text style={styles.btnText}>Ưu đãi của bạn</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
           <Pressable
             onPress={() =>
               Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 2.0")
