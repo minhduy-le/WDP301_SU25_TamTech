@@ -102,7 +102,7 @@ router.post("/", verifyToken, async (req, res, next) => {
       phone_number: req.body.phone_number,
       date_of_birth: req.body.date_of_birth,
       note: req.body.note,
-      role: req.body.role, // Thêm lại role
+      role: req.body.role,
     };
 
     const newUser = await accountService.createUser(userData);
@@ -127,13 +127,13 @@ router.post("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts:
  *   get:
- *     summary: Get all user accounts (excluding Admin role)
+ *     summary: Get all user accounts (excluding the logged-in user)
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of users excluding those with Admin role
+ *         description: List of users excluding the logged-in user
  *         content:
  *           application/json:
  *             schema:
@@ -163,8 +163,8 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: string
  *                       role:
  *                         type: string
- *                         enum: [User, Staff, Shipper]
- *                         description: Role of the user (Admin excluded)
+ *                         enum: [Admin, User, Staff, Shipper, Manager]
+ *                         description: Role of the user
  *                       isActive:
  *                         type: boolean
  *                         description: Indicates whether the user account is active
@@ -175,7 +175,7 @@ router.post("/", verifyToken, async (req, res, next) => {
  */
 router.get("/", verifyToken, async (req, res, next) => {
   try {
-    const users = await accountService.getAllUsers();
+    const users = await accountService.getAllUsers(req.userId);
     res.status(200).json({
       status: 200,
       message: "Users retrieved successfully",
@@ -193,7 +193,7 @@ router.get("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts/{id}:
  *   get:
- *     summary: Get a user by ID (excluding Admin role)
+ *     summary: Get a user by ID
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
@@ -206,7 +206,7 @@ router.get("/", verifyToken, async (req, res, next) => {
  *         description: User ID
  *     responses:
  *       200:
- *         description: User retrieved successfully (excluding Admin role)
+ *         description: User retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -234,15 +234,15 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     role:
  *                       type: string
- *                       enum: [User, Staff, Shipper]
- *                       description: Role of the user (Admin excluded)
+ *                       enum: [Admin, User, Staff, Shipper, Manager]
+ *                       description: Role of the user
  *                     isActive:
  *                       type: boolean
  *                       description: Indicates whether the user account is active
  *       400:
  *         description: Invalid user ID
  *       404:
- *         description: User not found or is an Admin
+ *         description: User not found
  *       401:
  *         description: Unauthorized
  *       500:
@@ -258,10 +258,14 @@ router.get("/:id", verifyToken, async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
   }
 });
 
