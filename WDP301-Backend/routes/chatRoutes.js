@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const chatService = require("../services/chatService");
-const verifyToken = require("../middlewares/verifyToken");
-const { Op } = require("sequelize");
+const { verifyToken } = require("../middlewares/verifyToken");
+const { createChat, getChatsByUser } = require("../services/chatService");
 
 /**
  * @swagger
- * /api/chat/messages:
+ * /chat:
  *   post:
- *     summary: Send a new message
+ *     summary: Create a new chat message
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
@@ -19,28 +18,22 @@ const { Op } = require("sequelize");
  *           schema:
  *             type: object
  *             required:
+ *               - receiverId
  *               - content
  *             properties:
- *               chatRoomId:
- *                 type: integer
- *                 description: ID of the chat room (optional if sending direct message)
  *               receiverId:
  *                 type: integer
- *                 description: ID of the receiver (optional if sending to chat room)
  *               content:
  *                 type: string
- *                 description: Message content
  *     responses:
  *       201:
- *         description: Message created successfully
+ *         description: Chat message created successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 id:
- *                   type: integer
- *                 chatRoomId:
  *                   type: integer
  *                 senderId:
  *                   type: integer
@@ -56,36 +49,40 @@ const { Op } = require("sequelize");
  *       401:
  *         description: Unauthorized
  */
-router.post("/messages", verifyToken, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
-    const { chatRoomId, receiverId, content } = req.body;
-    const senderId = req.userId; // Use req.userId from verifyToken
-    const message = await chatService.createMessage({
-      chatRoomId,
-      senderId,
+    const { receiverId, content } = req.body;
+    if (!receiverId || !content) {
+      return res.status(400).json({ error: "Missing receiverId or content" });
+    }
+
+    const chat = await createChat({
+      senderId: req.user.id,
       receiverId,
       content,
     });
-    res.status(201).json(message);
+
+    res.status(201).json(chat);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error creating chat:", error);
+    res.status(500).json({ error: "Failed to create chat" });
   }
 });
 
 /**
  * @swagger
- * /api/chat/messages:
+ * /chat/messages:
  *   get:
- *     summary: Get messages for a user or chat room
+ *     summary: Get chat messages for authenticated user
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: chatRoomId
+ *         name: receiverId
  *         schema:
  *           type: integer
- *         description: ID of the chat room (optional, if not provided, returns direct messages)
+ *         description: ID of the user to get chat messages with
  *       - in: query
  *         name: limit
  *         schema:
@@ -100,7 +97,7 @@ router.post("/messages", verifyToken, async (req, res) => {
  *         description: Number of messages to skip
  *     responses:
  *       200:
- *         description: List of messages
+ *         description: List of chat messages
  *         content:
  *           application/json:
  *             schema:
@@ -109,8 +106,6 @@ router.post("/messages", verifyToken, async (req, res) => {
  *                 type: object
  *                 properties:
  *                   id:
- *                     type: integer
- *                   chatRoomId:
  *                     type: integer
  *                   senderId:
  *                     type: integer
@@ -135,31 +130,17 @@ router.post("/messages", verifyToken, async (req, res) => {
  *                         type: integer
  *                       fullName:
  *                         type: string
- *                   ChatRoom:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       name:
- *                         type: string
- *       400:
- *         description: Invalid input
  *       401:
  *         description: Unauthorized
  */
 router.get("/messages", verifyToken, async (req, res) => {
   try {
-    const { chatRoomId, limit = 50, offset = 0 } = req.query;
-    const userId = req.userId; // Use req.userId from verifyToken
-    const messages = await chatService.getMessages({
-      chatRoomId: chatRoomId ? parseInt(chatRoomId) : null,
-      userId,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-    });
-    res.status(200).json(messages);
+    const { receiverId, limit = 50, offset = 0 } = req.query;
+    const chats = await getChatsByUser(req.user.id, parseInt(receiverId), parseInt(limit), parseInt(offset));
+    res.json(chats);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error fetching chats:", error);
+    res.status(500).json({ error: "Failed to fetch chats" });
   }
 });
 
