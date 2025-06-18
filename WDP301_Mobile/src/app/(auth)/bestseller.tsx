@@ -130,7 +130,7 @@ const BestSellerPage = () => {
                 </View>
                 <View style={styles.productFooter}>
                   <View style={styles.ratingContainer}>
-                    <AntDesign name="star" size={24} color="yellow" />
+                    <AntDesign name="star" size={24} color={APP_COLOR.ORANGE} />
                     <Text style={styles.ratingText}>4.6 (52)</Text>
                   </View>
                   <View style={styles.quantityControls}>

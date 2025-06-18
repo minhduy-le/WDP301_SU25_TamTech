@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
 import { TextInput } from "react-native-gesture-handler";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import debounce from "debounce";
 import { currencyFormatter } from "@/utils/api";
 import { useCurrentApp } from "@/context/app.context";
@@ -26,34 +26,51 @@ const RestaurantsPage = () => {
   const { id } = useLocalSearchParams();
   const { cart, setCart, restaurant } = useCurrentApp();
   const [showCart, setShowCart] = useState(false);
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchProducts = useCallback(
+    debounce(async (id: string) => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/products?page=0&size=10&keyword=${searchTerm}&typeId=${id}`
-        );
-        setRestaurants(res.data.data.content);
+        const res = await axios.get(`${API_URL}/api/products/type/${id}`);
+        if (res.data?.products) {
+          setRestaurants(res.data.products);
+        } else {
+          setRestaurants([]);
+        }
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
+        setRestaurants([]);
       }
-    };
-
-    fetchData();
-  }, [searchTerm, id]);
-
+    }, 500),
+    []
+  );
   const handleSearch = debounce(async (text: string) => {
     setSearchTerm(text);
-    if (!text) return;
-    const res = await axios.get(
-      `${BASE_URL}/products?page=0&size=10&keyword=${text}&typeId=0`
-    );
-    console.log(res);
-
-    if (res.data.data.content) {
-      setRestaurants(res.data.results);
+    if (!text.trim()) {
+      fetchProducts(id as string);
+      return;
+    }
+    try {
+      const res = await axios.get(
+        `${API_URL}/api/products/search-by-name-and-type?name=${text}&productTypeId=${id}`
+      );
+      if (res.data?.products) {
+        setRestaurants(res.data.products);
+      } else {
+        setRestaurants([]);
+      }
+    } catch (error: any) {
+      console.error("Error searching data:", error.message);
+      setRestaurants([]);
     }
   }, 300);
-
+  const handleChangeText = (text: string) => {
+    setSearchTerm(text);
+    handleSearch(text);
+  };
+  useEffect(() => {
+    if (id) {
+      fetchProducts(id as string);
+    }
+  }, [id, fetchProducts]);
   const handleQuantityChange = (item: any, action: "MINUS" | "PLUS") => {
     if (!restaurant?._id) return;
 
@@ -130,8 +147,9 @@ const RestaurantsPage = () => {
         }}
       >
         <TextInput
-          placeholder={`Bạn muốn ăn gì nào?`}
-          onChangeText={(text: string) => handleSearch(text)}
+          placeholder={`Bạn muốn dùng gì nào?`}
+          onChangeText={handleChangeText}
+          value={searchTerm}
           placeholderTextColor={APP_COLOR.BROWN}
           style={{
             backgroundColor: APP_COLOR.WHITE,
@@ -189,7 +207,7 @@ const RestaurantsPage = () => {
               >
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <Image
-                    src={item.productImage}
+                    src={item.image}
                     style={{
                       height: 100,
                       width: 100,
@@ -206,7 +224,7 @@ const RestaurantsPage = () => {
                         marginTop: 5,
                       }}
                     >
-                      {item.productName}
+                      {item.description}
                     </Text>
                     <Text
                       style={{
@@ -215,7 +233,7 @@ const RestaurantsPage = () => {
                         fontSize: 17,
                       }}
                     >
-                      {currencyFormatter(item.productPrice)}
+                      {currencyFormatter(item.price)}
                     </Text>
                   </View>
                 </View>

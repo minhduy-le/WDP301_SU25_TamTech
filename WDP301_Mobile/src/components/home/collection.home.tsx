@@ -246,8 +246,8 @@ const CollectionHome = (props: IProps) => {
                       <Text style={styles.ratingText}>5</Text>
                       <AntDesign
                         name="star"
-                        size={20}
-                        color={APP_COLOR.BUTTON_YELLOW}
+                        size={15}
+                        color={APP_COLOR.ORANGE}
                       />
                     </View>
                     <View style={styles.itemTextContainer}>
@@ -377,17 +377,19 @@ const styles = StyleSheet.create({
   },
   ratingContainer: {
     position: "absolute",
-    bottom: 105,
-    right: 10,
+    top: -10,
+    right: -10,
     flexDirection: "row",
-    gap: 5,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    opacity: 0.8,
+    borderRadius: 10,
+    alignItems: "center",
+    paddingHorizontal: 5,
   },
   ratingText: {
-    color: APP_COLOR.BUTTON_YELLOW,
+    color: APP_COLOR.ORANGE,
     fontFamily: FONTS.semiBold,
-    fontSize: 22,
-    position: "relative",
-    top: -5,
+    fontSize: 15,
   },
   itemTextContainer: {
     padding: 5,

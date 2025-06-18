@@ -7,7 +7,7 @@ import {
   Pressable,
   Alert,
   StyleSheet,
-  Platform,
+  Dimensions,
 } from "react-native";
 import {
   SafeAreaView,
@@ -22,7 +22,7 @@ import { jwtDecode } from "jwt-decode";
 import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
-
+import icon from "@/assets/icons/loi-chuc.png";
 const sampleData = {
   name: "Lê Minh Duy",
   phone: "0889679561",
@@ -42,11 +42,11 @@ const getCurrentDateTime = (): string => {
     return "Buổi tối thư giãn!";
   }
 };
-
+const ScreenWidth = Dimensions.get("screen").width;
 const AccountPage = () => {
   const insets = useSafeAreaInsets();
   const [decodeToken, setDecodeToken] = useState<any>("");
-  const { appState } = useCurrentApp();
+  const { appState, setAppState } = useCurrentApp();
   const [time, setTime] = useState("");
   useEffect(() => {
     setTime(getCurrentDateTime());
@@ -79,7 +79,8 @@ const AccountPage = () => {
         text: "Xác nhận",
         onPress: async () => {
           await AsyncStorage.removeItem("access_token");
-          router.replace("/(auth)/welcome");
+          setAppState(0);
+          router.replace("/(tabs)");
         },
       },
     ]);
@@ -119,40 +120,87 @@ const AccountPage = () => {
           </View>
           <Image source={logo} style={styles.img} />
         </View>
-        <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
-          <Text
+        {!appState && (
+          <>
+            <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
+              <Text
+                style={{
+                  color: APP_COLOR.BROWN,
+                  fontSize: 17,
+                  fontFamily: FONTS.regular,
+                  textAlign: "center",
+                }}
+              >
+                Hãy đăng nhập/đăng ký để nhận được các thông tin ưu đã từ Tấm
+                Tắc nhé.
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                marginBottom: 10,
+                marginHorizontal: 10,
+                justifyContent: "space-around",
+              }}
+            >
+              <ShareButton
+                title="Đăng Nhập"
+                onPress={() => router.push("/(auth)/welcome")}
+                textStyle={styles.loginBtnText}
+                btnStyle={styles.loginBtn}
+              />
+              <ShareButton
+                title="Đăng Ký"
+                onPress={() => router.push("/(auth)/customer.signup")}
+                textStyle={styles.loginBtnText}
+                btnStyle={styles.loginBtn}
+              />
+            </View>
+          </>
+        )}
+        {appState && (
+          <View
             style={{
-              color: APP_COLOR.BROWN,
-              fontSize: 17,
-              fontFamily: FONTS.regular,
-              textAlign: "center",
+              position: "relative",
+              bottom: -25,
+              backgroundColor: APP_COLOR.ORANGE,
+              marginHorizontal: 10,
+              padding: 5,
+              borderRadius: 10,
+              width: ScreenWidth * 0.85,
+              alignSelf: "center",
             }}
           >
-            Hày đăng nhập để nhận được các thông tin ưu đã từ Tấm Tắc nhé.
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            marginBottom: 10,
-            marginHorizontal: 10,
-            justifyContent: "space-around",
-          }}
-        >
-          <View></View>
-          <ShareButton
-            title="Đăng Nhập"
-            onPress={() => router.push("/(auth)/welcome")}
-            textStyle={styles.loginBtnText}
-            btnStyle={styles.loginBtn}
-          />
-          <ShareButton
-            title="Đăng Ký"
-            onPress={() => router.push("/(auth)/customer.signup")}
-            textStyle={styles.loginBtnText}
-            btnStyle={styles.loginBtn}
-          />
-        </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 10,
+                backgroundColor: APP_COLOR.ORANGE,
+                borderWidth: 1,
+                borderColor: APP_COLOR.WHITE,
+                borderRadius: 10,
+                paddingTop: 15,
+                paddingBottom: 20,
+              }}
+            >
+              <Text
+                style={[
+                  styles.text,
+                  {
+                    marginLeft: 10,
+                    color: APP_COLOR.WHITE,
+                    fontFamily: FONTS.medium,
+                  },
+                ]}
+              >
+                {decodeToken.fullName}
+              </Text>
+              <Image source={icon} style={{ height: 39, width: 80 }} />
+            </View>
+          </View>
+        )}
         <View style={styles.buttonContainer}>
           <Pressable
             onPress={() => router.navigate("/(user)/account/info")}
@@ -173,7 +221,7 @@ const AccountPage = () => {
                 alignItems: "center",
               }}
             >
-              <Feather name="user-check" size={30} color={APP_COLOR.BROWN} />
+              <Feather name="user-check" size={25} color={APP_COLOR.BROWN} />
               <Text style={styles.btnText}>Cập nhật thông tin</Text>
             </View>
             <MaterialIcons
@@ -204,7 +252,7 @@ const AccountPage = () => {
             >
               <MaterialIcons
                 name="password"
-                size={30}
+                size={25}
                 color={APP_COLOR.BROWN}
               />
               <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
@@ -215,7 +263,34 @@ const AccountPage = () => {
               color={APP_COLOR.BROWN}
             />
           </Pressable>
-
+          <Pressable
+            onPress={() => router.navigate("/(user)/account/password")}
+            style={{
+              paddingVertical: 15,
+              paddingHorizontal: 10,
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                alignItems: "center",
+              }}
+            >
+              <Feather name="gift" size={25} color={APP_COLOR.BROWN} />
+              <Text style={styles.btnText}>Ưu đãi của bạn</Text>
+            </View>
+            <MaterialIcons
+              name="navigate-next"
+              size={24}
+              color={APP_COLOR.BROWN}
+            />
+          </Pressable>
           <Pressable
             onPress={() =>
               Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 2.0")
@@ -239,7 +314,7 @@ const AccountPage = () => {
             >
               <MaterialIcons
                 name="info-outline"
-                size={30}
+                size={25}
                 color={APP_COLOR.BROWN}
               />
               <Text style={styles.btnText}>Về ứng dụng</Text>
@@ -270,7 +345,7 @@ const AccountPage = () => {
                 alignItems: "center",
               }}
             >
-              <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+              <MaterialIcons name="logout" size={25} color={APP_COLOR.BROWN} />
               <Text style={styles.btnText}>Đăng xuất</Text>
             </View>
             <MaterialIcons
@@ -280,6 +355,23 @@ const AccountPage = () => {
             />
           </Pressable>
         </View>
+      </View>
+      <View style={{ marginHorizontal: 10 }}>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Mọi thắc mắc vui lòng liên hệ qua CSKH:
+        </Text>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Hotline:{" "}
+          <Text style={[styles.text, { color: APP_COLOR.ORANGE }]}>
+            0889679561
+          </Text>
+        </Text>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Email:{" "}
+          <Text style={[styles.text, { color: APP_COLOR.ORANGE }]}>
+            minhduy.fptu.se@gmail.com
+          </Text>
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -295,7 +387,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: APP_COLOR.BROWN,
     fontFamily: FONTS.semiBold,
-    fontSize: 17,
+    fontSize: 15,
   },
   headerContainer: {
     flexDirection: "row",
@@ -323,6 +415,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginHorizontal: 10,
+    marginTop: 10,
     backgroundColor: APP_COLOR.WHITE,
     padding: 10,
     borderRadius: 10,
