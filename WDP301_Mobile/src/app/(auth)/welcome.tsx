@@ -4,18 +4,16 @@ import {
   StyleSheet,
   Image,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Pressable,
 } from "react-native";
 import ShareButton from "components/button/share.button";
-import { APP_COLOR, BASE_URL } from "utils/constant";
+import { APP_COLOR } from "utils/constant";
 import TextBetweenLine from "@/components/button/text.between.line";
 import { Link, router } from "expo-router";
 import logo from "@/assets/logo.png";
 import { FONTS, typography } from "@/theme/typography";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   authenticateWithBiometric,
   checkBiometricAuth,
@@ -29,85 +27,6 @@ import ShareInput from "@/components/input/share.input";
 import { CustomerSignInSchema } from "@/utils/validate.schema";
 import Toast from "react-native-root-toast";
 import { customerLoginAPI, forgotPasswordAPI } from "@/utils/api";
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 10,
-    marginTop: 30,
-    zIndex: 9999,
-  },
-  welcomeText: {
-    flex: 0.4,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerText: {
-    bottom: 40,
-    fontSize: 20,
-    color: "#632713",
-    fontFamily: FONTS.regular,
-  },
-  imgLogo: {
-    height: 230,
-    width: 400,
-    marginTop: 70,
-  },
-  welcomeBtn: {
-    paddingHorizontal: 30,
-    flex: 0.3,
-    gap: 20,
-  },
-  signUpText: {
-    textDecorationLine: "underline",
-    color: APP_COLOR.BROWN,
-    fontFamily: FONTS.bold,
-  },
-  welcomeLoginBtn: {
-    flexDirection: "row",
-    marginHorizontal: "auto",
-  },
-  loginBtn: {
-    width: 200,
-    justifyContent: "center",
-    borderRadius: 30,
-    paddingVertical: 10,
-    backgroundColor: "#EC6426",
-    marginHorizontal: "auto",
-  },
-  loginBtnFast: {
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    paddingVertical: 10,
-    marginLeft: 20,
-    backgroundColor: "#EC6426",
-  },
-  normalText: {
-    ...typography.bodyMedium,
-    color: "#632713",
-  },
-  hrefLink: { marginTop: 5 },
-  loginBtnText: {
-    ...typography.labelLarge,
-    color: APP_COLOR.WHITE,
-    paddingVertical: 5,
-    fontFamily: FONTS.medium,
-  },
-  quickLoginButton: {
-    backgroundColor: APP_COLOR.ORANGE,
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-  },
-  quickLoginText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
 
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
@@ -120,6 +39,7 @@ const WelcomePage = () => {
   ) => {
     try {
       setLoading(true);
+      console.log(email, password);
       const res = await customerLoginAPI(email, password);
       setLoading(false);
       console.log(res.data.token);
@@ -153,26 +73,6 @@ const WelcomePage = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        const refresh_token = await AsyncStorage.getItem("refresh_token");
-        const res = await axios.post(
-          `${BASE_URL}/token/refresh?token=${refresh_token}`
-        );
-        if (res.data) {
-          await AsyncStorage.setItem("access_token", res.data.access_token);
-          setAppState({
-            access_token: await AsyncStorage.getItem("access_token"),
-          });
-        } else {
-          Alert.alert("Hết hạn đăng nhập", "Hãy đăng nhập lại để sử dụng");
-        }
-      } catch (e) {}
-    }
-    prepare();
-  }, []);
   const handleQuickLogin = async () => {
     try {
       const token = await AsyncStorage.getItem("access_token");
@@ -331,5 +231,84 @@ const WelcomePage = () => {
     </View>
   );
 };
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 10,
+    marginTop: 30,
+    zIndex: 9999,
+  },
+  welcomeText: {
+    flex: 0.4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerText: {
+    bottom: 40,
+    fontSize: 20,
+    color: "#632713",
+    fontFamily: FONTS.regular,
+  },
+  imgLogo: {
+    height: 230,
+    width: 400,
+    marginTop: 70,
+  },
+  welcomeBtn: {
+    paddingHorizontal: 30,
+    flex: 0.3,
+    gap: 20,
+  },
+  signUpText: {
+    textDecorationLine: "underline",
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.bold,
+  },
+  welcomeLoginBtn: {
+    flexDirection: "row",
+    marginHorizontal: "auto",
+  },
+  loginBtn: {
+    width: 200,
+    justifyContent: "center",
+    borderRadius: 30,
+    paddingVertical: 10,
+    backgroundColor: "#EC6426",
+    marginHorizontal: "auto",
+  },
+  loginBtnFast: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginLeft: 20,
+    backgroundColor: "#EC6426",
+  },
+  normalText: {
+    ...typography.bodyMedium,
+    color: "#632713",
+  },
+  hrefLink: { marginTop: 5 },
+  loginBtnText: {
+    ...typography.labelLarge,
+    color: APP_COLOR.WHITE,
+    paddingVertical: 5,
+    fontFamily: FONTS.medium,
+  },
+  quickLoginButton: {
+    backgroundColor: APP_COLOR.ORANGE,
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+  quickLoginText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});
 
 export default WelcomePage;

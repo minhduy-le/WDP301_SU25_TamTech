@@ -25,4 +25,4 @@ export const APP_FONT = {
   },
 };
 export const BASE_URL = "https://tamtac-6548a8185ba9.herokuapp.com";
-export const API_URL = "https://wdp-301-0fd32c261026.herokuapp.com";
+export const API_URL = "https://wdp301-su25.space";

@@ -44,7 +44,7 @@ const CustomerChangePassword = () => {
       );
       setLoading(false);
       if (res.data) {
-        router.replace("/(auth)/customer.login");
+        router.replace("/(auth)/welcome");
       } else {
         Toast.show("Đổi mật khẩu thành công", {
           duration: Toast.durations.LONG,

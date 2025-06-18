@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useCallback } from "react";
-import { Dimensions, Image, Platform, Text, View } from "react-native";
+import { Dimensions, Image, Platform, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, {
   ICarouselInstance,
@@ -15,7 +15,6 @@ function BannerHome() {
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const width = Dimensions.get("window").width;
-
   React.useEffect(() => {
     const interval = setInterval(() => {
       if (ref.current) {
@@ -49,15 +48,16 @@ function BannerHome() {
         style={{ marginTop: Platform.OS === "android" ? 100 : 0 }}
         ref={ref}
         width={width}
-        height={width / 3.5}
+        height={width / 2.5}
         data={sliders}
         onProgressChange={progress}
         renderItem={({ item, index }) => (
           <Image
             style={{
               width: width,
-              height: width / 3.7,
+              height: width / 2.5,
               resizeMode: "cover",
+              justifyContent: "flex-end",
             }}
             source={item.source}
           />
