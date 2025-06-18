@@ -22,7 +22,7 @@ const Login = () => {
     onSuccess: (response) => {
       if (response.success) {
         if (response.role === Role.ADMIN) {
-          navigate("/admin/dashboard");
+          navigate("/admin/users");
         } else if (response.role === Role.MANAGER) {
           navigate("/manager/dashboard");
         } else if (response.role === Role.STAFF) {
