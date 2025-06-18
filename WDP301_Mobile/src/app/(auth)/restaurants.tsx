@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
 import { TextInput } from "react-native-gesture-handler";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -29,10 +29,8 @@ const RestaurantsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/products?page=0&size=10&keyword=${searchTerm}&typeId=${id}`
-        );
-        setRestaurants(res.data.data.content);
+        const res = await axios.get(`${API_URL}/api/products/type/${id}`);
+        setRestaurants(res.data.products);
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
       }
@@ -47,8 +45,6 @@ const RestaurantsPage = () => {
     const res = await axios.get(
       `${BASE_URL}/products?page=0&size=10&keyword=${text}&typeId=0`
     );
-    console.log(res);
-
     if (res.data.data.content) {
       setRestaurants(res.data.results);
     }
@@ -130,7 +126,7 @@ const RestaurantsPage = () => {
         }}
       >
         <TextInput
-          placeholder={`Bạn muốn ăn gì nào?`}
+          placeholder={`Bạn muốn dùng gì nào?`}
           onChangeText={(text: string) => handleSearch(text)}
           placeholderTextColor={APP_COLOR.BROWN}
           style={{
@@ -189,7 +185,7 @@ const RestaurantsPage = () => {
               >
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <Image
-                    src={item.productImage}
+                    src={item.image}
                     style={{
                       height: 100,
                       width: 100,
@@ -206,7 +202,7 @@ const RestaurantsPage = () => {
                         marginTop: 5,
                       }}
                     >
-                      {item.productName}
+                      {item.description}
                     </Text>
                     <Text
                       style={{
@@ -215,7 +211,7 @@ const RestaurantsPage = () => {
                         fontSize: 17,
                       }}
                     >
-                      {currencyFormatter(item.productPrice)}
+                      {currencyFormatter(item.price)}
                     </Text>
                   </View>
                 </View>

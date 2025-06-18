@@ -15,7 +15,7 @@ import {
 } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from "@expo/vector-icons/Feather";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -46,7 +46,7 @@ const getCurrentDateTime = (): string => {
 const AccountPage = () => {
   const insets = useSafeAreaInsets();
   const [decodeToken, setDecodeToken] = useState<any>("");
-  const { appState } = useCurrentApp();
+  const { appState, setAppState } = useCurrentApp();
   const [time, setTime] = useState("");
   useEffect(() => {
     setTime(getCurrentDateTime());
@@ -79,7 +79,8 @@ const AccountPage = () => {
         text: "Xác nhận",
         onPress: async () => {
           await AsyncStorage.removeItem("access_token");
-          router.replace("/(auth)/welcome");
+          setAppState(0);
+          router.replace("/(tabs)");
         },
       },
     ]);
@@ -119,40 +120,44 @@ const AccountPage = () => {
           </View>
           <Image source={logo} style={styles.img} />
         </View>
-        <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
-          <Text
-            style={{
-              color: APP_COLOR.BROWN,
-              fontSize: 17,
-              fontFamily: FONTS.regular,
-              textAlign: "center",
-            }}
-          >
-            Hày đăng nhập để nhận được các thông tin ưu đã từ Tấm Tắc nhé.
-          </Text>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            marginBottom: 10,
-            marginHorizontal: 10,
-            justifyContent: "space-around",
-          }}
-        >
-          <View></View>
-          <ShareButton
-            title="Đăng Nhập"
-            onPress={() => router.push("/(auth)/welcome")}
-            textStyle={styles.loginBtnText}
-            btnStyle={styles.loginBtn}
-          />
-          <ShareButton
-            title="Đăng Ký"
-            onPress={() => router.push("/(auth)/customer.signup")}
-            textStyle={styles.loginBtnText}
-            btnStyle={styles.loginBtn}
-          />
-        </View>
+        {!appState && (
+          <>
+            <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
+              <Text
+                style={{
+                  color: APP_COLOR.BROWN,
+                  fontSize: 17,
+                  fontFamily: FONTS.regular,
+                  textAlign: "center",
+                }}
+              >
+                Hãy đăng nhập/đăng ký để nhận được các thông tin ưu đã từ Tấm
+                Tắc nhé.
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                marginBottom: 10,
+                marginHorizontal: 10,
+                justifyContent: "space-around",
+              }}
+            >
+              <ShareButton
+                title="Đăng Nhập"
+                onPress={() => router.push("/(auth)/welcome")}
+                textStyle={styles.loginBtnText}
+                btnStyle={styles.loginBtn}
+              />
+              <ShareButton
+                title="Đăng Ký"
+                onPress={() => router.push("/(auth)/customer.signup")}
+                textStyle={styles.loginBtnText}
+                btnStyle={styles.loginBtn}
+              />
+            </View>
+          </>
+        )}
         <View style={styles.buttonContainer}>
           <Pressable
             onPress={() => router.navigate("/(user)/account/info")}
@@ -173,7 +178,7 @@ const AccountPage = () => {
                 alignItems: "center",
               }}
             >
-              <Feather name="user-check" size={30} color={APP_COLOR.BROWN} />
+              <Feather name="user-check" size={25} color={APP_COLOR.BROWN} />
               <Text style={styles.btnText}>Cập nhật thông tin</Text>
             </View>
             <MaterialIcons
@@ -204,7 +209,7 @@ const AccountPage = () => {
             >
               <MaterialIcons
                 name="password"
-                size={30}
+                size={25}
                 color={APP_COLOR.BROWN}
               />
               <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
@@ -239,7 +244,7 @@ const AccountPage = () => {
             >
               <MaterialIcons
                 name="info-outline"
-                size={30}
+                size={25}
                 color={APP_COLOR.BROWN}
               />
               <Text style={styles.btnText}>Về ứng dụng</Text>
@@ -270,7 +275,7 @@ const AccountPage = () => {
                 alignItems: "center",
               }}
             >
-              <MaterialIcons name="logout" size={30} color={APP_COLOR.BROWN} />
+              <MaterialIcons name="logout" size={25} color={APP_COLOR.BROWN} />
               <Text style={styles.btnText}>Đăng xuất</Text>
             </View>
             <MaterialIcons
@@ -280,6 +285,23 @@ const AccountPage = () => {
             />
           </Pressable>
         </View>
+      </View>
+      <View style={{ marginHorizontal: 10 }}>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Mọi thắc mắc vui lòng liên hệ qua CSKH:
+        </Text>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Hotline:{" "}
+          <Text style={[styles.text, { color: APP_COLOR.ORANGE }]}>
+            0889679561
+          </Text>
+        </Text>
+        <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
+          Email:{" "}
+          <Text style={[styles.text, { color: APP_COLOR.ORANGE }]}>
+            minhduy.fptu.se@gmail.com
+          </Text>
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -295,7 +317,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: APP_COLOR.BROWN,
     fontFamily: FONTS.semiBold,
-    fontSize: 17,
+    fontSize: 15,
   },
   headerContainer: {
     flexDirection: "row",
@@ -323,6 +345,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginHorizontal: 10,
+    marginTop: 10,
     backgroundColor: APP_COLOR.WHITE,
     padding: 10,
     borderRadius: 10,

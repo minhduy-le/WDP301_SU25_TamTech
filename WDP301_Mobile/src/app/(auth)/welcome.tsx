@@ -39,7 +39,6 @@ const WelcomePage = () => {
   ) => {
     try {
       setLoading(true);
-      console.log(email, password);
       const res = await customerLoginAPI(email, password);
       setLoading(false);
       console.log(res.data.token);

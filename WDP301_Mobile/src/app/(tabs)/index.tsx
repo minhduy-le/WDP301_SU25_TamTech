@@ -29,6 +29,8 @@ const HomeTab = () => {
   const { branchId, setBranchId } = useCurrentApp();
   const { access_token } = useLocalSearchParams();
   useEffect(() => {
+    console.log(access_token);
+
     const storeAccessToken = async () => {
       try {
         if (access_token) {

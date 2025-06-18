@@ -49,10 +49,10 @@ declare global {
   }
   interface IRestaurants {
     productId: string;
-    productName: string;
+    description: string;
     productDescription: string;
-    productImage: string;
-    productPrice: number;
+    image: string;
+    price: number;
     productType: string;
     productQuantity: number;
   }

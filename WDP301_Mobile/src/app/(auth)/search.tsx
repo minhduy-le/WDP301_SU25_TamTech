@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import axios from "axios";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR } from "@/utils/constant";
 import debounce from "debounce";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -11,42 +11,63 @@ import {
   FlatList,
   StyleSheet,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { FontAwesome, AntDesign } from "@expo/vector-icons";
 import menu from "@/assets/Menu.png";
 import { FONTS } from "@/theme/typography";
 import { useCurrentApp } from "@/context/app.context";
+import { currencyFormatter } from "@/utils/api";
 
 interface IProduct {
   productId: string;
-  productName: string;
-  productPrice: number;
-  productImage: string;
+  description: string;
+  price: number;
+  image: string;
+  name: string;
+  ProductType: {
+    name: string;
+    productTypeId: number;
+  };
 }
 
 const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<IProduct[]>([]);
   const { cart, setCart, restaurant } = useCurrentApp();
-
+  const [productTypeList, setProductTypeList] = useState<string[]>([]);
   const fetchProducts = useCallback(
     debounce(async (text: string) => {
       if (!text.trim()) {
         setProducts([]);
+        setProductTypeList([]);
         return;
       }
       try {
         const res = await axios.get(
-          `${BASE_URL}/products?page=0&size=10&keyword=${text}`
+          `${API_URL}/api/products/search?name=${text}`
         );
-        if (res.data?.data?.content) {
-          setProducts(res.data.data.content);
+        if (res.data?.products) {
+          const sortedProducts = res.data.products.sort(
+            (a: IProduct, b: IProduct) =>
+              a.ProductType.name.localeCompare(b.ProductType.name)
+          );
+          const products: IProduct[] = sortedProducts;
+          const productType: string[] = [
+            ...new Set(
+              products.map((product: IProduct) => product.ProductType.name)
+            ),
+          ];
+          setProductTypeList(productType);
+          setProducts(sortedProducts);
         } else {
           setProducts([]);
+          setProductTypeList([]);
         }
       } catch (error) {
         console.error("Error fetching search results:", error);
         setProducts([]);
+        setProductTypeList([]);
       }
     }, 500),
     []
@@ -125,6 +146,40 @@ const SearchPage = () => {
             value={searchTerm}
           />
         </View>
+        {productTypeList && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ padding: 10 }}
+          >
+            {productTypeList.map((item, index) => (
+              <Pressable
+                key={`${item}-${index}`}
+                style={{
+                  backgroundColor: APP_COLOR.YELLOW,
+                  width: 120,
+                  padding: 10,
+                  marginRight: 10,
+                  borderRadius: 30,
+                  alignItems: "center",
+                }}
+                onPress={() => {
+                  console.log(item);
+                }}
+              >
+                <Text
+                  style={{
+                    color: APP_COLOR.BROWN,
+                    fontFamily: FONTS.medium,
+                    fontSize: 15,
+                  }}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       {products.length > 0 ? (
@@ -138,13 +193,13 @@ const SearchPage = () => {
               <Pressable onPress={() => {}}>
                 <View style={styles.itemContainer}>
                   <Image
-                    source={{ uri: item.productImage }}
+                    source={{ uri: item.image }}
                     style={styles.productImage}
                   />
                   <View style={styles.productDetails}>
-                    <Text style={styles.productName}>{item.productName}</Text>
+                    <Text style={styles.productName}>{item.description}</Text>
                     <Text style={styles.productPrice}>
-                      {item.productPrice.toLocaleString()}đ
+                      {currencyFormatter(item.price)}
                     </Text>
                   </View>
                   <View
