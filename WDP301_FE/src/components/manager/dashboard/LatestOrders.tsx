@@ -102,10 +102,9 @@ const LatestOrders = () => {
     <Card
       title={<span style={{ color: '#8D572A', fontWeight: 700, fontSize: 20 }}>Đơn hàng mới nhất</span>}
       style={{
-        background: '#FFF8F1',
         borderRadius: 16,
         border: 'none',
-        margin: 16,
+        marginBottom: 30,
         boxShadow: '0 2px 8px #f0e1d0',
       }}
       bodyStyle={{ padding: 0 }}

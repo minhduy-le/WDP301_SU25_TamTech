@@ -69,12 +69,6 @@ interface Product {
   quantity?: number;
 }
 
-const productTypeApiOptions: ProductType[] = [
-  { productTypeId: 1, name: "Món chính" },
-  { productTypeId: 2, name: "Ăn kèm" },
-  { productTypeId: 3, name: "Đồ uống" },
-];
-
 const uploadImageAndGetUrl = async (file: File) => {
   const storageRef = ref(
     storage,
@@ -100,7 +94,7 @@ const ProductManagement: React.FC = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const { data: productTypes, isLoading: isProductTypesLoading } =
     useProductTypes();
-  const [filterType, setFilterType] = useState<string | undefined>(undefined);
+  const [filterType, setFilterType] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<boolean | undefined>(
     undefined
   );
@@ -108,13 +102,15 @@ const ProductManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 10;
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1, typeId?: number) => {
+    setTableLoading(true);
     try {
-      setTableLoading(true);
-      const response = await axios.get<
-        | { products?: Product[]; data?: Product[]; results?: Product[]; totalPages?: number }
-        | Product[]
-      >(`https://wdp301-su25.space/api/products?page=${page}`);
+      let response;
+      if (typeId) {
+        response = await axios.get(`https://wdp301-su25.space/api/products/type/${typeId}`);
+      } else {
+        response = await axios.get(`https://wdp301-su25.space/api/products?page=${page}`);
+      }
       let productData: Product[] = [];
       let totalPagesFromApi = 1;
       if (Array.isArray(response.data)) {
@@ -230,8 +226,9 @@ const ProductManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [page]);
+    setPage(1);
+    fetchProducts(1, filterType);
+  }, [filterType]);
 
   const handleAdd = () => {
     setEditingProduct(null);
@@ -642,12 +639,17 @@ const ProductManagement: React.FC = () => {
                 style={{ width: 140, borderRadius: 6 }}
                 value={filterType}
                 onChange={(v) => setFilterType(v)}
+                loading={isProductTypesLoading}
               >
-                {productTypeApiOptions.map((type) => (
-                  <Option key={type.productTypeId} value={type.name}>
-                    {type.name}
-                  </Option>
-                ))}
+                {isProductTypesLoading ? (
+                  <Option value="" disabled>Đang tải...</Option>
+                ) : (
+                  productTypes?.map((type) => (
+                    <Option key={type.productTypeId} value={type.productTypeId}>
+                      {type.name}
+                    </Option>
+                  ))
+                )}
               </Select>
               <Select
                 allowClear
@@ -684,7 +686,7 @@ const ProductManagement: React.FC = () => {
                 .toLowerCase()
                 .includes(searchText.toLowerCase());
               const matchType = filterType
-                ? product.ProductType?.name === filterType
+                ? product.ProductType?.productTypeId === filterType
                 : true;
               const matchStatus =
                 filterStatus !== undefined
