@@ -360,6 +360,32 @@ const searchProductsByTypeName = async (typeName) => {
   return products;
 };
 
+const searchProductsByNameAndType = async (searchTerm, productTypeId) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      productTypeId,
+      isActive: true,
+    },
+    attributes: ["productId", "name", "description", "price", "image"],
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -370,4 +396,5 @@ module.exports = {
   getBestSellerProducts,
   searchProductsByName,
   searchProductsByTypeName,
+  searchProductsByNameAndType,
 };
