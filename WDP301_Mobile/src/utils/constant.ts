@@ -12,7 +12,7 @@ export const APP_COLOR = {
   PROCESSING: "F8A91F",
   DONE: "#1A3F22",
   CANCEL: "#D71616",
-  PENDING: "rgba(17, 21, 248, 0.97)",
+  PENDING: "rgba(17, 21, 248, 0.63)",
   DELIVERY: "rgba(155, 160, 12, 0.97)",
 };
 

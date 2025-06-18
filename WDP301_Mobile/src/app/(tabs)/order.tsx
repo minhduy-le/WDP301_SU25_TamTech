@@ -1,11 +1,10 @@
 import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
-import { APP_COLOR, APP_FONT, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR } from "@/utils/constant";
 import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
-  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -21,11 +20,59 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+
+interface IOrderHistoryCus {
+  orderId: number;
+  order_create_at: string;
+  payment_method: string;
+  status: string;
+  order_address: string;
+  order_point_earn: number;
+  order_amount: number;
+}
+interface StatusInfo {
+  text: string;
+  color: string;
+}
 const OrderPage = () => {
   const [orderHistory, setOrderHistory] = useState<IOrderHistoryCus[]>([]);
-  const [orderId, setOrderid] = useState();
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [decodeToken, setDecodeToken] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const STATUS_COLORS = {
+    PENDING: "rgba(52, 55, 252, 0.75)",
+    APPROVED: "rgba(0, 154, 5, 0.68)",
+    PREPARING: "rgba(255, 251, 0, 0.75)",
+    COOKED: APP_COLOR.ORANGE,
+    DELIVERING: "rgba(3, 169, 244, 0.72)",
+    DELIVERED: "rgba(76, 175, 80, 0.70)",
+    CANCELED: "rgba(244, 67, 54, 0.70)",
+    DEFAULT: "rgba(158, 158, 158, 0.70)",
+  };
+  const statusMap: Record<string, StatusInfo> = {
+    Pending: { text: "Chờ thanh toán", color: STATUS_COLORS.PENDING },
+    Paid: { text: "Đã thanh toán", color: STATUS_COLORS.APPROVED },
+    Approved: { text: "Đã xác nhận", color: STATUS_COLORS.APPROVED },
+    Preparing: { text: "Đang chuẩn bị", color: STATUS_COLORS.PREPARING },
+    Cooked: { text: "Đã nấu xong", color: STATUS_COLORS.COOKED },
+    Delivering: { text: "Đang giao", color: STATUS_COLORS.DELIVERING },
+    Delivered: { text: "Đã giao", color: STATUS_COLORS.DELIVERED },
+    Canceled: { text: "Đã hủy", color: STATUS_COLORS.CANCELED },
+  };
+
+  const StatusBadge = ({ status }: { status: string }) => {
+    const statusInfo = statusMap[status] || {
+      text: status,
+      color: STATUS_COLORS.DEFAULT,
+    };
+    return (
+      <View
+        style={[styles.statusLayout, { backgroundColor: statusInfo.color }]}
+      >
+        <Text style={styles.statusText}>{statusInfo.text}</Text>
+      </View>
+    );
+  };
 
   function formatDateToDDMMYYYY(isoDate: string): string {
     const date = new Date(isoDate);
@@ -34,166 +81,107 @@ const OrderPage = () => {
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes}${" "}${day}/${month}/${year}`;
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
   }
-  const sampleData = [
-    {
-      id: 1,
-      orderId: "#2701270005",
-      address: "Hồ Chí Minh City",
-      orderStatus: "Đang chuẩn bị",
-      pointEarned: 7,
-      amount: 100000,
-      createdAt: "2025-05-19T23:57:09.213+07:00",
-      deliveryStatus: "Mang đi",
-    },
-    {
-      id: 2,
-      orderId: "#2701270005",
-      address: "Hà Nội",
-      orderStatus: "Đang giao",
-      pointEarned: 10,
-      amount: 15000,
-      createdAt: "2025-05-18T14:25:00.000+07:00",
-      deliveryStatus: "Mang đi",
-    },
-    {
-      id: 3,
-      orderId: "#2701270005",
-      address: "Đà Nẵng",
-      orderStatus: "Đặt hàng thành công",
-      pointEarned: 5,
-      amount: 80000,
-      createdAt: "2025-05-17T11:03:45.000+07:00",
-      deliveryStatus: "Dùng tại quán",
-    },
-    {
-      id: 4,
-      orderId: "#2701270005",
-      address: "Cần Thơ",
-      orderStatus: "Đã hủy",
-      pointEarned: 0,
-      amount: 120000,
-      createdAt: "2025-05-16T09:12:30.000+07:00",
-      deliveryStatus: "Giao hàng",
-    },
-    {
-      id: 5,
-      orderId: "#2701270005",
-      address: "Hải Phòng",
-      orderStatus: "Đang chuẩn bị",
-      pointEarned: 6,
-      amount: 140000,
-      createdAt: "2025-05-15T16:20:10.000+07:00",
-      deliveryStatus: "Mang đi",
-    },
-    {
-      id: 6,
-      orderId: "#2701270005",
-      address: "Biên Hòa",
-      orderStatus: "Chờ thanh toán",
-      pointEarned: 9,
-      amount: 180000,
-      createdAt: "2025-05-14T18:45:00.000+07:00",
-      deliveryStatus: "Dùng tại quán",
-    },
-    {
-      id: 7,
-      orderId: "#2701270005",
-      address: "Nha Trang",
-      orderStatus: "Đã giao",
-      pointEarned: 4,
-      amount: 70000,
-      createdAt: "2025-05-13T21:10:20.000+07:00",
-      deliveryStatus: "Mang đi",
-    },
-    {
-      id: 8,
-      orderId: "#2701270005",
-      address: "Huế",
-      orderStatus: "Đã hủy",
-      pointEarned: 0,
-      amount: 60000,
-      createdAt: "2025-05-12T13:33:40.000+07:00",
-      deliveryStatus: "Dùng tại quán",
-    },
-    {
-      id: 9,
-      orderId: "#2701270005",
-      address: "Vũng Tàu",
-      orderStatus: "Đang chuẩn bị",
-      pointEarned: 8,
-      amount: 200000,
-      createdAt: "2025-05-11T10:05:00.000+07:00",
-      deliveryStatus: "Dùng tại quán",
-    },
-    {
-      id: 10,
-      orderId: "#2701270005",
-      address: "Bình Dương",
-      orderStatus: "Đang giao",
-      pointEarned: 11,
-      amount: 220000,
-      createdAt: "2025-05-10T07:30:00.000+07:00",
-      deliveryStatus: "Mang đi",
-    },
-    {
-      id: 11,
-      orderId: "#2701270005",
-      address: "Quảng Ninh",
-      orderStatus: "Đã giao",
-      pointEarned: 6,
-      amount: 130000,
-      createdAt: "2025-05-09T15:50:00.000+07:00",
-      deliveryStatus: "Dùng tại quán",
-    },
-  ];
 
-  const handleViewDetails = (id: string) => {
+  const handleViewDetails = (id: number) => {
     router.navigate({
       pathname: "/(user)/order/[id]",
       params: { id: id },
     });
   };
-  const handleCancelOrder = (id: string) => {
+
+  const handleCancelOrder = (id: number) => {
     Alert.alert("Bạn muốn hủy?", "Hoạt động này không thể hoàn tác", [
       { text: "Hủy", style: "cancel" },
-      { text: "Xác nhận", onPress: () => Alert.alert("Đã hủy") },
+      {
+        text: "Xác nhận",
+        onPress: async () => {
+          try {
+            const token = await AsyncStorage.getItem("access_token");
+            await axios.put(
+              `${API_URL}/api/orders/${id}/cancel`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            setOrderHistory((prev) =>
+              prev.map((order) =>
+                order.orderId === id ? { ...order, status: "Canceled" } : order
+              )
+            );
+            Alert.alert("Thành công", "Đơn hàng đã được hủy");
+          } catch (error) {
+            Alert.alert("Lỗi", "Không thể hủy đơn hàng");
+            console.error("Cancel error:", error);
+          }
+        },
+      },
     ]);
   };
-  const handleFeedback = (id: string) => {
+
+  const handleFeedback = (id: number) => {
     router.navigate({
       pathname: "/(user)/like/[id]",
       params: { id: id },
     });
   };
-  const [decodeToken, setDecodeToken] = useState<any>("");
+
   useEffect(() => {
     const fetchOrderHistoryWithToken = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const token = await AsyncStorage.getItem("access_token");
         if (token) {
-          const decoded = jwtDecode(token);
+          const decoded: any = jwtDecode(token);
           setDecodeToken(decoded.id);
+          const res = await axios.get(`${API_URL}/api/orders/user`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          console.log(res.data);
 
-          const res = await axios.get(
-            `${BASE_URL}/orders/customer/${decoded.id}?page=${currentPage}&size=10`
-          );
-
-          if (res.data.data.content) {
-            setOrderHistory(res.data.data.content);
-            setTotalPages(res.data.data.totalPages);
+          if (res?.data) {
+            setOrderHistory(res.data);
           }
         } else {
-          console.log("No access token found.");
+          setError("Vui lòng đăng nhập để xem lịch sử đơn hàng");
         }
       } catch (error) {
+        setError("Không thể tải lịch sử đơn hàng");
         console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchOrderHistoryWithToken();
-  }, [currentPage]);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
+        <Text>Đang tải...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
+        <Text>{error}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -228,9 +216,13 @@ const OrderPage = () => {
         <ScrollView
           style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}
         >
-          {sampleData.map((item, index) => {
-            return (
-              <View key={index}>
+          {orderHistory.length === 0 ? (
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              Không có đơn hàng nào
+            </Text>
+          ) : (
+            orderHistory.map((item, index) => (
+              <View key={item.orderId}>
                 <View
                   style={{
                     padding: 10,
@@ -261,7 +253,7 @@ const OrderPage = () => {
                           justifyContent: "space-between",
                         }}
                       >
-                        <Text style={styles.orderText}>{item.orderId}</Text>
+                        <Text style={styles.orderText}>#{item.orderId}</Text>
                         <Text
                           style={{
                             color: APP_COLOR.BROWN,
@@ -269,151 +261,15 @@ const OrderPage = () => {
                             fontFamily: FONTS.medium,
                           }}
                         >
-                          {item.deliveryStatus}
+                          {item.payment_method}
                         </Text>
                       </View>
-
                       <Text style={styles.dateText}>
-                        {formatDateToDDMMYYYY(item.createdAt)}
+                        {formatDateToDDMMYYYY(item.order_create_at)}
                       </Text>
                     </View>
                     <View>
-                      <View style={styles.statusLayout}>
-                        <Text>
-                          {(() => {
-                            switch (item.orderStatus) {
-                              case "Đang chuẩn bị":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: APP_COLOR.BROWN,
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              case "Đang giao":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: APP_COLOR.DELIVERY,
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              case "Đã giao":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: APP_COLOR.DONE,
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              case "Đã hủy":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: APP_COLOR.CANCEL,
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              case "Đặt hàng thành công":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: APP_COLOR.PENDING,
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              case "Chờ thanh toán":
-                                return (
-                                  <View
-                                    style={[
-                                      styles.statusLayout,
-                                      {
-                                        backgroundColor: "orange",
-                                        borderRadius: 50,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.statusText,
-                                        { color: APP_COLOR.WHITE },
-                                      ]}
-                                    >
-                                      {item.orderStatus}
-                                    </Text>
-                                  </View>
-                                );
-                              default:
-                                return null;
-                            }
-                          })()}
-                        </Text>
-                      </View>
+                      <StatusBadge status={item.status} />
                       <View>
                         <View
                           style={{
@@ -422,11 +278,13 @@ const OrderPage = () => {
                             marginTop: 5,
                           }}
                         >
-                          <Text style={styles.text}>{item.address}</Text>
+                          <Text style={[styles.text, { width: 230 }]}>
+                            {item.order_address}
+                          </Text>
                           <Text
                             style={[styles.text, { color: APP_COLOR.ORANGE }]}
                           >
-                            +{item.pointEarned} điểm
+                            +{item.order_point_earn} điểm
                           </Text>
                         </View>
                         <View
@@ -447,15 +305,14 @@ const OrderPage = () => {
                               },
                             ]}
                           >
-                            {currencyFormatter(item.amount)}
+                            {currencyFormatter(item.order_amount)}
                           </Text>
                         </View>
                       </View>
                     </View>
-
                     <View style={{ flexDirection: "row" }}>
                       <View style={styles.container}>
-                        {item.orderStatus === "Đã giao" ? (
+                        {item.status === "Đã giao" ? (
                           <>
                             <TouchableOpacity
                               style={styles.button}
@@ -492,32 +349,34 @@ const OrderPage = () => {
                                 Xem chi tiết
                               </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[
-                                styles.button,
-                                { backgroundColor: APP_COLOR.ORANGE },
-                              ]}
-                              onPress={() => handleCancelOrder(item.orderId)}
-                            >
-                              <Text
+                            {item.status !== "Đã hủy" && (
+                              <TouchableOpacity
                                 style={[
-                                  styles.buttonText,
-                                  { color: APP_COLOR.WHITE },
+                                  styles.button,
+                                  { backgroundColor: APP_COLOR.ORANGE },
                                 ]}
+                                onPress={() => handleCancelOrder(item.orderId)}
                               >
-                                Hủy
-                              </Text>
-                            </TouchableOpacity>
+                                <Text
+                                  style={[
+                                    styles.buttonText,
+                                    { color: APP_COLOR.WHITE },
+                                  ]}
+                                >
+                                  Hủy
+                                </Text>
+                              </TouchableOpacity>
+                            )}
                           </>
                         )}
                       </View>
                     </View>
                   </View>
                 </View>
-                <View style={{ height: 10 }}></View>
+                <View style={{ height: 10 }} />
               </View>
-            );
-          })}
+            ))
+          )}
         </ScrollView>
         <Pressable onPress={() => router.navigate("/(auth)/qrcode")}>
           <View
@@ -570,20 +429,17 @@ const styles = StyleSheet.create({
     color: APP_COLOR.BROWN,
     marginLeft: 5,
   },
-  earnPoint: {
-    fontFamily: FONTS.regular,
-    fontSize: 17,
-    color: APP_COLOR.BROWN,
-  },
   statusLayout: {
     width: 120,
-    height: 35,
+    height: 25,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusText: {
-    fontFamily: FONTS.bold,
-    fontSize: 10,
-    marginHorizontal: "auto",
-    marginVertical: "auto",
+    fontFamily: FONTS.medium,
+    fontSize: 12,
+    color: APP_COLOR.WHITE,
   },
   container: {
     marginHorizontal: "auto",
@@ -599,24 +455,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: 150,
     height: 42,
+    justifyContent: "center",
   },
   buttonText: {
     color: APP_COLOR.BROWN,
     fontSize: 17,
     fontFamily: FONTS.bold,
-    marginHorizontal: "auto",
-  },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 10,
-  },
-  paginationButton: {
-    backgroundColor: APP_COLOR.ORANGE,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 10,
+    textAlign: "center",
   },
   orderText: {
     fontFamily: FONTS.regular,
