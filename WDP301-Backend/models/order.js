@@ -28,17 +28,17 @@ const Order = sequelize.define(
     order_amount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_discount_percent: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_discount_value: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_point_earn: {
       type: DataTypes.INTEGER,
@@ -48,12 +48,12 @@ const Order = sequelize.define(
     order_shipping_fee: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_subtotal: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     payment_method_id: {
       type: DataTypes.INTEGER,
