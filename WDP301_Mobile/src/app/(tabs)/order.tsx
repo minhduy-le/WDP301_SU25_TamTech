@@ -1,7 +1,7 @@
 import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
 import { API_URL, APP_COLOR } from "@/utils/constant";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -18,9 +18,8 @@ import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-
 interface IOrderHistoryCus {
   orderId: number;
   order_create_at: string;
@@ -39,6 +38,7 @@ const OrderPage = () => {
   const [decodeToken, setDecodeToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const STATUS_COLORS = {
     PENDING: "rgba(52, 55, 252, 0.75)",
     APPROVED: "rgba(0, 154, 5, 0.68)",
@@ -59,7 +59,37 @@ const OrderPage = () => {
     Delivered: { text: "Đã giao", color: STATUS_COLORS.DELIVERED },
     Canceled: { text: "Đã hủy", color: STATUS_COLORS.CANCELED },
   };
+  const fetchOrderHistoryWithToken = useCallback(async () => {
+    setToken(null);
+    setIsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (token) {
+        setToken(token);
+        const decoded: any = jwtDecode(token);
+        setDecodeToken(decoded.id);
+        const res = await axios.get(`${API_URL}/api/orders/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res?.data) {
+          setOrderHistory(res.data);
+        }
+      }
+    } catch (error) {
+      setError("Không thể tải lịch sử đơn hàng");
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderHistoryWithToken();
+    }, [fetchOrderHistoryWithToken])
+  );
   const StatusBadge = ({ status }: { status: string }) => {
     const statusInfo = statusMap[status] || {
       text: status,
@@ -122,45 +152,12 @@ const OrderPage = () => {
       },
     ]);
   };
-
   const handleFeedback = (id: number) => {
     router.navigate({
       pathname: "/(user)/like/[id]",
       params: { id: id },
     });
   };
-
-  useEffect(() => {
-    const fetchOrderHistoryWithToken = async () => {
-      setIsLoading(true);
-      setError("Không thể tải lịch sử đơn hàng");
-      try {
-        const token = await AsyncStorage.getItem("access_token");
-        if (token) {
-          setError(null);
-          const decoded: any = jwtDecode(token);
-          setDecodeToken(decoded.id);
-          const res = await axios.get(`${API_URL}/api/orders/user`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (res?.data) {
-            setOrderHistory(res.data);
-          }
-        } else {
-          setError("Vui lòng đăng nhập để xem lịch sử đơn hàng");
-        }
-      } catch (error) {
-        setError("Không thể tải lịch sử đơn hàng");
-        console.error("Error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchOrderHistoryWithToken();
-  }, []);
-
   if (isLoading) {
     return (
       <SafeAreaView
@@ -170,7 +167,6 @@ const OrderPage = () => {
       </SafeAreaView>
     );
   }
-
   if (error) {
     return (
       <SafeAreaView
@@ -185,107 +181,67 @@ const OrderPage = () => {
     <SafeAreaView
       style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
     >
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            paddingHorizontal: 10,
-            marginBottom: 10,
-          }}
-        >
-          <View style={{ flexDirection: "row" }}>
-            <Text
-              style={{
-                color: APP_COLOR.BROWN,
-                marginVertical: "auto",
-                fontFamily: FONTS.bold,
-                fontSize: 20,
-              }}
-            >
-              Lịch sử mua hàng
-            </Text>
-            <Image
-              source={logo}
-              style={{ width: 150, height: 100, marginLeft: 35 }}
-            />
+      {token ? (
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              borderBottomColor: "#eee",
+              borderBottomWidth: 1,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          >
+            <View style={{ flexDirection: "row" }}>
+              <Text
+                style={{
+                  color: APP_COLOR.BROWN,
+                  marginVertical: "auto",
+                  fontFamily: FONTS.bold,
+                  fontSize: 20,
+                }}
+              >
+                Lịch sử mua hàng
+              </Text>
+              <Image
+                source={logo}
+                style={{ width: 150, height: 100, marginLeft: 35 }}
+              />
+            </View>
           </View>
-        </View>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}
-        >
-          {orderHistory.length === 0 ? (
-            <Text style={{ textAlign: "center", marginTop: 20 }}>
-              Không có đơn hàng nào
-            </Text>
-          ) : (
-            orderHistory.map((item, index) => (
-              <View key={item.orderId}>
-                <View
-                  style={{
-                    padding: 10,
-                    flexDirection: "row",
-                    gap: 10,
-                    backgroundColor: APP_COLOR.DARK_YELLOW,
-                    borderRadius: 10,
-                    width: "90%",
-                    marginHorizontal: "auto",
-                  }}
-                >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}
+          >
+            {orderHistory.length === 0 ? (
+              <Text style={{ textAlign: "center", marginTop: 20 }}>
+                Không có đơn hàng nào
+              </Text>
+            ) : (
+              orderHistory.map((item, index) => (
+                <View key={item.orderId}>
                   <View
-                    style={{ gap: 10, width: 320, marginHorizontal: "auto" }}
+                    style={{
+                      padding: 10,
+                      flexDirection: "row",
+                      gap: 10,
+                      backgroundColor: APP_COLOR.DARK_YELLOW,
+                      borderRadius: 10,
+                      width: "90%",
+                      marginHorizontal: "auto",
+                    }}
                   >
                     <View
-                      style={{
-                        paddingVertical: "auto",
-                        borderBottomWidth: 0.5,
-                        borderColor: APP_COLOR.BROWN,
-                        marginHorizontal: 5,
-                        paddingBottom: 5,
-                      }}
+                      style={{ gap: 10, width: 320, marginHorizontal: "auto" }}
                     >
                       <View
                         style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
+                          paddingVertical: "auto",
+                          borderBottomWidth: 0.5,
+                          borderColor: APP_COLOR.BROWN,
+                          marginHorizontal: 5,
+                          paddingBottom: 5,
                         }}
                       >
-                        <Text style={styles.orderText}>#{item.orderId}</Text>
-                        <Text
-                          style={{
-                            color: APP_COLOR.BROWN,
-                            fontSize: 15,
-                            fontFamily: FONTS.medium,
-                          }}
-                        >
-                          {item.payment_method}
-                        </Text>
-                      </View>
-                      <Text style={styles.dateText}>
-                        {formatDateToDDMMYYYY(item.order_create_at)}
-                      </Text>
-                    </View>
-                    <View>
-                      <StatusBadge status={item.status} />
-                      <View>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            marginTop: 5,
-                          }}
-                        >
-                          <Text style={[styles.text, { width: 230 }]}>
-                            {item.order_address}
-                          </Text>
-                          <Text
-                            style={[styles.text, { color: APP_COLOR.ORANGE }]}
-                          >
-                            +{item.order_point_earn} điểm
-                          </Text>
-                        </View>
                         <View
                           style={{
                             flexDirection: "row",
@@ -293,68 +249,81 @@ const OrderPage = () => {
                             justifyContent: "space-between",
                           }}
                         >
-                          <Text style={styles.text}>X1 Sản phẩm</Text>
+                          <Text style={styles.orderText}>#{item.orderId}</Text>
                           <Text
-                            style={[
-                              styles.text,
-                              {
-                                fontSize: 20,
-                                fontFamily: FONTS.bold,
-                                alignSelf: "flex-end",
-                              },
-                            ]}
+                            style={{
+                              color: APP_COLOR.BROWN,
+                              fontSize: 15,
+                              fontFamily: FONTS.medium,
+                            }}
                           >
-                            {currencyFormatter(item.order_amount)}
+                            {item.payment_method}
                           </Text>
                         </View>
+                        <Text style={styles.dateText}>
+                          {formatDateToDDMMYYYY(item.order_create_at)}
+                        </Text>
                       </View>
-                    </View>
-                    <View style={{ flexDirection: "row" }}>
-                      <View style={styles.container}>
-                        {item.status === "Đã giao" ? (
-                          <>
-                            <TouchableOpacity
-                              style={styles.button}
-                              onPress={() => handleViewDetails(item.orderId)}
+                      <View>
+                        <StatusBadge status={item.status} />
+                        <View>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              marginTop: 5,
+                            }}
+                          >
+                            <Text style={[styles.text, { width: 230 }]}>
+                              {item.order_address}
+                            </Text>
+                            <Text
+                              style={[styles.text, { color: APP_COLOR.ORANGE }]}
                             >
-                              <Text style={styles.buttonText}>
-                                Xem chi tiết
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
+                              +{item.order_point_earn} điểm
+                            </Text>
+                          </View>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Text style={styles.text}>X1 Sản phẩm</Text>
+                            <Text
                               style={[
-                                styles.button,
-                                { backgroundColor: APP_COLOR.ORANGE },
+                                styles.text,
+                                {
+                                  fontSize: 20,
+                                  fontFamily: FONTS.bold,
+                                  alignSelf: "flex-end",
+                                },
                               ]}
-                              onPress={() => handleFeedback(item.orderId)}
                             >
-                              <Text
-                                style={[
-                                  styles.buttonText,
-                                  { color: APP_COLOR.WHITE },
-                                ]}
+                              {currencyFormatter(item.order_amount)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: "row" }}>
+                        <View style={styles.container}>
+                          {item.status === "Đã giao" ? (
+                            <>
+                              <TouchableOpacity
+                                style={styles.button}
+                                onPress={() => handleViewDetails(item.orderId)}
                               >
-                                Đánh giá
-                              </Text>
-                            </TouchableOpacity>
-                          </>
-                        ) : (
-                          <>
-                            <TouchableOpacity
-                              style={styles.button}
-                              onPress={() => handleViewDetails(item.orderId)}
-                            >
-                              <Text style={styles.buttonText}>
-                                Xem chi tiết
-                              </Text>
-                            </TouchableOpacity>
-                            {item.status !== "Đã hủy" && (
+                                <Text style={styles.buttonText}>
+                                  Xem chi tiết
+                                </Text>
+                              </TouchableOpacity>
                               <TouchableOpacity
                                 style={[
                                   styles.button,
                                   { backgroundColor: APP_COLOR.ORANGE },
                                 ]}
-                                onPress={() => handleCancelOrder(item.orderId)}
+                                onPress={() => handleFeedback(item.orderId)}
                               >
                                 <Text
                                   style={[
@@ -362,56 +331,95 @@ const OrderPage = () => {
                                     { color: APP_COLOR.WHITE },
                                   ]}
                                 >
-                                  Hủy
+                                  Đánh giá
                                 </Text>
                               </TouchableOpacity>
-                            )}
-                          </>
-                        )}
+                            </>
+                          ) : (
+                            <>
+                              <TouchableOpacity
+                                style={styles.button}
+                                onPress={() => handleViewDetails(item.orderId)}
+                              >
+                                <Text style={styles.buttonText}>
+                                  Xem chi tiết
+                                </Text>
+                              </TouchableOpacity>
+                              {item.status !== "Đã hủy" && (
+                                <TouchableOpacity
+                                  style={[
+                                    styles.button,
+                                    { backgroundColor: APP_COLOR.ORANGE },
+                                  ]}
+                                  onPress={() =>
+                                    handleCancelOrder(item.orderId)
+                                  }
+                                >
+                                  <Text
+                                    style={[
+                                      styles.buttonText,
+                                      { color: APP_COLOR.WHITE },
+                                    ]}
+                                  >
+                                    Hủy
+                                  </Text>
+                                </TouchableOpacity>
+                              )}
+                            </>
+                          )}
+                        </View>
                       </View>
                     </View>
                   </View>
+                  <View style={{ height: 10 }} />
                 </View>
-                <View style={{ height: 10 }} />
-              </View>
-            ))
-          )}
-        </ScrollView>
-        <Pressable onPress={() => router.navigate("/(auth)/qrcode")}>
-          <View
-            style={{
-              position: "absolute",
-              bottom: -25,
-              right: 20,
-              backgroundColor: APP_COLOR.BROWN,
-              borderRadius: 50,
-              padding: 15,
-              width: 60,
-              height: 60,
-              flexDirection: "row",
-              alignItems: "center",
-              shadowColor: "#000",
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }}
-          >
-            <MaterialCommunityIcons
-              name="qrcode-scan"
-              size={30}
-              color={APP_COLOR.WHITE}
+              ))
+            )}
+          </ScrollView>
+          <Pressable onPress={() => router.navigate("/(auth)/qrcode")}>
+            <View
               style={{
-                marginHorizontal: "auto",
-                marginVertical: "auto",
+                position: "absolute",
+                bottom: -25,
+                right: 20,
+                backgroundColor: APP_COLOR.BROWN,
+                borderRadius: 50,
+                padding: 15,
+                width: 60,
+                height: 60,
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#000",
+                shadowOffset: {
+                  width: 0,
+                  height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
               }}
-            />
-          </View>
-        </Pressable>
-      </View>
+            >
+              <MaterialCommunityIcons
+                name="qrcode-scan"
+                size={30}
+                color={APP_COLOR.WHITE}
+                style={{
+                  marginHorizontal: "auto",
+                  marginVertical: "auto",
+                }}
+              />
+            </View>
+          </Pressable>
+        </View>
+      ) : (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text style={{ color: APP_COLOR.BROWN, fontFamily: FONTS.regular }}>
+            Vui lòng đăng nhập để xem lịch sử đơn hàng.
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

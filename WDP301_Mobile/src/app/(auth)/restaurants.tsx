@@ -26,6 +26,7 @@ const RestaurantsPage = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { id } = useLocalSearchParams();
   const { cart, setCart, restaurant, appState } = useCurrentApp();
+  const { branchId, setBranchId } = useCurrentApp();
   const [showCart, setShowCart] = useState(false);
   const fetchProducts = useCallback(
     debounce(async (id: string) => {
@@ -390,13 +391,15 @@ const RestaurantsPage = () => {
               {cartItems.map((item, index) => (
                 <View key={index} style={styles.cartItem}>
                   <View style={styles.cartItemInfo}>
-                    <Text style={styles.cartItemTitle}>{item.data.title}</Text>
+                    <Text style={styles.cartItemTitle}>
+                      {item.data?.description}
+                    </Text>
                     <Text style={styles.cartItemQuantity}>
                       Số lượng: {item.quantity}
                     </Text>
                   </View>
                   <Text style={styles.cartItemPrice}>
-                    {currencyFormatter(item.data.basePrice * item.quantity)}
+                    {currencyFormatter(item.data.price * item.quantity)}
                   </Text>
                 </View>
               ))}
@@ -417,12 +420,22 @@ const RestaurantsPage = () => {
                 ]}
                 onPress={() => {
                   setShowCart(false);
-                  router.push("/(user)/product/place.order");
+                  if (!branchId) {
+                    Toast.show("Vui lòng chọn chi nhánh trước khi đặt hàng", {
+                      duration: Toast.durations.LONG,
+                      textColor: "white",
+                      backgroundColor: APP_COLOR.ORANGE,
+                      opacity: 1,
+                    });
+                    return;
+                  }
+                  router.push({
+                    pathname: "/(user)/product/place.order",
+                    params: { id: branchId },
+                  });
                 }}
               >
-                <Text style={styles.orderButtonText}>
-                  Đặt đơn - {currencyFormatter(totalPrice)}
-                </Text>
+                <Text style={styles.orderButtonText}>Đặt đơn</Text>
               </Pressable>
             </View>
           </Animated.View>
