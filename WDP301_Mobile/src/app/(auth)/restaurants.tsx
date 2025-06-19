@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR } from "@/utils/constant";
 import { TextInput } from "react-native-gesture-handler";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -20,11 +20,12 @@ import { useCurrentApp } from "@/context/app.context";
 import axios from "axios";
 import { FONTS } from "@/theme/typography";
 import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
+import Toast from "react-native-root-toast";
 const RestaurantsPage = () => {
   const [restaurants, setRestaurants] = useState<IRestaurants[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { id } = useLocalSearchParams();
-  const { cart, setCart, restaurant } = useCurrentApp();
+  const { cart, setCart, restaurant, appState } = useCurrentApp();
   const [showCart, setShowCart] = useState(false);
   const fetchProducts = useCallback(
     debounce(async (id: string) => {
@@ -127,10 +128,60 @@ const RestaurantsPage = () => {
     return cart[restaurant._id]?.items[itemId]?.quantity || 0;
   };
 
-  const totalPrice = restaurant?._id ? cart[restaurant._id]?.sum || 0 : 0;
-  const totalQuantity = restaurant?._id
-    ? cart[restaurant._id]?.quantity || 0
-    : 0;
+  const calculateTotalPrice = () => {
+    try {
+      if (!restaurant?._id) {
+        return 0;
+      }
+
+      const restaurantCart = cart[restaurant._id];
+      if (!restaurantCart || !restaurantCart.items) {
+        return 0;
+      }
+
+      const items = restaurantCart.items;
+      let total = 0;
+
+      Object.values(items).forEach((item: any) => {
+        const price = Number(
+          item?.data?.price ||
+            item?.data?.basePrice ||
+            item?.data?.productPrice ||
+            0
+        );
+        const quantity = Number(item?.quantity || 0);
+        total += price * quantity;
+      });
+
+      return total;
+    } catch (error) {
+      console.error("Lỗi tính tổng giá:", error);
+      return 0;
+    }
+  };
+  const calculateTotalQuantity = () => {
+    try {
+      if (!restaurant?._id) return 0;
+
+      const restaurantCart = cart[restaurant._id];
+      if (!restaurantCart || !restaurantCart.items) return 0;
+
+      const items = restaurantCart.items;
+      let total = 0;
+
+      Object.values(items).forEach((item: any) => {
+        const quantity = Number(item?.quantity || 0);
+        total += quantity;
+      });
+      return total;
+    } catch (error) {
+      console.error("Lỗi tính tổng số lượng:", error);
+      return 0;
+    }
+  };
+
+  const totalPrice = calculateTotalPrice();
+  const totalQuantity = calculateTotalQuantity();
   const cartItems = restaurant?._id
     ? Object.values(cart[restaurant._id]?.items || {})
     : [];
@@ -166,12 +217,34 @@ const RestaurantsPage = () => {
             paddingLeft: 5,
           }}
         />
-        <Pressable style={styles.cartButton} onPress={() => setShowCart(true)}>
-          <AntDesign name="shoppingcart" size={30} color={APP_COLOR.BROWN} />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
-          </View>
-        </Pressable>
+        {appState?.token ? (
+          <Pressable
+            style={styles.cartButton}
+            onPress={() => setShowCart(true)}
+          >
+            <AntDesign name="shoppingcart" size={30} color={APP_COLOR.BROWN} />
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>
+                {calculateTotalQuantity()}
+              </Text>
+            </View>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={styles.cartButton}
+            onPress={() => {
+              Toast.show("Vui lòng đăng nhập để xem giỏ hàng", {
+                duration: Toast.durations.LONG,
+                textColor: "white",
+                backgroundColor: APP_COLOR.CANCEL,
+                opacity: 1,
+                position: 30,
+              });
+            }}
+          >
+            <AntDesign name="shoppingcart" size={30} color={APP_COLOR.BROWN} />
+          </Pressable>
+        )}
       </View>
       {restaurants[0]?.productType && (
         <Text

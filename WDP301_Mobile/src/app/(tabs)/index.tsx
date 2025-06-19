@@ -8,7 +8,7 @@ import { useCurrentApp } from "@/context/app.context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Pressable, Text, View, ScrollView } from "react-native";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { APP_COLOR } from "@/utils/constant";
 import { currencyFormatter, getTypeProductAPI } from "@/utils/api";
 import Animated, {
   FadeIn,
@@ -19,6 +19,10 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
+interface ITem {
+  name: string;
+  productTypeId: number;
+}
 const HomeTab = () => {
   const [mounted, setMounted] = useState(false);
   const [showCart, setShowCart] = useState(false);
@@ -29,8 +33,6 @@ const HomeTab = () => {
   const { branchId, setBranchId } = useCurrentApp();
   const { access_token } = useLocalSearchParams();
   useEffect(() => {
-    console.log(access_token);
-
     const storeAccessToken = async () => {
       try {
         if (access_token) {
@@ -75,19 +77,62 @@ const HomeTab = () => {
       setShowPriceUpdate(false);
     }, 2000);
   };
+  const calculateTotalPrice = () => {
+    try {
+      if (!restaurant?._id) {
+        return 0;
+      }
+      const restaurantCart = cart[restaurant._id];
+      if (!restaurantCart || !restaurantCart.items) {
+        return 0;
+      }
+      const items = restaurantCart.items;
+      let total = 0;
 
-  const totalPrice = restaurant?._id ? cart[restaurant._id]?.sum || 0 : 0;
-  const totalQuantity = restaurant?._id
-    ? cart[restaurant._id]?.quantity || 0
-    : 0;
+      Object.values(items).forEach((item: any) => {
+        const price = Number(
+          item?.data?.price ||
+            item?.data?.basePrice ||
+            item?.data?.productPrice ||
+            0
+        );
+        const quantity = Number(item?.quantity || 0);
+        total += price * quantity;
+      });
+      return total;
+    } catch (error) {
+      console.error("Lỗi tính tổng giá:", error);
+      return 0;
+    }
+  };
+
+  const calculateTotalQuantity = () => {
+    try {
+      if (!restaurant?._id) return 0;
+
+      const restaurantCart = cart[restaurant._id];
+      if (!restaurantCart || !restaurantCart.items) return 0;
+
+      const items = restaurantCart.items;
+      let total = 0;
+
+      Object.values(items).forEach((item: any) => {
+        const quantity = Number(item?.quantity || 0);
+        total += quantity;
+      });
+      return total;
+    } catch (error) {
+      console.error("Lỗi tính tổng số lượng:", error);
+      return 0;
+    }
+  };
+
+  const totalPrice = calculateTotalPrice();
+  const totalQuantity = calculateTotalQuantity();
 
   const cartItems = restaurant?._id
     ? Object.values(cart[restaurant._id]?.items || {})
     : [];
-  interface ITem {
-    name: string;
-    productTypeId: number;
-  }
   return (
     <View
       style={{
@@ -135,7 +180,20 @@ const HomeTab = () => {
       )}
 
       {totalQuantity > 0 && (
-        <Pressable style={styles.cartButton} onPress={() => setShowCart(true)}>
+        <Pressable
+          style={styles.cartButton}
+          onPress={() => {
+            access_token
+              ? setShowCart(true)
+              : Toast.show("Vui lòng đăng nhập để xem giỏ hàng", {
+                  duration: Toast.durations.LONG,
+                  textColor: "white",
+                  backgroundColor: APP_COLOR.CANCEL,
+                  opacity: 1,
+                  position: 30,
+                });
+          }}
+        >
           <AntDesign
             name="shoppingcart"
             size={24}
@@ -168,13 +226,15 @@ const HomeTab = () => {
               {cartItems.map((item, index) => (
                 <View key={index} style={styles.cartItem}>
                   <View style={styles.cartItemInfo}>
-                    <Text style={styles.cartItemTitle}>{item.data.title}</Text>
+                    <Text style={styles.cartItemTitle}>
+                      {item.data?.description}
+                    </Text>
                     <Text style={styles.cartItemQuantity}>
                       Số lượng: {item.quantity}
                     </Text>
                   </View>
                   <Text style={styles.cartItemPrice}>
-                    {currencyFormatter(item.data.basePrice * item.quantity)}
+                    {currencyFormatter(item.data.price * item.quantity)}
                   </Text>
                 </View>
               ))}

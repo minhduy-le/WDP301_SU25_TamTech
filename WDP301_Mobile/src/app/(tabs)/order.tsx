@@ -133,10 +133,11 @@ const OrderPage = () => {
   useEffect(() => {
     const fetchOrderHistoryWithToken = async () => {
       setIsLoading(true);
-      setError(null);
+      setError("Không thể tải lịch sử đơn hàng");
       try {
         const token = await AsyncStorage.getItem("access_token");
         if (token) {
+          setError(null);
           const decoded: any = jwtDecode(token);
           setDecodeToken(decoded.id);
           const res = await axios.get(`${API_URL}/api/orders/user`, {
@@ -144,8 +145,6 @@ const OrderPage = () => {
               Authorization: `Bearer ${token}`,
             },
           });
-          console.log(res.data);
-
           if (res?.data) {
             setOrderHistory(res.data);
           }
@@ -159,7 +158,6 @@ const OrderPage = () => {
         setIsLoading(false);
       }
     };
-
     fetchOrderHistoryWithToken();
   }, []);
 
@@ -214,6 +212,7 @@ const OrderPage = () => {
           </View>
         </View>
         <ScrollView
+          showsVerticalScrollIndicator={false}
           style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}
         >
           {orderHistory.length === 0 ? (

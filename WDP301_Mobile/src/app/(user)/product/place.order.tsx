@@ -16,7 +16,6 @@ import {
   Platform,
 } from "react-native";
 import Toast from "react-native-root-toast";
-import Entypo from "@expo/vector-icons/Entypo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { Formik } from "formik";
@@ -59,7 +58,7 @@ const PlaceOrderPage = () => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const dropdownItems = [
     { id: "1", title: "COD" },
-    { id: "2", title: "VietQR" },
+    { id: "2", title: "PAYOS" },
   ];
   const [addresses, setAddresses] = useState<ICusInfor[]>([
     {
@@ -224,113 +223,9 @@ const PlaceOrderPage = () => {
       fetchData();
     }
   }, [decodeToken]);
-  const styles = StyleSheet.create({
-    container: {
-      gap: 3,
-    },
-    headerContainer: {
-      paddingTop: 5,
-      gap: 3,
-      borderBottomColor: APP_COLOR.BROWN,
-      borderBottomWidth: 0.5,
-      paddingBottom: 5,
-    },
-    customersInfo: {
-      flexDirection: "row",
-    },
-    cusInfo: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-      color: APP_COLOR.BROWN,
-    },
-    modalContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.5)",
-    },
-    modalContent: {
-      backgroundColor: "white",
-      padding: 20,
-      borderRadius: 10,
-      width: "80%",
-    },
-    modalButton: {
-      marginTop: 20,
-      backgroundColor: APP_COLOR.ORANGE,
-      padding: 10,
-      borderRadius: 10,
-      alignItems: "center",
-      width: 120,
-      marginHorizontal: 3,
-    },
-    addressItem: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      padding: 10,
-      borderBottomColor: "#eee",
-      borderBottomWidth: 1,
-    },
-    textInfor: {
-      color: APP_COLOR.GREY,
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-    },
-    textNameInfor: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-    },
-    textInputView: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    textInputText: {
-      color: APP_COLOR.BROWN,
-      fontFamily: FONTS.bold,
-      fontSize: 20,
-      marginVertical: "auto",
-    },
-    dropdownContainer: {
-      marginBottom: 15,
-      marginHorizontal: 5,
-    },
-    dropdownLabel: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-      marginBottom: 8,
-      color: APP_COLOR.BROWN,
-    },
-    dropdown: {
-      flexDirection: "row",
-      gap: 9,
-    },
-    dropdownItem: {
-      flex: 1,
-      padding: 6,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: APP_COLOR.BROWN,
-      alignItems: "center",
-    },
-    selectedDropdownItem: {
-      backgroundColor: APP_COLOR.BROWN,
-    },
-    dropdownText: {
-      fontFamily: FONTS.regular,
-      fontSize: 17,
-      color: APP_COLOR.BROWN,
-    },
-    selectedDropdownText: {
-      color: APP_COLOR.WHITE,
-    },
-    errorText: {
-      color: "red",
-      fontSize: 12,
-      marginTop: 4,
-    },
-  });
 
   useEffect(() => {
+    console.log("Cart:", cart.mock_restaurant_1.items);
     if (cart && restaurant && restaurant._id) {
       const result = [];
       const details: IDetails[] = [];
@@ -344,20 +239,20 @@ const PlaceOrderPage = () => {
             );
             const addPrice = option?.additionalPrice ?? 0;
             result.push({
-              image: currentItems.data.productImage,
-              title: currentItems.data.title,
+              image: currentItems.data.image,
+              title: currentItems.data.name,
               option: key,
-              price: currentItems.data.basePrice + addPrice,
+              price: currentItems.data.price + addPrice,
               quantity: value,
               productId: currentItems.data.productId,
             });
           }
         } else {
           result.push({
-            image: currentItems.data.productImage,
-            title: currentItems.data.title,
+            image: currentItems.data.image,
+            title: currentItems.data.name,
             option: "",
-            price: currentItems.data.basePrice,
+            price: currentItems.data.price,
             quantity: currentItems.quantity,
             productId: currentItems.data.productId,
           });
@@ -404,7 +299,34 @@ const PlaceOrderPage = () => {
       subscription.remove();
     };
   }, []);
+  const calculateTotalPrice = () => {
+    try {
+      if (!restaurant?._id) {
+        return 0;
+      }
+      const restaurantCart = cart[restaurant._id];
+      if (!restaurantCart || !restaurantCart.items) {
+        return 0;
+      }
+      const items = restaurantCart.items;
+      let total = 0;
 
+      Object.values(items).forEach((item: any) => {
+        const price = Number(
+          item?.data?.price ||
+            item?.data?.basePrice ||
+            item?.data?.productPrice ||
+            0
+        );
+        const quantity = Number(item?.quantity || 0);
+        total += price * quantity;
+      });
+      return total;
+    } catch (error) {
+      console.error("Lỗi tính tổng giá:", error);
+      return 0;
+    }
+  };
   const handleSelectAddress = (address: any, locationReal: any) => {
     if (locationReal) {
       address.address = locationReal;
@@ -712,11 +634,7 @@ const PlaceOrderPage = () => {
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(
-                          restaurant &&
-                            cart?.[restaurant._id] &&
-                            cart?.[restaurant._id].sum
-                        )}
+                        {currencyFormatter(calculateTotalPrice() || 0)}
                       </Text>
                     </View>
                     <View style={styles.textInputView}>
@@ -761,7 +679,7 @@ const PlaceOrderPage = () => {
                       <Text
                         style={[
                           styles.textInputText,
-                          { fontFamily: FONTS.bold, fontSize: 17 },
+                          { fontFamily: FONTS.bold, fontSize: 20 },
                         ]}
                       >
                         Số tiền thanh toán
@@ -769,11 +687,11 @@ const PlaceOrderPage = () => {
                       <Text
                         style={{
                           fontFamily: FONTS.bold,
-                          fontSize: 17,
+                          fontSize: 20,
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(200000)}
+                        {currencyFormatter(calculateTotalPrice() + 20000 || 0)}
                       </Text>
                     </View>
                   </View>
@@ -954,5 +872,109 @@ const PlaceOrderPage = () => {
     </SafeAreaView>
   );
 };
-
+const styles = StyleSheet.create({
+  container: {
+    gap: 3,
+  },
+  headerContainer: {
+    paddingTop: 5,
+    gap: 3,
+    borderBottomColor: APP_COLOR.BROWN,
+    borderBottomWidth: 0.5,
+    paddingBottom: 5,
+  },
+  customersInfo: {
+    flexDirection: "row",
+  },
+  cusInfo: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+    color: APP_COLOR.BROWN,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+  },
+  modalButton: {
+    marginTop: 20,
+    backgroundColor: APP_COLOR.ORANGE,
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    width: 120,
+    marginHorizontal: 3,
+  },
+  addressItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 10,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
+  },
+  textInfor: {
+    color: APP_COLOR.GREY,
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+  },
+  textNameInfor: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+  },
+  textInputView: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  textInputText: {
+    color: APP_COLOR.BROWN,
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    marginVertical: "auto",
+  },
+  dropdownContainer: {
+    marginBottom: 15,
+    marginHorizontal: 5,
+  },
+  dropdownLabel: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+    marginBottom: 8,
+    color: APP_COLOR.BROWN,
+  },
+  dropdown: {
+    flexDirection: "row",
+    gap: 9,
+  },
+  dropdownItem: {
+    flex: 1,
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: APP_COLOR.BROWN,
+    alignItems: "center",
+  },
+  selectedDropdownItem: {
+    backgroundColor: APP_COLOR.BROWN,
+  },
+  dropdownText: {
+    fontFamily: FONTS.regular,
+    fontSize: 17,
+    color: APP_COLOR.BROWN,
+  },
+  selectedDropdownText: {
+    color: APP_COLOR.WHITE,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+  },
+});
 export default PlaceOrderPage;

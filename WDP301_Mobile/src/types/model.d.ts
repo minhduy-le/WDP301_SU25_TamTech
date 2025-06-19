@@ -31,8 +31,9 @@ declare global {
       address: any;
       avatar: string;
       phone: string;
+      
     };
-    access_token: string;
+    token: string
   }
 
   interface ITopRestaurant {
@@ -88,8 +89,10 @@ declare global {
     _id: string;
     menu: string;
     title: string;
+    name: string;
     description: string;
     basePrice: number;
+    price: number;
     image: string;
     options: {
       title: string;
