@@ -104,6 +104,7 @@ const ManagerChat = () => {
     // Khởi tạo socket.io-client sẽ tự động quản lý việc kết nối lại.
     const newSocket = io("wss://wdp301-su25.space", {
       auth: { token },
+      transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
