@@ -28,7 +28,7 @@ const Promotion = sequelize.define(
     code: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true,
+      unique: false,
     },
     startDate: {
       type: DataTypes.DATE,

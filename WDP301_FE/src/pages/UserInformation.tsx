@@ -27,7 +27,7 @@ import {
 import PromotionIcon from "../components/icon/PromotionIcon";
 import Promotion from "./Promotion";
 import { useLocation, useNavigationType } from "react-router-dom";
-import { useAuthStore } from "../hooks/usersApi";
+import { useAuthStore, useChangePassword } from "../hooks/usersApi";
 import LocationBoldIcon from "../components/icon/LocationBoldIcon";
 import { useGetProfileUser, useUpdateProfile } from "../hooks/profileApi";
 import "../style/AddressOrder.css";
@@ -87,6 +87,8 @@ const UserInfomation = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditContactModalVisible, setIsEditContactModalVisible] =
     useState(false);
+  const [isChangePasswordModalVisible, setIsChangePasswordModalVisible] =
+    useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([
     {
@@ -122,7 +124,8 @@ const UserInfomation = () => {
       isDefault: false,
     },
   ]);
-  const [form] = Form.useForm();
+  const [updateForm] = Form.useForm();
+  const [changePasswordForm] = Form.useForm();
   const [editContactForm] = Form.useForm();
   const location = useLocation();
   const navigationType = useNavigationType();
@@ -131,6 +134,7 @@ const UserInfomation = () => {
 
   const { data: userProfile, refetch } = useGetProfileUser(userId || 0);
   const { mutate: updateProfile } = useUpdateProfile();
+  const { mutate: changePassword } = useChangePassword();
 
   const [showOrderTracking, setShowOrderTracking] = useState<boolean>(() => {
     const savedState = localStorage.getItem("showOrderTracking");
@@ -193,19 +197,19 @@ const UserInfomation = () => {
   }, [location.pathname, navigationType]);
 
   const showModal = () => {
-    form.setFieldsValue({
-      fullName: userProfile?.fullName || "",
-      date_of_birth: userProfile?.date_of_birth
-        ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+    updateForm.setFieldsValue({
+      fullName: userProfile?.user.fullName || "",
+      date_of_birth: userProfile?.user.date_of_birth
+        ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
         : null,
-      phone_number: userProfile?.phone_number || "",
-      email: userProfile?.email || "",
+      phone_number: userProfile?.user.phone_number || "",
+      email: userProfile?.user.email || "",
     });
     setIsModalVisible(true);
   };
 
   const handleOk = () => {
-    form.validateFields().then((values) => {
+    updateForm.validateFields().then((values) => {
       const formattedValues = {
         ...values,
         date_of_birth: values.date_of_birth
@@ -234,6 +238,48 @@ const UserInfomation = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+  };
+
+  const showModalChangePassword = () => {
+    changePasswordForm.resetFields();
+    setIsChangePasswordModalVisible(true);
+  };
+
+  const handleChangePassword = () => {
+    changePasswordForm
+      .validateFields()
+      .then((values) => {
+        const changePasswordData = {
+          oldPassword: values.oldPassword,
+          newPassword: values.newPassword,
+        };
+        changePassword(changePasswordData, {
+          onSuccess: () => {
+            message.success("Thay đổi mật khẩu thành công");
+            setIsChangePasswordModalVisible(false);
+            changePasswordForm.resetFields();
+          },
+          onError: (error) => {
+            const errorObj = error as unknown as { responseValue: string };
+            const errorMessage =
+              errorObj.responseValue || "Thay đổi mật khẩu thất bại";
+            if (errorMessage === "Incorrect old password") {
+              message.error("Mật khẩu cũ không đúng");
+            } else {
+              message.error(errorMessage);
+            }
+            console.error("Change password failed:", error);
+          },
+        });
+      })
+      .catch((error) => {
+        console.error("Validation failed:", error);
+      });
+  };
+
+  const handleChangePasswordCancel = () => {
+    setIsChangePasswordModalVisible(false);
+    changePasswordForm.resetFields();
   };
 
   const showEditContactModal = (contact: Contact) => {
@@ -268,13 +314,6 @@ const UserInfomation = () => {
     editContactForm.resetFields();
   };
 
-  // const showOrderTrackingDetails = (orderId: number) => {
-  //   setSelectedOrderId(orderId);
-  //   setShowOrderTracking(true);
-  //   localStorage.setItem("showOrderTracking", JSON.stringify(true));
-  //   localStorage.setItem("selectedOrderId", String(orderId));
-  // };
-
   const showOrderTrackingDetails = (order: any) => {
     setSelectedOrder(order);
     setShowOrderTracking(true);
@@ -295,17 +334,23 @@ const UserInfomation = () => {
         <Sider className="user-sider">
           <div className="user-details">
             <p className="user-name">
-              {userProfile?.fullName || "Dummy Tester VietNamese"}
+              {userProfile?.user.fullName || "Dummy Tester VietNamese"}
             </p>
             <p className="user-email">
-              {userProfile?.phone_number || "0902346789"}
+              {userProfile?.user.phone_number || "0902346789"}
             </p>
             <p className="user-email">
-              {userProfile?.email || "dummytestervietnamese@gmail.com"}
+              {userProfile?.user.email || "dummytestervietnamese@gmail.com"}
             </p>
-            <div className="edit" onClick={showModal}>
-              <EditOutlined style={{ color: "#da7339" }} />
-              <div className="edit-profile">Chỉnh sửa</div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div className="edit" onClick={showModal}>
+                <EditOutlined style={{ color: "#da7339" }} />
+                <div className="edit-profile">Chỉnh sửa</div>
+              </div>
+              <div className="edit" onClick={showModalChangePassword}>
+                <EditOutlined style={{ color: "#da7339" }} />
+                <div className="edit-profile">Đổi mật khẩu</div>
+              </div>
             </div>
             <Divider style={{ borderTop: "1px solid #da7339" }} />
             <Menu
@@ -356,18 +401,18 @@ const UserInfomation = () => {
                 <div className="content-header">Thông tin thành viên</div>
                 <div className="qr-code-section">
                   <img
-                    src="https://via.placeholder.com/150x150"
+                    src={userProfile?.qrCode}
                     alt="QR Code"
                     className="qr-code"
                   />
                   <div className="qr-text">
-                    <p>{userProfile?.phone_number || "0902346789"}</p>
+                    <p>{userProfile?.user.phone_number || "0902346789"}</p>
                     {/* <p>
                       <strong>Hạng thành viên:</strong> Vàng
                     </p> */}
                     <p>
                       <strong>Điểm tích lũy:</strong>{" "}
-                      {userProfile?.member_point || "0"} điểm
+                      {userProfile?.user.member_point || "0"} điểm
                     </p>
                     <p>
                       <strong>Điểm đã sử dụng:</strong> 0 điểm
@@ -486,16 +531,16 @@ const UserInfomation = () => {
         className="modal-edit-profile"
       >
         <Form
-          form={form}
+          form={updateForm}
           layout="vertical"
           name="updateProfile"
           initialValues={{
-            fullName: userProfile?.fullName || "",
-            date_of_birth: userProfile?.date_of_birth
-              ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+            fullName: userProfile?.user.fullName || "",
+            date_of_birth: userProfile?.user.date_of_birth
+              ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
               : null,
-            phone_number: userProfile?.phone_number || "",
-            email: userProfile?.email || "",
+            phone_number: userProfile?.user.phone_number || "",
+            email: userProfile?.user.email || "",
           }}
         >
           <div className="edit-title">Thông tin thành viên</div>
@@ -597,6 +642,77 @@ const UserInfomation = () => {
               className="update-contact-btn"
             >
               Cập nhật
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      <Modal
+        visible={isChangePasswordModalVisible}
+        onOk={handleChangePassword}
+        onCancel={handleChangePasswordCancel}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        footer={null}
+        className="modal-edit-profile"
+      >
+        <Form
+          form={changePasswordForm}
+          layout="vertical"
+          name="changePassword"
+          initialValues={{
+            oldPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+          }}
+        >
+          <div className="edit-title">Thay đổi mật khẩu</div>
+          <Divider
+            style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }}
+          />
+          <Form.Item
+            name="oldPassword"
+            label="Mật khẩu cũ*"
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu cũ!" }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="Mật khẩu mới*"
+            rules={[
+              { required: true, message: "Vui lòng nhập mật khẩu mới!" },
+              { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự!" },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Xác nhận mật khẩu mới*"
+            rules={[
+              { required: true, message: "Vui lòng xác nhận mật khẩu mới!" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("newPassword") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error("Mật khẩu không khớp với mật khẩu mới!")
+                  );
+                },
+              }),
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <Button
+              type="primary"
+              onClick={handleChangePassword}
+              className="update-profile-btn"
+            >
+              Xác nhận
             </Button>
           </div>
         </Form>

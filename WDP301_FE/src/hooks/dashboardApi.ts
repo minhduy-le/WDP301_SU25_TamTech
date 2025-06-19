@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import { useState, useEffect } from "react";
 
 export interface RevenueStat {
   month: number;
@@ -158,6 +159,56 @@ export const useWeeklyRevenue = () => {
         },
       });
       return Array.isArray(res.data.stats) ? res.data.stats : [];
+    },
+  });
+};
+export interface ProductTypeSaleStat {
+  productType: string;
+  totalQuantity: number;
+}
+export const useProductTypeSales = () => {
+  const [data, setData] = useState<ProductTypeSaleStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://wdp301-su25.space/api/dashboard/product-type-sales', {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZnVsbE5hbWUiOiJUbyBWeSIsImVtYWlsIjoidnl0b3RyaWV1MTJhMTIxQGdtYWlsLmNvbSIsInBob25lX251bWJlciI6IjA3NzkwODQxMjciLCJyb2xlIjoiTWFuYWdlciIsImlhdCI6MTc1MDE3NDM2MCwiZXhwIjoxNzUwMTc3OTYwfQ.hsF1p3Z9qzfbZbsrGm9Kg5ovwXS-VRNprRs_g36_ae8'
+          }
+        });
+        const result = await response.json();
+        if (result.status === 200) {
+          setData(result.stats);
+        } else {
+          setError(result.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred' as any);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return { data, loading, error };
+};
+
+export interface StaffProductivityStat {
+  fullName: string;
+  totalRevenue: number;
+}
+
+export const useStaffProductivity = () => {
+  return useQuery<StaffProductivityStat[], Error>({
+    queryKey: ["staff-productivity"],
+    queryFn: async () => {
+      const response = await axiosInstance.get("/dashboard/staff-productivity");
+      return response.data.stats;
     },
   });
 };

@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Button,
-  Card,
-  Spin,
-  message,
-  Typography,
-} from "antd";
+import { Row, Col, Button, Card, message, Typography } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cart.store";
@@ -123,7 +115,6 @@ const OurMenu: React.FC = () => {
     setSelectedMainProductForModal(null);
   };
 
-
   const itemsToDisplay =
     activeTab === "mainDishes"
       ? mainDishes
@@ -146,8 +137,9 @@ const OurMenu: React.FC = () => {
     boxShadow:
       activeTab === tabName ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
     outline: "none",
+    fontFamily: "'Montserrat', sans-serif",
   });
- 
+
   return (
     <div style={{ padding: "5px 0 50px 0", background: "#fff7e6" }}>
       <div className="our-menu-title-wrapper">
@@ -189,11 +181,8 @@ const OurMenu: React.FC = () => {
         {(activeTab === "mainDishes" && loadingMain) ||
         (activeTab === "drinks" && loadingDrinks) ||
         (activeTab === "sideDishes" && loadingSide) ||
-        (activeTab === "soup" && loadingSoup) ? (
-          <Col span={24} style={{ textAlign: "center", padding: "50px 0" }}>
-            <Spin size="large" tip="Đang tải thực đơn..." />
-          </Col>
-        ) : itemsToDisplay.length === 0 ? (
+        (activeTab === "soup" && loadingSoup) ||
+        itemsToDisplay.length === 0 ? (
           <Col span={24}>
             <p style={{ textAlign: "center", fontSize: 16, color: "#666" }}>
               Không có món nào trong danh mục này.
@@ -222,6 +211,8 @@ const OurMenu: React.FC = () => {
                     display: "flex",
                     flexDirection: "column",
                     height: "100%",
+                    width: "100%",
+                    border: "1px solid #e67e22",
                   }}
                   bodyStyle={{
                     padding: "0",
@@ -293,6 +284,7 @@ const OurMenu: React.FC = () => {
                         WebkitBoxOrient: "vertical",
                         marginTop: "10px",
                         cursor: "pointer",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                       title={item.name}
                       onClick={() => navigate(`/product/${item.productId}`)}
@@ -312,6 +304,7 @@ const OurMenu: React.FC = () => {
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         marginBottom: "12px",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                     >
                       {displayDescription}
@@ -330,6 +323,7 @@ const OurMenu: React.FC = () => {
                           fontSize: "1.25rem",
                           fontWeight: "bold",
                           color: "#e67e22",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
                         {parseFloat(item.price).toLocaleString()}đ
@@ -348,6 +342,7 @@ const OurMenu: React.FC = () => {
                           boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
                           fontWeight: "bold",
                           outline: "none",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                         onClick={() => {
                           if (activeTab === "mainDishes") {
@@ -389,7 +384,7 @@ const OurMenu: React.FC = () => {
                             "scale(1)";
                         }}
                       >
-                        Thêm vào giỏ
+                        Thêm
                       </Button>
                     </div>
                   </div>

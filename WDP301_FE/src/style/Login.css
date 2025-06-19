@@ -31,9 +31,9 @@
 }
 
 .form-content {
-  width: 100%;
-  /* text-align: center; */
-  padding: 0 180px;
+  margin: 0px auto;
+  width: max-content;
+  padding: 0px 20px;
 }
 
 .title {
@@ -131,10 +131,10 @@
   font-family: "Montserrat", sans-serif;
 }
 
-.ant-form-item-additional {
+/* .ant-form-item-additional {
   margin-top: -14px;
   margin-bottom: 7px;
-}
+} */
 
 .ant-form-item-additional .ant-form-item-explain-error {
   font-family: "Montserrat", sans-serif;
@@ -155,4 +155,16 @@
 
 .google-login-button .ant-btn-icon {
   height: 26px;
+}
+
+.link-forgot-password {
+  text-decoration: underline;
+  font-style: italic;
+  font-size: 16px;
+  color: #632713;
+  font-family: "Montserrat", sans-serif;
+  width: -webkit-fill-available;
+  display: block;
+  text-align: right;
+  margin-bottom: 20px;
 }

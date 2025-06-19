@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { Select, Input, Button } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { Button, AutoComplete, Spin, Input } from "antd";
 import "./HeroSection.css";
-
-const { Option } = Select;
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const demoImages = [
   "https://izitour.com/media/ckeditor/traditional-vietnamese-food-com-tam_2024-05-30_825.webp",
@@ -13,6 +12,10 @@ const demoImages = [
 
 const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [options, setOptions] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,6 +26,52 @@ const HeroSection = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Hàm gọi API khi nhập
+  const handleSearch = async (value: string) => {
+    setSearchValue(value);
+    if (!value) {
+      setOptions([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `https://wdp301-su25.space/api/products/search?name=${encodeURIComponent(
+          value
+        )}`
+      );
+      const products = res.data.products || [];
+      setOptions(
+        products.map((item: any) => ({
+            value: item.name,
+            id: item.productId,
+            label: (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img
+                src={item.image}
+                alt={item.name}
+                style={{
+                  width: 32,
+                  height: 32,
+                  objectFit: "cover",
+                  borderRadius: 4,
+                }}
+              />
+              <span>{item.name}</span>
+            </div>
+          ),
+        }))
+      );
+    } catch (err) {
+      setOptions([]);
+    }
+    setLoading(false);
+  };
+
+  const handleSelect = (_value: string, options: any) => {
+    navigate(`/product/${options.id} `);
+  };
 
   return (
     <section className="hero-section">
@@ -53,35 +102,49 @@ const HeroSection = () => {
           className="hero-form"
           style={{ display: "flex", gap: "10px", alignItems: "center" }}
         >
-          <Select
-            defaultValue="Chọn cửa hàng"
-            suffixIcon={<DownOutlined style={{ color: "#F9A14D" }} />}
+          <AutoComplete
             style={{
-              width: 150,
+              width: "470px",
               height: 40,
-              background: "#fff",
-              borderColor: "#F9A14D",
-              color: "#a05a13",
+              background: "#fdf7f2",
+              color: "#5c3d00",
+              fontFamily: "'Montserrat', sans-serif",
+              border: "1.5px solid #ffa94d",
+              borderRadius: "8px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}
-            popupClassName="custom-ant-select-dropdown"
-            className="custom-ant-select"
-          >
-            <Option disabled value="Chọn cửa hàng">
-              Chọn cửa hàng
-            </Option>
-            <Option value="Cửa hàng 1">Cửa hàng 1</Option>
-            <Option value="Cửa hàng 2">Cửa hàng 2</Option>
-          </Select>
-          <Input
-            placeholder="Địa chỉ giao hàng"
-            style={{
-              width: 200,
-              height: 40,
-              borderColor: "#F9A14D",
-              background: "#fff",
-              color: "#a05a13",
+            dropdownStyle={{
+              borderRadius: "8px",
             }}
+            popupMatchSelectWidth={false}
+            options={options}
+            onSearch={handleSearch}
+            value={searchValue}
+            
+            onChange={setSearchValue}
+            allowClear
+            notFoundContent={
+              loading ? <Spin size="small" /> : "Không tìm thấy món nào"
+            }
+            placeholder="Bạn muốn ăn gì?"
+            children={
+              <Input
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  fontFamily: "'Montserrat', sans-serif",
+                  color: "#5c3d00",
+                  paddingLeft: "10px",
+                  boxShadow: "none",
+                }}
+              />
+            }
+            onSelect={handleSelect}
           />
+
           <Button
             style={{
               height: 40,
@@ -90,7 +153,9 @@ const HeroSection = () => {
               color: "#fff",
               alignItems: "center",
               outline: "none",
+              fontFamily: "'Montserrat', sans-serif",
             }}
+            onClick={() => handleSelect(searchValue, options)}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.backgroundColor =
                 "#fb923c";
@@ -102,7 +167,7 @@ const HeroSection = () => {
               (e.currentTarget as HTMLElement).style.transform = "scale(1)";
             }}
           >
-            Xác nhận
+            Tìm kiếm
           </Button>
         </div>
       </div>

@@ -27,7 +27,7 @@ interface Chat {
 }
 
 interface OutletContext {
-  setSocket?: (socket: Socket | null) => void; // Optional to avoid TypeError
+  setSocket?: (socket: Socket | null) => void;
 }
 
 const ManagerChat = () => {
@@ -42,102 +42,157 @@ const ManagerChat = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore();
   const { mutate: createChat, isPending: isSending } = useCreateChat();
+
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const context = useOutletContext<OutletContext>();
-  const setParentSocket = context?.setSocket; // Safe access to setSocket
+  const isConnectingRef = useRef(false);
 
-  // Scroll to the latest message
+  const context = useOutletContext<OutletContext>();
+  const setParentSocket = context?.setSocket || (() => {});
+
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
       console.log("🔄 Scrolled to bottom");
     }
   };
 
-  // WebSocket connection
+  const cleanupSocket = () => {
+    console.log("🧹 Cleaning up socket and timers");
+
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
+
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+    }
+
+    setSocket(null);
+    setIsConnected(false);
+    setIsReconnecting(false);
+    isConnectingRef.current = false;
+
+    if (setParentSocket) {
+      setParentSocket(null);
+    }
+  };
+
   const connectSocket = () => {
+    if (isConnectingRef.current) return;
+
     if (!token || !authUser?.id) {
-      console.error("❌ No token or user ID available", {
-        token: !!token,
-        userId: authUser?.id,
-      });
-      message.error("Vui lòng đăng nhập để chat");
+      console.error("Missing token or user ID:", { token, authUser });
       return;
     }
 
-    console.log("🔌 Initializing socket connection for user:", authUser.id);
-    const newSocket = io("https://wdp301-su25.space", {
-      auth: { token },
-      reconnection: true,
-      reconnectionDelay: 1000,
+    isConnectingRef.current = true;
+    setIsReconnecting(true);
+
+    if (socket) {
+      socket.disconnect();
+    }
+
+    const socketUrl = "wss://wdp301-su25.space";
+    const newSocket = io(socketUrl, {
+      transports: ["polling", "websocket"], // Thử polling trước
+      upgrade: true,
       reconnectionAttempts: 5,
-      timeout: 20000,
+      reconnectionDelay: 2000,
+      timeout: 10000,
+      auth: { token },
     });
 
     setSocket(newSocket);
+
     if (setParentSocket) {
       setParentSocket(newSocket);
       console.log("🔌 Registered socket with parent context");
-    } else {
-      console.warn(
-        "⚠️ No setParentSocket available; socket not registered with parent"
-      );
     }
 
     newSocket.on("connect", () => {
       console.log("✅ Connected to WebSocket server", {
         userId: authUser.id,
         socketId: newSocket.id,
+        transport: newSocket.io.engine.transport.name,
       });
       setIsConnected(true);
       setConnectionAttempts(0);
+      setIsReconnecting(false);
+      isConnectingRef.current = false;
       message.success(`Kết nối thành công với ID ${authUser.id}`);
 
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = setInterval(() => {
-        newSocket.emit("ping", (response: any) => {
-          console.log("🏓 Ping response:", response);
-        });
+        if (newSocket.connected) {
+          newSocket.emit("ping", (response: any) => {
+            console.log("🏓 Ping response:", response);
+          });
+        }
       }, 30000);
     });
 
-    newSocket.on("connect_error", (error) => {
-      console.error("❌ Connection error:", error.message);
+    newSocket.on("connect_error", (error: any) => {
+      console.error("Connection failed:", {
+        message: error.message,
+        description: error.description,
+        code: error.code,
+        context: error.context,
+        stack: error.stack,
+      });
+      message.error(`Kết nối thất bại: ${error.message || "Lỗi không xác định"}`);
       setIsConnected(false);
-      setConnectionAttempts((prev) => prev + 1);
+      setIsReconnecting(false);
+      isConnectingRef.current = false;
 
-      if (connectionAttempts < 5) {
+      const currentAttempts = connectionAttempts + 1;
+      setConnectionAttempts(currentAttempts);
+
+      if (currentAttempts < 5) {
+        const delay = Math.min(1000 * Math.pow(2, currentAttempts - 1), 10000);
         message.warning(
-          `Kết nối thất bại: ${error.message}. Đang thử lại... (${
-            connectionAttempts + 1
-          }/5)`
+          `Kết nối thất bại: ${error.message}. Đang thử lại sau ${delay / 1000}s... (${currentAttempts}/5)`
         );
-        if (reconnectTimeoutRef.current)
-          clearTimeout(reconnectTimeoutRef.current);
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log("🔄 Attempting to reconnect...");
+          console.log(`🔄 Attempting to reconnect... (attempt ${currentAttempts + 1})`);
           connectSocket();
-        }, 2000 * (connectionAttempts + 1));
+        }, delay);
       } else {
-        message.error("Không thể kết nối sau 5 lần thử");
+        message.error("Không thể kết nối sau 5 lần thử. Vui lòng kiểm tra kết nối mạng.");
+        cleanupSocket();
       }
     });
 
-    newSocket.on("disconnect", () => {
-      console.log("❌ Disconnected from WebSocket server");
+    newSocket.on("disconnect", (reason) => {
+      console.log("❌ Disconnected from WebSocket server. Reason:", reason);
       setIsConnected(false);
-      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-    });
+      isConnectingRef.current = false;
 
-    newSocket.on("error", (error) => {
-      console.error("🚨 Socket error:", error.message);
-      message.error(error.message || "Lỗi WebSocket");
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = null;
+      }
+
+      if (reason === "io server disconnect" || reason === "transport close") {
+        if (connectionAttempts < 5) {
+          console.log("🔄 Server disconnected, attempting to reconnect...");
+          setTimeout(() => connectSocket(), 2000);
+        }
+      }
     });
 
     newSocket.on("message", (receivedMessage: Chat) => {
@@ -149,19 +204,19 @@ const ManagerChat = () => {
         createdAt: receivedMessage.createdAt,
       });
 
-      const isRelevant =
-        receivedMessage.senderId === authUser?.id ||
-        receivedMessage.receiverId === authUser?.id;
+      const isRelevant = receivedMessage.senderId === authUser?.id || receivedMessage.receiverId === authUser?.id;
+
       if (!isRelevant) {
-        console.log("📨 Message not for me, ignoring");
+        console.log("📨 Message not for current user, ignoring");
         return;
       }
 
       setChats((prevChats) => {
         if (prevChats.some((chat) => chat.id === receivedMessage.id)) {
-          console.log("⚠️ Duplicate message, skipping");
+          console.log("⚠️ Duplicate message detected, skipping");
           return prevChats;
         }
+
         console.log("✅ Adding new message to chat");
         const newMessage = {
           ...receivedMessage,
@@ -169,10 +224,11 @@ const ManagerChat = () => {
           Sender: receivedMessage.Sender,
           Receiver: receivedMessage.Receiver,
         };
+
         const updatedChats = [...prevChats, newMessage].sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
+
         return updatedChats;
       });
     });
@@ -182,29 +238,17 @@ const ManagerChat = () => {
 
   useEffect(() => {
     if (!authUser?.id || !token) {
-      console.log(
-        "❌ Skipping socket connection: missing authUser.id or token"
-      );
+      console.log("❌ Skipping socket connection: missing authUser.id or token", { authUser, token });
       return;
     }
 
-    const socketInstance = connectSocket();
+    connectSocket();
 
     return () => {
-      console.log("🔌 Cleaning up socket connection");
-      if (reconnectTimeoutRef.current)
-        clearTimeout(reconnectTimeoutRef.current);
-      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-      if (socketInstance) {
-        socketInstance.disconnect();
-        if (setParentSocket) {
-          setParentSocket(null);
-          console.log("🔌 Cleared socket in parent context");
-        }
-      }
-      setIsConnected(false);
+      console.log("🔌 Component unmounting, cleaning up socket connection");
+      cleanupSocket();
     };
-  }, [authUser?.id, token, setParentSocket]);
+  }, [authUser?.id, token]);
 
   useEffect(() => {
     if (!authUser || !selectedUser) {
@@ -221,13 +265,13 @@ const ManagerChat = () => {
             offset: 0,
           },
         });
+
         const filteredChats = response.data.filter(
           (chat) =>
-            (chat.senderId === authUser.id &&
-              chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id &&
-              chat.receiverId === authUser.id)
+            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
+            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
         );
+
         setChats(
           filteredChats
             .map((chat) => ({
@@ -236,13 +280,10 @@ const ManagerChat = () => {
               Sender: chat.Sender,
               Receiver: chat.Receiver,
             }))
-            .sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-            )
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         );
-        setTimeout(scrollToBottom, 0);
+
+        setTimeout(scrollToBottom, 100);
       } catch (error: any) {
         console.error("❌ Failed to fetch messages:", error.message);
         message.error("Không thể tải tin nhắn");
@@ -252,7 +293,7 @@ const ManagerChat = () => {
     };
 
     fetchInitialMessages();
-  }, [selectedUser, authUser, accounts]);
+  }, [selectedUser, authUser]);
 
   useEffect(() => {
     scrollToBottom();
@@ -270,26 +311,19 @@ const ManagerChat = () => {
     authUser && selectedUser
       ? chats.filter(
           (chat) =>
-            (chat.senderId === authUser.id &&
-              chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id &&
-              chat.receiverId === authUser.id)
+            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
+            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
         )
       : [];
 
   const handleSendMessage = () => {
-    if (!selectedUser || !messageInput.trim() || !authUser || !isConnected) {
-      console.log("❌ Cannot send message:", {
-        hasSelectedUser: !!selectedUser,
-        hasMessage: !!messageInput.trim(),
-        hasAuthUser: !!authUser,
-        isConnected,
-      });
-      message.error(
-        !isConnected
-          ? "Không kết nối được với server chat. Vui lòng thử lại."
-          : "Vui lòng chọn người nhận và nhập tin nhắn."
-      );
+    if (!selectedUser || !messageInput.trim() || !authUser) {
+      message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
+      return;
+    }
+
+    if (!isConnected) {
+      message.error("Không kết nối được với server chat. Vui lòng thử lại.");
       return;
     }
 
@@ -302,15 +336,21 @@ const ManagerChat = () => {
       onSuccess: () => {
         console.log("✅ Message created via API");
         setMessageInput("");
-        message.success("Tin nhắn đã được gửi!");
-        socket?.emit("sendMessage", messageData, (response: any) => {
-          console.log("📤 Socket emit response:", response);
-          if (response?.error) {
-            message.error(response.error || "Gửi tin nhắn qua socket thất bại");
-          } else if (response?.success) {
-            console.log("✅ Socket message sent");
-          }
-        });
+
+        if (socket?.connected) {
+          socket.emit("sendMessage", messageData, (response: any) => {
+            console.log("📤 Socket emit response:", response);
+            if (response?.error) {
+              message.error(response.error || "Gửi tin nhắn qua socket thất bại");
+            } else if (response?.success) {
+              console.log("✅ Socket message sent successfully");
+              message.success("Tin nhắn đã được gửi!");
+            }
+          });
+        } else {
+          console.warn("⚠️ Socket not connected, message sent via API only");
+          message.success("Tin nhắn đã được gửi!");
+        }
       },
       onError: (error: any) => {
         console.error("❌ Failed to create message:", error.message);
@@ -335,8 +375,10 @@ const ManagerChat = () => {
   const handleReconnect = () => {
     console.log("🔄 Manual reconnect initiated");
     setConnectionAttempts(0);
-    if (socket) socket.disconnect();
-    connectSocket();
+    cleanupSocket();
+    setTimeout(() => {
+      connectSocket();
+    }, 1000);
   };
 
   return (
@@ -355,20 +397,21 @@ const ManagerChat = () => {
         <div
           style={{
             padding: "5px 15px",
-            backgroundColor: isConnected ? "#4caf50" : "#f44336",
+            backgroundColor: isConnected ? "#4caf50" : isReconnecting ? "#ff9800" : "#f44336",
             color: "white",
             borderRadius: "12px",
             fontSize: "12px",
           }}
         >
-          {isConnected ? `🟢 Kết nối (ID ${authUser?.id})` : "🔴 Ngắt kết nối"}
+          {isConnected ? `🟢 Kết nối (ID ${authUser?.id})` : isReconnecting ? "🟡 Đang kết nối..." : "🔴 Ngắt kết nối"}
         </div>
-        {!isConnected && (
+        {!isConnected && !isReconnecting && (
           <Button size="small" onClick={handleReconnect}>
             Kết nối lại
           </Button>
         )}
       </div>
+
       <Card
         style={{
           width: 300,
@@ -390,23 +433,16 @@ const ManagerChat = () => {
           dataSource={filteredAccounts}
           renderItem={(account) => (
             <List.Item
-              onClick={() =>
-                setSelectedUser({ id: account.id, fullName: account.fullName })
-              }
+              onClick={() => setSelectedUser({ id: account.id, fullName: account.fullName })}
               style={{ cursor: "pointer", padding: "8px", borderRadius: "8px" }}
               className={selectedUser?.id === account.id ? "active-user" : ""}
             >
               <List.Item.Meta
-                avatar={
-                  <Avatar style={{ backgroundColor: "#1890ff" }}>
-                    {account.fullName[0]}
-                  </Avatar>
-                }
+                avatar={<Avatar style={{ backgroundColor: "#1890ff" }}>{account.fullName[0]}</Avatar>}
                 title={
                   <span
                     style={{
-                      fontWeight:
-                        selectedUser?.id === account.id ? "bold" : "normal",
+                      fontWeight: selectedUser?.id === account.id ? "bold" : "normal",
                       fontSize: 16,
                     }}
                   >
@@ -443,6 +479,7 @@ const ManagerChat = () => {
             >
               Chat với: {selectedUser.fullName}
             </div>
+
             <div
               ref={chatContainerRef}
               className="chat-container-user"
@@ -458,43 +495,32 @@ const ManagerChat = () => {
               }}
             >
               {isLoadingChats ? (
-                <p
-                  style={{ textAlign: "center", color: "#888", margin: "auto" }}
-                >
-                  Đang tải tin nhắn...
-                </p>
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Đang tải tin nhắn...</p>
               ) : userChats.length ? (
                 userChats.map((chat) => (
                   <div
                     key={chat.id}
-                    className={`message-bubble ${
-                      chat.senderId === authUser?.id ? "sent" : "received"
-                    }`}
+                    className={`message-bubble ${chat.senderId === authUser?.id ? "sent" : "received"}`}
                     style={{
-                      backgroundColor:
-                        chat.senderId === authUser?.id ? "#2196f3" : "#fff",
+                      backgroundColor: chat.senderId === authUser?.id ? "#2196f3" : "#fff",
                       color: chat.senderId === authUser?.id ? "#fff" : "#000",
-                      margin:
-                        chat.senderId === authUser?.id
-                          ? "5px 10px 5px auto"
-                          : "5px auto 5px 10px",
+                      margin: chat.senderId === authUser?.id ? "5px 10px 5px auto" : "5px auto 5px 10px",
                       padding: "10px 15px",
                       maxWidth: "70%",
                       borderRadius: "10px",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
                     }}
                   >
                     <div>{chat.content}</div>
                     <div
                       style={{
                         marginTop: "5px",
-                        textAlign:
-                          chat.senderId === authUser?.id ? "right" : "left",
+                        textAlign: chat.senderId === authUser?.id ? "right" : "left",
                       }}
                     >
                       <small
                         style={{
-                          color:
-                            chat.senderId === authUser?.id ? "#e6f0ff" : "#888",
+                          color: chat.senderId === authUser?.id ? "#e6f0ff" : "#888",
                           fontSize: "12px",
                         }}
                       >
@@ -504,13 +530,10 @@ const ManagerChat = () => {
                   </div>
                 ))
               ) : (
-                <p
-                  style={{ textAlign: "center", color: "#888", margin: "auto" }}
-                >
-                  Chưa có tin nhắn với người này.
-                </p>
+                <p style={{ textAlign: "center", color: "#888", margin: "auto" }}>Chưa có tin nhắn với người này.</p>
               )}
             </div>
+
             <div
               style={{
                 padding: "15px",

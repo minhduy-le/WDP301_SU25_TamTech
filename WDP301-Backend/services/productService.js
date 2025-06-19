@@ -3,6 +3,7 @@ const Product = require("../models/product");
 const ProductRecipe = require("../models/ProductRecipe");
 const Material = require("../models/material");
 const { Op } = require("sequelize");
+const ProductType = require("../models/productType");
 
 const validateProductData = (data) => {
   const { name, price, productTypeId, recipes, description, image } = data;
@@ -330,6 +331,61 @@ const searchProductsByName = async (searchTerm) => {
   return products;
 };
 
+const searchProductsByTypeName = async (typeName) => {
+  if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const productType = await ProductType.findOne({
+    where: { name: typeName },
+  });
+
+  if (!productType) {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      productTypeId: productType.productTypeId,
+      isActive: true,
+    },
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
+const searchProductsByNameAndType = async (searchTerm, productTypeId) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      productTypeId,
+      isActive: true,
+    },
+    attributes: ["productId", "name", "description", "price", "image"],
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -339,4 +395,6 @@ module.exports = {
   getProductById,
   getBestSellerProducts,
   searchProductsByName,
+  searchProductsByTypeName,
+  searchProductsByNameAndType,
 };

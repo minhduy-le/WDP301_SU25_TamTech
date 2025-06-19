@@ -4,6 +4,7 @@ const Product = require("../models/product");
 const User = require("../models/user");
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
+const ProductType = require("../models/productType");
 
 const getProductStats = async () => {
   const [results] = await sequelize.query(
@@ -359,6 +360,82 @@ const getMonthlyRevenue = async () => {
   return stats;
 };
 
+const getProductTypeSales = async () => {
+  // Fetch all product types
+  const allProductTypes = await ProductType.findAll({
+    attributes: ["name"],
+    raw: true,
+  });
+
+  // Fetch sales data with LEFT JOIN to include product types with no sales
+  const productTypeSales = await sequelize.query(
+    `SELECT 
+      pt.name as productType,
+      COALESCE(SUM(oi.quantity), 0) as totalQuantity
+     FROM product_types pt
+     LEFT JOIN products p ON pt.productTypeId = p.productTypeId
+     LEFT JOIN order_items oi ON p.productId = oi.productId
+     LEFT JOIN orders o ON oi.orderId = o.orderId
+     WHERE o.orderId IS NULL OR o.status_id NOT IN (1, 5)
+     GROUP BY pt.productTypeId, pt.name
+     ORDER BY totalQuantity DESC`,
+    {
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // Map results to ensure all product types are included
+  const stats = allProductTypes.map((pt) => {
+    const sale = productTypeSales.find((sale) => sale.productType === pt.name) || {
+      productType: pt.name,
+      totalQuantity: 0,
+    };
+    return {
+      productType: pt.name,
+      totalQuantity: parseInt(sale.totalQuantity) || 0,
+    };
+  });
+
+  return stats;
+};
+
+const getStaffProductivity = async () => {
+  const staffUsers = await User.findAll({
+    where: { role: "Staff" },
+    attributes: ["id", "fullName"],
+    raw: true,
+  });
+
+  const staffRevenue = await sequelize.query(
+    `SELECT 
+      u.id,
+      u.fullName,
+      COALESCE(SUM(o.order_amount), 0) as totalRevenue
+     FROM users u
+     LEFT JOIN orders o ON (u.id = o.createByStaffId OR u.id = o.approvedBy)
+     WHERE u.role = 'Staff'
+     AND (o.orderId IS NULL OR o.status_id NOT IN (1, 5))
+     GROUP BY u.id, u.fullName
+     ORDER BY totalRevenue DESC`,
+    {
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  const stats = staffUsers.map((staff) => {
+    const revenue = staffRevenue.find((rev) => rev.id === staff.id) || {
+      fullName: staff.fullName,
+      totalRevenue: 0,
+    };
+    return {
+      fullName: staff.fullName,
+      totalRevenue: parseFloat(revenue.totalRevenue) || 0,
+    };
+  });
+
+  return stats;
+};
+
 module.exports = {
   getProductStats,
   getUserStats,
@@ -368,4 +445,6 @@ module.exports = {
   getCurrentMonthOrders,
   getCurrentMonthProducts,
   getMonthlyRevenue,
+  getProductTypeSales,
+  getStaffProductivity,
 };

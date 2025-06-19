@@ -87,14 +87,12 @@ const createUser = async (userData) => {
   }
 };
 
-const getAllUsers = async () => {
+const getAllUsers = async (loggedInUserId) => {
   try {
     const users = await User.findAll({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
       where: {
-        role: {
-          [Op.ne]: "Admin", // Exclude users with Admin role
-        },
+        id: { [Op.ne]: loggedInUserId } // Exclude the logged-in user
       },
     });
     return users;

@@ -5,7 +5,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
-  BarChartOutlined,
   SettingOutlined,
   LogoutOutlined,
   BellOutlined,
@@ -58,11 +57,6 @@ const AdminSidebar: React.FC = () => {
   const siderCollapsedWidth = 80;
 
   const menuItems = [
-    {
-      key: "/admin/dashboard",
-      icon: <BarChartOutlined />,
-      label: "Tổng quan",
-    },
     // {
     //   key: "stores",
     //   icon: <ShopOutlined />,
@@ -121,6 +115,8 @@ const AdminSidebar: React.FC = () => {
       onClick: () => {
         logout();
         message.success("Đăng xuất thành công");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/login");
       },
     },

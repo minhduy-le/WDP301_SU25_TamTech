@@ -58,7 +58,7 @@ const Checkout = () => {
     null
   );
   const [detailedAddress, setDetailedAddress] = useState("");
-  const [isProxyOrder, setIsProxyOrder] = useState(false);
+  const [isDatHo, setIsDatHo] = useState(false);
   const currentDate = dayjs().format("DD/MM/YYYY");
   const [paymentMethod, setPaymentMethod] = useState<number>(0);
   const [note, setNote] = useState("");
@@ -229,7 +229,7 @@ const Checkout = () => {
     const paymentMethodId = paymentMethod ?? 0;
 
     let orderAddress = detailedAddress.trim();
-    if (isProxyOrder && detailedAddressProxy) {
+    if (isDatHo && detailedAddressProxy) {
       orderAddress = detailedAddressProxy.trim();
     }
 
@@ -243,7 +243,7 @@ const Checkout = () => {
       order_address: orderAddress,
       note: note || "",
       promotion_code: appliedPromotion ? promotionCode : "",
-      ...(isProxyOrder && {
+      ...(isDatHo && {
         isDatHo: true,
         tenNguoiDatHo: nguoiDatHo,
         soDienThoaiNguoiDatHo: sdtNguoiDatHo,
@@ -352,7 +352,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.fullName}
+                value={userProfile?.user.fullName}
                 disabled
               />
               <Input
@@ -362,7 +362,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.phone_number}
+                value={userProfile?.user.phone_number}
                 disabled
               />
               <Input
@@ -372,10 +372,10 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.email}
+                value={userProfile?.user.email}
                 disabled
               />
-              {!isProxyOrder && (
+              {!isDatHo && (
                 <Input
                   placeholder="Địa chỉ chi tiết"
                   style={{
@@ -396,15 +396,15 @@ const Checkout = () => {
                 </Title>
                 <div className="checkbox-label">
                   <Checkbox
-                    checked={isProxyOrder}
-                    onChange={(e) => setIsProxyOrder(e.target.checked)}
+                    checked={isDatHo}
+                    onChange={(e) => setIsDatHo(e.target.checked)}
                   />
                   <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
                     Đặt hộ
                   </Text>
                 </div>
               </Row>
-              {isProxyOrder && (
+              {isDatHo && (
                 <>
                   <Input
                     placeholder="Tên người nhận"

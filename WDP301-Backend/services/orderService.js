@@ -772,6 +772,7 @@ const getUserOrders = async (req, res) => {
       status: order.OrderStatus ? order.OrderStatus.status : null,
       fullName: order.User ? order.User.fullName : null,
       phone_number: order.User ? order.User.phone_number : null,
+      orderItemsCount: order.OrderItems.length,
       orderItems: order.OrderItems.map((item) => ({
         productId: item.productId,
         name: item.Product ? item.Product.name : null,

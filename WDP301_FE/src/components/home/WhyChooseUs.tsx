@@ -61,7 +61,7 @@ const WhyChooseUs: React.FC = () => {
     <section className="artistic-layer-wcu-section">
       <div className="artistic-layer-wcu-container">
         <Title level={2} className="artistic-layer-main-title">
-          Điều Gì Tạo Nên <span className="brand-tam">Cơm Tấm Tắc</span> <span className="brand-tac">Đặc Sắc</span>?
+          ĐIỀU GÌ TẠO NÊN <span className="brand-tam">CƠM TẤM TẮC</span> <span className="brand-tac">ĐẶC SẮC</span>?
         </Title>
         
         <Row gutter={[48, 64]} justify="center"> 

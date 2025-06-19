@@ -12,9 +12,14 @@ interface MaterialDetailApiResponse {
 }
 
 export interface MaterialDto {
-  materialId: number;
+  materialId?: number;
   name: string;
   quantity: number;
+  storeId: number;
+  Store?: {
+    name: string;
+    address: string;
+  };
 }
 
 interface MutationVariables {

@@ -9,16 +9,16 @@ import {
   Avatar,
   Select,
   Button,
+  Progress,
 } from "antd";
 import {
   DollarOutlined,
   ShoppingOutlined,
   TrophyOutlined,
   DownloadOutlined,
+  DashboardOutlined,
 } from "@ant-design/icons";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -30,15 +30,23 @@ import {
   Cell,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
-import { useRevenueStats, useTopProducts, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder, useWeeklyRevenue } from "../../hooks/dashboardApi";
-
+import {
+  useRevenueStats,
+  useTopProducts,
+  useCurrentMonthRevenue,
+  useCurrentMonthProduct,
+  useCurrentMonthOrder,
+  useWeeklyRevenue,
+  useProductTypeSales,
+  useStaffProductivity,
+} from "../../hooks/dashboardApi";
 
 const { Title, Text } = Typography;
-
-
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
@@ -47,33 +55,61 @@ const yearList: number[] = [];
 for (let y = startYear; y <= currentYear; y++) {
   yearList.push(y);
 }
+export interface ProductTypeSaleStat {
+  productType: string;
+  totalQuantity: number;
+}
 
-const customerTypeData = [
-  { name: 'Mang đi', value: 120 },
-  { name: 'Ăn tại chỗ', value: 180 },
-  { name: 'Đặt online', value: 60 },
-];
-const customerTypeColors = ['#D97B41', '#A05A2C', '#faad14'];
+const customerTypeColors = ["#B22222", "#FF6F3C", "#FFC107", "	#347433"];
 
-const renderCustomerTypeLabel = ({ cx, cy, midAngle, outerRadius, value }: { cx: number, cy: number, midAngle: number, outerRadius: number, value: number }) => {
+const renderCustomerTypeLabel = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  value,
+}: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius: number;
+  value: number;
+}) => {
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 24;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   return (
-    <text x={x} y={y} fill="#A05A2C" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={15} fontWeight={600}>
+    <text
+      x={x}
+      y={y}
+      fill="#A05A2C"
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontSize={15}
+      fontWeight={600}
+    >
       {value}
     </text>
   );
 };
-
 
 const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
   const { active, payload } = props;
   if (active && payload && payload.length) {
     const { name, value } = payload[0].payload;
     return (
-      <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 10, color: '#A05A2C', fontWeight: 600, fontSize: 15 }}>
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #eee",
+          borderRadius: 8,
+          padding: 10,
+          color: "#A05A2C",
+          fontWeight: 600,
+          fontSize: 15,
+        }}
+      >
         {name}: {value} lượt
       </div>
     );
@@ -83,12 +119,17 @@ const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
 
 const ManagerDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const { data: staffProductivity = [] } = useStaffProductivity();
+
   const { data: revenueStats } = useRevenueStats(selectedYear);
   const { data: topProductsData = [], isLoading: topProductsLoading } =
     useTopProducts();
   const monthlyRevenueData =
-    revenueStats?.map((s) => ({ month: `Tháng ${s.month}`, revenue: s.revenue })) || [];
-  
+    revenueStats?.map((s) => ({
+      month: `Tháng ${s.month}`,
+      revenue: s.revenue,
+    })) || [];
+
   const topProducts = topProductsData.map((p) => ({
     name: p.productName,
     sold: p.totalQuantity,
@@ -98,20 +139,19 @@ const ManagerDashboard: React.FC = () => {
   const { data: currentMonthRevenueStats } = useCurrentMonthRevenue();
   const { data: currentMonthOrderStats } = useCurrentMonthOrder();
   const { data: weeklyRevenue = [] } = useWeeklyRevenue();
-
+  const { data: productTypeStats = [] } = useProductTypeSales();
+  const productTypeData = productTypeStats.map((item: ProductTypeSaleStat) => ({
+    name: item.productType,
+    value: item.totalQuantity,
+  }));
   const weeklyChartData = weeklyRevenue.map((w: any) => ({
     week: `Tuần ${w.week}`,
     "Doanh thu tháng trước": w.previousMonthRevenue,
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
 
-  const weeklyBarData = weeklyRevenue.map((w: any) => ({
-    week: `Tuần ${w.week}`,
-    "Tháng này": w.currentMonthRevenue,
-    "Tháng trước": w.previousMonthRevenue,
-  }));
   return (
-    <div style={{ padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
+    <div style={{ paddingTop: 15, padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
       <div
         style={{
           display: "flex",
@@ -124,7 +164,7 @@ const ManagerDashboard: React.FC = () => {
           level={2}
           style={{ margin: 0, fontWeight: 700, color: "#A05A2C", fontSize: 40 }}
         >
-          Dashboard
+          Dashboard <DashboardOutlined />
         </Title>
         <Button
           type="primary"
@@ -183,8 +223,14 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-            {typeof currentMonthRevenueStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthRevenueStats.percentageChange >= 0 ? "success" : "warning"}>
+            {typeof currentMonthRevenueStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthRevenueStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthRevenueStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthRevenueStats.percentageChange}% so với tháng trước
               </Text>
@@ -213,8 +259,14 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-           {typeof currentMonthOrderStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthOrderStats.percentageChange >= 0 ? "success" : "warning"}>
+            {typeof currentMonthOrderStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthOrderStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthOrderStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthOrderStats.percentageChange}% so với tháng trước
               </Text>
@@ -244,7 +296,9 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-            <Text type="secondary" style={{color: "#A05A2C"}}>Mỗi đơn hàng trong tháng này</Text>
+            <Text type="secondary" style={{ color: "#A05A2C" }}>
+              Mỗi đơn hàng trong tháng này
+            </Text>
           </Card>
         </Col>
         <Col xs={24} md={12} lg={6}>
@@ -267,8 +321,14 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-            {typeof currentMonthProductStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthProductStats.percentageChange >= 0 ? "success" : "warning"}>
+            {typeof currentMonthProductStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthProductStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthProductStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthProductStats.percentageChange}% so với tháng trước
               </Text>
@@ -284,7 +344,7 @@ const ManagerDashboard: React.FC = () => {
           <Card
             title={
               <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
-                So sánh doanh thu 
+                So sánh doanh thu tháng này và tháng trước
               </span>
             }
             style={{
@@ -293,47 +353,63 @@ const ManagerDashboard: React.FC = () => {
             }}
           >
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart
+              <AreaChart
+                width={730}
+                height={250}
                 data={weeklyChartData}
                 margin={{ top: 24, left: 0, bottom: 8 }}
               >
+                <defs>
+                  <linearGradient
+                    id="colorLastMonth"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#A05A2C" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#A05A2C" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorThisMonth"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#faad14" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#faad14" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week" tick={{ fontSize: 12 }} />
                 <YAxis
-                  yAxisId="left"
                   tickFormatter={(v) => v.toLocaleString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip formatter={(v) => v.toLocaleString()} />
                 <Legend />
-                <Line
-                  yAxisId="left"
+                <Area
                   type="monotone"
                   dataKey="Doanh thu tháng trước"
                   stroke="#A05A2C"
-                  strokeWidth={3}
-                  dot={false}
+                  fillOpacity={1}
+                  fill="url(#colorLastMonth)"
                 />
-                <Line
-                  yAxisId="left"
+                <Area
                   type="monotone"
                   dataKey="Doanh thu tháng này"
-                  stroke="#D97B41"
-                  strokeWidth={3}
-                  dot={false}
+                  stroke="#faad14"
+                  fillOpacity={1}
+                  fill="url(#colorThisMonth)"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </Card>
 
           <Card
             title={
-              <span style={{ color: "#222", fontWeight: 700 }}>
+              <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
                 Báo cáo doanh thu năm {selectedYear}
               </span>
             }
@@ -387,7 +463,7 @@ const ManagerDashboard: React.FC = () => {
               <Card
                 title={
                   <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                    Tỉ lệ hình thức mua hàng
+                    Tỉ lệ loại sản phẩm bán chạy
                   </span>
                 }
                 bordered={false}
@@ -396,22 +472,29 @@ const ManagerDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
-                      data={customerTypeData}
+                      data={productTypeData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
+                      cy="42%"
                       outerRadius={90}
                       label={renderCustomerTypeLabel}
                       labelLine={true}
                       stroke="#fff"
                     >
-                      {customerTypeData.map((_entry, idx) => (
-                        <Cell key={`cell-${idx}`} fill={customerTypeColors[idx]} />
+                      {productTypeData.map((_entry, idx) => (
+                        <Cell
+                          key={`cell-${idx}`}
+                          fill={customerTypeColors[idx]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip content={CustomCustomerTypeTooltip} />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      style={{ marginBottom: 10 }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Card>
@@ -463,25 +546,37 @@ const ManagerDashboard: React.FC = () => {
           <LatestOrders />
         </Col>
       </Row>
-
-      <Row gutter={[24, 24]} style={{ marginTop: 16 }}>
-        <Col xs={24} md={24} lg={24}>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
           <Card
-            bordered={false}
-            style={{ borderRadius: 12, boxShadow: "0 4px 16px rgba(160,90,44,0.08)", marginBottom: 24 }}
-            title={<span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>Doanh thu theo tuần trong tháng</span>}
+            title={
+              <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
+                Hiệu suất nhân viên
+              </span>
+            }
           >
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={weeklyBarData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" style={{ fontWeight: 600, fill: "#A05A2C" }} />
-                <YAxis tickFormatter={v => v.toLocaleString()} style={{ fontWeight: 600, fill: "#A05A2C" }} />
-                <Tooltip formatter={(value: number) => value.toLocaleString() + "₫"} />
-                <Legend />
-                <Bar dataKey="Tháng này" fill="#D97B41" radius={[8, 8, 0, 0]} barSize={32} />
-                <Bar dataKey="Tháng trước" fill="#F9E4B7" radius={[8, 8, 0, 0]} barSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
+            {staffProductivity.map((staff, index) => (
+              <div key={index} style={{ marginBottom: "16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <span>{staff.fullName}</span>
+                  <span>{staff.totalRevenue.toLocaleString()}đ</span>
+                </div>
+                <Progress
+                  percent={Math.min((staff.totalRevenue / 10000000) * 100, 100)}
+                  strokeColor={{
+                    "0%": "#F9E4B7",
+                    "100%": "#D97B41",
+                  }}
+                  showInfo={false}
+                />
+              </div>
+            ))}
           </Card>
         </Col>
       </Row>

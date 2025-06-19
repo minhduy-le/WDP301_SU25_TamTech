@@ -49,20 +49,32 @@ const BestSellers: React.FC = () => {
     setSelectedProduct(null);
   };
 
-  if (isLoading) return <Spin size="large" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }} />;
+  if (isLoading)
+    return (
+      <Spin
+        size="large"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      />
+    );
   if (isError) return <div>Lỗi khi tải sản phẩm bán chạy!</div>;
 
   return (
-    <section style={{ padding: "20px 0 40px 0", background: "#da7339" }}>
+    <section style={{ padding: "20px 0 120px 0", background: "linear-gradient(to bottom, #f97316, #fff7e6)" }}>
       <h2
         style={{
           fontSize: "40px",
           fontWeight: "bold",
           textAlign: "center",
           marginBottom: "30px",
-          color: "#efe6db",
+          color: "#fff7e6",
           letterSpacing: "1px",
           marginTop: "0px",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
         MÓN ĂN NỔI BẬT
@@ -94,7 +106,7 @@ const BestSellers: React.FC = () => {
               style={{
                 borderRadius: 24,
                 overflow: "hidden",
-                background: "#efe6db",
+                background: "#fff7e6",
                 boxShadow: "0 4px 24px #0001",
                 border: "none",
               }}
@@ -119,22 +131,39 @@ const BestSellers: React.FC = () => {
                       background: "#fff",
                       color: "#78a243",
                       fontWeight: 600,
-                      borderRadius: 16,
-                      padding: "2px 12px",
-                      fontSize: 16,
+                      borderRadius: 15,
+                      padding: "1px 10px",
+                      fontSize: 20,
+                      fontFamily: "'Montserrat', sans-serif",
                       boxShadow: "0 2px 8px #0002",
                     }}
                   >
-                    ★ 1000+
+                    ★
                   </span>
                 </div>
               }
               bodyStyle={{ padding: 24 }}
             >
-              <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, cursor: "pointer" }} onClick={() => navigate(`/product/${product.productId}`)}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: 22,
+                  marginBottom: 8,
+                  cursor: "pointer",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+                onClick={() => navigate(`/product/${product.productId}`)}
+              >
                 {product.name.toUpperCase()}
               </div>
-              <div style={{ color: "#444", marginBottom: 16, fontSize: 16 }}>
+              <div
+                style={{
+                  color: "#444",
+                  marginBottom: 16,
+                  fontSize: 16,
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+              >
                 {product.description}
               </div>
               <div
@@ -154,6 +183,7 @@ const BestSellers: React.FC = () => {
                       background: "#f97316",
                       borderRadius: 5,
                       padding: "2px 12px",
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     {parseFloat(product.price).toLocaleString()}đ
@@ -163,6 +193,7 @@ const BestSellers: React.FC = () => {
                       color: "#888888",
                       textDecoration: "line-through",
                       fontSize: 15,
+                      fontFamily: "'Montserrat', sans-serif",
                     }}
                   >
                     {product.originalPrice.toLocaleString()}đ
@@ -177,18 +208,17 @@ const BestSellers: React.FC = () => {
                     borderRadius: 8,
                     width: 90,
                     outline: "none",
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                   onMouseEnter={(e) => {
-                    (
-                      e.currentTarget as HTMLElement
-                    ).style.backgroundColor = "#fb923c";
+                    (e.currentTarget as HTMLElement).style.backgroundColor =
+                      "#fb923c";
                     (e.currentTarget as HTMLElement).style.transform =
                       "scale(1.05)";
                   }}
                   onMouseLeave={(e) => {
-                    (
-                      e.currentTarget as HTMLElement
-                    ).style.backgroundColor = "#f97316";
+                    (e.currentTarget as HTMLElement).style.backgroundColor =
+                      "#f97316";
                     (e.currentTarget as HTMLElement).style.transform =
                       "scale(1)";
                   }}

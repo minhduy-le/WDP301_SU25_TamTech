@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import {useState } from "react";
 import {
   Table,
   Space,
@@ -9,14 +9,21 @@ import {
   Modal,
   Descriptions,
   Tooltip,
+  message,
+  Form,
   //   message,
 } from "antd";
-import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
+import { SearchOutlined, EyeOutlined, PlusOutlined, FireOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
-import { useMaterials, type MaterialDto } from "../hooks/materialsApi";
+import {
+  useMaterials,
+  type MaterialDto,
+  useCreateMaterials,
+} from "../../../hooks/materialsApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -26,9 +33,14 @@ const MaterialManagement = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
     null
   );
+  const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
+  const queryClient = useQueryClient();
+  const { mutate: createMaterial, isPending: isCreating } =
+    useCreateMaterials();
 
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
@@ -38,13 +50,16 @@ const MaterialManagement = () => {
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
+
+
   const columns = [
     {
       title: "Mã nguyên liệu",
       dataIndex: "materialId",
       key: "materialId",
       width: 100,
-      sorter: (a: MaterialDto, b: MaterialDto) => a.materialId - b.materialId,
+      sorter: (a: MaterialDto, b: MaterialDto) =>
+        (a.materialId ?? 0) - (b.materialId ?? 0),
     },
     {
       title: "Tên nguyên liệu",
@@ -80,17 +95,54 @@ const MaterialManagement = () => {
               style={{
                 color: "#D97B41",
                 fontWeight: 600,
-                padding: 0,
+                padding: "4px 8px",
+                height: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                borderRadius: 6,
+                border: "1px solid #D97B41",
+                background: "#FFF9F0",
+                transition: "all 0.3s ease",
                 outline: "none",
-                boxShadow: "none",
-                border: "none",
               }}
-            />
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#D97B41";
+                e.currentTarget.style.color = "#FFF9F0";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FFF9F0";
+                e.currentTarget.style.color = "#D97B41";
+              }}
+            >
+              Chi tiết
+            </Button>
           </Tooltip>
         </Space>
       ),
     },
   ];
+
+  const handleAddMaterial = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        createMaterial(values, {
+          onSuccess: () => {
+            message.success("Tạo nguyên liệu thành công!");
+            setIsAddModalVisible(false);
+            form.resetFields();
+            queryClient.invalidateQueries({ queryKey: ["materials"] });
+          },
+          onError: (error: any) => {
+            message.error(error.message || "Tạo nguyên liệu thất bại!");
+          },
+        });
+      })
+      .catch((info) => {
+        console.log("Validate Failed:", info);
+      });
+  };
 
   return (
     <div
@@ -139,19 +191,34 @@ const MaterialManagement = () => {
         .material-table .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right {
            background: inherit !important;
         }
+        /* Your CSS styles remain the same */
+        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
+        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
+        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
+        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
+          border-color: #D97B41 !important; box-shadow: none !important;
+        }
+        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
+        .ant-table-column-sorter-up.active svg,
+        .ant-table-column-sorter-down.active svg {
+          color: #D97B41 !important;
+          fill: #D97B41 !important;
+        }
       `}</style>
 
-      <div style={{ maxWidth: 1300, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1300 }}>
         <h1
           style={{
-            fontWeight: 800,
+            fontWeight: 700,
             color: "#A05A2C",
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
+            paddingTop: 0,  
+            marginTop: 0,
           }}
         >
-          Quản lý Nguyên liệu
+          Quản lý Nguyên liệu <FireOutlined/>
         </h1>
         <Card
           style={{
@@ -191,6 +258,21 @@ const MaterialManagement = () => {
                 allowClear
               />
             </Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                fontWeight: 600,
+                borderRadius: 6,
+                boxShadow: "0 2px 0 rgba(0,0,0,0.043)",
+                outline: "none",
+              }}
+              onClick={() => setIsAddModalVisible(true)}
+            >
+              Thêm nguyên liệu
+            </Button>
           </div>
 
           <Table
@@ -233,6 +315,7 @@ const MaterialManagement = () => {
           //     Đóng
           //   </Button>,
           // ]}
+          centered
           footer={null}
           width={1000}
           styles={{
@@ -261,28 +344,135 @@ const MaterialManagement = () => {
             >
               <Descriptions
                 bordered
-                column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
+                column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
                 size="default"
                 labelStyle={{
                   color: "#A05A2C",
                   fontWeight: 600,
                   background: "#FFF9F0",
-                  // width: "160px",
                 }}
                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
                 <Descriptions.Item label="Mã nguyên liệu">
                   {selectedMaterial.materialId}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tên">
+                <Descriptions.Item label="Tên nguyên liệu">
                   {selectedMaterial.name}
                 </Descriptions.Item>
                 <Descriptions.Item label="Số lượng">
                   {selectedMaterial.quantity}
                 </Descriptions.Item>
+                <Descriptions.Item label="Mã cửa hàng">
+                  {selectedMaterial.storeId}
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên cửa hàng">
+                  {selectedMaterial.Store?.name}
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ cửa hàng">
+                  {selectedMaterial.Store?.address}
+                </Descriptions.Item>
               </Descriptions>
             </Card>
           )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Thêm nguyên liệu
+            </span>
+          }
+          open={isAddModalVisible}
+          onCancel={() => {
+            setIsAddModalVisible(false);
+            form.resetFields();
+          }}
+          centered
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => {
+                setIsAddModalVisible(false);
+                form.resetFields();
+              }}
+              style={{
+                borderRadius: 6,
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="create"
+              type="primary"
+              onClick={handleAddMaterial}
+              loading={isCreating}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                borderRadius: 6,
+                outline: "none"
+              }}
+            >
+              Tạo
+            </Button>,
+          ]}
+          width={500}
+          styles={{
+            body: {
+              background: "#FFF9F0",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid ${tableBorderColor}`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          <Form
+            form={form}
+            name="addMaterialForm"
+            layout="vertical"
+            style={{
+              background: "#fff",
+              padding: "24px",
+              borderRadius: "8px",
+              border: "1px solid #f0f0f0",
+            }}
+            initialValues={{ name: "", quantity: 0 }}
+            onFinish={handleAddMaterial}
+          >
+            <Form.Item
+              name="name"
+              label="Tên nguyên liệu"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
+              ]}
+              style={{ marginBottom: 0 }}
+            >
+              <Input placeholder="Nhập tên nguyên liệu" style={{ borderRadius: 6, marginBottom: 16 }} />
+            </Form.Item>
+            <Form.Item
+              name="quantity"
+              label="Số lượng"
+              style={{ marginBottom: 0 }}
+              rules={[
+                { required: true, message: "Vui lòng nhập số lượng!" },
+                {
+                  validator: (_, value) =>
+                    value > 0
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
+                        ),
+                },
+              ]}
+            >
+              <Input type="number" placeholder="Nhập số lượng" style={{ borderRadius: 6, marginBottom: 16 }} />
+            </Form.Item>
+          </Form>
         </Modal>
       </div>
     </div>

@@ -1,6 +1,6 @@
 .hero-section {
-  position: relative; 
-  height: 80vh; 
+  position: relative;
+  height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,50 +41,52 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
-  z-index: 2; 
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2;
 }
 
 .hero-content {
-  position: relative; 
-  z-index: 3; 
+  position: relative;
+  z-index: 3;
   padding: 20px;
-  max-width: 800px; 
+  max-width: 800px;
 }
 
 .hero-title {
-  font-size: 3rem; 
+  font-size: 3rem;
   font-weight: bold;
   margin-bottom: 1rem;
   line-height: 1.2;
+  font-family: "Montserrat", sans-serif;
 }
 
 .hero-title span {
-  font-size: 3rem; 
-  font-weight: 'bold';
+  font-size: 3rem;
+  font-weight: "bold";
 }
 
 .hero-title .highlight {
-  color: #F9A14D; 
+  color: #f9a14d;
   font-weight: bold;
 }
 
 .hero-desc {
   font-size: 1.2rem;
   margin-bottom: 2rem;
+  font-family: "Montserrat", sans-serif;
 }
 
 .hero-form {
   display: flex;
   gap: 10px;
   align-items: center;
-  justify-content: center; 
+  justify-content: center;
   color: #a05a13;
 }
 
 .custom-ant-select .ant-select-selector {
   background: #fff !important;
-  border-color: #F9A14D !important;
+  border-color: #f9a14d !important;
   border-radius: 5px !important;
   height: 40px !important;
   display: flex;
@@ -98,11 +100,11 @@
 }
 
 .custom-ant-select-dropdown .ant-select-item-option-disabled {
-  color: rgba(0,0,0,0.25) !important;
+  color: rgba(0, 0, 0, 0.25) !important;
 }
 
 .hero-form .ant-input {
-  border-color: #F9A14D;
+  border-color: #f9a14d;
   color: #a05a13;
 }
 .hero-form .ant-input::placeholder {

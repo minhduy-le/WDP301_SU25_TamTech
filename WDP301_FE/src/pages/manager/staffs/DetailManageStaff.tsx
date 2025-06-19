@@ -121,125 +121,267 @@ const DetailManageStaff: React.FC = () => {
         <div className="staff-detail-page">
             <style>{`
                 :root {
-                    --primary-color: #007bff;
-                    --secondary-color: #6c757d;
-                    --success-color: #28a745;
-                    --danger-color: #dc3545;
-                    --warning-color: #ffc107;
-                    --light-color: #f8f9fa;
-                    --dark-color: #343a40;
-                    --border-color: #dee2e6;
-                    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    --primary-color: #d97706;
+                    --primary-hover: #b45309;
+                    --secondary-color: #78716c;
+                    --success-color: #16a34a;
+                    --danger-color: #dc2626;
+                    --warning-color: #d97706;
+                    --light-color: #fafaf9;
+                    --dark-color: #44403c;
+                    --border-color: #e7e5e4;
+                    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
                 }
+
                 .staff-detail-page {
                     font-family: var(--font-family);
-                    background-color: #f4f7fa;
-                    padding: 30px;
-                    max-width: 1200px;
+                    background-color: #f5f5f4;
+                    padding: 2rem;
+                    max-width: 1280px;
                     margin: 0 auto;
+                    min-height: 100vh;
                 }
+
                 .card {
                     background-color: white;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                    padding: 25px;
-                    margin-bottom: 25px;
+                    border-radius: 1rem;
+                    box-shadow: var(--card-shadow);
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    border: 1px solid var(--border-color);
                 }
+
+                .card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+                }
+
                 h2 {
                     font-size: 1.25rem;
+                    font-weight: 600;
                     margin-top: 0;
-                    margin-bottom: 20px;
+                    margin-bottom: 1.5rem;
                     color: var(--dark-color);
-                    border-bottom: 1px solid var(--border-color);
-                    padding-bottom: 10px;
+                    border-bottom: 2px solid var(--border-color);
+                    padding-bottom: 0.75rem;
                 }
                 
                 /* Profile Header */
                 .profile-header {
                     display: flex;
                     align-items: center;
-                    gap: 25px;
+                    gap: 2rem;
+                    background: linear-gradient(to right, #ffffff, #fafaf9);
+                    border: 1px solid var(--border-color);
                 }
+
                 .profile-avatar {
-                    width: 90px;
-                    height: 90px;
+                    width: 100px;
+                    height: 100px;
                     border-radius: 50%;
                     object-fit: cover;
-                    border: 3px solid var(--primary-color);
+                    border: 4px solid var(--primary-color);
+                    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1);
                 }
+
                 .profile-info h1 {
                     margin: 0;
-                    font-size: 1.8rem;
+                    font-size: 1.875rem;
+                    font-weight: 700;
+                    color: var(--dark-color);
                 }
+
                 .profile-info p {
-                    margin: 5px 0 0 0;
+                    margin: 0.5rem 0 0 0;
                     color: var(--secondary-color);
+                    font-size: 1rem;
                 }
+
                 .profile-actions {
                     margin-left: auto;
                     display: flex;
-                    gap: 10px;
+                    gap: 1rem;
                 }
+
                 .btn {
-                    padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer;
-                    text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: opacity 0.3s;
+                    padding: 0.75rem 1.5rem;
+                    border: none;
+                    border-radius: 0.5rem;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
                 }
-                .btn-primary { background-color: var(--primary-color); color: white; }
-                .btn-secondary { background-color: #6c757d; color: white; }
+
+                .btn:hover {
+                    transform: translateY(-1px);
+                }
+
+                .btn-primary {
+                    background-color: var(--primary-color);
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    background-color: var(--primary-hover);
+                }
+
+                .btn-secondary {
+                    background-color: #fafaf9;
+                    color: var(--dark-color);
+                    border: 1px solid var(--border-color);
+                }
+
+                .btn-secondary:hover {
+                    background-color: #f5f5f4;
+                }
 
                 /* KPI Grid */
                 .kpi-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 1.5rem;
                 }
+
                 .kpi-item {
                     display: flex;
                     align-items: center;
-                    background-color: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 8px;
+                    background-color: #fafaf9;
+                    padding: 1.5rem;
+                    border-radius: 1rem;
+                    border: 1px solid var(--border-color);
                 }
+
                 .kpi-icon {
-                    width: 40px;
-                    height: 40px;
+                    width: 48px;
+                    height: 48px;
                     color: var(--primary-color);
-                    margin-right: 15px;
+                    margin-right: 1rem;
+                    padding: 0.75rem;
+                    background-color: rgba(217, 119, 6, 0.1);
+                    border-radius: 0.75rem;
                 }
+
                 .kpi-text .value {
                     font-size: 1.5rem;
-                    font-weight: 600;
+                    font-weight: 700;
                     color: var(--dark-color);
+                    line-height: 1.2;
                 }
+
                 .kpi-text .label {
-                    font-size: 0.9rem;
+                    font-size: 0.875rem;
                     color: var(--secondary-color);
+                    margin-top: 0.25rem;
                 }
                 
                 /* Tables */
-                table { width: 100%; border-collapse: collapse; }
-                th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: left; }
-                th { font-size: 0.8rem; text-transform: uppercase; color: var(--secondary-color); }
-                .status-hoanthanh { color: var(--success-color); }
-                .status-dahuy { color: var(--danger-color); }
+                table {
+                    width: 100%;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                }
+
+                th, td {
+                    padding: 1rem;
+                    text-align: left;
+                    border-bottom: 1px solid var(--border-color);
+                }
+
+                th {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    color: var(--secondary-color);
+                    background-color: #fafaf9;
+                }
+
+                tr:last-child td {
+                    border-bottom: none;
+                }
+
+                tr:hover td {
+                    background-color: #fafaf9;
+                }
+
+                .status-hoanthanh {
+                    color: var(--success-color);
+                    font-weight: 500;
+                }
+
+                .status-dahuy {
+                    color: var(--danger-color);
+                    font-weight: 500;
+                }
 
                 /* Notes Section */
                 .note-item {
                     border-bottom: 1px dashed var(--border-color);
-                    padding: 15px 0;
+                    padding: 1rem 0;
                 }
-                .note-item:last-child { border-bottom: none; }
-                .note-content { margin: 0 0 8px 0; }
-                .note-meta { font-size: 0.8rem; color: var(--secondary-color); }
-                .note-input-area { margin-top: 20px; }
+
+                .note-item:last-child {
+                    border-bottom: none;
+                }
+
+                .note-content {
+                    margin: 0 0 0.5rem 0;
+                    color: var(--dark-color);
+                    line-height: 1.5;
+                }
+
+                .note-meta {
+                    font-size: 0.75rem;
+                    color: var(--secondary-color);
+                }
+
+                .note-input-area {
+                    margin-top: 1.5rem;
+                }
+
                 textarea {
                     width: 100%;
-                    padding: 10px;
-                    border-radius: 5px;
+                    padding: 1rem;
+                    border-radius: 0.75rem;
                     border: 1px solid var(--border-color);
                     font-family: var(--font-family);
-                    min-height: 80px;
-                    margin-bottom: 10px;
+                    min-height: 100px;
+                    margin-bottom: 1rem;
+                    resize: vertical;
+                    transition: border-color 0.2s ease;
+                }
+
+                textarea:focus {
+                    outline: none;
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+                }
+
+                @media (max-width: 768px) {
+                    .staff-detail-page {
+                        padding: 1rem;
+                    }
+
+                    .profile-header {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+
+                    .profile-actions {
+                        margin: 1rem 0 0 0;
+                        flex-direction: column;
+                        width: 100%;
+                    }
+
+                    .btn {
+                        width: 100%;
+                    }
                 }
             `}</style>
 
@@ -251,8 +393,7 @@ const DetailManageStaff: React.FC = () => {
                     <p>{employee.role} | {employee.email} | {employee.phone}</p>
                 </div>
                 <div className="profile-actions">
-                    <button className="btn btn-secondary">Đặt lại mật khẩu</button>
-                    <button className="btn btn-primary">Chỉnh sửa</button>
+                    <button className="btn btn-primary">Liên hệ</button>
                 </div>
             </div>
 
