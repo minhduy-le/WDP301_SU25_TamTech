@@ -7,6 +7,8 @@ const ChatRoomUser = require("../models/ChatRoomUser");
 const User = require("../models/user");
 
 const initializeSocket = (server) => {
+  // WDP301-Backend/config/socket.js
+
   const io = socketIo(server, {
     cors: {
       origin: ["https://wdp301-su25.space", "http://localhost:3000"],
@@ -14,7 +16,6 @@ const initializeSocket = (server) => {
       credentials: true,
     },
     transports: ["polling", "websocket"], // Thử polling trước
-    allowEIO3: true,
   });
 
   io.use((socket, next) => {
