@@ -26,17 +26,17 @@ const Order = sequelize.define(
       },
     },
     order_amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0.0,
     },
     order_discount_percent: {
-      type: DataTypes.DECIMAL(5, 2),
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 0.0,
     },
     order_discount_value: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 0.0,
     },
@@ -46,12 +46,12 @@ const Order = sequelize.define(
       defaultValue: 0,
     },
     order_shipping_fee: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0.0,
     },
     order_subtotal: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0.0,
     },

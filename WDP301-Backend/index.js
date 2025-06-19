@@ -4,7 +4,10 @@ const sequelize = require("./config/database");
 const setupSwagger = require("./config/swagger");
 const initializeSocket = require("./config/socket");
 const cors = require("cors");
+
 require("dotenv").config();
+
+require("./config/firebase");
 
 // Import routes
 const userRoutes = require("./routes/userRoutes");
@@ -24,6 +27,7 @@ const promotionTypeRoutes = require("./routes/promotionTypeRoutes");
 const promotionRoutes = require("./routes/promotionRoutes");
 const posOrderRoutes = require("./routes/orderRoutesPosApp");
 const chatMessageAIRoutes = require("./routes/chatMessageAIRoutes");
+const NotificationRoutes = require("./routes/notificationRoutes");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
@@ -65,6 +69,7 @@ app.use("/api/location", districtsRoutes);
 app.use("/api/promotion-types", promotionTypeRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/chat-message-ai", chatMessageAIRoutes);
+app.use("/api/notifications", NotificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");

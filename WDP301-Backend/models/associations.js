@@ -15,6 +15,7 @@ const Message = require("./message");
 const Promotion = require("./promotion");
 const PromotionType = require("./promotionType");
 const ChatMessageAI = require("./ChatMessageAI");
+const Notification = require("./notification");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -74,6 +75,8 @@ User.hasMany(Promotion, { foreignKey: "createBy", as: "CreatedPromotions" });
 ChatMessageAI.belongsTo(User, { foreignKey: "senderId", as: "Sender" });
 User.hasMany(ChatMessageAI, { foreignKey: "senderId", as: "SentChatMessagesAI" });
 
+Notification.belongsTo(User, { foreignKey: "userId", as: "User" }); // Added Notification relationship
+
 module.exports = {
   Product,
   ProductType,
@@ -92,4 +95,5 @@ module.exports = {
   Promotion,
   PromotionType,
   ChatMessageAI,
+  Notification,
 };
