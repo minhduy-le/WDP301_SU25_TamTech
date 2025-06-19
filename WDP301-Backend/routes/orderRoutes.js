@@ -11,6 +11,7 @@ const {
   setOrderToDelivered,
   getAllOrders,
   getPaidOrders,
+  getOrderDetails,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -582,6 +583,146 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
     });
   }
 });
+
+/**
+ * @swagger
+ * /api/orders/{orderId}:
+ *   get:
+ *     summary: Retrieve details of a specific order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Details of the specified order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orderId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 payment_time:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                 order_create_at:
+ *                   type: string
+ *                   format: date-time
+ *                 order_address:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                   description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
+ *                 fullName:
+ *                   type: string
+ *                   description: User's full name
+ *                 phone_number:
+ *                   type: string
+ *                   nullable: true
+ *                 orderItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                         description: Product name
+ *                       quantity:
+ *                         type: integer
+ *                       price:
+ *                         type: number
+ *                 orderItemsCount:
+ *                   type: integer
+ *                   description: Total number of order items in the order
+ *                 order_shipping_fee:
+ *                   type: number
+ *                 order_discount_value:
+ *                   type: number
+ *                 order_amount:
+ *                   type: number
+ *                 order_subtotal:
+ *                   type: number
+ *                 invoiceUrl:
+ *                   type: string
+ *                   nullable: true
+ *                 order_point_earn:
+ *                   type: integer
+ *                 note:
+ *                   type: string
+ *                   nullable: true
+ *                 payment_method:
+ *                   type: string
+ *                   description: Payment method name (e.g., Vnpay, PayOS)
+ *                 isDatHo:
+ *                   type: boolean
+ *                   description: Indicates if the order is placed on behalf
+ *                 tenNguoiDatHo:
+ *                   type: string
+ *                   description: Name of the person placing the order on behalf
+ *                   nullable: true
+ *                 soDienThoaiNguoiDatHo:
+ *                   type: string
+ *                   description: Phone number of the person placing the order on behalf
+ *                   nullable: true
+ *                 certificationOfDelivered:
+ *                   type: string
+ *                   description: URL of the certification image for delivered orders
+ *                   nullable: true
+ *                 order_delivery_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Timestamp when the order was delivered
+ *                   nullable: true
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user not allowed to access this order)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: You do not have permission to view this order'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+router.get("/:orderId", verifyToken, getOrderDetails);
 
 /**
  * @swagger

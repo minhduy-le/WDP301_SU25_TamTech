@@ -376,6 +376,125 @@ const createOrder = async (req, res) => {
   }
 };
 
+const getOrderDetails = async (req, res) => {
+  console.log("getOrderDetails called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      attributes: [
+        "orderId",
+        "userId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "order_subtotal",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "isDatHo",
+        "tenNguoiDatHo",
+        "soDienThoaiNguoiDatHo",
+        "certificationOfDelivered",
+        "order_delivery_at",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.userId !== userId && !["Staff", "Admin"].includes(userRole)) {
+      console.log("Unauthorized access attempt by userId:", userId, "for orderId:", parsedOrderId);
+      return res.status(403).send("Unauthorized: You do not have permission to view this order");
+    }
+
+    const formattedOrder = {
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItemsCount: order.OrderItems.length,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
+      order_amount: order.order_amount,
+      order_subtotal: order.order_subtotal,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+      isDatHo: order.isDatHo,
+      tenNguoiDatHo: order.tenNguoiDatHo,
+      soDienThoaiNguoiDatHo: order.soDienThoaiNguoiDatHo,
+      certificationOfDelivered: order.certificationOfDelivered,
+      order_delivery_at: order.order_delivery_at,
+    };
+
+    console.log("Returning formatted order:", JSON.stringify(formattedOrder, null, 2));
+    res.status(200).json(formattedOrder);
+  } catch (error) {
+    console.error("Error in getOrderDetails:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve order details", error: error.message });
+  }
+};
+
 async function generateAndUploadInvoice(order, orderId, transaction) {
   console.log("generateAndUploadInvoice called for orderId:", orderId);
   try {
@@ -1355,4 +1474,5 @@ module.exports = {
   setOrderToDelivered,
   getAllOrders,
   getPaidOrders,
+  getOrderDetails,
 };
