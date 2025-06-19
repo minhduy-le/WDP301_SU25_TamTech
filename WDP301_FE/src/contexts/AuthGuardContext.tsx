@@ -54,15 +54,16 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/verify-email",
       "/verify-otp",
       "/menu",
+      "/forgot-password",
       "/product/:productId",
       "/blog",
     ];
 
     if (!user || !user.role) {
-      if (location.pathname.startsWith('/product/')) {
+      if (location.pathname.startsWith("/product/")) {
         return;
       }
-      
+
       if (!publicPages.includes(location.pathname)) {
         navigate("/login", { replace: true });
       }
@@ -84,11 +85,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
 
     const restrictedPages: Record<UserRole, string[]> = {
       Staff: ["/staff/orders", "/staff/profile", "/staff/chat"],
-      User: [
-        "/checkout",
-        "/payment-success",
-        "/user-information",
-      ],
+      User: ["/checkout", "/payment-success", "/user-information"],
       Shipper: [],
       Manager: [
         "/manager/dashboard",

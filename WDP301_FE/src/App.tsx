@@ -38,6 +38,7 @@ import ManagerChat from "./pages/ManagerChat";
 import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
 import MaterialManagement from "./pages/manager/materials/MaterialManagement";
 import ManagerProfile from "./pages/manager/ManagerProfile";
+import ForgotPassword from "./pages/ForgotPassword";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -76,6 +77,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/register" element={<Register />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/checkout" element={<Checkout />} />
