@@ -1,4 +1,3 @@
-// WDP301-Backend/services/userService.js
 const { Sequelize, Op } = require("sequelize");
 const User = require("../models/user");
 const Information = require("../models/information");
@@ -237,22 +236,6 @@ const userService = {
     );
 
     return { token };
-  },
-
-  async updateFcmToken(fcmToken, userId) {
-    if (!fcmToken) {
-      throw "FCM token cannot be blank";
-    }
-    if (fcmToken.length > 1000) {
-      throw "FCM token cannot exceed 1000 characters";
-    }
-
-    const user = await User.findOne({ where: { id: userId } }); // <-- Đã sửa lỗi "nơi" thành "where"
-    if (!user) {
-      throw "User not found";
-    }
-
-    await user.update({ fcmToken }); // <-- Đã sửa để update đúng user instance
   },
 
   async googleLogin(idToken) {

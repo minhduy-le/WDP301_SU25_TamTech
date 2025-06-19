@@ -9,10 +9,6 @@ const User = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    fcmToken: {
-      type: DataTypes.STRING(1000),
-      allowNull: true,
-    },
     fullName: {
       type: DataTypes.STRING(20),
       allowNull: false,
