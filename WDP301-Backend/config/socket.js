@@ -9,13 +9,16 @@ const User = require("../models/user");
 const initializeSocket = (server) => {
   // WDP301-Backend/config/socket.js
 
+  // WDP301-Backend/config/socket.js
+
   const io = socketIo(server, {
     cors: {
       origin: ["https://wdp301-su25.space", "http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
+      allowEIO3: true, // <-- Thêm dòng này
     },
-    transports: ["polling", "websocket"], // Thử polling trước
+    transports: ["polling", "websocket"],
   });
 
   io.use((socket, next) => {
