@@ -27,6 +27,7 @@ const promotionRoutes = require("./routes/promotionRoutes");
 require("./models/associations");
 
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app); // Create HTTP server
 const port = process.env.PORT || 3000;
 
