@@ -31,9 +31,8 @@ declare global {
       address: any;
       avatar: string;
       phone: string;
-      
     };
-    token: string
+    token: string;
   }
 
   interface ITopRestaurant {
@@ -137,62 +136,58 @@ declare global {
     updatedAt: Date;
   }
   interface IOrderHistoryCus {
-    orderId: number,
-    payment_time: string,
-    order_create_at: string,
-    order_address: string,
-    status: string,
-    fullName: string,
-    phone_number: string,
+    orderId: number;
+    payment_time: string;
+    order_create_at: string;
+    order_address: string;
+    status: string;
+    fullName: string;
+    phone_number: string;
     orderItems: [
       {
-        productId: number,
-        name: string,
-        quantity: number,
-        price: string
+        productId: number;
+        name: string;
+        quantity: number;
+        price: string;
       }
-    ],
-    order_shipping_fee: string,
-    order_discount_value: string,
-    order_amount: string,
-    order_subtotal: string,
-    invoiceUrl: string,
-    order_point_earn: number,
-    note: string,
-    payment_method: string
-  },
-  interface IOrderDetails {
-    id: string;
-    customerName: string | null;
-    subTotal: number;
-    promotionCode: string | null;
-    discountValue: number;
-    discountPercent: number;
-    amount: number;
-    shipping_fee: number | null;
-    isPickUp: boolean;
-    delivery_at: string | null;
-    orderStatus: string;
+    ];
+    order_shipping_fee: string;
+    order_discount_value: string;
+    order_amount: string;
+    order_subtotal: string;
+    invoiceUrl: string;
+    order_point_earn: number;
     note: string;
-    payment_code: string | null;
-    payment_methods: string | null;
-    address: string;
-    phone: string;
-    pointUsed: number;
-    pointEarned: number;
-    createdAt: string;
+    payment_method: string;
+  }
+  interface IOrderDetails {
+    orderId: number;
+    userId: number;
+    payment_time: string;
+    order_create_at: string;
+    order_address: string;
+    status: string;
+    fullName: string;
+    phone_number: string;
+    orderItemsCount: number;
     orderItems: {
-      productName: string;
-      productImg: string;
       productId: number;
-      orderId: number;
+      name: string;
       quantity: number;
       price: number;
-      note: string;
-      feedback: string | null;
-      feedbackPoint: number;
-      expiredFeedbackTime: string | null;
-      feedBackYet: boolean;
     }[];
+    order_shipping_fee: number;
+    order_discount_value: number;
+    order_amount: number;
+    order_subtotal: number;
+    invoiceUrl: string;
+    order_point_earn: number;
+    note: string;
+    payment_method: string;
+    isDatHo: boolean;
+    tenNguoiDatHo: string | null;
+    soDienThoaiNguoiDatHo: string | null;
+    certificationOfDelivered: string | null;
+    order_delivery_at: string | null;
   }
 }

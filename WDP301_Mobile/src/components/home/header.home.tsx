@@ -27,8 +27,6 @@ interface IPropsBranches {
 }
 const styles = StyleSheet.create({
   container: {
-    marginTop: Platform.OS === "ios" ? 30 : 20,
-    marginBottom: Platform.OS === "ios" ? 20 : 0,
     paddingTop: 20,
     gap: 3,
     height: 50,
@@ -94,10 +92,10 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/branches/distance?destination=${locationReal}`
-        );
-        setBranchInfo(res.data.data);
+        // const res = await axios.get(
+        //   `${BASE_URL}/branches/distance?destination=${locationReal}`
+        // );
+        // setBranchInfo(res.data.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }

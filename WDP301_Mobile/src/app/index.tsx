@@ -8,7 +8,6 @@ import axios from "axios";
 SplashScreen.preventAutoHideAsync();
 
 const RootPage = () => {
-  const { setAppState } = useCurrentApp();
   const [state, setState] = useState<any>();
   useEffect(() => {
     async function prepare() {
@@ -16,7 +15,7 @@ const RootPage = () => {
         router.replace("/(tabs)");
       } catch (e) {
         setState(() => {
-          throw new Error("Không thể kết tới API Backend...");
+          throw new Error("Không thể kết nối đến máy chủ");
         });
       } finally {
         await SplashScreen.hideAsync();

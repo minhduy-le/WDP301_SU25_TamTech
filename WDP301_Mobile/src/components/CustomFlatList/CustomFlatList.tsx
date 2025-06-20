@@ -52,6 +52,7 @@ function CustomFlatList<T>({
             useNativeDriver: true,
           }
         )}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
