@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import axios from "axios";
 
 export interface Shipper {
   id: number;
@@ -10,6 +12,7 @@ export interface Shipper {
 
 interface AssignShipper {
   shipperId: number;
+  orderDate: string;
 }
 
 const fetchShippers = async (): Promise<Shipper[]> => {
@@ -38,6 +41,14 @@ export const useAssignShipper = () => {
         assignShipper
       );
       return response.data;
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };
