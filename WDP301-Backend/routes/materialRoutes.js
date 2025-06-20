@@ -57,6 +57,9 @@ const materialService = require("../services/materialService");
  *                     storeId:
  *                       type: integer
  *                       description: Hardcoded to 1
+ *                     barcode:
+ *                       type: string
+ *                       description: URL of the generated barcode image
  *       400:
  *         description: Invalid input
  *         content:
@@ -130,6 +133,9 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: integer
  *                       storeId:
  *                         type: integer
+ *                       barcode:
+ *                         type: string
+ *                         description: URL of the generated barcode image
  *                       Store:
  *                         type: object
  *                         properties:
