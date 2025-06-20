@@ -14,6 +14,8 @@ const ChatRoomUser = require("./ChatRoomUser");
 const Message = require("./message");
 const Promotion = require("./promotion");
 const PromotionType = require("./promotionType");
+const Schedule = require("./schedule");
+const ScheduleShipper = require("./ScheduleShipper");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -70,6 +72,12 @@ PromotionType.hasMany(Promotion, { foreignKey: "promotionTypeId", as: "Promotion
 Promotion.belongsTo(User, { foreignKey: "createBy", as: "Creator" });
 User.hasMany(Promotion, { foreignKey: "createBy", as: "CreatedPromotions" });
 
+// Define relationships for Schedule and ScheduleShipper
+Schedule.hasMany(ScheduleShipper, { foreignKey: "scheduleId", as: "ScheduleShippers" });
+ScheduleShipper.belongsTo(Schedule, { foreignKey: "scheduleId", as: "Schedule" });
+ScheduleShipper.belongsTo(User, { foreignKey: "shipperId", as: "Shipper" });
+User.hasMany(ScheduleShipper, { foreignKey: "shipperId", as: "ScheduleShippers" });
+
 module.exports = {
   Product,
   ProductType,
@@ -87,4 +95,6 @@ module.exports = {
   Message,
   Promotion,
   PromotionType,
+  Schedule,
+  ScheduleShipper,
 };
