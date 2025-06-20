@@ -1,7 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { Table, Space, Button, Input, Card, Modal, Descriptions, Tooltip, message, Form, Image } from "antd";
-import { SearchOutlined, EyeOutlined, PlusOutlined, FireOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Space,
+  Button,
+  Input,
+  Card,
+  Modal,
+  Descriptions,
+  Tooltip,
+  message,
+  Form,
+  Image,
+} from "antd";
+import {
+  SearchOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -13,7 +30,7 @@ import {
   useIncreaseMaterialQuantity,
 } from "../../../hooks/materialsApi";
 import { useQueryClient } from "@tanstack/react-query";
-import BarcodeScannerComponent from "react-barcode-scanner";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -31,6 +48,7 @@ const MaterialManagement = () => {
   const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
   const [isScanning, setIsScanning] = useState(false);
+  const [scanner, setScanner] = useState<Html5QrcodeScanner | null>(null);
 
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
@@ -46,7 +64,8 @@ const MaterialManagement = () => {
       dataIndex: "materialId",
       key: "materialId",
       width: 160,
-      sorter: (a: MaterialDto, b: MaterialDto) => (a.materialId ?? 0) - (b.materialId ?? 0),
+      sorter: (a: MaterialDto, b: MaterialDto) =>
+        (a.materialId ?? 0) - (b.materialId ?? 0),
     },
     {
       title: "Tên nguyên liệu",
@@ -164,30 +183,56 @@ const MaterialManagement = () => {
 
   const handleBarcodeScan = (err: any, result: any) => {
     if (result) {
-      const scannedBarcode = result.text;
+      const scannedBarcode = result;
       const material = materials?.find((m) => m.barcode === scannedBarcode);
       if (material) {
-        increaseMaterialQuantity(
-          { materialId: material.materialId! },
-          {
-            onSuccess: () => {
-              message.success("Cập nhật số lượng thành công!");
-              queryClient.invalidateQueries({ queryKey: ["materials"] });
-            },
-            onError: (error: any) => {
-              message.error(error.message || "Cập nhật số lượng thất bại!");
-            },
-          }
-        );
+        increaseMaterialQuantity({ materialId: material.materialId! }, {
+          onSuccess: () => {
+            message.success("Cập nhật số lượng thành công!");
+            queryClient.invalidateQueries({ queryKey: ["materials"] });
+          },
+          onError: (error: any) => {
+            message.error(error.message || "Cập nhật số lượng thất bại!");
+          },
+        });
       } else {
         message.error("Không tìm thấy nguyên liệu với barcode này!");
+      }
+      if (scanner) {
+        scanner.clear();
+        setScanner(null);
       }
       setIsScanning(false);
     } else if (err) {
       message.error("Quét barcode thất bại!");
+      if (scanner) {
+        scanner.clear();
+        setScanner(null);
+      }
       setIsScanning(false);
     }
   };
+
+  useEffect(() => {
+    if (isScanning && !scanner) {
+      const qrScanner = new Html5QrcodeScanner(
+        "barcode-scanner",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+      qrScanner.render(handleBarcodeScan, (error) => {
+        console.error(error);
+        message.error("Lỗi khi khởi tạo scanner!");
+      });
+      setScanner(qrScanner);
+    }
+    return () => {
+      if (scanner) {
+        scanner.clear();
+        setScanner(null);
+      }
+    };
+  }, [isScanning, scanner]);
 
   return (
     <div
@@ -330,14 +375,20 @@ const MaterialManagement = () => {
               border: `1px solid ${tableBorderColor}`,
               overflow: "hidden",
             }}
-            rowClassName={(_, index) => (index % 2 === 0 ? "even-row-material" : "odd-row-material")}
+            rowClassName={(_, index) =>
+              index % 2 === 0 ? "even-row-material" : "odd-row-material"
+            }
             scroll={{ x: 980 }}
             sticky
           />
         </Card>
 
         <Modal
-          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Chi tiết nguyên liệu</span>}
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Chi tiết nguyên liệu
+            </span>
+          }
           open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           centered
@@ -378,21 +429,38 @@ const MaterialManagement = () => {
                 }}
                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
-                <Descriptions.Item label="Mã nguyên liệu">{selectedMaterial.materialId}</Descriptions.Item>
-                <Descriptions.Item label="Tên nguyên liệu">{selectedMaterial.name}</Descriptions.Item>
-                <Descriptions.Item label="Số lượng">{selectedMaterial.quantity}</Descriptions.Item>
-                <Descriptions.Item label="Barcode">
-                  <Image src={selectedMaterial.barcode} alt={selectedMaterial.name} />
+                <Descriptions.Item label="Mã nguyên liệu">
+                  {selectedMaterial.materialId}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tên cửa hàng">{selectedMaterial.Store?.name}</Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ cửa hàng">{selectedMaterial.Store?.address}</Descriptions.Item>
+                <Descriptions.Item label="Tên nguyên liệu">
+                  {selectedMaterial.name}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số lượng">
+                  {selectedMaterial.quantity}
+                </Descriptions.Item>
+                <Descriptions.Item label="Barcode">
+                  <Image
+                    src={selectedMaterial.barcode}
+                    alt={selectedMaterial.name}
+                  />
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên cửa hàng">
+                  {selectedMaterial.Store?.name}
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ cửa hàng">
+                  {selectedMaterial.Store?.address}
+                </Descriptions.Item>
               </Descriptions>
             </Card>
           )}
         </Modal>
 
         <Modal
-          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Thêm nguyên liệu</span>}
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Thêm nguyên liệu
+            </span>
+          }
           open={isAddModalVisible}
           onCancel={() => {
             setIsAddModalVisible(false);
@@ -458,10 +526,15 @@ const MaterialManagement = () => {
             <Form.Item
               name="name"
               label="Tên nguyên liệu"
-              rules={[{ required: true, message: "Vui lòng nhập tên nguyên liệu!" }]}
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
+              ]}
               style={{ marginBottom: 0 }}
             >
-              <Input placeholder="Nhập tên nguyên liệu" style={{ borderRadius: 6, marginBottom: 16 }} />
+              <Input
+                placeholder="Nhập tên nguyên liệu"
+                style={{ borderRadius: 6, marginBottom: 16 }}
+              />
             </Form.Item>
             <Form.Item
               name="quantity"
@@ -471,17 +544,29 @@ const MaterialManagement = () => {
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
                   validator: (_, value) =>
-                    value > 0 ? Promise.resolve() : Promise.reject(new Error("Số lượng phải lớn hơn hoặc bằng 0!")),
+                    value > 0
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
+                        ),
                 },
               ]}
             >
-              <Input type="number" placeholder="Nhập số lượng" style={{ borderRadius: 6, marginBottom: 16 }} />
+              <Input
+                type="number"
+                placeholder="Nhập số lượng"
+                style={{ borderRadius: 6, marginBottom: 16 }}
+              />
             </Form.Item>
           </Form>
         </Modal>
 
         <Modal
-          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Quét Barcode</span>}
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Quét Barcode
+            </span>
+          }
           open={isScanning}
           onCancel={() => setIsScanning(false)}
           centered
@@ -501,11 +586,7 @@ const MaterialManagement = () => {
           }}
           style={{ borderRadius: 12, top: 20 }}
         >
-          <BarcodeScannerComponent
-            width={500}
-            height={300}
-            onUpdate={(err, result) => handleBarcodeScan(err, result)}
-          />
+          <div id="barcode-scanner" style={{ width: "100%", height: "300px" }} />
         </Modal>
       </div>
     </div>
