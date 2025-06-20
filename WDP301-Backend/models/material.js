@@ -17,6 +17,10 @@ const Material = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    barcode: {
+      type: DataTypes.STRING(767),
+      allowNull: true,
+    },
     storeId: {
       type: DataTypes.INTEGER,
       allowNull: false,

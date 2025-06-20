@@ -1,5 +1,8 @@
 const Material = require("../models/material");
 const Store = require("../models/store");
+const { createCanvas } = require("canvas");
+const JsBarcode = require("jsbarcode");
+const { uploadFileToFirebase } = require("../config/firebase");
 
 const createMaterial = async (materialData) => {
   try {
@@ -28,18 +31,41 @@ const createMaterial = async (materialData) => {
       throw "Invalid storeId: Store with ID 1 does not exist";
     }
 
-    // Create material with hardcoded storeId
+    // Generate barcode
+    const canvas = createCanvas();
+    const barcodeValue = `MAT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    JsBarcode(canvas, barcodeValue, {
+      format: "CODE128",
+      displayValue: true,
+      fontSize: 12,
+      width: 2,
+      height: 50,
+    });
+
+    // Convert canvas to buffer
+    const stream = canvas.createPNGStream();
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    const fileBuffer = Buffer.concat(chunks);
+
+    // Upload barcode to Firebase Storage
+    const barcodeUrl = await uploadFileToFirebase(fileBuffer, `${barcodeValue}.png`, "image/png");
+
+    // Create material with barcode URL
     const finalMaterialData = {
       ...materialData,
       quantity: quantity,
       storeId: storeId,
+      barcode: barcodeUrl,
     };
 
     // Create material in database
     const material = await Material.create(finalMaterialData);
     return material;
   } catch (error) {
-    throw error.message || error; // Ensure a plain string is thrown
+    throw error.message || error;
   }
 };
 
