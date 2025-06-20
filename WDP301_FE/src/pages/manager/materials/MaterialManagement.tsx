@@ -82,14 +82,6 @@ const MaterialManagement = () => {
       sorter: (a: MaterialDto, b: MaterialDto) => a.quantity - b.quantity,
     },
     {
-      title: "Barcode",
-      dataIndex: "barcode",
-      key: "barcode",
-      render: (barcode: string, record: MaterialDto) => (
-        <Image src={barcode} alt={record.name} />
-      ),
-    },
-    {
       title: "Hành động",
       key: "actions",
       width: 220,
@@ -374,8 +366,11 @@ const MaterialManagement = () => {
                 <Descriptions.Item label="Số lượng">
                   {selectedMaterial.quantity}
                 </Descriptions.Item>
-                <Descriptions.Item label="Mã cửa hàng">
-                  {selectedMaterial.storeId}
+                <Descriptions.Item label="Barcode">
+                  <Image
+                    src={selectedMaterial.barcode}
+                    alt={selectedMaterial.name}
+                  />
                 </Descriptions.Item>
                 <Descriptions.Item label="Tên cửa hàng">
                   {selectedMaterial.Store?.name}
