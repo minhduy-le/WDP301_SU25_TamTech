@@ -138,7 +138,7 @@ const SignUpPage = () => {
               >
                 Đã có tài khoản?
               </Text>
-              <Link href={"/(auth)/login"}>
+              <Link href={"/(auth)/welcome"}>
                 <Text
                   style={{
                     color: APP_COLOR.ORANGE,

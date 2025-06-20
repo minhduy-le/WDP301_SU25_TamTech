@@ -23,11 +23,6 @@ import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
 import icon from "@/assets/icons/loi-chuc.png";
-const sampleData = {
-  name: "Lê Minh Duy",
-  phone: "0889679561",
-  address: "TP Thủ Đức, TP Hồ Chí Minh",
-};
 
 const getCurrentDateTime = (): string => {
   const now = new Date();
@@ -264,7 +259,7 @@ const AccountPage = () => {
             />
           </Pressable>
           <Pressable
-            onPress={() => router.navigate("/(user)/account/password")}
+            onPress={() => router.navigate("/(auth)/voucher")}
             style={{
               paddingVertical: 15,
               paddingHorizontal: 10,
@@ -356,7 +351,7 @@ const AccountPage = () => {
           </Pressable>
         </View>
       </View>
-      <View style={{ marginHorizontal: 10 }}>
+      <View style={{ marginHorizontal: 10, marginBottom: 25 }}>
         <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
           Mọi thắc mắc vui lòng liên hệ qua CSKH:
         </Text>

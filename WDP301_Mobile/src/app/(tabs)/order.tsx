@@ -79,7 +79,6 @@ const OrderPage = () => {
       }
     } catch (error) {
       setError("Không thể tải lịch sử đơn hàng");
-      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -178,11 +177,9 @@ const OrderPage = () => {
   }
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
-    >
+    <View style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}>
       {token ? (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, paddingBottom: 40 }}>
           <View
             style={{
               borderBottomColor: "#eee",
@@ -260,7 +257,7 @@ const OrderPage = () => {
                             {item.payment_method}
                           </Text>
                         </View>
-                        <Text style={styles.dateText}>
+                        <Text style={styles.orderText}>
                           {formatDateToDDMMYYYY(item.order_create_at)}
                         </Text>
                       </View>
@@ -306,66 +303,51 @@ const OrderPage = () => {
                           </View>
                         </View>
                       </View>
-                      <View style={{ flexDirection: "row" }}>
+                      <View
+                        style={{ flexDirection: "row", alignSelf: "flex-end" }}
+                      >
                         <View style={styles.container}>
-                          {item.status === "Đã giao" ? (
-                            <>
-                              <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => handleViewDetails(item.orderId)}
-                              >
-                                <Text style={styles.buttonText}>
-                                  Xem chi tiết
-                                </Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity
+                          <TouchableOpacity
+                            style={styles.button}
+                            onPress={() => handleViewDetails(item.orderId)}
+                          >
+                            <Text style={styles.buttonText}>Xem chi tiết</Text>
+                          </TouchableOpacity>
+                          {["Paid", "Pending"].includes(item.status) && (
+                            <TouchableOpacity
+                              style={[
+                                styles.button,
+                                { backgroundColor: APP_COLOR.ORANGE },
+                              ]}
+                              onPress={() => handleCancelOrder(item.orderId)}
+                            >
+                              <Text
                                 style={[
-                                  styles.button,
-                                  { backgroundColor: APP_COLOR.ORANGE },
+                                  styles.buttonText,
+                                  { color: APP_COLOR.WHITE },
                                 ]}
-                                onPress={() => handleFeedback(item.orderId)}
                               >
-                                <Text
-                                  style={[
-                                    styles.buttonText,
-                                    { color: APP_COLOR.WHITE },
-                                  ]}
-                                >
-                                  Đánh giá
-                                </Text>
-                              </TouchableOpacity>
-                            </>
-                          ) : (
-                            <>
-                              <TouchableOpacity
-                                style={styles.button}
-                                onPress={() => handleViewDetails(item.orderId)}
+                                Hủy
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                          {item.status === "Delivered" && (
+                            <TouchableOpacity
+                              style={[
+                                styles.button,
+                                { backgroundColor: APP_COLOR.ORANGE },
+                              ]}
+                              onPress={() => handleFeedback(item.orderId)}
+                            >
+                              <Text
+                                style={[
+                                  styles.buttonText,
+                                  { color: APP_COLOR.WHITE },
+                                ]}
                               >
-                                <Text style={styles.buttonText}>
-                                  Xem chi tiết
-                                </Text>
-                              </TouchableOpacity>
-                              {item.status !== "Đã hủy" && (
-                                <TouchableOpacity
-                                  style={[
-                                    styles.button,
-                                    { backgroundColor: APP_COLOR.ORANGE },
-                                  ]}
-                                  onPress={() =>
-                                    handleCancelOrder(item.orderId)
-                                  }
-                                >
-                                  <Text
-                                    style={[
-                                      styles.buttonText,
-                                      { color: APP_COLOR.WHITE },
-                                    ]}
-                                  >
-                                    Hủy
-                                  </Text>
-                                </TouchableOpacity>
-                              )}
-                            </>
+                                Nhận xét
+                              </Text>
+                            </TouchableOpacity>
                           )}
                         </View>
                       </View>
@@ -380,7 +362,7 @@ const OrderPage = () => {
             <View
               style={{
                 position: "absolute",
-                bottom: -25,
+                bottom: 0,
                 right: 20,
                 backgroundColor: APP_COLOR.BROWN,
                 borderRadius: 50,
@@ -420,16 +402,11 @@ const OrderPage = () => {
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  dateText: {
-    fontFamily: FONTS.regular,
-    fontSize: 17,
-    color: APP_COLOR.BROWN,
-  },
   text: {
     fontFamily: FONTS.medium,
     fontSize: 15,
@@ -457,24 +434,21 @@ const styles = StyleSheet.create({
     backgroundColor: APP_COLOR.WHITE,
     borderWidth: 0.5,
     borderColor: APP_COLOR.BROWN,
-    paddingVertical: 9,
-    paddingHorizontal: 20,
     borderRadius: 8,
-    width: 150,
-    height: 42,
+    width: 100,
+    height: 30,
     justifyContent: "center",
   },
   buttonText: {
     color: APP_COLOR.BROWN,
-    fontSize: 17,
+    fontSize: 13,
     fontFamily: FONTS.bold,
     textAlign: "center",
   },
   orderText: {
     fontFamily: FONTS.regular,
     color: APP_COLOR.BROWN,
-    fontSize: 17,
-    marginVertical: 5,
+    fontSize: 14,
   },
 });
 

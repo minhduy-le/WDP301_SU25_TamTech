@@ -53,7 +53,7 @@ const HomeTab = () => {
         const res = await getTypeProductAPI();
         setCollectionData(res.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching type products data:", error);
       }
     };
 

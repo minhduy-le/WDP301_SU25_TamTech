@@ -79,10 +79,6 @@ const RootLayout = () => {
               >
                 <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen
-                  name="(auth)/login"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
                   name="(auth)/signup"
                   options={{ headerShown: false }}
                 />
@@ -121,6 +117,10 @@ const RootLayout = () => {
                 />
                 <Stack.Screen
                   name="(auth)/role.signup"
+                  options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                  name="(auth)/voucher"
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen
@@ -170,6 +170,12 @@ const RootLayout = () => {
                     headerStyle: {
                       backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
                     },
+                  }}
+                />
+                <Stack.Screen
+                  name="(user)/voucher/[id]"
+                  options={{
+                    headerShown: false,
                   }}
                 />
                 <Stack.Screen
