@@ -25,12 +25,7 @@ const MaterialManagement = () => {
   const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
   // --- STYLING CONSTANTS ---
-  const headerColor = "#A05A2C";
-  const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
-  const oddRowBgColor = "#FFF7E6";
-  const cellTextColor = "#5D4037";
-  const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
   const handleOpenDetailModal = (record: MaterialDto) => {
