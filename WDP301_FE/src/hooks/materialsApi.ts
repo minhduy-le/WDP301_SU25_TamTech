@@ -15,6 +15,7 @@ export interface MaterialDto {
   materialId?: number;
   name: string;
   quantity: number;
+  barcode: string;
   storeId: number;
   Store?: {
     name: string;

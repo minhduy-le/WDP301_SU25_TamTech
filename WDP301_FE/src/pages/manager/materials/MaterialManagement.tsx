@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {useState } from "react";
+import { useState } from "react";
 import {
   Table,
   Space,
@@ -11,9 +11,15 @@ import {
   Tooltip,
   message,
   Form,
+  Image,
   //   message,
 } from "antd";
-import { SearchOutlined, EyeOutlined, PlusOutlined, FireOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -50,14 +56,12 @@ const MaterialManagement = () => {
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
-
-
   const columns = [
     {
       title: "Mã nguyên liệu",
       dataIndex: "materialId",
       key: "materialId",
-      width: 100,
+      width: 160,
       sorter: (a: MaterialDto, b: MaterialDto) =>
         (a.materialId ?? 0) - (b.materialId ?? 0),
     },
@@ -76,6 +80,14 @@ const MaterialManagement = () => {
       key: "quantity",
       width: 150,
       sorter: (a: MaterialDto, b: MaterialDto) => a.quantity - b.quantity,
+    },
+    {
+      title: "Barcode",
+      dataIndex: "barcode",
+      key: "barcode",
+      render: (barcode: string, record: MaterialDto) => (
+        <Image src={barcode} alt={record.name} />
+      ),
     },
     {
       title: "Hành động",
@@ -214,11 +226,11 @@ const MaterialManagement = () => {
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
-            paddingTop: 0,  
+            paddingTop: 0,
             marginTop: 0,
           }}
         >
-          Quản lý Nguyên liệu <FireOutlined/>
+          Quản lý Nguyên liệu <FireOutlined />
         </h1>
         <Card
           style={{
@@ -410,7 +422,7 @@ const MaterialManagement = () => {
                 background: "#D97B41",
                 borderColor: "#D97B41",
                 borderRadius: 6,
-                outline: "none"
+                outline: "none",
               }}
             >
               Tạo
@@ -452,7 +464,10 @@ const MaterialManagement = () => {
               ]}
               style={{ marginBottom: 0 }}
             >
-              <Input placeholder="Nhập tên nguyên liệu" style={{ borderRadius: 6, marginBottom: 16 }} />
+              <Input
+                placeholder="Nhập tên nguyên liệu"
+                style={{ borderRadius: 6, marginBottom: 16 }}
+              />
             </Form.Item>
             <Form.Item
               name="quantity"
@@ -470,7 +485,11 @@ const MaterialManagement = () => {
                 },
               ]}
             >
-              <Input type="number" placeholder="Nhập số lượng" style={{ borderRadius: 6, marginBottom: 16 }} />
+              <Input
+                type="number"
+                placeholder="Nhập số lượng"
+                style={{ borderRadius: 6, marginBottom: 16 }}
+              />
             </Form.Item>
           </Form>
         </Modal>

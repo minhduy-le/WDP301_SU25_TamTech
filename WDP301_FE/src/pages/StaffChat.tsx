@@ -29,7 +29,10 @@ interface Chat {
 const StaffChat = () => {
   // --- State ---
   const [searchText, setSearchText] = useState("");
-  const [selectedUser, setSelectedUser] = useState<{ id: number; fullName: string } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number;
+    fullName: string;
+  } | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
@@ -45,7 +48,8 @@ const StaffChat = () => {
   // --- Functions ---
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   };
 
@@ -55,7 +59,9 @@ const StaffChat = () => {
       return;
     }
     if (!isConnected || !socket) {
-      message.error("Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc kết nối lại.");
+      message.error(
+        "Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc kết nối lại."
+      );
       return;
     }
 
@@ -87,7 +93,8 @@ const StaffChat = () => {
     const yesterday = dayjs().subtract(1, "day");
 
     if (messageDate.isSame(today, "day")) return messageDate.format("HH:mm");
-    if (messageDate.isSame(yesterday, "day")) return `Hôm qua ${messageDate.format("HH:mm")}`;
+    if (messageDate.isSame(yesterday, "day"))
+      return `Hôm qua ${messageDate.format("HH:mm")}`;
     return messageDate.format("HH:mm DD/MM/YYYY");
   };
 
@@ -108,11 +115,20 @@ const StaffChat = () => {
     newSocket.on("connect", () => setIsConnected(true));
     newSocket.on("disconnect", () => setIsConnected(false));
     newSocket.on("message", (receivedMessage: Chat) => {
-      const isRelevant = receivedMessage.senderId === selectedUser?.id || receivedMessage.senderId === authUser.id;
+      const isRelevant =
+        receivedMessage.senderId === selectedUser?.id ||
+        receivedMessage.senderId === authUser.id;
       if (isRelevant) {
         setChats((prev) =>
-          [...prev, { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) }].sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          [
+            ...prev,
+            {
+              ...receivedMessage,
+              createdAt: new Date(receivedMessage.createdAt),
+            },
+          ].sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           )
         );
       }
@@ -133,18 +149,26 @@ const StaffChat = () => {
     const fetchInitialMessages = async () => {
       setIsLoadingChats(true);
       try {
-        const response = await axiosInstance.get<Chat[]>("/chat/messages", { params: { limit: 100 } });
+        const response = await axiosInstance.get<Chat[]>("/chat/messages", {
+          params: { limit: 100 },
+        });
         const filteredChats = response.data.filter(
           (chat) =>
-            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
+            (chat.senderId === authUser.id &&
+              chat.receiverId === selectedUser.id) ||
+            (chat.senderId === selectedUser.id &&
+              chat.receiverId === authUser.id)
         );
         setChats(
           filteredChats
             .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            .sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+            )
         );
-      } catch (error) {
+      } catch {
         message.error("Không thể tải tin nhắn.");
       } finally {
         setIsLoadingChats(false);
@@ -168,7 +192,13 @@ const StaffChat = () => {
     ) || [];
 
   return (
-    <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
+    <div
+      style={{
+        display: "flex",
+        padding: "20px",
+        height: "calc(100vh - 100px)",
+      }}
+    >
       <div
         style={{
           position: "fixed",
@@ -186,7 +216,13 @@ const StaffChat = () => {
       </div>
 
       <Card
-        style={{ width: 300, marginRight: 20, display: "flex", flexDirection: "column", borderRadius: "12px" }}
+        style={{
+          width: 300,
+          marginRight: 20,
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: "12px",
+        }}
         bodyStyle={{ overflowY: "auto", flex: 1 }}
       >
         <Input
@@ -201,14 +237,29 @@ const StaffChat = () => {
           dataSource={filteredAccounts}
           renderItem={(account) => (
             <List.Item
-              onClick={() => setSelectedUser({ id: account.id, fullName: account.fullName })}
-              style={{ cursor: "pointer", padding: "12px", borderRadius: "8px" }}
+              onClick={() =>
+                setSelectedUser({ id: account.id, fullName: account.fullName })
+              }
+              style={{
+                cursor: "pointer",
+                padding: "12px",
+                borderRadius: "8px",
+              }}
               className={selectedUser?.id === account.id ? "active-user" : ""}
             >
               <List.Item.Meta
-                avatar={<Avatar style={{ backgroundColor: "#1890ff" }}>{account.fullName[0]}</Avatar>}
+                avatar={
+                  <Avatar style={{ backgroundColor: "#1890ff" }}>
+                    {account.fullName[0]}
+                  </Avatar>
+                }
                 title={
-                  <span style={{ fontWeight: selectedUser?.id === account.id ? "bold" : "normal" }}>
+                  <span
+                    style={{
+                      fontWeight:
+                        selectedUser?.id === account.id ? "bold" : "normal",
+                    }}
+                  >
                     {account.fullName}
                   </span>
                 }
@@ -218,31 +269,63 @@ const StaffChat = () => {
         />
       </Card>
 
-      <Card style={{ flex: 1, display: "flex", flexDirection: "column", borderRadius: "12px" }}>
+      <Card
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: "12px",
+          height: "100%",
+          overflowY: "auto",
+        }}
+      >
         {selectedUser ? (
           <>
-            <div style={{ padding: "15px", borderBottom: "1px solid #f0f0f0", fontWeight: "bold", fontSize: 16 }}>
+            <div
+              style={{
+                padding: 15,
+                paddingTop: 0,
+                borderBottom: "1px solid #f0f0f0",
+                fontWeight: "bold",
+                fontSize: 16,
+              }}
+            >
               Chat với: {selectedUser.fullName}
             </div>
             <div
               ref={chatContainerRef}
               className="chat-container-user"
-              style={{ flex: 1, overflowY: "auto", padding: "20px", background: "#f5f5f5" }}
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "20px",
+                background: "#f5f5f5",
+                // maxHeight: "calc(100% - 89%)",
+                // minHeight: "-webkit-fill-available",
+              }}
             >
               {isLoadingChats ? (
-                <p style={{ textAlign: "center", color: "#888" }}>Đang tải tin nhắn...</p>
+                <p style={{ textAlign: "center", color: "#888" }}>
+                  Đang tải tin nhắn...
+                </p>
               ) : chats.length ? (
                 chats.map((chat) => (
                   <div
                     key={chat.id}
-                    className={`message-bubble ${chat.senderId === authUser?.id ? "sent" : "received"}`}
+                    className={`message-bubble ${
+                      chat.senderId === authUser?.id ? "sent" : "received"
+                    }`}
                   >
                     <div>{chat.content}</div>
-                    <small className="message-time">{formatChatTime(chat.createdAt)}</small>
+                    <small className="message-time">
+                      {formatChatTime(chat.createdAt)}
+                    </small>
                   </div>
                 ))
               ) : (
-                <p style={{ textAlign: "center", color: "#888" }}>Chưa có tin nhắn nào.</p>
+                <p style={{ textAlign: "center", color: "#888" }}>
+                  Chưa có tin nhắn nào.
+                </p>
               )}
             </div>
             <div style={{ padding: "15px", borderTop: "1px solid #f0f0f0" }}>
@@ -265,7 +348,9 @@ const StaffChat = () => {
             </div>
           </>
         ) : (
-          <div style={{ textAlign: "center", margin: "auto", color: "#888" }}>Chọn một quản lý để bắt đầu chat.</div>
+          <div style={{ textAlign: "center", margin: "auto", color: "#888" }}>
+            Chọn một quản lý để bắt đầu chat.
+          </div>
         )}
       </Card>
     </div>

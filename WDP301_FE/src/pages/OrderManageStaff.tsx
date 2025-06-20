@@ -104,14 +104,32 @@ const StaffOrderManagement = () => {
   };
 
   const handleAssignShipper = (orderId: number, shipperId: number) => {
+    const orderDate = dayjs().format("MM-DD-YYYY");
+
     assignShipperMutation.mutate(
-      { orderId, assignShipper: { shipperId } },
+      { orderId, assignShipper: { shipperId, orderDate } },
       {
         onSuccess: () => {
           message.success("Đã gán shipper thành công!");
           setIsAssignModalVisible(false); // Đóng modal sau khi gán thành công
         },
-        onError: () => message.error("Gán shipper thất bại!"),
+        onError: (error: AxiosError) => {
+          {
+            const errorMessage =
+              error.response?.data?.toString() || "Gán shipper thất bại!";
+            if (
+              errorMessage.includes("Shipper has not registered a schedule for")
+            ) {
+              const extractedDate =
+                errorMessage.match(/(\d{2}-\d{2}-\d{4})/)?.[0] || orderDate;
+              message.error(
+                `Shipper chưa đăng ký lịch trình cho ngày ${extractedDate}`
+              );
+            } else {
+              message.error(errorMessage);
+            }
+          }
+        },
       }
     );
   };
