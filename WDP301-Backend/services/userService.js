@@ -230,7 +230,6 @@ const userService = {
         email: user.email,
         phone_number: user.phone_number,
         role: user.role || "user",
-        date_of_birth: user.date_of_birth,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
