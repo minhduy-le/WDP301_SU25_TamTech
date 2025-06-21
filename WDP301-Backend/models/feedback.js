@@ -9,12 +9,12 @@ const Feedback = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    orderId: {
+    productId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "orders",
-        key: "orderId", // Changed to match assumed primary key of orders table
+        model: "products",
+        key: "productId",
       },
     },
     userId: {
@@ -24,6 +24,11 @@ const Feedback = sequelize.define(
         model: "users",
         key: "id",
       },
+    },
+    isFeedback: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     comment: {
       type: DataTypes.STRING(255),
@@ -36,11 +41,6 @@ const Feedback = sequelize.define(
         min: 1,
         max: 5,
       },
-    },
-    isResponsed: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
     },
   },
   {
