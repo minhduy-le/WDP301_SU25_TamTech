@@ -28,12 +28,10 @@ interface OrderHistoryProps {
 }
 
 interface FeedbackItem {
-  productId: number;
+  orderId: number;
   name: string;
   quantity: number;
   price: string;
-  rating: number;
-  comment: string;
 }
 
 const statusMap: { [key: string]: string } & {
@@ -69,13 +67,12 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     orderItems: FeedbackItem[];
   } | null>(null);
 
-  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [rating, setRating] = useState<number>(0);
+  const [comment, setComment] = useState<string>("");
   const [loadingButtons, setLoadingButtons] = useState<Record<number, boolean>>(
     {}
   );
-  const [submittingFeedback, setSubmittingFeedback] = useState<
-    Record<number, boolean>
-  >({});
+  const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
 
   const { mutate: createFeedback } = useCreateFeedback();
 
@@ -93,12 +90,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
 
     const actions = getActionsForStatus(order.status);
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
-      productId: item.productId,
+      orderId: order.orderId,
       name: item.name,
       quantity: item.quantity,
       price: `${getFormattedPrice(item.price)} x${item.quantity}`,
-      rating: 0,
-      comment: "",
     }));
     setSelectedOrder({
       id: order.orderId,
@@ -112,86 +107,72 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       actions: actions,
       orderItems: feedbackItems,
     });
-    setFeedbackItems(feedbackItems);
+    setRating(0);
+    setComment("");
     setIsModalVisible(true);
   };
 
   const handleOk = async () => {
     if (!selectedOrder) return;
 
-    const itemsToSubmit = feedbackItems.filter(
-      (item) => item.rating > 0 || item.comment.trim()
-    );
-
-    if (itemsToSubmit.length === 0) {
-      setIsModalVisible(false);
-      setFeedbackItems([]);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+    if (rating === 0 && !comment.trim()) {
+      message.warning("Vui lòng nhập đánh giá hoặc nhận xét!");
       return;
     }
 
-    setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: true }));
+    setSubmittingFeedback(true);
 
     try {
-      const promises = itemsToSubmit.map(
-        (item) =>
-          new Promise<void>((resolve, reject) => {
-            createFeedback(
-              {
-                productId: item.productId,
-                feedbackData: {
-                  comment: item.comment,
-                  rating: item.rating,
-                },
-              },
-              {
-                onSuccess: () => {
-                  message.success(`Đánh giá cho ${item.name} đã được gửi!`);
-                  resolve();
-                },
-                onError: (error: any) => {
-                  message.error(
-                    `Đã xảy ra lỗi khi gửi đánh giá cho ${item.name}.`
-                  );
-                  console.error(error);
-                  reject(error);
-                },
-              }
-            );
-          })
-      );
-
-      await Promise.all(promises);
+      await new Promise<void>((resolve, reject) => {
+        createFeedback(
+          {
+            orderId: selectedOrder.id,
+            feedbackData: {
+              comment,
+              rating,
+            },
+          },
+          {
+            onSuccess: () => {
+              message.success(
+                `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi!`
+              );
+              resolve();
+            },
+            onError: (error: any) => {
+              message.error(
+                `Đã xảy ra lỗi khi gửi đánh giá cho đơn hàng ${selectedOrder.id}.`
+              );
+              console.error(error);
+              reject(error);
+            },
+          }
+        );
+      });
 
       setIsModalVisible(false);
-      setFeedbackItems([]);
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setSubmittingFeedback(false);
     } catch (error) {
       console.error("Feedback submission failed:", error);
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setSubmittingFeedback(false);
     }
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setFeedbackItems([]);
     if (selectedOrder) {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setSubmittingFeedback(false);
     }
   };
 
-  const handleRatingChange = (index: number, value: number) => {
-    setFeedbackItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, rating: value } : item))
-    );
+  const handleRatingChange = (value: number) => {
+    setRating(value);
   };
 
-  const handleCommentChange = (index: number, value: string) => {
-    setFeedbackItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, comment: value } : item))
-    );
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setComment(e.target.value);
   };
 
   const { data: orderHistory, isLoading: isOrderHistoryLoading } =
@@ -242,7 +223,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               const actions = getActionsForStatus(order.status);
               const itemCount = order.orderItems ? order.orderItems.length : 0;
               const isLoading = loadingButtons[order.orderId] || false;
-              const isSubmitting = submittingFeedback[order.orderId] || false;
+              const isSubmitting = submittingFeedback;
               const total = calculateTotal(order);
               return (
                 <Col
@@ -373,8 +354,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                     ? order.orderItems.length
                     : 0;
                   const isLoading = loadingButtons[order.orderId] || false;
-                  const isSubmitting =
-                    submittingFeedback[order.orderId] || false;
+                  const isSubmitting = submittingFeedback;
                   const total = calculateTotal(order);
                   return (
                     <Col
@@ -508,7 +488,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               backgroundColor: "#EFE6DB",
             }}
           >
-            Đánh giá món ăn
+            Đánh giá đơn hàng
           </Title>
         }
         visible={isModalVisible}
@@ -517,14 +497,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         footer={[
           <Button
             key="submit"
-            className="submt-button-feedback"
+            className="submit-button-feedback"
             onClick={handleOk}
-            loading={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
-            disabled={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
+            loading={submittingFeedback}
+            disabled={submittingFeedback}
           >
             Gửi đánh giá
           </Button>,
@@ -541,84 +517,85 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         }}
       >
         {selectedOrder && selectedOrder.orderItems.length > 0 ? (
-          selectedOrder.orderItems.map((item, index) => (
-            <div key={index} className="feedback-item">
-              <Row>
-                <Col
-                  span={17}
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      color: "#2d1e1a",
-                    }}
+          <>
+            {selectedOrder.orderItems.map((item, index) => (
+              <div key={index} className="feedback-item">
+                <Row>
+                  <Col
+                    span={17}
+                    style={{ display: "flex", flexDirection: "column" }}
                   >
-                    {item.name}
-                  </Text>
-                </Col>
-                <Col span={7} style={{ textAlign: "right" }}>
-                  <Text
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#2d1e1a",
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  </Col>
+                  <Col span={7} style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#DA7339",
+                      }}
+                    >
+                      {item.price}
+                    </Text>
+                  </Col>
+                </Row>
+                {index < selectedOrder.orderItems.length - 1 && (
+                  <hr
                     style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      color: "#DA7339",
+                      border: "0",
+                      borderTop: "1px solid #000",
+                      margin: "10px 0",
                     }}
-                  >
-                    {item.price}
-                  </Text>
-                </Col>
-              </Row>
-              <Col span={24}>
-                <Text
+                  />
+                )}
+              </div>
+            ))}
+            <Text
+              style={{
+                fontFamily: "Montserrat, sans-serif",
+                color: "#DA7339",
+                fontWeight: 500,
+                padding: "0 10px",
+                fontSize: 16,
+              }}
+            >
+              Đánh giá
+            </Text>
+            <Row
+              style={{
+                alignItems: "center",
+                padding: "0 10px",
+              }}
+            >
+              <Col span={7} style={{ textAlign: "left" }}>
+                <Rate
+                  value={rating}
+                  onChange={handleRatingChange}
+                  style={{ color: "#78A243", marginTop: "5px" }}
+                  disabled={submittingFeedback}
+                />
+              </Col>
+              <Col span={17}>
+                <Input
+                  placeholder="Nhận xét chung cho đơn hàng"
+                  value={comment}
+                  onChange={handleCommentChange}
                   style={{
                     fontFamily: "Montserrat, sans-serif",
-                    color: "#DA7339",
+                    width: "100%",
+                    marginTop: "5px",
                   }}
-                >
-                  Đánh giá món ăn
-                </Text>
-              </Col>
-              <Row style={{ marginTop: "5px", alignItems: "center" }}>
-                <Col span={7} style={{ textAlign: "left" }}>
-                  <Rate
-                    defaultValue={item.rating}
-                    onChange={(value) => handleRatingChange(index, value)}
-                    style={{ color: "#78A243" }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
-                  />
-                </Col>
-                <Col span={17}>
-                  <Input
-                    placeholder="Nhận xét"
-                    defaultValue={item.comment}
-                    onChange={(e) => handleCommentChange(index, e.target.value)}
-                    style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      width: "100%",
-                    }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
-                  />
-                </Col>
-              </Row>
-              {index < selectedOrder.orderItems.length - 1 && (
-                <hr
-                  style={{
-                    border: "0",
-                    borderTop: "1px solid #000",
-                    margin: "10px 0",
-                  }}
+                  disabled={submittingFeedback}
                 />
-              )}
-            </div>
-          ))
+              </Col>
+            </Row>
+          </>
         ) : (
           <Text>Không có món nào để đánh giá.</Text>
         )}

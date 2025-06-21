@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, useMemo } from "react";
 import {
   Table,
   Button,
@@ -16,7 +17,7 @@ import {
   SearchOutlined,
   EyeOutlined,
   SendOutlined,
-  CommentOutlined, 
+  CommentOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -120,7 +121,7 @@ const initialFeedbackData: Feedback[] = [
   },
 ];
 
-const CustomerFeedbackManagement: React.FC = () => {
+const CustomerFeedbackManagement = () => {
   const [feedbackList, setFeedbackList] =
     useState<Feedback[]>(initialFeedbackData);
   const [searchText, setSearchText] = useState("");
@@ -163,7 +164,7 @@ const CustomerFeedbackManagement: React.FC = () => {
         replyContent: values.replyContent,
         status: values.status,
         repliedDate: dayjs().toISOString(),
-        repliedBy: "Admin", 
+        repliedBy: "Admin",
       };
 
       setFeedbackList((prev) =>
@@ -377,7 +378,7 @@ const CustomerFeedbackManagement: React.FC = () => {
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
-            paddingTop: 0,  
+            paddingTop: 0,
             marginTop: 15,
           }}
         >
