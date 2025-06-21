@@ -1,23 +1,23 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const Feedback = sequelize.define(
-  "Feedback",
+const FeedbackResponse = sequelize.define(
+  "FeedbackResponse",
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    orderId: {
+    feedbackId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "orders",
-        key: "orderId", // Changed to match assumed primary key of orders table
+        model: "feedback",
+        key: "id",
       },
     },
-    userId: {
+    repliedBy: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -25,28 +25,15 @@ const Feedback = sequelize.define(
         key: "id",
       },
     },
-    comment: {
+    content: {
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    rating: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        min: 1,
-        max: 5,
-      },
-    },
-    isResponsed: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    },
   },
   {
-    tableName: "feedback",
+    tableName: "feedback_responses",
     timestamps: true,
   }
 );
 
-module.exports = Feedback;
+module.exports = FeedbackResponse;
