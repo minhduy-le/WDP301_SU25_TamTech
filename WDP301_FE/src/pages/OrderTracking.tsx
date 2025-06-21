@@ -11,6 +11,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { getFormattedPrice } from "../utils/formatPrice";
 
 const items = [
   {
@@ -54,11 +55,6 @@ interface OrderTrackingProps {
   order?: any;
   onBackClick?: () => void;
 }
-
-const getFormattedPrice = (price: string) => {
-  const integerPart = parseFloat(price.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
 
 const statusMap: { [key: string]: string } & {
   Pending: string;

@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useGetOrderHistory, type OrderHistory } from "../hooks/ordersApi";
 import { useCreateFeedback } from "../hooks/feedbacksApi";
 import dayjs from "dayjs";
+import { getFormattedPrice } from "../utils/formatPrice";
 
 const { Title, Text } = Typography;
 
@@ -34,12 +35,6 @@ interface FeedbackItem {
   rating: number;
   comment: string;
 }
-
-const getFormattedPrice = (price: string | number) => {
-  const priceStr = typeof price === "number" ? price.toString() : price;
-  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
 
 const statusMap: { [key: string]: string } & {
   Pending: string;
