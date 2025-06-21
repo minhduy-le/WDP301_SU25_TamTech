@@ -52,6 +52,14 @@ export interface FeedbackDto {
   ];
 }
 
+interface FeedbackDetailApiResponse {
+  feedbacks?: FeedbackDto;
+}
+
+interface FeedbackResponse {
+  content: string;
+}
+
 export const useCreateFeedback = () => {
   return useMutation({
     mutationFn: async ({
@@ -80,5 +88,39 @@ export const useFeedbacks = () => {
   return useQuery<FeedbackDto[], Error>({
     queryKey: ["feedback"],
     queryFn: fetchFeedbacks,
+  });
+};
+
+export const useGetFeedbackById = (orderId: number) => {
+  return useQuery<FeedbackDto, Error>({
+    queryKey: ["feedback", orderId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`feedback/${orderId}`);
+      const { feedbacks } = response.data as FeedbackDetailApiResponse;
+
+      if (!feedbacks) {
+        throw new Error("Không thể tải chi tiết đánh giá");
+      }
+      return feedbacks;
+    },
+    enabled: !!orderId,
+  });
+};
+
+export const useResponseFeedback = () => {
+  return useMutation({
+    mutationFn: async ({
+      feedbackId,
+      responseFeedback,
+    }: {
+      feedbackId: number;
+      responseFeedback: FeedbackResponse;
+    }) => {
+      const response = await axiosInstance.post(
+        `feedback/response/${feedbackId}`,
+        responseFeedback
+      );
+      return response.data as FeedbackDto; // Giả định API trả về FeedbackDto sau khi phản hồi
+    },
   });
 };
