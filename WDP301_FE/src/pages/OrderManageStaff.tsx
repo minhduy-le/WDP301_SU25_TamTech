@@ -37,16 +37,11 @@ import { AxiosError } from "axios";
 import { useGetShippers, useAssignShipper } from "../hooks/shipperApi";
 import DeliveryIcon from "../components/icon/DeliveryIcon";
 import PrintIcon from "../components/icon/PrintIcon";
+import { getFormattedPrice } from "../utils/formatPrice";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
-
-const getFormattedPrice = (price: string | number) => {
-  const priceStr = typeof price === "number" ? price.toString() : price;
-  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
 
 const { Option } = Select;
 
