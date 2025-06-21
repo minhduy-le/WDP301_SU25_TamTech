@@ -9,6 +9,10 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { auth } = require("../config/firebase");
+const Promotion = require("../models/promotion");
+const { uploadFileToFirebase } = require("../config/firebase");
+const { createCanvas } = require("canvas");
+const JsBarcode = require("jsbarcode");
 
 // Current date for date_of_birth validation
 const currentDate = new Date("2025-05-26T10:53:00+07:00");
@@ -117,10 +121,62 @@ const userService = {
       console.log("User created with ID:", user.id);
       await Information.create({ userId: user.id, address: null }, { transaction });
       console.log("Information record created for user ID:", user.id);
+
+      // Generate barcode for WELCOME promotion
+      const promotionCode = `WELCOME_${user.id}`;
+      let barcodeUrl = null;
+      try {
+        console.log(`Generating barcode for code: ${promotionCode}`);
+        const canvas = createCanvas(300, 100);
+        JsBarcode(canvas, promotionCode, {
+          format: "CODE128",
+          width: 2,
+          height: 80,
+          displayValue: true,
+          fontSize: 14,
+        });
+        const buffer = canvas.toBuffer("image/png");
+        console.log(`Generated buffer: type=image/png, length=${buffer.length}, isBuffer=${Buffer.isBuffer(buffer)}`);
+        const fileName = `barcodes/${promotionCode}_${Date.now()}.png`;
+        barcodeUrl = await uploadFileToFirebase(buffer, fileName, "image/png");
+        console.log(`Barcode uploaded: ${barcodeUrl}`);
+      } catch (barcodeError) {
+        console.error("Error generating or uploading barcode:", barcodeError.message, barcodeError.stack);
+      }
+
+      // Create a "WELCOME" promotion for the new user
+      await Promotion.create(
+        {
+          promotionTypeId: 7,
+          name: "WELCOME",
+          code: promotionCode,
+          description: "Welcome promotion for new users",
+          barcode: barcodeUrl,
+          startDate: new Date("2025-06-22"),
+          endDate: new Date("2026-12-31"),
+          minOrderAmount: 0,
+          discountAmount: 15000,
+          maxNumberOfUses: 1,
+          createBy: 1,
+          forUser: user.id,
+          isUsedBySpecificUser: false,
+          NumberCurrentUses: 0,
+          isActive: true,
+        },
+        { transaction }
+      );
+      console.log(`WELCOME promotion created for user ID: ${user.id}`);
+
       await transaction.commit();
       console.log("Transaction committed successfully");
     } catch (error) {
       console.error("Transaction error in registerUser:", error.message, error.stack);
+      if (error.name === "SequelizeValidationError") {
+        console.error(
+          "Validation errors:",
+          error.errors.map((e) => e.message)
+        );
+      }
       await transaction.rollback();
       console.log("Transaction rolled back successfully");
       throw "Server error";
