@@ -5,6 +5,90 @@ const verifyToken = require("../middlewares/verifyToken");
 
 /**
  * @swagger
+ * /api/feedback:
+ *   get:
+ *     summary: Get all feedbacks
+ *     tags: [Feedback]
+ *     responses:
+ *       200:
+ *         description: Feedbacks retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 feedbacks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       orderId:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       comment:
+ *                         type: string
+ *                       rating:
+ *                         type: integer
+ *                       isResponsed:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       User:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           fullName:
+ *                             type: string
+ *                       FeedbackResponses:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                             feedbackId:
+ *                               type: integer
+ *                             repliedBy:
+ *                               type: integer
+ *                             content:
+ *                               type: string
+ *                             createdAt:
+ *                               type: string
+ *                               format: date-time
+ *                             updatedAt:
+ *                               type: string
+ *                               format: date-time
+ *                             RepliedBy:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: integer
+ *                                 fullName:
+ *                                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.get("/", async (req, res) => {
+  try {
+    const feedbacks = await feedbackService.getAllFeedbacks();
+
+    res.status(200).json({ feedbacks });
+  } catch (error) {
+    console.error("Error retrieving all feedbacks:", error);
+    res.status(500).send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/feedback/{orderId}:
  *   post:
  *     summary: Create feedback for an order

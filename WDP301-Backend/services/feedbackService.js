@@ -83,6 +83,32 @@ const feedbackService = {
     return feedbacks;
   },
 
+  async getAllFeedbacks() {
+    const feedbacks = await Feedback.findAll({
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName"],
+        },
+        {
+          model: FeedbackResponse,
+          as: "FeedbackResponses",
+          include: [
+            {
+              model: User,
+              as: "RepliedBy",
+              attributes: ["id", "fullName"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return feedbacks;
+  },
+
   async createFeedbackResponse({ feedbackId, userId, content }) {
     if (!Number.isInteger(feedbackId) || feedbackId < 1) {
       throw new Error("Feedback ID must be a positive integer");
