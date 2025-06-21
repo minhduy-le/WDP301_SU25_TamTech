@@ -386,6 +386,40 @@ const searchProductsByNameAndType = async (searchTerm, productTypeId) => {
   return products;
 };
 
+const searchProductsByNameAndTypeName = async (searchTerm, typeName) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+  if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const productType = await ProductType.findOne({
+    where: { name: typeName },
+  });
+
+  if (!productType) {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      productTypeId: productType.productTypeId,
+      isActive: true,
+    },
+    attributes: ["productId", "name", "description", "price", "image"],
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -397,4 +431,5 @@ module.exports = {
   searchProductsByName,
   searchProductsByTypeName,
   searchProductsByNameAndType,
+  searchProductsByNameAndTypeName,
 };

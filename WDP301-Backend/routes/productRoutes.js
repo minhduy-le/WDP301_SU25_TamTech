@@ -220,6 +220,116 @@ router.get("/search-by-name-and-type", async (req, res) => {
 
 /**
  * @swagger
+ * /api/products/search-by-name-and-type-name:
+ *   get:
+ *     summary: Search products by partial product name and exact product type name
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Partial name to search for in products
+ *       - in: query
+ *         name: typeName
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Exact name of the product type to filter by
+ *     responses:
+ *       200:
+ *         description: List of products matching the search term and exact product type name
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Invalid search term or product type name
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 invalidName: { value: "Search term must be a non-empty string" }
+ *                 invalidTypeName: { value: "Product type name must match exactly or is required" }
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get("/search-by-name-and-type-name", async (req, res) => {
+  try {
+    const { name, typeName } = req.query;
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      throw new Error("Search term must be a non-empty string");
+    }
+    if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+      throw new Error("Product type name must match exactly or is required");
+    }
+    const products = await productService.searchProductsByNameAndTypeName(name.trim(), typeName.trim());
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error searching products by name and type name:", error);
+    res
+      .status(error.message.includes("Search term") || error.message.includes("Product type name") ? 400 : 500)
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/products/best-seller:
  *   get:
  *     summary: Get best seller products based on order items
