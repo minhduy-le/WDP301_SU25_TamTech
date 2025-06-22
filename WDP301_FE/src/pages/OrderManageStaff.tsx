@@ -38,6 +38,7 @@ import { useGetShippers, useAssignShipper } from "../hooks/shipperApi";
 import DeliveryIcon from "../components/icon/DeliveryIcon";
 import PrintIcon from "../components/icon/PrintIcon";
 import { getFormattedPrice } from "../utils/formatPrice";
+import printJS from "print-js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -201,6 +202,23 @@ const StaffOrderManagement = () => {
   const cellTextColor = "#1E40AF";
   const borderColor = "#3B82F6";
   const tableBorderColor = "#3B82F6";
+
+  const handlePrintInvoice = (invoiceUrl: string) => {
+    fetch(invoiceUrl, { method: "HEAD" })
+      .then((response) => {
+        if (response.ok) {
+          printJS({
+            printable: invoiceUrl,
+            type: "pdf",
+            showModal: true,
+            onError: (error) => message.error(`Lỗi khi in: ${error}`),
+          });
+        } else {
+          message.error("Không thể truy cập file PDF. Vui lòng kiểm tra URL.");
+        }
+      })
+      .catch((error) => message.error(`Lỗi mạng: ${error.message}`));
+  };
 
   const columns = [
     {
@@ -428,6 +446,7 @@ const StaffOrderManagement = () => {
             <Button
               type="link"
               icon={<PrintIcon />}
+              onClick={() => handlePrintInvoice(record.invoiceUrl)}
               style={{
                 color: "#3B82F6",
                 fontWeight: 600,
