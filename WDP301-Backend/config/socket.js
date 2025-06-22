@@ -11,15 +11,17 @@ const initializeSocket = (server) => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    // Ưu tiên polling trước, sau đó mới upgrade lên websocket
-    transports: ["polling", "websocket"],
-    // Tăng timeout để tránh disconnect sớm
+    // Chỉ sử dụng polling để tránh vấn đề upgrade
+    transports: ["polling"],
+    // Tăng timeout để tránh disconnect
     pingTimeout: 60000,
     pingInterval: 25000,
-    // Cho phép upgrade từ polling lên websocket
-    allowUpgrades: true,
+    // Disable upgrade để ổn định
+    allowUpgrades: false,
     // Tăng thời gian chờ handshake
     handshakeTimeout: 10000,
+    // Tăng timeout cho polling
+    pollingTimeout: 30000,
   });
 
   // Middleware xác thực

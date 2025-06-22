@@ -36,13 +36,20 @@ const ManagerChat = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Đang kết nối...");
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
   // --- Hooks ---
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore();
   const { mutate: createChat, isPending: isSending } = useCreateChat();
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debug function
+  const addDebugInfo = useCallback((info: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugInfo((prev) => [...prev.slice(-4), `[${timestamp}] ${info}`]);
+    console.log(`[DEBUG] ${info}`);
+  }, []);
 
   // --- Functions ---
   const scrollToBottom = () => {
@@ -54,84 +61,78 @@ const ManagerChat = () => {
   const initializeSocket = useCallback(() => {
     if (!token || !authUser?.id) {
       setConnectionStatus("Chưa xác thực");
+      addDebugInfo("No token or user ID");
       return null;
     }
 
     setConnectionStatus("Đang kết nối...");
+    addDebugInfo("Initializing socket connection...");
 
+    // Force polling only để test
     const newSocket = io("https://wdp301-su25.space", {
       auth: { token },
-      query: { token }, // Backup token trong query
-      transports: ["polling", "websocket"],
+      query: { token },
+      transports: ["polling"], // Chỉ sử dụng polling
       timeout: 20000,
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
       reconnectionDelayMax: 10000,
-      maxReconnectionAttempts: 10,
       forceNew: true,
+      // Tăng polling interval
+      pollingTimeout: 30000,
+      // Disable upgrade để tránh chuyển sang websocket
+      upgrade: false,
     });
 
     // Connection events
     newSocket.on("connect", () => {
-      console.log("✅ WebSocket Connected:", newSocket.id);
+      addDebugInfo(`Connected with ID: ${newSocket.id}`);
       setIsConnected(true);
-      setConnectionStatus("Đã kết nối");
+      setConnectionStatus("Đã kết nối (Polling)");
       message.success("Kết nối chat thành công!");
-
-      // Clear any pending reconnect timeout
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
     });
 
     newSocket.on("connect_error", (error) => {
-      console.error("❌ Connection Error:", error);
+      addDebugInfo(`Connection error: ${error.message}`);
       setIsConnected(false);
       setConnectionStatus("Lỗi kết nối");
-      message.error(`Lỗi kết nối: ${error.message}`);
+      console.error("Connection Error:", error);
     });
 
     newSocket.on("disconnect", (reason) => {
-      console.log("❌ WebSocket Disconnected:", reason);
+      addDebugInfo(`Disconnected: ${reason}`);
       setIsConnected(false);
       setConnectionStatus("Mất kết nối");
 
       if (reason === "io server disconnect") {
-        // Server disconnected, try to reconnect manually
-        setConnectionStatus("Đang kết nối lại...");
-        reconnectTimeoutRef.current = setTimeout(() => {
-          newSocket.connect();
-        }, 3000);
-      } else {
-        message.warning("Mất kết nối với máy chủ chat.");
+        addDebugInfo("Server initiated disconnect, will reconnect...");
       }
     });
 
     // Reconnection events
     newSocket.on("reconnect_attempt", (attemptNumber) => {
-      console.log(`🔄 Reconnection attempt #${attemptNumber}`);
+      addDebugInfo(`Reconnection attempt #${attemptNumber}`);
       setConnectionStatus(`Đang kết nối lại (${attemptNumber})...`);
     });
 
     newSocket.on("reconnect", (attemptNumber) => {
-      console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+      addDebugInfo(`Reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
       setConnectionStatus("Đã kết nối lại");
       message.success("Đã kết nối lại thành công!");
     });
 
     newSocket.on("reconnect_failed", () => {
-      console.error("❌ Failed to reconnect");
+      addDebugInfo("Reconnection failed");
       setIsConnected(false);
       setConnectionStatus("Kết nối thất bại");
-      message.error("Không thể kết nối lại. Vui lòng tải lại trang.");
+      message.error("Không thể kết nối lại.");
     });
 
     // Message handling
     newSocket.on("message", (receivedMessage: Chat) => {
-      console.log("📨 Received message:", receivedMessage);
+      addDebugInfo(`Received message from user ${receivedMessage.senderId}`);
       const isRelevant =
         (receivedMessage.senderId === selectedUser?.id && receivedMessage.receiverId === authUser.id) ||
         (receivedMessage.senderId === authUser.id && receivedMessage.receiverId === selectedUser?.id);
@@ -153,13 +154,24 @@ const ManagerChat = () => {
       }
     });
 
-    // Heartbeat handling
-    newSocket.on("heartbeat", () => {
-      newSocket.emit("heartbeat-response");
+    // Custom ping-pong to test connection
+    const pingInterval = setInterval(() => {
+      if (newSocket.connected) {
+        newSocket.emit("ping", (response: any) => {
+          if (response?.success) {
+            addDebugInfo("Ping successful");
+          }
+        });
+      }
+    }, 30000);
+
+    // Cleanup ping interval on disconnect
+    newSocket.on("disconnect", () => {
+      clearInterval(pingInterval);
     });
 
     return newSocket;
-  }, [token, authUser?.id, selectedUser?.id]);
+  }, [token, authUser?.id, selectedUser?.id, addDebugInfo]);
 
   const handleSendMessage = () => {
     if (!selectedUser || !messageInput.trim() || !authUser) {
@@ -167,7 +179,7 @@ const ManagerChat = () => {
       return;
     }
     if (!isConnected || !socket) {
-      message.error("Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc kết nối lại.");
+      message.error("Chưa kết nối đến máy chủ chat.");
       return;
     }
 
@@ -176,20 +188,26 @@ const ManagerChat = () => {
       content: messageInput.trim(),
     };
 
-    // Gửi tin nhắn qua API để lưu vào DB
+    addDebugInfo(`Sending message to user ${selectedUser.id}`);
+
+    // Gửi tin nhắn qua API trước
     createChat(messageData, {
       onSuccess: () => {
         setMessageInput("");
-        // Sau khi API thành công, gửi tin nhắn qua socket để real-time
+        addDebugInfo("API call successful, sending via socket...");
+
+        // Sau đó gửi qua socket để real-time
         socket.emit("sendMessage", messageData, (response: any) => {
           if (response?.error) {
-            message.error(response.error || "Gửi tin nhắn qua socket thất bại");
+            addDebugInfo(`Socket error: ${response.error}`);
+            message.error(response.error);
           } else {
-            console.log("✅ Message sent via socket:", response);
+            addDebugInfo("Socket message sent successfully");
           }
         });
       },
       onError: (error: any) => {
+        addDebugInfo(`API error: ${error.message}`);
         message.error(error.message || "Gửi tin nhắn thất bại!");
       },
     });
@@ -214,19 +232,15 @@ const ManagerChat = () => {
       setSocket(newSocket);
     }
 
-    // Cleanup function
     return () => {
       if (newSocket) {
-        console.log("🧹 Cleaning up socket connection.");
+        addDebugInfo("Cleaning up socket connection");
         newSocket.disconnect();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
       }
     };
   }, [initializeSocket]);
 
-  // Load initial messages when selecting a user
+  // Load initial messages
   useEffect(() => {
     if (!authUser || !selectedUser) {
       setChats([]);
@@ -235,22 +249,28 @@ const ManagerChat = () => {
 
     const fetchInitialMessages = async () => {
       setIsLoadingChats(true);
+      addDebugInfo(`Loading messages for user ${selectedUser.id}`);
+
       try {
         const response = await axiosInstance.get<Chat[]>("/chat/messages", {
           params: { limit: 100, offset: 0 },
         });
+
         const filteredChats = response.data.filter(
           (chat) =>
             (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
             (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
         );
+
         setChats(
           filteredChats
             .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         );
+
+        addDebugInfo(`Loaded ${filteredChats.length} messages`);
       } catch (error: any) {
-        console.error("Error fetching messages:", error);
+        addDebugInfo(`Error loading messages: ${error.message}`);
         message.error("Không thể tải tin nhắn.");
       } finally {
         setIsLoadingChats(false);
@@ -258,15 +278,15 @@ const ManagerChat = () => {
     };
 
     fetchInitialMessages();
-  }, [selectedUser, authUser]);
+  }, [selectedUser, authUser, addDebugInfo]);
 
-  // Auto scroll to bottom on new messages
+  // Auto scroll
   useEffect(() => {
     const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
   }, [chats]);
 
-  // --- Render Logic ---
+  // --- Render ---
   const filteredAccounts =
     accounts?.filter(
       (account) =>
@@ -277,6 +297,29 @@ const ManagerChat = () => {
 
   return (
     <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
+      {/* Debug Panel - Temporary */}
+      <div
+        style={{
+          position: "fixed",
+          top: 120,
+          right: 20,
+          zIndex: 1000,
+          background: "rgba(0,0,0,0.8)",
+          color: "white",
+          padding: "10px",
+          borderRadius: "8px",
+          fontSize: "10px",
+          maxWidth: "300px",
+          maxHeight: "200px",
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ fontWeight: "bold", marginBottom: "5px" }}>Debug Info:</div>
+        {debugInfo.map((info, index) => (
+          <div key={index}>{info}</div>
+        ))}
+      </div>
+
       {/* Connection Status */}
       <div style={{ position: "fixed", top: 80, right: 20, zIndex: 1000 }}>
         <div
