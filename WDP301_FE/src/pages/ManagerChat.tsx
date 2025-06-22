@@ -72,17 +72,14 @@ const ManagerChat = () => {
     const newSocket = io("https://wdp301-su25.space", {
       auth: { token },
       query: { token },
-      transports: ["polling"], // Chỉ sử dụng polling
-      timeout: 20000,
+      // XÓA DÒNG NÀY: transports: ["polling"],
+      // XÓA DÒNG NÀY: pollingTimeout: 30000,
+      // SỬA DÒNG NÀY: upgrade: false,
+      // THAY BẰNG CÁC TÙY CHỌN DƯỚI ĐÂY (hoặc để trống để dùng mặc định)
+      transports: ["polling", "websocket"], // Cho phép cả hai, client sẽ cố gắng nâng cấp lên websocket
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 3000,
-      reconnectionDelayMax: 10000,
-      forceNew: true,
-      // Tăng polling interval
-      pollingTimeout: 30000,
-      // Disable upgrade để tránh chuyển sang websocket
-      upgrade: false,
     });
 
     // Connection events

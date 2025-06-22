@@ -11,17 +11,14 @@ const initializeSocket = (server) => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    // Chỉ sử dụng polling để tránh vấn đề upgrade
-    transports: ["polling"],
-    // Tăng timeout để tránh disconnect
+    // SỬA LẠI CÁC DÒNG DƯỚI ĐÂY
+    // Bỏ hoặc thay đổi `transports` và `allowUpgrades`
+    transports: ["polling", "websocket"], // Mặc định, cho phép cả hai
+    allowUpgrades: true, // Mặc định, cho phép nâng cấp kết nối
+
+    // Các tùy chọn khác có thể giữ lại nếu cần
     pingTimeout: 60000,
     pingInterval: 25000,
-    // Disable upgrade để ổn định
-    allowUpgrades: false,
-    // Tăng thời gian chờ handshake
-    handshakeTimeout: 10000,
-    // Tăng timeout cho polling
-    pollingTimeout: 30000,
   });
 
   // Middleware xác thực
