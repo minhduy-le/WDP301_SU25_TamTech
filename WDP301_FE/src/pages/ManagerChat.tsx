@@ -5,17 +5,15 @@ import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
 import { useCreateChat } from "../hooks/chatsApi";
-import io, { Socket } from "socket.io-client";
 import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
 import "../style/StaffChat.css";
+// --- IMPORT HOOK MỚI ĐỂ QUẢN LÝ SOCKET ---
+import { useSocket } from "../hooks/useSocket";
 
 dayjs.extend(customParseFormat);
-
-//log token
-console.log("Token:", useAuthStore.getState().token);
 
 // --- Interfaces ---
 interface Chat {
@@ -36,23 +34,15 @@ const ManagerChat = () => {
   const [messageInput, setMessageInput] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<string>("Đang kết nối...");
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
 
   // --- Hooks ---
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
-  const { user: authUser, token } = useAuthStore();
+  const { user: authUser } = useAuthStore();
   const { mutate: createChat, isPending: isSending } = useCreateChat();
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Debug function
-  const addDebugInfo = useCallback((info: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugInfo((prev) => [...prev.slice(-4), `[${timestamp}] ${info}`]);
-    console.log(`[DEBUG] ${info}`);
-  }, []);
+  // --- SỬ DỤNG HOOK useSocket ĐỂ KẾT NỐI VÀ LẤY VỀ INSTANCE SOCKET ---
+  const { socket, isConnected } = useSocket();
 
   // --- Functions ---
   const scrollToBottom = () => {
@@ -61,125 +51,14 @@ const ManagerChat = () => {
     }
   };
 
-  const initializeSocket = useCallback(() => {
-    if (!token || !authUser?.id) {
-      setConnectionStatus("Chưa xác thực");
-      addDebugInfo("No token or user ID");
-      return null;
-    }
-
-    setConnectionStatus("Đang kết nối...");
-    addDebugInfo("Initializing socket connection...");
-
-    // Force polling only để test
-    const newSocket = io("https://wdp301-su25.space", {
-      auth: { token },
-      query: { token },
-      // XÓA DÒNG NÀY: transports: ["polling"],
-      // XÓA DÒNG NÀY: pollingTimeout: 30000,
-      // SỬA DÒNG NÀY: upgrade: false,
-      // THAY BẰNG CÁC TÙY CHỌN DƯỚI ĐÂY (hoặc để trống để dùng mặc định)
-      transports: ["polling", "websocket"], // Cho phép cả hai, client sẽ cố gắng nâng cấp lên websocket
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 3000,
-    });
-
-    // Connection events
-    newSocket.on("connect", () => {
-      addDebugInfo(`Connected with ID: ${newSocket.id}`);
-      setIsConnected(true);
-      setConnectionStatus("Đã kết nối (Polling)");
-      message.success("Kết nối chat thành công!");
-    });
-
-    newSocket.on("connect_error", (error) => {
-      addDebugInfo(`Connection error: ${error.message}`);
-      setIsConnected(false);
-      setConnectionStatus("Lỗi kết nối");
-      console.error("Connection Error:", error);
-    });
-
-    newSocket.on("disconnect", (reason) => {
-      addDebugInfo(`Disconnected: ${reason}`);
-      setIsConnected(false);
-      setConnectionStatus("Mất kết nối");
-
-      if (reason === "io server disconnect") {
-        addDebugInfo("Server initiated disconnect, will reconnect...");
-      }
-    });
-
-    // Reconnection events
-    newSocket.on("reconnect_attempt", (attemptNumber) => {
-      addDebugInfo(`Reconnection attempt #${attemptNumber}`);
-      setConnectionStatus(`Đang kết nối lại (${attemptNumber})...`);
-    });
-
-    newSocket.on("reconnect", (attemptNumber) => {
-      addDebugInfo(`Reconnected after ${attemptNumber} attempts`);
-      setIsConnected(true);
-      setConnectionStatus("Đã kết nối lại");
-      message.success("Đã kết nối lại thành công!");
-    });
-
-    newSocket.on("reconnect_failed", () => {
-      addDebugInfo("Reconnection failed");
-      setIsConnected(false);
-      setConnectionStatus("Kết nối thất bại");
-      message.error("Không thể kết nối lại.");
-    });
-
-    // Message handling
-    newSocket.on("message", (receivedMessage: Chat) => {
-      addDebugInfo(`Received message from user ${receivedMessage.senderId}`);
-      const isRelevant =
-        (receivedMessage.senderId === selectedUser?.id && receivedMessage.receiverId === authUser.id) ||
-        (receivedMessage.senderId === authUser.id && receivedMessage.receiverId === selectedUser?.id);
-
-      if (isRelevant) {
-        setChats((prevChats) => {
-          if (prevChats.some((chat) => chat.id === receivedMessage.id)) {
-            return prevChats;
-          }
-          const updatedChats = [
-            ...prevChats,
-            {
-              ...receivedMessage,
-              createdAt: new Date(receivedMessage.createdAt),
-            },
-          ];
-          return updatedChats.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        });
-      }
-    });
-
-    // Custom ping-pong to test connection
-    const pingInterval = setInterval(() => {
-      if (newSocket.connected) {
-        newSocket.emit("ping", (response: any) => {
-          if (response?.success) {
-            addDebugInfo("Ping successful");
-          }
-        });
-      }
-    }, 30000);
-
-    // Cleanup ping interval on disconnect
-    newSocket.on("disconnect", () => {
-      clearInterval(pingInterval);
-    });
-
-    return newSocket;
-  }, [token, authUser?.id, selectedUser?.id, addDebugInfo]);
-
   const handleSendMessage = () => {
     if (!selectedUser || !messageInput.trim() || !authUser) {
       message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
       return;
     }
+    // Kiểm tra trạng thái kết nối trước khi gửi
     if (!isConnected || !socket) {
-      message.error("Chưa kết nối đến máy chủ chat.");
+      message.error("Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc làm mới trang.");
       return;
     }
 
@@ -188,26 +67,19 @@ const ManagerChat = () => {
       content: messageInput.trim(),
     };
 
-    addDebugInfo(`Sending message to user ${selectedUser.id}`);
-
-    // Gửi tin nhắn qua API trước
+    // Gửi tin nhắn qua API để lưu vào DB
     createChat(messageData, {
       onSuccess: () => {
         setMessageInput("");
-        addDebugInfo("API call successful, sending via socket...");
-
-        // Sau đó gửi qua socket để real-time
+        // Sau khi lưu thành công, phát sự kiện qua socket để bên nhận có thể cập nhật real-time
         socket.emit("sendMessage", messageData, (response: any) => {
           if (response?.error) {
-            addDebugInfo(`Socket error: ${response.error}`);
-            message.error(response.error);
-          } else {
-            addDebugInfo("Socket message sent successfully");
+            console.error("Socket emit error:", response.error);
+            message.error(response.error || "Gửi tin nhắn qua socket thất bại");
           }
         });
       },
       onError: (error: any) => {
-        addDebugInfo(`API error: ${error.message}`);
         message.error(error.message || "Gửi tin nhắn thất bại!");
       },
     });
@@ -225,22 +97,44 @@ const ManagerChat = () => {
 
   // --- Effects ---
 
-  // Initialize socket connection
+  // Lắng nghe sự kiện 'message' từ socket để cập nhật UI real-time
   useEffect(() => {
-    const newSocket = initializeSocket();
-    if (newSocket) {
-      setSocket(newSocket);
+    if (socket) {
+      const handleNewMessage = (receivedMessage: Chat) => {
+        // Chỉ cập nhật state nếu tin nhắn liên quan đến cuộc hội thoại đang mở
+        const isRelevant =
+          (receivedMessage.senderId === selectedUser?.id && receivedMessage.receiverId === authUser?.id) ||
+          (receivedMessage.senderId === authUser?.id && receivedMessage.receiverId === selectedUser?.id);
+
+        if (isRelevant) {
+          setChats((prevChats) => {
+            // Tránh thêm tin nhắn trùng lặp nếu có
+            if (prevChats.some((chat) => chat.id === receivedMessage.id)) {
+              return prevChats;
+            }
+            const updatedChats = [
+              ...prevChats,
+              {
+                ...receivedMessage,
+                createdAt: new Date(receivedMessage.createdAt),
+              },
+            ];
+            // Sắp xếp lại để đảm bảo thứ tự thời gian
+            return updatedChats.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          });
+        }
+      };
+
+      socket.on("message", handleNewMessage);
+
+      // Dọn dẹp listener khi component unmount hoặc socket/user thay đổi
+      return () => {
+        socket.off("message", handleNewMessage);
+      };
     }
+  }, [socket, selectedUser, authUser]);
 
-    return () => {
-      if (newSocket) {
-        addDebugInfo("Cleaning up socket connection");
-        newSocket.disconnect();
-      }
-    };
-  }, [initializeSocket]);
-
-  // Load initial messages
+  // Load tin nhắn ban đầu khi chọn một người dùng mới
   useEffect(() => {
     if (!authUser || !selectedUser) {
       setChats([]);
@@ -249,8 +143,6 @@ const ManagerChat = () => {
 
     const fetchInitialMessages = async () => {
       setIsLoadingChats(true);
-      addDebugInfo(`Loading messages for user ${selectedUser.id}`);
-
       try {
         const response = await axiosInstance.get<Chat[]>("/chat/messages", {
           params: { limit: 100, offset: 0 },
@@ -267,10 +159,7 @@ const ManagerChat = () => {
             .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         );
-
-        addDebugInfo(`Loaded ${filteredChats.length} messages`);
       } catch (error: any) {
-        addDebugInfo(`Error loading messages: ${error.message}`);
         message.error("Không thể tải tin nhắn.");
       } finally {
         setIsLoadingChats(false);
@@ -278,9 +167,9 @@ const ManagerChat = () => {
     };
 
     fetchInitialMessages();
-  }, [selectedUser, authUser, addDebugInfo]);
+  }, [selectedUser, authUser]);
 
-  // Auto scroll
+  // Tự động cuộn xuống khi có tin nhắn mới
   useEffect(() => {
     const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
@@ -297,30 +186,7 @@ const ManagerChat = () => {
 
   return (
     <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
-      {/* Debug Panel - Temporary */}
-      <div
-        style={{
-          position: "fixed",
-          top: 120,
-          right: 20,
-          zIndex: 1000,
-          background: "rgba(0,0,0,0.8)",
-          color: "white",
-          padding: "10px",
-          borderRadius: "8px",
-          fontSize: "10px",
-          maxWidth: "300px",
-          maxHeight: "200px",
-          overflowY: "auto",
-        }}
-      >
-        <div style={{ fontWeight: "bold", marginBottom: "5px" }}>Debug Info:</div>
-        {debugInfo.map((info, index) => (
-          <div key={index}>{info}</div>
-        ))}
-      </div>
-
-      {/* Connection Status */}
+      {/* Connection Status Indicator */}
       <div style={{ position: "fixed", top: 80, right: 20, zIndex: 1000 }}>
         <div
           style={{
@@ -332,7 +198,7 @@ const ManagerChat = () => {
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
-          {isConnected ? `🟢 ${connectionStatus}` : `🔴 ${connectionStatus}`}
+          {isConnected ? `🟢 Đã kết nối` : `🔴 Mất kết nối`}
         </div>
       </div>
 
@@ -384,7 +250,7 @@ const ManagerChat = () => {
             >
               {isLoadingChats ? (
                 <p style={{ textAlign: "center", color: "#888" }}>Đang tải tin nhắn...</p>
-              ) : chats.length ? (
+              ) : chats.length > 0 ? (
                 chats.map((chat) => (
                   <div
                     key={chat.id}
