@@ -9,21 +9,17 @@ const initializeSocket = (server) => {
     cors: {
       origin: [
         "https://wdp301-su25.space",
-        "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:5173/manager/chat",
+        "http://localhost:3000",
+        "https://wdp301-su25.space/",
         "https://wdp301-su25.space/manager/chat",
-        "*",
+        "https://wdp301-su25.space/staff/chat",
       ],
       methods: ["GET", "POST"],
       credentials: true,
     },
-    // SỬA LẠI CÁC DÒNG DƯỚI ĐÂY
-    // Bỏ hoặc thay đổi `transports` và `allowUpgrades`
-    transports: ["polling", "websocket"], // Mặc định, cho phép cả hai
-    allowUpgrades: true, // Mặc định, cho phép nâng cấp kết nối
-
-    // Các tùy chọn khác có thể giữ lại nếu cần
+    transports: ["websocket", "polling"],
+    allowUpgrades: true,
     pingTimeout: 60000,
     pingInterval: 25000,
   });
