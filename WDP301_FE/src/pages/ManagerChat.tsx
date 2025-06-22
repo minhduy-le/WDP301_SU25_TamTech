@@ -1,3 +1,5 @@
+// WDP301_FE/src/pages/ManagerChat.tsx
+
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
@@ -10,13 +12,11 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
 import "../style/StaffChat.css";
-// --- IMPORT HOOK STOMP MỚI ---
 import { useStomp } from "../hooks/useStomp";
-import axios from "axios";
+import axios from "axios"; // Import axios
 
 dayjs.extend(customParseFormat);
 
-// --- Interfaces ---
 interface Chat {
   id: number;
   chatRoomId?: number;
@@ -39,7 +39,6 @@ const ManagerChat = () => {
   const { mutate: createChat, isPending: isSending } = useCreateChat();
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- HÀM FETCH LẠI DỮ LIỆU ---
   const fetchMessages = async () => {
     if (!authUser || !selectedUser) return;
     setIsLoadingChats(true);
@@ -64,8 +63,6 @@ const ManagerChat = () => {
     }
   };
 
-  // --- SỬ DỤNG HOOK useStomp ---
-  // Khi nhận được payload "Create New Chat", sẽ gọi hàm fetchMessages
   useStomp("/topic/chat", (body) => {
     if (body === "Create New Chat") {
       console.log("Realtime signal received: Create New Chat. Refetching messages...");
@@ -74,7 +71,6 @@ const ManagerChat = () => {
     }
   });
 
-  // Load tin nhắn ban đầu khi chọn user
   useEffect(() => {
     fetchMessages();
   }, [selectedUser, authUser]);
@@ -93,9 +89,8 @@ const ManagerChat = () => {
     createChat(messageData, {
       onSuccess: () => {
         setMessageInput("");
-        // Sau khi gửi thành công, gọi API để trigger update real-time cho các client khác
+        // SỬA ĐỔI TẠI ĐÂY: Gọi API trigger trên server production
         axios.post("https://wdp301-su25.space/api/trigger-chat-update");
-        // Fetch lại tin nhắn cho chính mình
         fetchMessages();
       },
       onError: (error: any) => {
@@ -134,6 +129,7 @@ const ManagerChat = () => {
 
   return (
     <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
+      {/* Phần JSX giữ nguyên */}
       <Card
         style={{ width: 300, marginRight: 20, display: "flex", flexDirection: "column", borderRadius: "12px" }}
         bodyStyle={{ overflowY: "auto", flex: 1 }}
