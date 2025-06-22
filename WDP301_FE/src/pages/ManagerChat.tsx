@@ -14,6 +14,9 @@ import "../style/StaffChat.css";
 
 dayjs.extend(customParseFormat);
 
+//log token
+console.log("Token:", useAuthStore.getState().token);
+
 // --- Interfaces ---
 interface Chat {
   id: number;
