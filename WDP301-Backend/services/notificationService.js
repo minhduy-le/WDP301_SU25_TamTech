@@ -1,57 +1,78 @@
-const admin = require("../config/firebase");
+// WDP301-Backend/services/notificationService.js
+
+const { Op } = require("sequelize");
+const { sendPushNotification } = require("../config/firebase");
 const Notification = require("../models/notification");
 const User = require("../models/user");
 
 const notificationService = {
-  // Save or update FCM token for a user
   async saveFcmToken(userId, fcmToken) {
     if (!userId || !fcmToken) {
       throw new Error("User ID and FCM token are required");
     }
-
     const user = await User.findByPk(userId);
     if (!user) {
       throw new Error("User not found");
     }
 
-    // Check if notification entry exists for the user
-    let notification = await Notification.findOne({ where: { userId } });
-    if (notification) {
-      // Update existing FCM token
-      notification.fcmToken = fcmToken;
-      await notification.save();
-    } else {
-      // Create new notification entry
-      notification = await Notification.create({ userId, fcmToken });
-    }
+    // Use findOrCreate to avoid duplicate tokens for the same user
+    await Notification.findOrCreate({
+      where: { userId, fcmToken },
+      defaults: {
+        userId,
+        fcmToken,
+        title: "FCM Token Registration", // Internal note
+        message: `Token registered for user ${userId}`,
+      },
+    });
 
     return { message: "FCM token saved successfully" };
   },
 
-  // Send push notification to a user
-  async sendNotification(userId, title, message) {
-    const notification = await Notification.findOne({ where: { userId } });
-    if (!notification || !notification.fcmToken) {
-      throw new Error("No FCM token found for this user");
+  async sendNotificationToUser(userId, title, message) {
+    // Find all distinct FCM tokens for the user
+    const userNotifications = await Notification.findAll({
+      where: { userId, fcmToken: { [Op.ne]: null } },
+      attributes: ["fcmToken"],
+      group: ["fcmToken"],
+    });
+
+    if (!userNotifications || userNotifications.length === 0) {
+      console.log(`No FCM tokens found for user ${userId}.`);
+      return;
     }
 
-    const payload = {
-      notification: {
-        title,
-        body: message,
+    const tokens = userNotifications.map((n) => n.fcmToken);
+
+    // Create a single notification record in the database for this message
+    await Notification.create({
+      userId,
+      title,
+      message,
+      fcmToken: null, // This indicates it's a message, not a device registration
+    });
+
+    // Send push notification to all registered tokens
+    const promises = tokens.map((token) => sendPushNotification(token, title, message));
+    await Promise.allSettled(promises);
+
+    return { message: `Notification sent to ${tokens.length} device(s).` };
+  },
+
+  async getNotificationsByUserId(userId) {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    // Fetch only actual messages, not token registration entries
+    const notifications = await Notification.findAll({
+      where: {
+        userId,
+        fcmToken: null, // Ensure we only get messages
       },
-      token: notification.fcmToken,
-    };
-
-    try {
-      const response = await admin.messaging().send(payload);
-      // Save notification to database
-      await Notification.create({ userId, title, message, fcmToken: notification.fcmToken });
-      return { message: "Notification sent successfully", response };
-    } catch (error) {
-      console.error("Error sending notification:", error.message);
-      throw new Error("Failed to send notification");
-    }
+      order: [["createdAt", "DESC"]],
+      limit: 20, // Limit to the latest 20 notifications
+    });
+    return notifications;
   },
 };
 

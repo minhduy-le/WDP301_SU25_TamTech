@@ -12,10 +12,11 @@ const {
   Promotion,
 } = require("../models/associations");
 const sequelize = require("../config/database");
-const { uploadFileToFirebase } = require("../config/firebase");
+const { uploadFileToFirebase, sendPushNotification } = require("../config/firebase");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
+const notificationService = require("./notificationService");
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -337,6 +338,28 @@ const createOrder = async (req, res) => {
       await transaction.rollback();
       console.log("Transaction rolled back due to payment link creation failure");
       return res.status(500).send("Failed to create payment link");
+    }
+
+    // Send push notifications to Managers
+    try {
+      const staffUsers = await User.findAll({
+        where: { role: "Staff" },
+        attributes: ["id"],
+        transaction,
+      });
+
+      const title = "New Order Received";
+      const message = `A new order #${order.orderId} has been placed.`;
+
+      for (const staff of staffUsers) {
+        // Asynchronously send notification without waiting to not block the response
+        notificationService
+          .sendNotificationToUser(staff.id, title, message)
+          .catch((err) => console.error(`Failed to send notification to staff ${staff.id}:`, err));
+      }
+    } catch (notificationError) {
+      console.error("Error in querying staff for notifications:", notificationError.message);
+      // Do not rollback transaction for notification errors, just log it.
     }
 
     await transaction.commit();

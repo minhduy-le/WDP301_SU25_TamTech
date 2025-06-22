@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown, message } from "antd";
+import { Layout, Menu, Button, Avatar, Dropdown, message, Badge, List, Typography } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -16,6 +16,10 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./StaffSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
+import { useGetNotifications, type Notification } from "../../hooks/ordersApi"; // Import hook and type
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 const { Header, Sider, Content } = Layout;
 
@@ -52,6 +56,7 @@ const StaffSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { data: notifications, isLoading: notificationsLoading } = useGetNotifications();
 
   const siderWidth = 250;
   const siderCollapsedWidth = 80;
@@ -97,6 +102,55 @@ const StaffSidebar = () => {
       },
     },
   ];
+
+  const notificationOverlay = (
+    <div
+      style={{
+        backgroundColor: "white",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+        borderRadius: "8px",
+        width: "360px",
+        maxHeight: "450px",
+        display: "flex",
+        flexDirection: "column",
+        border: "1px solid #f0f0f0",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: "1px solid #f0f0f0",
+          fontWeight: "bold",
+          fontSize: "16px",
+          color: "#1E40AF",
+        }}
+      >
+        Notifications
+      </div>
+      <List
+        loading={notificationsLoading}
+        dataSource={notifications}
+        style={{ overflowY: "auto", flex: 1 }}
+        locale={{ emptyText: <div style={{ padding: "20px", textAlign: "center" }}>No new notifications</div> }}
+        renderItem={(item: Notification) => (
+          <List.Item style={{ padding: "12px 16px", borderBottom: "1px solid #f0f0f0" }}>
+            <List.Item.Meta
+              title={<Typography.Text strong>{item.title}</Typography.Text>}
+              description={
+                <>
+                  <Typography.Text>{item.message}</Typography.Text>
+                  <br />
+                  <Typography.Text type="secondary" style={{ fontSize: "12px" }}>
+                    {dayjs(item.createdAt).fromNow()}
+                  </Typography.Text>
+                </>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    </div>
+  );
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -217,26 +271,15 @@ const StaffSidebar = () => {
               gap: 24,
             }}
           >
-            <Button
-              type="text"
-              icon={<BellOutlined className="admin-bell-btn" />}
-              style={{
-                fontSize: "18px",
-                color: "#60A5FA",
-                width: 40,
-                height: 40,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "transparent",
-              }}
-            />
+            <Dropdown overlay={notificationOverlay} trigger={["click"]} placement="bottomRight">
+              <a onClick={(e) => e.preventDefault()}>
+                <Badge count={notifications?.length || 0}>
+                  <BellOutlined className="admin-bell-btn" style={{ fontSize: "20px", color: "#1E40AF" }} />
+                </Badge>
+              </a>
+            </Dropdown>
 
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              arrow
-            >
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
               <div
                 style={{
                   display: "flex",
@@ -262,9 +305,7 @@ const StaffSidebar = () => {
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#1E40AF", fontWeight: 600 }}>
-                  {user?.fullName}
-                </span>
+                <span style={{ color: "#1E40AF", fontWeight: 600 }}>{user?.fullName}</span>
                 <DownOutlined style={{ color: "#1E40AF" }} />
               </div>
             </Dropdown>

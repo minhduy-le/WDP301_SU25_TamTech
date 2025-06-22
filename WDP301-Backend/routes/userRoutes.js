@@ -576,4 +576,76 @@ router.post("/google-login", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/save-fcm-token:
+ *   post:
+ *     summary: Save FCM token for push notifications
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fcmToken
+ *             properties:
+ *               fcmToken:
+ *                 type: string
+ *                 description: Firebase Cloud Messaging token
+ *     responses:
+ *       200:
+ *         description: FCM token saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post("/save-fcm-token", verifyToken, async (req, res) => {
+  const { fcmToken } = req.body;
+  const userId = req.userId;
+
+  if (!fcmToken || typeof fcmToken !== "string" || fcmToken.trim() === "") {
+    return res.status(400).json({ message: "Valid FCM token is required" });
+  }
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if token already exists for this user
+    const existingNotification = await Notification.findOne({
+      where: { userId, fcmToken },
+    });
+
+    if (!existingNotification) {
+      await Notification.create({
+        userId,
+        fcmToken,
+        title: "FCM Token Registration",
+        message: "FCM token registered successfully",
+      });
+    }
+
+    res.status(200).json({ message: "FCM token saved successfully" });
+  } catch (error) {
+    console.error("Error saving FCM token:", error.message);
+    res.status(500).json({ message: "Failed to save FCM token", error: error.message });
+  }
+});
+
 module.exports = router;

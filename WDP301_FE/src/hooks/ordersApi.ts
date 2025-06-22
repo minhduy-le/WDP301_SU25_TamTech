@@ -63,6 +63,29 @@ export interface OrderHistory {
   payment_method: string;
 }
 
+export interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Add the new hook to fetch notifications
+const fetchNotifications = async (): Promise<Notification[]> => {
+  const response = await axiosInstance.get<Notification[]>("notifications");
+  return response.data;
+};
+
+export const useGetNotifications = () => {
+  return useQuery<Notification[], Error>({
+    queryKey: ["notifications"],
+    queryFn: fetchNotifications,
+    refetchInterval: 60000, // Refetch every 60 seconds to keep it fresh
+  });
+};
+
 interface MutationVariables {
   orderId: number;
 }
@@ -87,16 +110,12 @@ export const useCreateOrder = () => {
 export const useCalculateShipping = () => {
   return useMutation({
     mutationFn: async (calculateShip: CalculateShipping) => {
-      const response = await axiosInstance.post(
-        `orders/shipping/calculate`,
-        calculateShip
-      );
+      const response = await axiosInstance.post(`orders/shipping/calculate`, calculateShip);
       return response.data as ShippingResponseDto;
     },
     onError: (error: any) => {
       if (axios.isAxiosError(error) && error.response) {
-        const errorMessage =
-          error.response.data?.message || error.response.data;
+        const errorMessage = error.response.data?.message || error.response.data;
         throw new Error(errorMessage);
       } else {
         throw new Error("An unexpected error occurred");
