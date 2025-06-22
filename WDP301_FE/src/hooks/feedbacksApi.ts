@@ -36,6 +36,10 @@ export interface FeedbackDto {
     id: number;
     fullName: number;
   };
+  Product: {
+    productId: number;
+    name: string;
+  };
   FeedbackResponses: [
     {
       id: number;
@@ -64,13 +68,15 @@ export const useCreateFeedback = () => {
   return useMutation({
     mutationFn: async ({
       orderId,
+      productId,
       feedbackData,
     }: {
       orderId: number;
+      productId: number;
       feedbackData: CreateFeedback;
     }) => {
       const response = await axiosInstance.post(
-        `feedback/${orderId}`,
+        `feedback/${orderId}/${productId}`,
         feedbackData
       );
       return response.data as FeedbackResponseDto;

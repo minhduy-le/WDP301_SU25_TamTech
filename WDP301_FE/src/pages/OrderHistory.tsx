@@ -29,9 +29,12 @@ interface OrderHistoryProps {
 
 interface FeedbackItem {
   orderId: number;
+  productId: number;
   name: string;
   quantity: number;
   price: string;
+  rating?: number;
+  comment?: string;
 }
 
 const statusMap: { [key: string]: string } & {
@@ -67,12 +70,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     orderItems: FeedbackItem[];
   } | null>(null);
 
-  const [rating, setRating] = useState<number>(0);
-  const [comment, setComment] = useState<string>("");
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [loadingButtons, setLoadingButtons] = useState<Record<number, boolean>>(
     {}
   );
-  const [submittingFeedback, setSubmittingFeedback] = useState<boolean>(false);
 
   const { mutate: createFeedback } = useCreateFeedback();
 
@@ -86,14 +87,16 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   };
 
   const showModal = (order: OrderHistory) => {
-    setLoadingButtons((prev) => ({ ...prev, [order.orderId]: true }));
-
+    // Không đặt loadingButtons thành true ngay khi mở modal, chỉ khi gửi feedback
     const actions = getActionsForStatus(order.status);
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
       orderId: order.orderId,
+      productId: item.productId,
       name: item.name,
       quantity: item.quantity,
       price: `${getFormattedPrice(item.price)} x${item.quantity}`,
+      rating: 0,
+      comment: "",
     }));
     setSelectedOrder({
       id: order.orderId,
@@ -107,55 +110,68 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       actions: actions,
       orderItems: feedbackItems,
     });
-    setRating(0);
-    setComment("");
+    setFeedbacks(feedbackItems);
     setIsModalVisible(true);
   };
 
   const handleOk = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !feedbacks.length) return;
 
-    if (rating === 0 && !comment.trim()) {
-      message.warning("Vui lòng nhập đánh giá hoặc nhận xét!");
+    const hasValidFeedback = feedbacks.some(
+      (item) => (item.rating ?? 0) > 0 || item.comment?.trim()
+    );
+    if (!hasValidFeedback) {
+      message.warning("Vui lòng nhập ít nhất một đánh giá hoặc nhận xét!");
       return;
     }
 
-    setSubmittingFeedback(true);
+    // Đặt trạng thái loading khi bắt đầu gửi
+    setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
     try {
-      await new Promise<void>((resolve, reject) => {
-        createFeedback(
-          {
-            orderId: selectedOrder.id,
-            feedbackData: {
-              comment,
-              rating,
-            },
-          },
-          {
-            onSuccess: () => {
-              message.success(
-                `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi!`
-              );
-              resolve();
-            },
-            onError: (error: any) => {
-              message.error(
-                `Đã xảy ra lỗi khi gửi đánh giá cho đơn hàng ${selectedOrder.id}.`
-              );
-              console.error(error);
-              reject(error);
-            },
-          }
-        );
-      });
+      // Gửi feedback cho từng productId
+      await Promise.all(
+        feedbacks.map(
+          (item) =>
+            new Promise<void>((resolve, reject) => {
+              if ((item.rating ?? 0) > 0 || (item.comment ?? "").trim()) {
+                createFeedback(
+                  {
+                    orderId: item.orderId,
+                    productId: item.productId,
+                    feedbackData: {
+                      comment: item.comment || "",
+                      rating: item.rating || 0,
+                    },
+                  },
+                  {
+                    onSuccess: () => resolve(),
+                    onError: (error: any) => {
+                      message.error(
+                        `Lỗi khi gửi đánh giá cho sản phẩm ${item.name}.`
+                      );
+                      console.error(error);
+                      reject(error);
+                    },
+                  }
+                );
+              } else {
+                resolve(); // Bỏ qua nếu không có feedback
+              }
+            })
+        )
+      );
 
-      setIsModalVisible(false);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback(false);
+      message.success(
+        `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi thành công!`
+      );
     } catch (error) {
+      message.error("Một số đánh giá không được gửi. Vui lòng thử lại.");
       console.error("Feedback submission failed:", error);
-      setSubmittingFeedback(false);
+    } finally {
+      // Reset trạng thái loading dù thành công hay thất bại
+      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setIsModalVisible(false);
     }
   };
 
@@ -163,16 +179,19 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     setIsModalVisible(false);
     if (selectedOrder) {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback(false);
     }
   };
 
-  const handleRatingChange = (value: number) => {
-    setRating(value);
+  const handleRatingChange = (index: number, value: number) => {
+    setFeedbacks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, rating: value } : item))
+    );
   };
 
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setComment(e.target.value);
+  const handleCommentChange = (index: number, value: string) => {
+    setFeedbacks((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, comment: value } : item))
+    );
   };
 
   const { data: orderHistory, isLoading: isOrderHistoryLoading } =
@@ -184,6 +203,8 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         return ["Đánh giá", "Đặt lại"];
       case "Canceled":
         return ["Đặt lại"];
+      case "Paid":
+        return ["Đánh giá"];
       case "Preparing":
       case "Delivering":
         return ["Đặt tiếp"];
@@ -223,7 +244,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               const actions = getActionsForStatus(order.status);
               const itemCount = order.orderItems ? order.orderItems.length : 0;
               const isLoading = loadingButtons[order.orderId] || false;
-              const isSubmitting = submittingFeedback;
               const total = calculateTotal(order);
               return (
                 <Col
@@ -309,7 +329,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                 }}
                               >
                                 {action}
-                                {isSubmitting && (
+                                {isLoading && (
                                   <LoadingOutlined
                                     style={{ marginLeft: 8, fontSize: 14 }}
                                     spin
@@ -354,7 +374,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                     ? order.orderItems.length
                     : 0;
                   const isLoading = loadingButtons[order.orderId] || false;
-                  const isSubmitting = submittingFeedback;
                   const total = calculateTotal(order);
                   return (
                     <Col
@@ -442,7 +461,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                     }}
                                   >
                                     {action}
-                                    {isSubmitting && (
+                                    {isLoading && (
                                       <LoadingOutlined
                                         style={{ marginLeft: 8, fontSize: 14 }}
                                         spin
@@ -488,7 +507,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               backgroundColor: "#EFE6DB",
             }}
           >
-            Đánh giá đơn hàng
+            Đánh giá món ăn
           </Title>
         }
         visible={isModalVisible}
@@ -497,10 +516,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         footer={[
           <Button
             key="submit"
-            className="submit-button-feedback"
+            className="submt-button-feedback"
             onClick={handleOk}
-            loading={submittingFeedback}
-            disabled={submittingFeedback}
+            loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
+            disabled={selectedOrder ? loadingButtons[selectedOrder.id] : false}
           >
             Gửi đánh giá
           </Button>,
@@ -517,8 +536,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         }}
       >
         {selectedOrder && selectedOrder.orderItems.length > 0 ? (
-          <>
-            {selectedOrder.orderItems.map((item, index) => (
+          selectedOrder.orderItems.map((item, index) => {
+            const feedback =
+              feedbacks.find((f) => f.productId === item.productId) || item;
+            return (
               <div key={index} className="feedback-item">
                 <Row>
                   <Col
@@ -545,6 +566,44 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                     </Text>
                   </Col>
                 </Row>
+                <Col span={24}>
+                  <Text
+                    style={{
+                      fontFamily: "Montserrat, sans-serif",
+                      color: "#DA7339",
+                    }}
+                  >
+                    Đánh giá món ăn
+                  </Text>
+                </Col>
+                <Row style={{ marginTop: "5px", alignItems: "center" }}>
+                  <Col span={7} style={{ textAlign: "left" }}>
+                    <Rate
+                      value={feedback.rating}
+                      onChange={(value) => handleRatingChange(index, value)}
+                      style={{ color: "#78A243" }}
+                      disabled={
+                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                      }
+                    />
+                  </Col>
+                  <Col span={17}>
+                    <Input
+                      placeholder="Nhận xét"
+                      value={feedback.comment}
+                      onChange={(e) =>
+                        handleCommentChange(index, e.target.value)
+                      }
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        width: "100%",
+                      }}
+                      disabled={
+                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                      }
+                    />
+                  </Col>
+                </Row>
                 {index < selectedOrder.orderItems.length - 1 && (
                   <hr
                     style={{
@@ -555,47 +614,8 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                   />
                 )}
               </div>
-            ))}
-            <Text
-              style={{
-                fontFamily: "Montserrat, sans-serif",
-                color: "#DA7339",
-                fontWeight: 500,
-                padding: "0 10px",
-                fontSize: 16,
-              }}
-            >
-              Đánh giá
-            </Text>
-            <Row
-              style={{
-                alignItems: "center",
-                padding: "0 10px",
-              }}
-            >
-              <Col span={7} style={{ textAlign: "left" }}>
-                <Rate
-                  value={rating}
-                  onChange={handleRatingChange}
-                  style={{ color: "#78A243", marginTop: "5px" }}
-                  disabled={submittingFeedback}
-                />
-              </Col>
-              <Col span={17}>
-                <Input
-                  placeholder="Nhận xét chung cho đơn hàng"
-                  value={comment}
-                  onChange={handleCommentChange}
-                  style={{
-                    fontFamily: "Montserrat, sans-serif",
-                    width: "100%",
-                    marginTop: "5px",
-                  }}
-                  disabled={submittingFeedback}
-                />
-              </Col>
-            </Row>
-          </>
+            );
+          })
         ) : (
           <Text>Không có món nào để đánh giá.</Text>
         )}

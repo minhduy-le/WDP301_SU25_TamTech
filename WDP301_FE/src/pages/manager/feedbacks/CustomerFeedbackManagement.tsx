@@ -41,7 +41,7 @@ const CustomerFeedbackManagement = () => {
   const { data: feedbacks, isLoading: isFeedbackLoading } = useFeedbacks();
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
-  const [filterType, setFilterType] = useState<string>("Tất cả");
+  // const [filterType, setFilterType] = useState<string>("Tất cả");
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackDto | null>(
@@ -137,11 +137,11 @@ const CustomerFeedbackManagement = () => {
         (fb) =>
           filterStatus === "Tất cả" ||
           fb.isResponsed.toString() === filterStatus
-      )
-      .filter(
-        (fb) => filterType === "Tất cả" || fb.rating.toString() === filterType // Cần ánh xạ hợp lý hơn nếu có loại phản hồi
       );
-  }, [feedbacks, searchText, filterStatus, filterType]);
+    // .filter(
+    //   (fb) => filterType === "Tất cả" || fb.rating.toString() === filterType // Cần ánh xạ hợp lý hơn nếu có loại phản hồi
+    // );
+  }, [feedbacks, searchText, filterStatus]);
 
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
@@ -153,16 +153,31 @@ const CustomerFeedbackManagement = () => {
 
   const columns = [
     {
+      title: "Mã ĐH",
+      dataIndex: "orderId",
+      key: "orderId",
+      width: 100,
+      sorter: (a: FeedbackDto, b: FeedbackDto) => a.orderId - b.orderId,
+    },
+    {
       title: "Khách hàng",
       dataIndex: ["User", "fullName"],
       key: "customerName",
-      width: 180,
+      width: 130,
       ellipsis: true,
       sorter: (a: FeedbackDto, b: FeedbackDto) =>
         a.User.fullName.toString().localeCompare(b.User.fullName.toString()),
       render: (name: number) => (
         <span style={{ fontWeight: 500 }}>{name.toString()}</span>
       ),
+    },
+    {
+      title: "Sản phẩm",
+      dataIndex: ["Product", "name"],
+      key: "productName",
+      width: 150,
+      sorter: (a: FeedbackDto, b: FeedbackDto) =>
+        a.Product.name.toString().localeCompare(b.Product.name.toString()),
     },
     {
       title: "Comment",
@@ -204,6 +219,7 @@ const CustomerFeedbackManagement = () => {
       title: "Hành động",
       key: "actions",
       width: 150,
+      // fixed: "right",
       align: "center",
       render: (_: any, record: FeedbackDto) => (
         <Button
@@ -308,15 +324,14 @@ const CustomerFeedbackManagement = () => {
               }}
               allowClear
             />
-            <Select
+            {/* <Select
               value={filterType}
               style={{ width: 200, borderRadius: 6 }}
               onChange={(value) => setFilterType(value)}
               placeholder="Lọc theo loại"
             >
               <Option value="Tất cả">Tất cả loại</Option>
-              {/* Cần ánh xạ loại phản hồi nếu API cung cấp */}
-            </Select>
+            </Select> */}
             <Select
               value={filterStatus}
               style={{ width: 200, borderRadius: 6 }}
@@ -336,7 +351,7 @@ const CustomerFeedbackManagement = () => {
             loading={isFeedbackLoading}
             rowKey="id"
             pagination={{
-              pageSize: 8,
+              pageSize: 5,
               showSizeChanger: true,
               showTotal: (total) => `Tổng ${total} phản hồi`,
             }}
