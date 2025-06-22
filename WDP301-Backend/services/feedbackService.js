@@ -1,12 +1,17 @@
 const Feedback = require("../models/feedback");
 const FeedbackResponse = require("../models/FeedbackResponse");
 const Order = require("../models/order");
+const OrderItem = require("../models/orderItem");
 const User = require("../models/user");
+const Product = require("../models/product");
 
 const feedbackService = {
-  async createFeedback({ orderId, userId, comment, rating }) {
+  async createFeedback({ orderId, productId, userId, comment, rating }) {
     if (!Number.isInteger(orderId) || orderId < 1) {
       throw new Error("Order ID must be a positive integer");
+    }
+    if (!Number.isInteger(productId) || productId < 1) {
+      throw new Error("Product ID must be a positive integer");
     }
     if (!Number.isInteger(userId) || userId < 1) {
       throw new Error("User ID must be a positive integer");
@@ -21,44 +26,63 @@ const feedbackService = {
       throw new Error("Rating must be an integer between 1 and 5");
     }
 
+    // Verify the order belongs to the user
     const order = await Order.findOne({
       where: { orderId, userId },
-      include: [],
+      attributes: ["orderId"],
     });
     if (!order) {
       throw new Error("Order not found or you are not authorized to provide feedback for this order");
     }
 
+    // Verify the product exists in the order
+    const orderItem = await OrderItem.findOne({
+      where: { orderId, productId },
+      attributes: ["orderItemId"],
+    });
+    if (!orderItem) {
+      throw new Error("Product not found in this order");
+    }
+
+    // Check for existing feedback for this product in this order
     const existingFeedback = await Feedback.findOne({
-      where: { orderId, userId },
+      where: { orderId, productId, userId },
     });
     if (existingFeedback) {
-      throw new Error("You have already provided feedback for this order");
+      throw new Error("You have already provided feedback for this product in this order");
     }
 
     const feedback = await Feedback.create({
       orderId,
+      productId,
       userId,
       comment: comment.trim(),
       rating,
-      isResponsed: false, // Set isResponsed to false on creation
+      isResponsed: false,
     });
 
     return feedback;
   },
 
-  async getFeedbackByOrderId(orderId) {
+  async getFeedbackByProductAndOrder(orderId, productId) {
     if (!Number.isInteger(orderId) || orderId < 1) {
       throw new Error("Order ID must be a positive integer");
     }
+    if (!Number.isInteger(productId) || productId < 1) {
+      throw new Error("Product ID must be a positive integer");
+    }
 
-    const order = await Order.findByPk(orderId, { attributes: ["orderId"] });
-    if (!order) {
-      throw new Error("Order not found");
+    // Verify the order and product exist
+    const orderItem = await OrderItem.findOne({
+      where: { orderId, productId },
+      attributes: ["orderItemId"],
+    });
+    if (!orderItem) {
+      throw new Error("Product not found in this order");
     }
 
     const feedbacks = await Feedback.findAll({
-      where: { orderId },
+      where: { orderId, productId },
       include: [
         {
           model: User,
@@ -75,6 +99,11 @@ const feedbackService = {
               attributes: ["id", "fullName"],
             },
           ],
+        },
+        {
+          model: Product,
+          as: "Product",
+          attributes: ["productId", "name"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -101,6 +130,11 @@ const feedbackService = {
               attributes: ["id", "fullName"],
             },
           ],
+        },
+        {
+          model: Product,
+          as: "Product",
+          attributes: ["productId", "name"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -139,7 +173,6 @@ const feedbackService = {
       content: content.trim(),
     });
 
-    // Update isResponsed to true
     await feedback.update({ isResponsed: true });
 
     return feedbackResponse;

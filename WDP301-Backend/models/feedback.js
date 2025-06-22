@@ -9,12 +9,12 @@ const Feedback = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    orderId: {
+    productId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "orders",
-        key: "orderId",
+        model: "products",
+        key: "productId",
       },
     },
     userId: {
@@ -23,6 +23,14 @@ const Feedback = sequelize.define(
       references: {
         model: "users",
         key: "id",
+      },
+    },
+    orderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "orders",
+        key: "orderId",
       },
     },
     comment: {

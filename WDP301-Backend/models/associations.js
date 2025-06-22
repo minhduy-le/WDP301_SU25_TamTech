@@ -22,6 +22,7 @@ const ScheduleShipper = require("./ScheduleShipper");
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
 Product.belongsTo(Store, { foreignKey: "storeId", as: "Store" });
 Product.hasMany(ProductRecipe, { foreignKey: "productId", as: "ProductRecipes" });
+Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
 
 Store.hasMany(Product, { foreignKey: "storeId", as: "Products" });
 Store.hasMany(Material, { foreignKey: "storeId", as: "Materials" });
@@ -37,7 +38,6 @@ Order.belongsTo(User, { foreignKey: "userId", as: "User" });
 Order.belongsTo(PaymentMethod, { foreignKey: "payment_method_id", as: "PaymentMethod" });
 Order.belongsTo(OrderStatus, { foreignKey: "status_id", as: "OrderStatus" });
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "OrderItems" });
-Order.hasMany(Feedback, { foreignKey: "orderId", as: "Feedbacks" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "Orders" });
 User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
@@ -47,7 +47,7 @@ OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 
 Product.hasMany(OrderItem, { foreignKey: "productId", as: "OrderItems" });
 
-Feedback.belongsTo(Order, { foreignKey: "orderId", as: "Order", targetKey: "orderId" });
+Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
 Feedback.hasMany(FeedbackResponse, { foreignKey: "feedbackId", as: "FeedbackResponses" });
 
