@@ -34,6 +34,7 @@ const port = process.env.PORT || 3000;
 
 // Initialize Socket.IO
 const io = initializeSocket(server);
+app.set("io", io); // <-- THÊM DÒNG NÀY
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

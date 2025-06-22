@@ -6,14 +6,12 @@ import { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
-import { useCreateChat } from "../hooks/chatsApi";
 import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
 import "../style/StaffChat.css";
-import { useStomp } from "../hooks/useStomp";
-import axios from "axios"; // Import axios
+import { useSocketConnection, useSocketListener, emitSocketEvent } from "../hooks/useSocket";
 
 dayjs.extend(customParseFormat);
 
@@ -33,23 +31,29 @@ const ManagerChat = () => {
   const [selectedUser, setSelectedUser] = useState<{ id: number; fullName: string } | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
+  const [isSending, setIsSending] = useState(false); // <-- THAY ĐỔI: State để quản lý trạng thái gửi
   const [isLoadingChats, setIsLoadingChats] = useState(false);
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
-  const { user: authUser } = useAuthStore();
-  const { mutate: createChat, isPending: isSending } = useCreateChat();
+  const { user: authUser, token } = useAuthStore(); // <-- THAY ĐỔI: Lấy token để xác thực socket
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async () => {
-    if (!authUser || !selectedUser) return;
+  // --- THAY ĐỔI: Khởi tạo kết nối socket ---
+  // Hook này nên được gọi ở component cha (App.tsx) để duy trì kết nối
+  // Nhưng để ví dụ, ta sẽ gọi ở đây.
+  useSocketConnection(token);
+
+  const fetchMessages = async (userToFetchFor: { id: number; fullName: string } | null) => {
+    if (!authUser || !userToFetchFor) return;
     setIsLoadingChats(true);
     try {
+      // API GET để lấy lịch sử vẫn như cũ
       const response = await axiosInstance.get<Chat[]>("/chat/messages", {
         params: { limit: 100, offset: 0 },
       });
       const filteredChats = response.data.filter(
         (chat) =>
-          (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-          (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
+          (chat.senderId === authUser.id && chat.receiverId === userToFetchFor.id) ||
+          (chat.senderId === userToFetchFor.id && chat.receiverId === authUser.id)
       );
       setChats(
         filteredChats
@@ -63,40 +67,62 @@ const ManagerChat = () => {
     }
   };
 
-  useStomp("/topic/chat", (body) => {
-    if (body === "Create New Chat") {
-      console.log("Realtime signal received: Create New Chat. Refetching messages...");
+  // --- THAY ĐỔI: Lắng nghe sự kiện 'message' từ socket.io ---
+  useSocketListener("message", (data: unknown) => {
+    const newMessage = data as Chat;
+    // Chỉ cập nhật UI nếu tin nhắn thuộc về cuộc hội thoại đang xem
+    if (
+      selectedUser &&
+      ((newMessage.senderId === authUser?.id && newMessage.receiverId === selectedUser.id) ||
+        (newMessage.senderId === selectedUser.id && newMessage.receiverId === authUser?.id))
+    ) {
+      console.log("Realtime message received:", newMessage);
       message.info("Có tin nhắn mới!", 1.5);
-      fetchMessages();
+      setChats((prevChats) => [...prevChats, { ...newMessage, createdAt: new Date(newMessage.createdAt) }]);
     }
   });
 
   useEffect(() => {
-    fetchMessages();
-  }, [selectedUser, authUser]);
+    if (selectedUser) {
+      fetchMessages(selectedUser);
+    } else {
+      setChats([]); // Xóa tin nhắn cũ khi không chọn user nào
+    }
+  }, [selectedUser]);
 
+  // --- THAY ĐỔI: Logic gửi tin nhắn qua socket ---
   const handleSendMessage = () => {
     if (!selectedUser || !messageInput.trim() || !authUser) {
       message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
       return;
     }
 
+    setIsSending(true);
+
     const messageData = {
       receiverId: selectedUser.id,
       content: messageInput.trim(),
     };
 
-    createChat(messageData, {
-      onSuccess: () => {
-        setMessageInput("");
-        // SỬA ĐỔI TẠI ĐÂY: Gọi API trigger trên server production
-        axios.post("https://wdp301-su25.space/api/trigger-chat-update");
-        fetchMessages();
-      },
-      onError: (error: any) => {
-        message.error(error.message || "Gửi tin nhắn thất bại!");
-      },
-    });
+    // Gửi sự kiện 'sendMessage' thay vì gọi API POST
+    emitSocketEvent("sendMessage", messageData);
+
+    // Giao diện người dùng có thể cập nhật ngay lập tức để tạo cảm giác "gửi tức thì"
+    // Tin nhắn thực sự sẽ được đẩy xuống từ server qua sự kiện 'message'
+    // nhưng ta có thể thêm tạm vào state để UI mượt hơn
+    const tempMessage = {
+      id: Date.now(), // ID tạm
+      senderId: authUser.id,
+      receiverId: selectedUser.id,
+      content: messageInput.trim(),
+      createdAt: new Date(),
+      Sender: { id: authUser.id, fullName: authUser.fullName },
+    };
+    setChats((prevChats) => [...prevChats, tempMessage]);
+
+    setMessageInput("");
+    setIsSending(false);
+    setTimeout(() => scrollToBottom(), 0); // Cuộn xuống dưới cùng
   };
 
   const scrollToBottom = () => {
@@ -110,13 +136,7 @@ const ManagerChat = () => {
   }, [chats]);
 
   const formatChatTime = (createdAt: Date) => {
-    const messageDate = dayjs(createdAt);
-    const today = dayjs();
-    const yesterday = dayjs().subtract(1, "day");
-
-    if (messageDate.isSame(today, "day")) return messageDate.format("HH:mm");
-    if (messageDate.isSame(yesterday, "day")) return `Hôm qua ${messageDate.format("HH:mm")}`;
-    return messageDate.format("HH:mm DD/MM/YYYY");
+    return dayjs(createdAt).format("HH:mm");
   };
 
   const filteredAccounts =
