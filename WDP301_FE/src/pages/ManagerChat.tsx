@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
