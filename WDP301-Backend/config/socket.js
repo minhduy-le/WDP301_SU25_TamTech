@@ -7,7 +7,14 @@ const User = require("../models/user");
 const initializeSocket = (server) => {
   const io = socketIo(server, {
     cors: {
-    origin: ["https://wdp301-su25.space", "http://localhost:3000", "http://localhost:5173"],
+      origin: [
+        "https://wdp301-su25.space",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5173/manager/chat",
+        "https://wdp301-su25.space/manager/chat",
+        "*",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },
