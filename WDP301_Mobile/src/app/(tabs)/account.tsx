@@ -8,11 +8,8 @@ import {
   Alert,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from "@expo/vector-icons/Feather";
 import { router } from "expo-router";
@@ -23,6 +20,8 @@ import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
 import icon from "@/assets/icons/loi-chuc.png";
+import CusInfoText from "@/components/account/user.info.text";
+import Toast from "react-native-root-toast";
 
 const getCurrentDateTime = (): string => {
   const now = new Date();
@@ -39,7 +38,6 @@ const getCurrentDateTime = (): string => {
 };
 const ScreenWidth = Dimensions.get("screen").width;
 const AccountPage = () => {
-  const insets = useSafeAreaInsets();
   const [decodeToken, setDecodeToken] = useState<any>("");
   const { appState, setAppState } = useCurrentApp();
   const [time, setTime] = useState("");
@@ -82,276 +80,319 @@ const AccountPage = () => {
   };
 
   return (
-    <SafeAreaView
+    <ScrollView
       style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
     >
-      <View
-        style={{
-          flex: 1,
-        }}
-      >
-        <View style={styles.headerContainer}>
-          <View>
+      <View style={styles.headerContainer}>
+        <View>
+          <Text
+            style={[
+              styles.text,
+              { fontFamily: FONTS.medium, fontSize: 19, textAlign: "center" },
+            ]}
+          >
+            {time}
+          </Text>
+          <Text
+            style={[
+              styles.text,
+              {
+                fontFamily: FONTS.bold,
+                color: APP_COLOR.ORANGE,
+                textAlign: "center",
+              },
+            ]}
+          >
+            {decodeToken.fullName}
+          </Text>
+        </View>
+        <Image source={logo} style={styles.img} />
+      </View>
+      {!appState && (
+        <>
+          <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
             <Text
-              style={[
-                styles.text,
-                { fontFamily: FONTS.medium, fontSize: 19, textAlign: "center" },
-              ]}
+              style={{
+                color: APP_COLOR.BROWN,
+                fontSize: 17,
+                fontFamily: FONTS.regular,
+                textAlign: "center",
+              }}
             >
-              {time}
+              Hãy đăng nhập/đăng ký để nhận được các thông tin ưu đã từ Tấm Tắc
+              nhé.
             </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              marginBottom: 10,
+              marginHorizontal: 10,
+              justifyContent: "space-around",
+            }}
+          >
+            <ShareButton
+              title="Đăng Nhập"
+              onPress={() => router.push("/(auth)/welcome")}
+              textStyle={styles.loginBtnText}
+              btnStyle={styles.loginBtn}
+            />
+            <ShareButton
+              title="Đăng Ký"
+              onPress={() => router.push("/(auth)/customer.signup")}
+              textStyle={styles.loginBtnText}
+              btnStyle={styles.loginBtn}
+            />
+          </View>
+        </>
+      )}
+      {appState && (
+        <View
+          style={{
+            position: "relative",
+            bottom: -25,
+            backgroundColor: APP_COLOR.ORANGE,
+            marginHorizontal: 10,
+            padding: 5,
+            borderRadius: 10,
+            width: ScreenWidth * 0.85,
+            alignSelf: "center",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 10,
+              backgroundColor: APP_COLOR.ORANGE,
+              borderWidth: 1,
+              borderColor: APP_COLOR.WHITE,
+              borderRadius: 10,
+              paddingTop: 15,
+              paddingBottom: 20,
+            }}
+          >
             <Text
               style={[
                 styles.text,
                 {
-                  fontFamily: FONTS.bold,
-                  color: APP_COLOR.ORANGE,
-                  textAlign: "center",
+                  marginLeft: 10,
+                  color: APP_COLOR.WHITE,
+                  fontFamily: FONTS.medium,
                 },
               ]}
             >
               {decodeToken.fullName}
             </Text>
+            <Image source={icon} style={{ height: 39, width: 80 }} />
           </View>
-          <Image source={logo} style={styles.img} />
         </View>
-        {!appState && (
-          <>
-            <View style={{ marginHorizontal: 10, marginBottom: 10 }}>
-              <Text
-                style={{
-                  color: APP_COLOR.BROWN,
-                  fontSize: 17,
-                  fontFamily: FONTS.regular,
-                  textAlign: "center",
-                }}
-              >
-                Hãy đăng nhập/đăng ký để nhận được các thông tin ưu đã từ Tấm
-                Tắc nhé.
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                marginBottom: 10,
-                marginHorizontal: 10,
-                justifyContent: "space-around",
-              }}
-            >
-              <ShareButton
-                title="Đăng Nhập"
-                onPress={() => router.push("/(auth)/welcome")}
-                textStyle={styles.loginBtnText}
-                btnStyle={styles.loginBtn}
-              />
-              <ShareButton
-                title="Đăng Ký"
-                onPress={() => router.push("/(auth)/customer.signup")}
-                textStyle={styles.loginBtnText}
-                btnStyle={styles.loginBtn}
-              />
-            </View>
-          </>
-        )}
+      )}
+      <View style={styles.buttonContainer}>
         {appState && (
           <View
             style={{
-              position: "relative",
-              bottom: -25,
-              backgroundColor: APP_COLOR.ORANGE,
-              marginHorizontal: 10,
-              padding: 5,
-              borderRadius: 10,
-              width: ScreenWidth * 0.85,
-              alignSelf: "center",
+              paddingHorizontal: 10,
+              paddingTop: 10,
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: 10,
-                backgroundColor: APP_COLOR.ORANGE,
-                borderWidth: 1,
-                borderColor: APP_COLOR.WHITE,
-                borderRadius: 10,
-                paddingTop: 15,
-                paddingBottom: 20,
-              }}
+            <Text
+              style={[styles.text, { fontFamily: FONTS.bold, marginBottom: 5 }]}
             >
-              <Text
-                style={[
-                  styles.text,
-                  {
-                    marginLeft: 10,
-                    color: APP_COLOR.WHITE,
-                    fontFamily: FONTS.medium,
-                  },
-                ]}
-              >
-                {decodeToken.fullName}
-              </Text>
-              <Image source={icon} style={{ height: 39, width: 80 }} />
+              Thông tin tài khoản
+            </Text>
+            <View style={{ marginHorizontal: 5 }}>
+              <CusInfoText title="Họ và tên" info={decodeToken.fullName} />
+              <CusInfoText title="Ngày sinh" info={decodeToken.date_of_birth} />
+              <CusInfoText title="SĐT" info={decodeToken.phone_number} />
+              <CusInfoText title="Email" info={decodeToken.email} />
             </View>
           </View>
         )}
-        <View style={styles.buttonContainer}>
-          <Pressable
-            onPress={() => router.navigate("/(user)/account/info")}
+        <Pressable
+          onPress={() => router.navigate("/(user)/account/info")}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
             style={{
-              paddingVertical: 15,
-              paddingHorizontal: 10,
-              borderBottomColor: "#eee",
-              borderBottomWidth: 1,
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 10,
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <Feather name="user-check" size={25} color={APP_COLOR.BROWN} />
-              <Text style={styles.btnText}>Cập nhật thông tin</Text>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              color={APP_COLOR.BROWN}
-            />
-          </Pressable>
+            <Feather name="user-check" size={25} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Cập nhật thông tin</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
 
-          <Pressable
-            onPress={() => router.navigate("/(user)/account/password")}
+        <Pressable
+          onPress={() => router.navigate("/(user)/account/password")}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
             style={{
-              paddingVertical: 15,
-              paddingHorizontal: 10,
-              borderBottomColor: "#eee",
-              borderBottomWidth: 1,
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 10,
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <MaterialIcons
-                name="password"
-                size={25}
-                color={APP_COLOR.BROWN}
-              />
-              <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              color={APP_COLOR.BROWN}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => router.navigate("/(auth)/voucher")}
+            <MaterialIcons name="password" size={25} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Thay đổi mật khẩu</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => router.navigate("/(auth)/voucher")}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
             style={{
-              paddingVertical: 15,
-              paddingHorizontal: 10,
-              borderBottomColor: "#eee",
-              borderBottomWidth: 1,
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 10,
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <Feather name="gift" size={25} color={APP_COLOR.BROWN} />
-              <Text style={styles.btnText}>Ưu đãi của bạn</Text>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              color={APP_COLOR.BROWN}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() =>
-              Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 2.0")
-            }
+            <Feather name="gift" size={25} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Ưu đãi của bạn</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => Toast.show("Notification")}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
             style={{
-              paddingVertical: 15,
-              paddingHorizontal: 10,
-              borderBottomColor: "#eee",
-              borderBottomWidth: 1,
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 10,
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <MaterialIcons
-                name="info-outline"
-                size={25}
-                color={APP_COLOR.BROWN}
-              />
-              <Text style={styles.btnText}>Về ứng dụng</Text>
-            </View>
+            <Feather name="bell" size={24} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Thông báo</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() =>
+            Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 1.0.2")
+          }
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 10,
+              alignItems: "center",
+            }}
+          >
             <MaterialIcons
-              name="navigate-next"
-              size={24}
+              name="info-outline"
+              size={25}
               color={APP_COLOR.BROWN}
             />
-          </Pressable>
+            <Text style={styles.btnText}>Về ứng dụng</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
 
-          <Pressable
-            onPress={() => handleLogout()}
+        <Pressable
+          onPress={() => handleLogout()}
+          style={{
+            paddingVertical: 15,
+            paddingHorizontal: 10,
+            borderBottomColor: "#eee",
+            borderBottomWidth: 1,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View
             style={{
-              paddingVertical: 15,
-              paddingHorizontal: 10,
-              borderBottomColor: "#eee",
-              borderBottomWidth: 1,
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 10,
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-              }}
-            >
-              <MaterialIcons name="logout" size={25} color={APP_COLOR.BROWN} />
-              <Text style={styles.btnText}>Đăng xuất</Text>
-            </View>
-            <MaterialIcons
-              name="navigate-next"
-              size={24}
-              color={APP_COLOR.BROWN}
-            />
-          </Pressable>
-        </View>
+            <MaterialIcons name="logout" size={25} color={APP_COLOR.BROWN} />
+            <Text style={styles.btnText}>Đăng xuất</Text>
+          </View>
+          <MaterialIcons
+            name="navigate-next"
+            size={24}
+            color={APP_COLOR.BROWN}
+          />
+        </Pressable>
       </View>
-      <View style={{ marginHorizontal: 10, marginBottom: 25 }}>
+      <View
+        style={{
+          marginHorizontal: 10,
+          marginTop: 10,
+        }}
+      >
         <Text style={[styles.text, { fontSize: 15, fontFamily: FONTS.medium }]}>
           Mọi thắc mắc vui lòng liên hệ qua CSKH:
         </Text>
@@ -368,7 +409,10 @@ const AccountPage = () => {
           </Text>
         </Text>
       </View>
-    </SafeAreaView>
+      <View
+        style={{ backgroundColor: APP_COLOR.BACKGROUND_ORANGE, height: 30 }}
+      ></View>
+    </ScrollView>
   );
 };
 const styles = StyleSheet.create({
@@ -376,7 +420,6 @@ const styles = StyleSheet.create({
   img: {
     height: 100,
     width: 150,
-    marginTop: 10,
     alignSelf: "center",
   },
   btnText: {
@@ -387,8 +430,8 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     marginHorizontal: 10,
-    paddingBottom: 5,
-    marginBottom: 10,
+    paddingBottom: 3,
+    marginBottom: 3,
     borderBottomColor: APP_COLOR.BROWN,
     borderBottomWidth: 0.5,
     alignItems: "center",

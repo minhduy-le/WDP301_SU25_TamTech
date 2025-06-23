@@ -1,20 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  Pressable,
-  FlatList,
-  Modal,
-  Platform,
-} from "react-native";
+import { Image, StyleSheet, Text, View, Platform } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import * as Location from "expo-location";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
-import axios from "axios";
 import { useCurrentApp } from "@/context/app.context";
 interface HeaderHomeProps {
   onBranchSelect: (id: string) => void;

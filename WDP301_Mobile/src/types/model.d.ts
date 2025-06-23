@@ -102,6 +102,20 @@ declare global {
     updatedAt: Date;
   }
 
+  interface ICartItem {
+    ProductType: {
+      name: string;
+      productTypeId: number;
+    };
+    name: string;
+    productId: string;
+    image: string;
+    description: string;
+    price: number;
+    basePrice?: number;
+    title?: string;
+  }
+
   interface ICart {
     [key: string]: {
       sum: number;
@@ -109,7 +123,7 @@ declare global {
       items: {
         [key: string]: {
           quantity: number;
-          data: IMenuItem;
+          data: ICartItem;
           extra?: {
             [key: string]: number;
           };
