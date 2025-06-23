@@ -35,181 +35,125 @@ const transporter = nodemailer.createTransport({
 const emailTemplate = fs.readFileSync(path.join(__dirname, "../templates/otpEmail.html"), "utf-8");
 const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../templates/forgotPasswordEmail.html"), "utf-8");
 
+/**
+ * Hàm mới để xử lý các tác vụ sau đăng ký một cách bất đồng bộ.
+ * Điều này giúp API trả về phản hồi nhanh hơn và tránh timeout.
+ * @param {object} user - Đối tượng người dùng vừa được tạo.
+ */
+async function handlePostRegistrationTasks(user) {
+  try {
+    // Tạo mã vạch cho khuyến mãi WELCOME
+    const promotionCode = `WELCOME_${user.id}`;
+    let barcodeUrl = null;
+    try {
+      console.log(`Generating barcode for code: ${promotionCode}`);
+      const canvas = createCanvas(300, 100);
+      JsBarcode(canvas, promotionCode, {
+        format: "CODE128",
+        width: 2,
+        height: 80,
+        displayValue: true,
+        fontSize: 14,
+      });
+      const buffer = canvas.toBuffer("image/png");
+      const fileName = `barcodes/${promotionCode}_${Date.now()}.png`;
+      barcodeUrl = await uploadFileToFirebase(buffer, fileName, "image/png");
+      console.log(`Barcode uploaded: ${barcodeUrl}`);
+    } catch (barcodeError) {
+      console.error("Error generating or uploading barcode:", barcodeError.message, barcodeError.stack);
+    }
+
+    // Tạo khuyến mãi "WELCOME" cho người dùng mới
+    await Promotion.create({
+      promotionTypeId: 7,
+      name: "WELCOME",
+      code: promotionCode,
+      description: "Welcome promotion for new users",
+      barcode: barcodeUrl,
+      startDate: new Date("2025-06-22"),
+      endDate: new Date("2026-12-31"),
+      minOrderAmount: 0,
+      discountAmount: 15000,
+      maxNumberOfUses: 1,
+      createBy: 1,
+      forUser: user.id,
+      isUsedBySpecificUser: false,
+      NumberCurrentUses: 0,
+      isActive: true,
+    });
+    console.log(`WELCOME promotion created for user ID: ${user.id}`);
+
+    // Xử lý OTP và gửi email
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await redisClient.setEx(`otp:${user.email}`, 600, otp);
+    console.log("OTP stored in Redis for email:", user.email);
+
+    const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(user.email)}&otp=${otp}`;
+    let emailHtml = emailTemplate
+      .replace("{fullName}", user.fullName)
+      .replace("{otp}", otp)
+      .replace(
+        "Xác thực ngay",
+        `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
+      );
+
+    await transporter.sendMail({
+      from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
+      to: user.email,
+      subject: "Xác thực tài khoản Tấm Tech",
+      html: emailHtml,
+      attachments: [{ filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" }],
+    });
+    console.log("Email sent to:", user.email);
+  } catch (error) {
+    console.error("Error in handlePostRegistrationTasks for user ID " + user.id + ":", error.message, error.stack);
+  }
+}
+
 const userService = {
   async registerUser({ fullName, email, phone_number, password, date_of_birth }) {
-    // Validate fullName
-    if (!fullName) {
-      throw "Full name cannot be blank";
-    }
-    if (fullName.trim() === "") {
-      throw "Full name cannot be blank";
-    }
-    if (fullName.length < 2) {
-      throw "Full name must be at least 2 characters";
-    }
-    if (fullName.length > 20) {
-      throw "Full name cannot exceed 20 characters";
-    }
-
-    // Validate email
-    if (!email) {
-      throw "Email cannot be blank";
-    }
-    if (email.length > 100) {
-      throw "Email cannot exceed 100 characters";
-    }
-    if (!validator.isEmail(email)) {
-      throw "Email format is invalid";
-    }
-
-    // Validate phone_number
-    if (!phone_number) {
-      throw "Phone number cannot be blank";
-    }
-    if (phone_number.length > 12) {
-      throw "Phone number cannot exceed 12 characters";
-    }
+    // --- VALIDATION (Không thay đổi) ---
+    if (!fullName || fullName.trim() === "") throw "Full name cannot be blank";
+    if (fullName.length < 2) throw "Full name must be at least 2 characters";
+    if (fullName.length > 20) throw "Full name cannot exceed 20 characters";
+    if (!email || !validator.isEmail(email)) throw "Email format is invalid";
+    if (email.length > 100) throw "Email cannot exceed 100 characters";
+    if (!phone_number) throw "Phone number cannot be blank";
+    if (phone_number.length > 12) throw "Phone number cannot exceed 12 characters";
     const phoneStr = phone_number.toString().replace(/\D/g, "");
-    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
-      throw "Phone number must be 10 or 11 digits";
-    }
-
-    // Validate password
-    if (!password) {
-      throw "Password cannot be blank";
-    }
-    if (password.length < 6) {
-      throw "Password must be at least 6 characters";
-    }
-    if (password.length > 250) {
-      throw "Password cannot exceed 250 characters";
-    }
-
-    // Validate date_of_birth if provided
+    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) throw "Phone number must be 10 or 11 digits";
+    if (!password || password.length < 6) throw "Password must be at least 6 characters";
+    if (password.length > 250) throw "Password cannot exceed 250 characters";
     if (date_of_birth) {
       const dob = new Date(date_of_birth);
-      if (isNaN(dob)) {
-        throw "Date of birth format is invalid";
-      }
-      if (dob > currentDate) {
-        throw "Date of birth must not be in the future";
-      }
+      if (isNaN(dob) || dob > currentDate) throw "Date of birth must not be in the future";
     }
 
-    const existingUser = await User.findOne({
-      where: { [Op.or]: [{ email }, { phone_number }] },
-    });
+    const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone_number }] } });
     if (existingUser) {
-      if (existingUser.email === email) {
-        throw "Email already exists";
-      }
-      if (existingUser.phone_number === phone_number) {
-        throw "Phone number already exists";
-      }
+      if (existingUser.email === email) throw "Email already exists";
+      if (existingUser.phone_number === phone_number) throw "Phone number already exists";
     }
 
     const transaction = await User.sequelize.transaction();
-
     let user;
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      console.log("Hashed password:", hashedPassword);
       user = await User.create(
         { fullName, email, phone_number, password: hashedPassword, isActive: false, date_of_birth },
         { transaction }
       );
-      console.log("User created with ID:", user.id);
       await Information.create({ userId: user.id, address: null }, { transaction });
-      console.log("Information record created for user ID:", user.id);
-
-      // Generate barcode for WELCOME promotion
-      const promotionCode = `WELCOME_${user.id}`;
-      let barcodeUrl = null;
-      try {
-        console.log(`Generating barcode for code: ${promotionCode}`);
-        const canvas = createCanvas(300, 100);
-        JsBarcode(canvas, promotionCode, {
-          format: "CODE128",
-          width: 2,
-          height: 80,
-          displayValue: true,
-          fontSize: 14,
-        });
-        const buffer = canvas.toBuffer("image/png");
-        console.log(`Generated buffer: type=image/png, length=${buffer.length}, isBuffer=${Buffer.isBuffer(buffer)}`);
-        const fileName = `barcodes/${promotionCode}_${Date.now()}.png`;
-        barcodeUrl = await uploadFileToFirebase(buffer, fileName, "image/png");
-        console.log(`Barcode uploaded: ${barcodeUrl}`);
-      } catch (barcodeError) {
-        console.error("Error generating or uploading barcode:", barcodeError.message, barcodeError.stack);
-      }
-
-      // Create a "WELCOME" promotion for the new user
-      await Promotion.create(
-        {
-          promotionTypeId: 7,
-          name: "WELCOME",
-          code: promotionCode,
-          description: "Welcome promotion for new users",
-          barcode: barcodeUrl,
-          startDate: new Date("2025-06-22"),
-          endDate: new Date("2026-12-31"),
-          minOrderAmount: 0,
-          discountAmount: 15000,
-          maxNumberOfUses: 1,
-          createBy: 1,
-          forUser: user.id,
-          isUsedBySpecificUser: false,
-          NumberCurrentUses: 0,
-          isActive: true,
-        },
-        { transaction }
-      );
-      console.log(`WELCOME promotion created for user ID: ${user.id}`);
-
       await transaction.commit();
-      console.log("Transaction committed successfully");
     } catch (error) {
-      console.error("Transaction error in registerUser:", error.message, error.stack);
-      if (error.name === "SequelizeValidationError") {
-        console.error(
-          "Validation errors:",
-          error.errors.map((e) => e.message)
-        );
-      }
       await transaction.rollback();
-      console.log("Transaction rolled back successfully");
+      console.error("Transaction error in registerUser:", error.message);
       throw "Server error";
     }
 
-    // Handle OTP and email sending separately
-    try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log("Generated OTP:", otp);
-      await redisClient.setEx(`otp:${email}`, 600, otp);
-      console.log("OTP stored in Redis for email:", email);
-
-      const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
-      let emailHtml = emailTemplate
-        .replace("{fullName}", fullName)
-        .replace("{otp}", otp)
-        .replace(
-          "Xác thực ngay",
-          `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
-        );
-
-      await transporter.sendMail({
-        from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
-        to: email,
-        subject: "Xác thực tài khoản Tấm Tech",
-        html: emailHtml,
-        attachments: [{ filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" }],
-      });
-      console.log("Email sent to:", email);
-    } catch (error) {
-      console.error("Error in OTP or email sending:", error.message, error.stack);
-      console.log("Proceeding despite OTP/email failure; user can resend OTP later");
-    }
+    // --- GỌI BẤT ĐỒNG BỘ ---
+    // Gọi hàm mới một cách bất đồng bộ (không dùng `await`) để không chặn phản hồi
+    handlePostRegistrationTasks(user);
 
     return {
       status: 201,
