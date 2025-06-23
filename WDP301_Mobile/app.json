@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tấm Tắc",
     "slug": "Tấm Tắc",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./src/assets/splash.png",
     "userInterfaceStyle": "light",
@@ -21,7 +21,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "foregroundImage": "./src/assets/splash.png",
         "backgroundColor": "#ffffff"
       },
       "scheme": "tamtac-app",

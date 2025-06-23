@@ -3,7 +3,6 @@ import { APP_COLOR } from "@/utils/constant";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
-  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,83 +13,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import ShareButton from "@/components/button/share.button";
-import { router } from "expo-router";
-
-const styles = StyleSheet.create({
-  headerText: {
-    color: APP_COLOR.ORANGE,
-    fontFamily: FONTS.semiBold,
-    fontSize: 17,
-  },
-  cartItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  productName: {
-    fontFamily: FONTS.semiBold,
-    color: APP_COLOR.BROWN,
-    fontSize: 16,
-    flex: 1,
-    marginRight: 10,
-  },
-  productDetails: {
-    fontFamily: FONTS.regular,
-    color: APP_COLOR.BROWN,
-    fontSize: 14,
-  },
-  starsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  starStyle: {
-    marginHorizontal: 5,
-  },
-  generalFeedbackInput: {
-    borderColor: APP_COLOR.BROWN,
-    borderWidth: 0.5,
-    width: "90%",
-    height: 120,
-    marginHorizontal: "5%",
-    borderRadius: 10,
-    fontFamily: FONTS.regular,
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    textAlignVertical: "top",
-    marginBottom: 20,
-    color: APP_COLOR.BROWN,
-  },
-  sectionTitle: {
-    fontFamily: FONTS.semiBold,
-    color: APP_COLOR.BROWN,
-    fontSize: 20,
-    marginHorizontal: 10,
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 10,
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  buttonContainer: {
-    alignSelf: "center",
-    marginBottom: 20,
-    marginTop: 10,
-  },
-});
-
+import { router, useLocalSearchParams } from "expo-router";
+import { currencyFormatter } from "@/utils/api";
 interface OrderItem {
   productId: number;
   productName: string;
@@ -103,7 +27,6 @@ interface OrderItem {
   productImg: string;
   feedBackYet: boolean;
 }
-
 interface DataSample {
   id: number;
   subTotal: number;
@@ -125,7 +48,6 @@ interface DataSample {
   orderItems: OrderItem[];
   customerDTO: string | null;
 }
-
 const dataSample: DataSample = {
   id: 12,
   subTotal: 375000,
@@ -205,24 +127,37 @@ const Like = () => {
   const navigation: any = useNavigation();
   const [generalRating, setGeneralRating] = useState<number>(0);
   const [generalFeedback, setGeneralFeedback] = useState<string>("");
-  const handleRating = (rating: number) => {
-    setGeneralRating(rating);
-    console.log(`Đã đánh giá đơn hàng với ${rating} sao.`);
+  const [itemReviews, setItemReviews] = useState<{
+    [key: number]: { rating: number; feedback: string };
+  }>({});
+  const { id } = useLocalSearchParams();
+  const handleRating = (productId: number, rating: number) => {
+    setItemReviews((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], rating },
+    }));
   };
 
-  const renderStars = () => {
+  const handleFeedback = (productId: number, feedback: string) => {
+    setItemReviews((prev) => ({
+      ...prev,
+      [productId]: { ...prev[productId], feedback },
+    }));
+  };
+
+  const renderStars = (productId: number, rating: number) => {
     const stars = [];
     const maxRating = 5;
     for (let i = 1; i <= maxRating; i++) {
       stars.push(
         <TouchableOpacity
           key={i}
-          onPress={() => handleRating(i)}
+          onPress={() => handleRating(productId, i)}
           style={styles.starStyle}
         >
           <AntDesign
-            name={i <= generalRating ? "star" : "staro"}
-            size={32}
+            name={i <= rating ? "star" : "staro"}
+            size={27}
             color={APP_COLOR.ORANGE}
           />
         </TouchableOpacity>
@@ -235,8 +170,11 @@ const Like = () => {
     console.log("Đánh giá chung cho đơn hàng:");
     console.log("Số sao:", generalRating);
     console.log("Nhận xét:", generalFeedback);
+    console.log("Đánh giá từng món:");
+    console.log(itemReviews);
     setGeneralFeedback("");
     setGeneralRating(0);
+    setItemReviews({});
     router.replace("/(user)/like/feedback.success");
   };
 
@@ -245,36 +183,49 @@ const Like = () => {
       <ScrollView>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>Đánh giá đơn hàng</Text>
-          <Text style={styles.headerText}>Đơn hàng #{dataSample.id}</Text>
+          <Text style={styles.headerText}>Đơn hàng #{id}</Text>
         </View>
-        {renderStars()}
-        <TextInput
-          style={styles.generalFeedbackInput}
-          placeholder={`Để lại nhận xét chung cho đơn hàng này...`}
-          placeholderTextColor={APP_COLOR.BROWN || "#A0522D80"}
-          value={generalFeedback}
-          onChangeText={setGeneralFeedback}
-          multiline={true}
-          numberOfLines={4}
-        />
-
         <Text style={styles.sectionTitle}>Các món trong đơn hàng:</Text>
-        {dataSample.orderItems.map((item) => (
-          <View key={item.productId} style={styles.cartItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.productName}>{item.productName}</Text>
-              {item.note && (
-                <Text style={styles.productDetails}>Ghi chú: {item.note}</Text>
-              )}
+        <View>
+          {dataSample.orderItems.map((item) => (
+            <View key={item.productId} style={styles.cartItem}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.productName}>{item.productName}</Text>
+                  {item.note && (
+                    <Text style={styles.productDetails}>
+                      Ghi chú: {item.note}
+                    </Text>
+                  )}
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={styles.productDetails}>
+                    {item.quantity} X{" "}
+                    <Text style={{ fontFamily: FONTS.bold }}>
+                      {currencyFormatter(item.price * item.quantity)}
+                    </Text>
+                  </Text>
+
+                  {renderStars(
+                    item.productId,
+                    itemReviews[item.productId]?.rating || 0
+                  )}
+                </View>
+              </View>
+              <View style={{ justifyContent: "flex-start" }}>
+                <TextInput
+                  style={styles.generalFeedbackInput}
+                  placeholder={`Để lại nhận xét cho món ${item.productName} (tùy chọn)`}
+                  placeholderTextColor={APP_COLOR.BROWN || "#A0522D80"}
+                  value={itemReviews[item.productId]?.feedback || ""}
+                  onChangeText={(text) => handleFeedback(item.productId, text)}
+                  multiline={true}
+                  numberOfLines={4}
+                />
+              </View>
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.productDetails}>SL: {item.quantity}</Text>
-              <Text style={styles.productDetails}>
-                Giá: {(item.price * item.quantity).toLocaleString("vi-VN")} đ
-              </Text>
-            </View>
-          </View>
-        ))}
+          ))}
+        </View>
         <View style={styles.buttonContainer}>
           <ShareButton
             title="Gửi đánh giá"
@@ -294,5 +245,79 @@ const Like = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  headerText: {
+    color: APP_COLOR.ORANGE,
+    fontFamily: FONTS.semiBold,
+    fontSize: 17,
+  },
+  cartItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+    justifyContent: "space-between",
+  },
+  productName: {
+    fontFamily: FONTS.semiBold,
+    color: APP_COLOR.BROWN,
+    fontSize: 17,
+    flex: 1,
+    marginRight: 10,
+  },
+  productDetails: {
+    fontFamily: FONTS.medium,
+    color: APP_COLOR.BROWN,
+    fontSize: 14,
+  },
+  starsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginVertical: 5,
+  },
+  starStyle: {
+    marginHorizontal: 5,
+  },
+  generalFeedbackInput: {
+    borderColor: APP_COLOR.BROWN,
+    borderWidth: 0.5,
+    width: "90%",
+    height: 70,
+    borderRadius: 10,
+    fontFamily: FONTS.regular,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    textAlignVertical: "top",
+    marginBottom: 10,
+    color: APP_COLOR.BROWN,
+    marginTop: 10,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.semiBold,
+    color: APP_COLOR.BROWN,
+    fontSize: 20,
+    marginHorizontal: 10,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    alignSelf: "center",
+    marginBottom: 20,
+    marginTop: 10,
+  },
+});
 
 export default Like;

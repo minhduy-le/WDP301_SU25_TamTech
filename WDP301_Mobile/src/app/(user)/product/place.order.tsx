@@ -225,7 +225,6 @@ const PlaceOrderPage = () => {
   }, [decodeToken]);
 
   useEffect(() => {
-    console.log("Cart:", cart.mock_restaurant_1.items);
     if (cart && restaurant && restaurant._id) {
       const result = [];
       const details: IDetails[] = [];

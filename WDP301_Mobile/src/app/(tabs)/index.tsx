@@ -3,7 +3,7 @@ import CollectionHome from "@/components/home/collection.home";
 import HeaderHome from "@/components/home/header.home";
 import SearchHome from "@/components/home/search.home";
 import TopListHome from "@/components/home/top.list.home";
-import ItemQuantity from "@/components/example/restaurant/order/item.quantity";
+
 import { useCurrentApp } from "@/context/app.context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -19,6 +19,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
+import ItemQuantity from "@/components/restaurant/order/item.quantity";
 interface ITem {
   name: string;
   productTypeId: number;

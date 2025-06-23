@@ -1,6 +1,6 @@
 {
   "name": "Tấm Tắc",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "expo-router/entry",
   "author": {
     "name": "Minz"
@@ -66,6 +66,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@types/lodash": "^4.17.18",
     "@types/react": "~19.0.10",
     "rn-nodeify": "^10.3.0",
     "typescript": "~5.8.3"
