@@ -24,7 +24,6 @@ const initializeSocket = (server) => {
     pingInterval: 25000,
   });
 
-  // Middleware xác thực
   io.use((socket, next) => {
     try {
       const token =
