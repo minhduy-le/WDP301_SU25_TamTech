@@ -9,16 +9,12 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { auth } = require("../config/firebase");
-const Promotion = require("../models/promotion");
-const { uploadFileToFirebase } = require("../config/firebase");
-const { createCanvas } = require("canvas");
-const JsBarcode = require("jsbarcode");
 
 // Current date for date_of_birth validation
 const currentDate = new Date("2025-05-26T10:53:00+07:00");
 
 const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || process.env.REDISCLOUD_URL || "redis://localhost:6379",
+  url: 'rediss://default:Acr3AAIncDEzYWRkOTViMzNlNmQ0NGY1YmRhZDkyNzhjMjJjYmQ2N3AxNTE5NTk@modern-civet-51959.upstash.io:6379',
 });
 redisClient.connect().catch((err) => {
   console.error("Redis connection error:", err.message);
@@ -35,106 +31,47 @@ const transporter = nodemailer.createTransport({
 const emailTemplate = fs.readFileSync(path.join(__dirname, "../templates/otpEmail.html"), "utf-8");
 const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../templates/forgotPasswordEmail.html"), "utf-8");
 
-/**
- * Hàm mới để xử lý các tác vụ sau đăng ký một cách bất đồng bộ.
- * Điều này giúp API trả về phản hồi nhanh hơn và tránh timeout.
- * @param {object} user - Đối tượng người dùng vừa được tạo.
- */
-async function handlePostRegistrationTasks(user) {
-  try {
-    // Tạo mã vạch cho khuyến mãi WELCOME
-    const promotionCode = `WELCOME_${user.id}`;
-    let barcodeUrl = null;
-    try {
-      console.log(`Generating barcode for code: ${promotionCode}`);
-      const canvas = createCanvas(300, 100);
-      JsBarcode(canvas, promotionCode, {
-        format: "CODE128",
-        width: 2,
-        height: 80,
-        displayValue: true,
-        fontSize: 14,
-      });
-      const buffer = canvas.toBuffer("image/png");
-      const fileName = `barcodes/${promotionCode}_${Date.now()}.png`;
-      barcodeUrl = await uploadFileToFirebase(buffer, fileName, "image/png");
-      console.log(`Barcode uploaded: ${barcodeUrl}`);
-    } catch (barcodeError) {
-      console.error("Error generating or uploading barcode:", barcodeError.message, barcodeError.stack);
-    }
-
-    // Tạo khuyến mãi "WELCOME" cho người dùng mới
-    await Promotion.create({
-      promotionTypeId: 7,
-      name: "WELCOME",
-      code: promotionCode,
-      description: "Welcome promotion for new users",
-      barcode: barcodeUrl,
-      startDate: new Date("2025-06-22"),
-      endDate: new Date("2026-12-31"),
-      minOrderAmount: 0,
-      discountAmount: 15000,
-      maxNumberOfUses: 1,
-      createBy: 1,
-      forUser: user.id,
-      isUsedBySpecificUser: false,
-      NumberCurrentUses: 0,
-      isActive: true,
-    });
-    console.log(`WELCOME promotion created for user ID: ${user.id}`);
-
-    // Xử lý OTP và gửi email
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await redisClient.setEx(`otp:${user.email}`, 600, otp);
-    console.log("OTP stored in Redis for email:", user.email);
-
-    const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(user.email)}&otp=${otp}`;
-    let emailHtml = emailTemplate
-      .replace("{fullName}", user.fullName)
-      .replace("{otp}", otp)
-      .replace(
-        "Xác thực ngay",
-        `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
-      );
-
-    await transporter.sendMail({
-      from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
-      to: user.email,
-      subject: "Xác thực tài khoản Tấm Tech",
-      html: emailHtml,
-      attachments: [{ filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" }],
-    });
-    console.log("Email sent to:", user.email);
-  } catch (error) {
-    console.error("Error in handlePostRegistrationTasks for user ID " + user.id + ":", error.message, error.stack);
-  }
-}
-
 const userService = {
   async registerUser({ fullName, email, phone_number, password, date_of_birth }) {
-    // --- VALIDATION (Không thay đổi) ---
-    if (!fullName || fullName.trim() === "") throw "Full name cannot be blank";
-    if (fullName.length < 2) throw "Full name must be at least 2 characters";
-    if (fullName.length > 20) throw "Full name cannot exceed 20 characters";
-    if (!email || !validator.isEmail(email)) throw "Email format is invalid";
-    if (email.length > 100) throw "Email cannot exceed 100 characters";
-    if (!phone_number) throw "Phone number cannot be blank";
-    if (phone_number.length > 12) throw "Phone number cannot exceed 12 characters";
-    const phoneStr = phone_number.toString().replace(/\D/g, "");
-    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) throw "Phone number must be 10 or 11 digits";
-    if (!password || password.length < 6) throw "Password must be at least 6 characters";
-    if (password.length > 250) throw "Password cannot exceed 250 characters";
+    // Combined validation for efficiency
+    const errors = [];
+    if (!fullName || fullName.trim() === "" || fullName.length < 2 || fullName.length > 20) {
+      errors.push("Full name must be between 2 and 20 characters");
+    }
+    if (!email || email.length > 100 || !validator.isEmail(email)) {
+      errors.push("Email must be valid and not exceed 100 characters");
+    }
+    if (!phone_number || phone_number.length > 12 || !/^\d{10,11}$/.test(phone_number.replace(/\D/g, ""))) {
+      errors.push("Phone number must be 10 or 11 digits");
+    }
+    if (!password || password.length < 6 || password.length > 250) {
+      errors.push("Password must be between 6 and 250 characters");
+    }
     if (date_of_birth) {
       const dob = new Date(date_of_birth);
-      if (isNaN(dob) || dob > currentDate) throw "Date of birth must not be in the future";
+      if (isNaN(dob) || dob > currentDate) {
+        errors.push("Date of birth must be valid and not in the future");
+      }
+    }
+    if (errors.length > 0) {
+      throw errors.join("; ");
     }
 
-    const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone_number }] } });
+    // Check for existing user
+    const existingUser = await User.findOne({
+      where: { [Op.or]: [{ email }, { phone_number }] },
+      attributes: ["email", "phone_number"],
+    });
     if (existingUser) {
-      if (existingUser.email === email) throw "Email already exists";
-      if (existingUser.phone_number === phone_number) throw "Phone number already exists";
+      if (existingUser.email === email) {
+        throw "Email already exists";
+      }
+      if (existingUser.phone_number === phone_number) {
+        throw "Phone number already exists";
+      }
     }
 
+    // Perform database operations in a transaction
     const transaction = await User.sequelize.transaction();
     let user;
     try {
@@ -151,9 +88,34 @@ const userService = {
       throw "Server error";
     }
 
-    // --- GỌI BẤT ĐỒNG BỘ ---
-    // Gọi hàm mới một cách bất đồng bộ (không dùng `await`) để không chặn phản hồi
-    handlePostRegistrationTasks(user);
+    // Handle OTP and email sending asynchronously
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
+    const emailHtml = emailTemplate
+      .replace("{fullName}", fullName)
+      .replace("{otp}", otp)
+      .replace(
+        "Xác thực ngay",
+        `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
+      );
+
+    // Non-blocking Redis and email operations
+    Promise.all([
+      redisClient
+        .setEx(`otp:${email}`, 600, otp)
+        .catch((err) => console.error("Redis OTP storage error:", err.message)),
+      transporter
+        .sendMail({
+          from: `"Tấm Tech" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: "Xác thực tài khoản Tấm Tech",
+          html: emailHtml,
+          attachments: [
+            { filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" },
+          ],
+        })
+        .catch((err) => console.error("Email sending error:", err.message)),
+    ]).catch((err) => console.log("Proceeding despite OTP/email failure:", err.message));
 
     return {
       status: 201,
@@ -230,7 +192,6 @@ const userService = {
         email: user.email,
         phone_number: user.phone_number,
         role: user.role || "user",
-        date_of_birth: user.date_of_birth,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
