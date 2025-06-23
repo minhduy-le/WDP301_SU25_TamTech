@@ -14,7 +14,7 @@ const { auth } = require("../config/firebase");
 const currentDate = new Date("2025-05-26T10:53:00+07:00");
 
 const redisClient = redis.createClient({
-  url: 'rediss://default:Acr3AAIncDEzYWRkOTViMzNlNmQ0NGY1YmRhZDkyNzhjMjJjYmQ2N3AxNTE5NTk@modern-civet-51959.upstash.io:6379',
+  url: "rediss://default:Acr3AAIncDEzYWRkOTViMzNlNmQ0NGY1YmRhZDkyNzhjMjJjYmQ2N3AxNTE5NTk@modern-civet-51959.upstash.io:6379",
 });
 redisClient.connect().catch((err) => {
   console.error("Redis connection error:", err.message);
