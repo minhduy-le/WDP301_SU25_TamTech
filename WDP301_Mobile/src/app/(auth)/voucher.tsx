@@ -1,8 +1,9 @@
 import VoucherComponent from "@/components/account/user.voucher";
 import { FONTS } from "@/theme/typography";
 import { APP_COLOR } from "@/utils/constant";
-import { FlatList, StyleSheet, Text, View } from "react-native";
-
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { router } from "expo-router";
 const Voucher = () => {
   const sampleData = [
     {
@@ -26,7 +27,21 @@ const Voucher = () => {
   ];
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Mã ưu đãi của tôi</Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginHorizontal: 10,
+        }}
+      >
+        <Pressable
+          onPress={() => router.navigate("/(tabs)")}
+          style={{ flex: 0.5 }}
+        >
+          <AntDesign name="arrowleft" size={24} color={APP_COLOR.BROWN} />
+        </Pressable>
+        <Text style={styles.text}>Mã ưu đãi của tôi</Text>
+      </View>
       <FlatList
         data={sampleData}
         renderItem={({ item }) => (
