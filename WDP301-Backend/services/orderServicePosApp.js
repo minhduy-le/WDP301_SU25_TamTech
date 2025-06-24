@@ -14,6 +14,7 @@ const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
+const { generateInvoice } = require("../utils/invoiceService");
 
 console.log("Loading orderServicePosApp.js version 2025-06-17-pos-app-v4");
 
@@ -437,7 +438,7 @@ const setOrderToPaidPosApp = async (req, res) => {
       return res.status(500).send("Failed to update order status");
     }
 
-    const invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
+    const invoiceUrl = await generateInvoice(order, parsedOrderId, transaction, true);
     console.log("Invoice generated:", invoiceUrl);
 
     await transaction.commit();
@@ -455,208 +456,6 @@ const setOrderToPaidPosApp = async (req, res) => {
     return res.status(500).send("Failed to update order status");
   }
 };
-
-async function generateAndUploadInvoice(order, orderId, transaction) {
-  console.log("generateAndUploadInvoice called for orderId:", orderId);
-  try {
-    const orderItems = await OrderItem.findAll({
-      where: { orderId },
-      include: [{ model: Product, as: "Product", attributes: ["name"] }],
-      attributes: ["quantity", "price"],
-      transaction,
-    });
-    console.log("Fetched order items:", JSON.stringify(orderItems, null, 2));
-
-    // Fetch user info if userId exists, else use default
-    let customerName = "Khách lẻ";
-    if (order.userId) {
-      const user = await User.findOne({
-        where: { id: order.userId },
-        attributes: ["fullName"],
-        transaction,
-      });
-      customerName = user ? user.fullName || "Khách lẻ" : "Khách lẻ";
-    }
-    console.log("Customer name for invoice:", customerName);
-
-    const qrCodeUrl = await QRCode.toDataURL(`https://wdp301-su25.space/order/${order.orderId}`);
-    console.log("Generated QR code for URL:", qrCodeUrl.slice(0, 50) + "...");
-
-    console.log("Starting PDF generation for orderId:", orderId);
-    const doc = new PDFDocument({
-      size: [216, 800], // Increased height to accommodate content
-      margin: 15,
-      info: {
-        Title: `Hóa đơn #${order.orderId}`,
-        Author: "ABC Company Limited",
-        Subject: "Hóa đơn bán hàng",
-        Keywords: "hóa đơn, đơn hàng",
-      },
-    });
-
-    const buffers = [];
-    doc.on("data", buffers.push.bind(buffers));
-
-    // Load font for Vietnamese support
-    doc.registerFont("NotoSans", "./fonts/NotoSans-Regular.ttf");
-    doc.registerFont("NotoSans-Bold", "./fonts/NotoSans-SemiBold.ttf");
-
-    const textColor = "#000000";
-    const lineColor = "#000000";
-    const lineSpacing = 12;
-    const sectionSpacing = 20;
-
-    let currentY = 15;
-
-    // Drawing dashed line helper
-    const drawDashedLine = (y, dashLength = 5, gapLength = 5) => {
-      doc.lineWidth(1).strokeColor(lineColor);
-      for (let x = doc.page.margins.left; x < doc.page.width - doc.page.margins.right; x += dashLength + gapLength) {
-        doc
-          .moveTo(x, y)
-          .lineTo(x + dashLength, y)
-          .stroke();
-      }
-    };
-
-    // Company header
-    doc.font("NotoSans-Bold").fontSize(14).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
-    currentY += lineSpacing;
-    doc.font("NotoSans").fontSize(10);
-    doc.text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("TP. Hồ Chí Minh", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("Điện thoại: +84 909 123 456", { align: "center" });
-    currentY += sectionSpacing;
-
-    drawDashedLine(currentY);
-    currentY += sectionSpacing;
-
-    // Invoice title and details
-    doc
-      .font("NotoSans-Bold")
-      .fontSize(12)
-      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
-    currentY += lineSpacing;
-    doc.font("NotoSans").fontSize(10);
-    doc.text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, 15, currentY, { align: "left" });
-    doc.text(
-      `Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`,
-      doc.page.width / 2,
-      currentY,
-      { align: "right" }
-    );
-    currentY += lineSpacing;
-    doc.text(`Khách hàng: ${customerName}`, 15, currentY, { align: "left" });
-    currentY += sectionSpacing;
-
-    drawDashedLine(currentY);
-    currentY += sectionSpacing;
-
-    // Order items table header
-    doc.font("NotoSans-Bold").fontSize(10);
-    doc.text("Sản phẩm", 15, currentY, { align: "left", width: 100 });
-    doc.text("Số lượng", 115, currentY, { align: "center", width: 40 });
-    doc.text("Đơn giá", 155, currentY, { align: "right", width: 40 });
-    doc.text("Tổng", 195, currentY, { align: "right" });
-    currentY += lineSpacing;
-    drawDashedLine(currentY);
-    currentY += 8;
-
-    // Order items
-    doc.font("NotoSans").fontSize(9);
-    orderItems.forEach((item) => {
-      const itemTotal = item.quantity * item.price;
-      const productName =
-        item.Product.name.length > 20 ? item.Product.name.substring(0, 17) + "..." : item.Product.name;
-      doc.text(productName, 15, currentY, { align: "left", width: 100 });
-      doc.text(item.quantity.toString(), 115, currentY, { align: "center", width: 40 });
-      doc.text(item.price.toLocaleString("vi-VN"), 155, currentY, { align: "right", width: 40 });
-      doc.text(itemTotal.toLocaleString("vi-VN"), 195, currentY, { align: "right" });
-      currentY += lineSpacing;
-    });
-
-    currentY += 8;
-    drawDashedLine(currentY);
-    currentY += sectionSpacing;
-
-    // Order note
-    if (order.note) {
-      doc.font("NotoSans-Bold").fontSize(10).text("Ghi chú:", 15, currentY, { align: "left" });
-      currentY += lineSpacing;
-      doc.font("NotoSans").fontSize(9).text(order.note, 15, currentY, { align: "left", width: 186 });
-      currentY += lineSpacing * 2;
-    }
-
-    // Order totals
-    doc.font("NotoSans").fontSize(10);
-    doc.text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, 15, currentY, { align: "right" });
-    currentY += lineSpacing;
-    if (order.order_discount_value > 0) {
-      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, 15, currentY, {
-        align: "right",
-      });
-      currentY += lineSpacing;
-    }
-    doc.font("NotoSans-Bold").fontSize(12);
-    const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
-    doc.text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, 15, currentY, { align: "right" });
-    currentY += sectionSpacing;
-
-    // Payment status
-    doc.font("NotoSans").fontSize(10);
-    doc.text("Thanh toán: Thanh toán tại quầy", 15, currentY, { align: "left" });
-    currentY += lineSpacing;
-    doc.text("Trạng thái: ĐÃ THANH TOÁN", 15, currentY, { align: "left" });
-    currentY += sectionSpacing;
-
-    drawDashedLine(currentY);
-    currentY += sectionSpacing;
-
-    // QR code
-    const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, (doc.page.width - 100) / 2, currentY, { width: 100, align: "center" });
-    currentY += 110;
-    doc.font("NotoSans").fontSize(8).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
-    currentY += sectionSpacing;
-
-    drawDashedLine(currentY);
-    currentY += sectionSpacing;
-
-    // Footer
-    doc.font("NotoSans").fontSize(10);
-    doc.text("Cảm ơn bạn đã mua sắm cùng chúng tôi!", { align: "center" });
-    currentY += lineSpacing;
-    doc.fontSize(8).text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
-    currentY += lineSpacing;
-
-    doc.page.height = currentY + doc.page.margins.bottom;
-
-    doc.end();
-
-    console.log("PDF generation complete, collecting buffer for orderId:", orderId);
-    const pdfBuffer = await new Promise((resolve) => {
-      const buffers = [];
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", () => resolve(Buffer.concat(buffers)));
-    });
-    console.log("PDF buffer size:", pdfBuffer.length);
-
-    console.log("Uploading PDF to Firebase for orderId:", orderId);
-    const invoiceUrl = await uploadFileToFirebase(pdfBuffer, `receipt_${orderId}.pdf`, "application/pdf");
-    console.log("Firebase upload successful, invoiceUrl:", invoiceUrl);
-
-    order.invoiceUrl = invoiceUrl;
-    await order.save({ transaction });
-    console.log("Order updated with invoiceUrl for orderId:", orderId, invoiceUrl);
-
-    return invoiceUrl;
-  } catch (error) {
-    console.error("Error in generateAndUploadInvoice for orderId:", orderId, error.message, error.stack);
-    throw error;
-  }
-}
 
 module.exports = {
   createOrderPosApp,

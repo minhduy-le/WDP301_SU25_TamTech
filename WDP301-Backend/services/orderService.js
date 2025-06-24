@@ -17,6 +17,7 @@ const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
 const notificationService = require("./notificationService");
+const { generateInvoice } = require("../utils/invoiceService");
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -518,187 +519,6 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
-async function generateAndUploadInvoice(order, orderId, transaction) {
-  console.log("generateAndUploadInvoice called for orderId:", orderId);
-  try {
-    const orderItems = await OrderItem.findAll({
-      where: { orderId },
-      include: [{ model: Product, as: "Product", attributes: ["name"] }],
-      attributes: ["quantity", "price"],
-      transaction,
-    });
-    console.log("Fetched order items:", JSON.stringify(orderItems, null, 2));
-
-    const user = await User.findOne({
-      where: { id: order.userId },
-      attributes: ["id", "fullName"],
-      transaction,
-    });
-    console.log("Fetched user:", user ? user.fullName : "Khách hàng");
-
-    const qrCodeUrl = await QRCode.toDataURL(`${FRONTEND_DOMAIN}/order/${order.orderId}`);
-    console.log("Generated QR code for URL:", qrCodeUrl.slice(0, 50) + "...");
-
-    console.log("Starting PDF generation for orderId:", orderId);
-    const doc = new PDFDocument({
-      size: [216, 600],
-      margin: 10,
-      info: {
-        Title: `Hóa đơn #${order.orderId}`,
-        Author: "ABC Company Limited",
-        Subject: "Hóa đơn bán hàng",
-        Keywords: "hóa đơn, đơn hàng",
-      },
-    });
-
-    const buffers = [];
-    doc.on("data", buffers.push.bind(buffers));
-
-    const textColor = "#000000";
-    const lineColor = "#000000";
-    const lineSpacing = 12;
-
-    let currentY = 10;
-
-    const drawDashedLine = (y, dashLength = 5, gapLength = 5) => {
-      doc.lineWidth(1).strokeColor(lineColor);
-      for (let x = doc.page.margins.left; x < doc.page.width - doc.page.margins.right; x += dashLength + gapLength) {
-        doc
-          .moveTo(x, y)
-          .lineTo(x + dashLength, y)
-          .stroke();
-      }
-    };
-
-    doc.font("Helvetica-Bold").fontSize(12).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
-    currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("TP. Hồ Chí Minh", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("Điện thoại: +84 909 123 456", { align: "center" });
-    currentY += lineSpacing;
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(10)
-      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
-    currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
-    currentY += lineSpacing;
-    doc.text(`Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`, { align: "left" });
-    currentY += lineSpacing;
-    doc.text(`Khách hàng: ${user ? user.fullName || "Khách lẻ" : "Khách lẻ"}`, { align: "left" });
-    if (order.isDatHo && order.tenNguoiDatHo && order.soDienThoaiNguoiDatHo) {
-      currentY += lineSpacing;
-      doc.text(`Đặt hộ: ${order.tenNguoiDatHo} - SĐT: ${order.soDienThoaiNguoiDatHo}`, { align: "left" });
-    }
-    currentY += lineSpacing;
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    doc.font("Helvetica-Bold").fontSize(8).text("Sản phẩm", { align: "left" });
-    currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Số lượng x Giá = Tổng", { align: "right" });
-    currentY += lineSpacing;
-
-    orderItems.forEach((item) => {
-      const itemTotal = item.quantity * item.price;
-      doc.text(`${item.Product.name}`, { align: "left" });
-      currentY += lineSpacing;
-      doc.text(`${item.quantity} x ${item.price.toLocaleString("vi-VN")} = ${itemTotal.toLocaleString("vi-VN")} VND`, {
-        align: "right",
-      });
-      currentY += lineSpacing;
-    });
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    if (order.note) {
-      doc.font("Helvetica-Bold").fontSize(8).text("Ghi chú:", { align: "left" });
-      currentY += lineSpacing;
-      doc.font("Helvetica").fontSize(8).text(order.note, { align: "left", width: 190 });
-      currentY += lineSpacing * 2;
-    }
-
-    doc.font("Helvetica").fontSize(8);
-    doc.text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, { align: "right" });
-    currentY += lineSpacing;
-    doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, { align: "right" });
-    currentY += lineSpacing;
-
-    if (order.order_discount_value > 0) {
-      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, { align: "right" });
-      currentY += lineSpacing;
-    }
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    doc.font("Helvetica-Bold").fontSize(10);
-    const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
-    doc.text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, { align: "right" });
-    currentY += lineSpacing;
-
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
-    currentY += lineSpacing;
-    doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
-    currentY += lineSpacing;
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
-    currentY += 110;
-    doc.fontSize(6).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
-    currentY += lineSpacing;
-
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Cảm ơn bạn đã mua sắm cùng chúng tôi!", { align: "center" });
-    currentY += lineSpacing;
-    doc.text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
-    currentY += lineSpacing;
-
-    doc.page.height = currentY + doc.page.margins.bottom;
-
-    doc.end();
-
-    console.log("PDF generation complete, collecting buffer for orderId:", orderId);
-    const pdfBuffer = await new Promise((resolve) => {
-      const buffers = [];
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", () => resolve(Buffer.concat(buffers)));
-    });
-    console.log("PDF buffer size:", pdfBuffer.length);
-
-    console.log("Uploading PDF to Firebase for orderId:", orderId);
-    const invoiceUrl = await uploadFileToFirebase(pdfBuffer, `receipt_${orderId}.pdf`, "application/pdf");
-    console.log("Firebase upload successful, invoiceUrl:", invoiceUrl);
-
-    order.invoiceUrl = invoiceUrl;
-    await order.save({ transaction });
-    console.log("Order updated with invoiceUrl for orderId:", orderId, invoiceUrl);
-
-    return invoiceUrl;
-  } catch (error) {
-    console.error("Error in generateAndUploadInvoice for orderId:", orderId, error.message, error.stack);
-    throw error;
-  }
-}
-
 const handlePaymentSuccess = async (req, res) => {
   console.log("handlePaymentSuccess called at:", new Date().toISOString());
   console.log("Request method:", req.method);
@@ -753,7 +573,7 @@ const handlePaymentSuccess = async (req, res) => {
       let invoiceUrl = order.invoiceUrl;
       if (!invoiceUrl) {
         console.log("No invoiceUrl, generating PDF for orderId:", parsedOrderId);
-        invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
+        invoiceUrl = await generateInvoice(order, parsedOrderId, transaction, false);
       }
       await transaction.commit();
       console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
@@ -820,7 +640,7 @@ const handlePaymentSuccess = async (req, res) => {
         return res.status(500).json({ message: "Failed to update order status", error: saveError.message });
       }
 
-      const invoiceUrl = await generateAndUploadInvoice(order, parsedOrderId, transaction);
+      const invoiceUrl = await generateInvoice(order, parsedOrderId, transaction, false);
       console.log("Invoice generated:", invoiceUrl);
 
       try {
