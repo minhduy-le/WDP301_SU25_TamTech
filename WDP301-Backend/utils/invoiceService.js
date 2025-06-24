@@ -2,6 +2,7 @@ const { OrderItem, User, Product } = require("../models/associations");
 const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
+const path = require("path");
 
 async function generateInvoice(order, orderId, transaction, isPosReceipt = false) {
   console.log(`generateInvoice called for orderId: ${orderId}, isPosReceipt: ${isPosReceipt}`);
