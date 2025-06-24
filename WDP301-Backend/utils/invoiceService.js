@@ -64,7 +64,7 @@ async function generateInvoice(order, orderId, transaction, isPosReceipt = false
 
     if (!isPosReceipt) {
       doc
-        .image("public/logo.png", 50, 45, { width: 70 })
+        .image("./images/logo.png", 50, 45, { width: 70 })
         .fillColor("#2E7D32")
         .font("NotoSans-Bold")
         .fontSize(24)
