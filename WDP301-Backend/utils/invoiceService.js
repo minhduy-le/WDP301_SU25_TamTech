@@ -42,8 +42,9 @@ async function generateInvoice(order, orderId, transaction, isPosReceipt = false
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
 
-    doc.registerFont("NotoSans", "./fonts/NotoSans-Regular.ttf");
-    doc.registerFont("NotoSans-Bold", "./fonts/NotoSans-SemiBold.ttf");
+    // Điều chỉnh đường dẫn font - hãy thay bằng vị trí thực tế của bạn
+    doc.registerFont("NotoSans", "../public/fonts/NotoSans-Regular.ttf"); // Thay đổi nếu cần
+    doc.registerFont("NotoSans-Bold", "../public/fonts/NotoSans-SemiBold.ttf"); // Thay đổi nếu cần
 
     const textColor = "#000000";
     const lineColor = isPosReceipt ? "#CCCCCC" : "#E0E0E0";
@@ -64,7 +65,7 @@ async function generateInvoice(order, orderId, transaction, isPosReceipt = false
 
     if (!isPosReceipt) {
       doc
-        .image("./images/logo.png", 50, 45, { width: 70 })
+        .image("../images/logo.png", 50, 45, { width: 70 })
         .fillColor("#2E7D32")
         .font("NotoSans-Bold")
         .fontSize(24)
