@@ -105,6 +105,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/admin/users",
         "/admin/system-issues",
         "/admin/profile",
+        "/admin/chat",
       ],
     };
 

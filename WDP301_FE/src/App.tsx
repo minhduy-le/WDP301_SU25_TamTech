@@ -39,6 +39,7 @@ import DetailManageStaff from "./pages/manager/staffs/DetailManageStaff";
 import MaterialManagement from "./pages/manager/materials/MaterialManagement";
 import ManagerProfile from "./pages/manager/ManagerProfile";
 import ForgotPassword from "./pages/ForgotPassword";
+import ChatAdmin from "./pages/admin/ChatAdmin";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -113,6 +114,7 @@ function App() {
               path="/admin/system-issues"
               element={<SystemIssuesReport />}
             />
+            <Route path="/admin/chat" element={<ChatAdmin />} />
             <Route path="/admin/profile" element={<AdminProfile />} />
           </Route>
 
