@@ -36,15 +36,15 @@ const ManagerChat = () => {
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore(); // <-- THAY ĐỔI: Lấy token để xác thực socket
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { isConnected } = useSocketConnection(token);
 
   useEffect(() => {
     if (!token) {
       console.error("No token available for socket connection");
-    } else {
-      console.log("Initializing socket with token:", token.substring(0, 10) + "...");
-      useSocketConnection(token);
+    } else if (!isConnected) {
+      console.log("Socket is not connected, attempting to reconnect...");
     }
-  }, [token]);
+  }, [token, isConnected]);
 
   // --- THAY ĐỔI: Khởi tạo kết nối socket ---
   // Hook này nên được gọi ở component cha (App.tsx) để duy trì kết nối
