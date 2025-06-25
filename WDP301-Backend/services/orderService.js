@@ -518,8 +518,8 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     console.log("Starting PDF generation for orderId:", orderId);
     const doc = new PDFDocument({
-      size: [216, 700], // Tăng chiều cao để có đủ không gian
-      margin: 15, // Giảm margin để tối ưu không gian
+      size: [216, 600],
+      margin: 20,
       info: {
         Title: `Hóa đơn #${order.orderId}`,
         Author: "Tấm Tắc",
@@ -535,257 +535,160 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
 
-    // Enhanced styling constants
-    const colors = {
-      primary: "#2563EB", // Blue
-      secondary: "#64748B", // Gray
-      accent: "#059669", // Green
-      text: "#1E293B", // Dark gray
-      light: "#F1F5F9", // Light gray
-      border: "#E2E8F0", // Border gray
-      success: "#10B981", // Success green
-    };
+    // Styling constants
+    const headerColor = "#1E3A8A";
+    const textColor = "#1F2937";
+    const accentColor = "#10B981";
+    const lineSpacing = 14;
+    const tableBorderColor = "#E5E7EB";
 
-    const spacing = {
-      small: 8,
-      medium: 12,
-      large: 16,
-      xlarge: 20,
-    };
+    let currentY = 20;
 
-    let currentY = 15;
-    const pageWidth = 216;
-    const contentWidth = pageWidth - 30; // 15px margin on each side
-
-    // =============== HEADER SECTION ===============
-    // Company logo background
-    doc.rect(15, currentY, contentWidth, 45).fillColor(colors.light).fill();
-
-    currentY += 8;
-
-    // Company name with enhanced styling
-    doc.font("NotoSans-Bold").fontSize(18).fillColor(colors.primary).text("TẤM TẮC", { align: "center" });
-
-    currentY += spacing.large;
-
-    // Company info
-    doc
-      .font("NotoSans")
-      .fontSize(9)
-      .fillColor(colors.secondary)
-      .text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
-
-    currentY += spacing.small;
-
+    // Company header
+    doc.font("NotoSans-Bold").fontSize(16).fillColor(headerColor).text("TẤM TẮC", { align: "center" });
+    currentY += lineSpacing;
+    doc.font("NotoSans").fontSize(10).fillColor(textColor).text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
+    currentY += lineSpacing;
     doc.text("TP. Hồ Chí Minh | Tel: +84 909 123 456", { align: "center" });
+    currentY += lineSpacing * 1.5;
 
-    currentY += spacing.large;
+    // Dashed line
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
+    currentY += lineSpacing;
 
-    // Decorative line
-    doc.lineWidth(2).strokeColor(colors.primary).moveTo(60, currentY).lineTo(156, currentY).stroke();
-
-    currentY += spacing.large;
-
-    // =============== INVOICE INFO SECTION ===============
-    // Invoice title with background
-    doc.rect(15, currentY, contentWidth, 25).fillColor(colors.primary).fill();
-
+    // Invoice info
     doc
       .font("NotoSans-Bold")
       .fontSize(12)
-      .fillColor("white")
-      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, 15, currentY + 8, {
-        width: contentWidth,
-        align: "center",
-      });
-
-    currentY += 35;
-
-    // Invoice details in a clean layout
-    const invoiceDetails = [
-      { label: "Ngày:", value: new Date(order.order_create_at).toLocaleDateString("vi-VN") },
-      { label: "Thời gian:", value: new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN") },
-      { label: "Khách hàng:", value: user ? user.fullName || "Khách lẻ" : "Khách lẻ" },
-    ];
-
-    // Add booking info if exists
-    if (order.isDatHo && order.tenNguoiDatHo && order.soDienThoaiNguoiDatHo) {
-      invoiceDetails.push({
-        label: "Đặt hộ:",
-        value: `${order.tenNguoiDatHo} - SĐT: ${order.soDienThoaiNguoiDatHo}`,
-      });
-    }
-
-    invoiceDetails.forEach((detail) => {
-      doc
-        .font("NotoSans")
-        .fontSize(9)
-        .fillColor(colors.text)
-        .text(detail.label, 20, currentY, { width: 50 })
-        .text(detail.value, 75, currentY, { width: 120 });
-      currentY += spacing.medium;
-    });
-
-    currentY += spacing.small;
-
-    // =============== ITEMS TABLE SECTION ===============
-    // Table header with background
-    doc.rect(15, currentY, contentWidth, 20).fillColor(colors.accent).fill();
-
+      .fillColor(headerColor)
+      .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
+    currentY += lineSpacing;
     doc
-      .font("NotoSans-Bold")
+      .font("NotoSans")
       .fontSize(9)
-      .fillColor("white")
-      .text("SẢN PHẨM", 20, currentY + 6)
-      .text("SL", 130, currentY + 6, { width: 25, align: "center" })
-      .text("GIÁ", 160, currentY + 6, { width: 36, align: "right" });
-
-    currentY += 25;
-
-    // Table items with alternating background
-    orderItems.forEach((item, index) => {
-      const itemTotal = item.quantity * item.price;
-
-      // Alternating row colors
-      if (index % 2 === 0) {
-        doc
-          .rect(15, currentY - 2, contentWidth, spacing.large)
-          .fillColor(colors.light)
-          .fill();
-      }
-
-      doc
-        .font("NotoSans")
-        .fontSize(8)
-        .fillColor(colors.text)
-        .text(item.Product.name, 20, currentY, { width: 105 })
-        .text(item.quantity.toString(), 130, currentY, { width: 25, align: "center" })
-        .text(`${item.price.toLocaleString("vi-VN")}`, 160, currentY, { width: 36, align: "right" });
-
-      currentY += spacing.medium;
-    });
-
-    // Table bottom border
-    doc.lineWidth(1).strokeColor(colors.border).moveTo(15, currentY).lineTo(201, currentY).stroke();
-
-    currentY += spacing.large;
-
-    // =============== NOTES SECTION ===============
-    if (order.note) {
-      doc.rect(15, currentY, contentWidth, 5).fillColor(colors.secondary).fill();
-
-      currentY += 8;
-
-      doc.font("NotoSans-Bold").fontSize(9).fillColor(colors.text).text("GHI CHÚ:", 20, currentY);
-
-      currentY += spacing.medium;
-
-      doc
-        .font("NotoSans")
-        .fontSize(8)
-        .fillColor(colors.secondary)
-        .text(order.note, 20, currentY, { width: contentWidth - 10 });
-
-      currentY += spacing.large;
+      .fillColor(textColor)
+      .text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
+    currentY += lineSpacing;
+    doc.text(`Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`, { align: "left" });
+    currentY += lineSpacing;
+    doc.text(`Khách hàng: ${user ? user.fullName || "Khách lẻ" : "Khách lẻ"}`, { align: "left" });
+    if (order.isDatHo && order.tenNguoiDatHo && order.soDienThoaiNguoiDatHo) {
+      currentY += lineSpacing;
+      doc.text(`Đặt hộ: ${order.tenNguoiDatHo} - SĐT: ${order.soDienThoaiNguoiDatHo}`, { align: "left" });
     }
+    currentY += lineSpacing * 1.5;
 
-    // =============== SUMMARY SECTION ===============
-    // Summary background
-    doc.rect(15, currentY, contentWidth, 60).fillColor(colors.light).fill();
-
-    currentY += 8;
-
-    const summaryItems = [
-      { label: "Tổng phụ:", value: `${order.order_amount.toLocaleString("vi-VN")} VND` },
-      { label: "Phí vận chuyển:", value: `${order.order_shipping_fee.toLocaleString("vi-VN")} VND` },
-    ];
-
-    if (order.order_discount_value > 0) {
-      summaryItems.push({
-        label: "Giảm giá:",
-        value: `-${order.order_discount_value.toLocaleString("vi-VN")} VND`,
-      });
-    }
-
-    summaryItems.forEach((item) => {
-      doc
-        .font("NotoSans")
-        .fontSize(9)
-        .fillColor(colors.text)
-        .text(item.label, 120, currentY, { width: 50 })
-        .text(item.value, 160, currentY, { width: 36, align: "right" });
-      currentY += spacing.medium;
-    });
-
-    // Total separator line
-    doc.lineWidth(2).strokeColor(colors.accent).moveTo(120, currentY).lineTo(196, currentY).stroke();
-
-    currentY += spacing.small;
-
-    // Total amount
-    const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
-    doc
-      .font("NotoSans-Bold")
-      .fontSize(11)
-      .fillColor(colors.accent)
-      .text("TỔNG CỘNG:", 120, currentY, { width: 50 })
-      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 160, currentY, { width: 36, align: "right" });
-
-    currentY += spacing.xlarge;
-
-    // =============== PAYMENT STATUS ===============
-    doc.rect(15, currentY, contentWidth, 25).fillColor(colors.success).fill();
-
+    // Items table
     doc
       .font("NotoSans-Bold")
       .fontSize(10)
-      .fillColor("white")
-      .text("✓ ĐÃ THANH TOÁN", 15, currentY + 8, { width: contentWidth, align: "center" });
+      .fillColor(headerColor)
+      .text("SẢN PHẨM", 20, currentY)
+      .text("SỐ LƯỢNG", 120, currentY, { width: 30, align: "right" })
+      .text("GIÁ", 160, currentY, { width: 36, align: "right" });
+    currentY += lineSpacing;
 
-    currentY += 35;
+    doc.lineWidth(0.5).strokeColor(tableBorderColor).moveTo(20, currentY).lineTo(196, currentY).stroke();
+    currentY += 2;
 
-    // =============== QR CODE SECTION ===============
-    // QR code background
-    doc.rect(15, currentY, contentWidth, 100).fillColor("white").stroke();
+    orderItems.forEach((item) => {
+      const itemTotal = item.quantity * item.price;
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(item.Product.name, 22, currentY, { width: 98 });
+      doc.text(item.quantity.toString(), 120, currentY, { width: 30, align: "right" });
+      doc.text(`${item.price.toLocaleString("vi-VN")} VND`, 160, currentY, { width: 36, align: "right" });
+      currentY += lineSpacing;
+      doc.lineWidth(0.5).strokeColor(tableBorderColor).moveTo(20, currentY).lineTo(196, currentY).stroke();
+      currentY += 2;
+    });
 
+    currentY += lineSpacing;
+
+    // Notes
+    if (order.note) {
+      doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("GHI CHÚ:", 20, currentY);
+      currentY += lineSpacing;
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(order.note, 22, currentY, { width: 174 });
+      currentY += lineSpacing * 1.5;
+    }
+
+    // Summary
+    doc
+      .font("NotoSans")
+      .fontSize(9)
+      .fillColor(textColor)
+      .text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
+    currentY += lineSpacing;
+    doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, 130, currentY, {
+      width: 66,
+      align: "right",
+    });
+    currentY += lineSpacing;
+
+    if (order.order_discount_value > 0) {
+      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
+      currentY += lineSpacing;
+    }
+
+    // Total line
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(130, currentY).lineTo(196, currentY).stroke();
+    currentY += lineSpacing;
+
+    const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
+    doc
+      .font("NotoSans-Bold")
+      .fontSize(12)
+      .fillColor(accentColor)
+      .text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
+    currentY += lineSpacing * 1.5;
+
+    // Payment and status
+    doc.font("NotoSans").fontSize(9).fillColor(textColor).text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
+    currentY += lineSpacing;
+    doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
+    currentY += lineSpacing * 1.5;
+
+    // QR Code and additional info
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 58, currentY + 10, { width: 80, align: "center" });
+    doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
+    currentY += 110;
+    doc.font("NotoSans").fontSize(8).fillColor(textColor).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
+    currentY += lineSpacing;
 
-    currentY += 95;
+    // Footer with proper Vietnamese text
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
+    currentY += lineSpacing;
 
+    doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
+    currentY += lineSpacing;
     doc
       .font("NotoSans")
       .fontSize(8)
-      .fillColor(colors.secondary)
-      .text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
+      .fillColor(textColor)
+      .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
+    currentY += lineSpacing;
 
-    currentY += spacing.large;
-
-    // =============== FOOTER SECTION ===============
-    // Decorative line
-    doc
-      .lineWidth(1)
-      .strokeColor(colors.border)
-      .moveTo(20, currentY)
-      .lineTo(196, currentY)
-      .dash(3, { space: 3 })
-      .stroke();
-
-    currentY += spacing.medium;
-
-    // Thank you message
-    doc.font("NotoSans-Bold").fontSize(12).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
-
-    currentY += spacing.medium;
-
+    // Ensure all text below QR code uses the correct font
     doc
       .font("NotoSans")
-      .fontSize(7)
-      .fillColor(colors.secondary)
-      .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
+      .fontSize(8)
+      .fillColor(textColor)
+      .text("Thành toán: Đã", 20, currentY, { continued: true })
+      .text("ITOA", { continued: true })
+      .text(" - Mã đơn hàng: ", { continued: true })
+      .text(order.orderId, { continued: true })
+      .text(" - Ngày tạo: ", { continued: true })
+      .text(new Date().toLocaleString("vi-VN"), { align: "left" });
 
-    // Set final page height
-    doc.page.height = currentY + 30;
+    doc.page.height = currentY + doc.page.margins.bottom;
 
     doc.end();
 
