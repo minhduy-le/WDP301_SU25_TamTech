@@ -547,10 +547,10 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     };
 
     const spacing = {
-      small: 10,
-      medium: 15,
-      large: 20,
-      xlarge: 25,
+      small: 8,
+      medium: 12,
+      large: 16,
+      xlarge: 20,
     };
 
     let currentY = 15;
@@ -668,42 +668,39 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     // Table bottom border
     doc.lineWidth(1).strokeColor(colors.border).moveTo(15, currentY).lineTo(201, currentY).stroke();
 
-    currentY += spacing.xlarge;
+    currentY += spacing.large;
 
     // =============== NOTES SECTION ===============
     if (order.note) {
-      doc.rect(15, currentY, contentWidth, 8).fillColor(colors.secondary).fill();
+      doc.rect(15, currentY, contentWidth, 15).fillColor(colors.secondary).fill();
 
-      currentY += spacing.medium;
+      doc.font("NotoSans-Bold").fontSize(9).fillColor("white").text("GHI CHÚ", 20, currentY + 4);
 
-      doc.font("NotoSans-Bold").fontSize(9).fillColor(colors.text).text("GHI CHÚ:", 20, currentY);
-
-      currentY += spacing.medium;
+      currentY += 20;
 
       doc
         .font("NotoSans")
         .fontSize(8)
-        .fillColor(colors.secondary)
+        .fillColor(colors.text)
         .text(order.note, 20, currentY, { width: contentWidth - 10 });
 
-      currentY += spacing.xlarge;
+      currentY += spacing.large + 5;
     }
 
     // =============== SUMMARY SECTION ===============
-    // Summary background
-    doc.rect(15, currentY, contentWidth, 70).fillColor(colors.light).fill();
-
     currentY += spacing.medium;
 
+    // Summary items with proper spacing and alignment
     const summaryItems = [
-      { label: "Tổng phụ:", value: `${order.order_amount.toLocaleString("vi-VN")} VND` },
-      { label: "Phí vận chuyển:", value: `${order.order_shipping_fee.toLocaleString("vi-VN")} VND` },
+      { label: "Tổng phụ:", value: `${order.order_amount.toLocaleString("vi-VN")} VND`, color: colors.text },
+      { label: "Phí vận chuyển:", value: `${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, color: colors.text },
     ];
 
     if (order.order_discount_value > 0) {
       summaryItems.push({
         label: "Giảm giá:",
         value: `-${order.order_discount_value.toLocaleString("vi-VN")} VND`,
+        color: colors.accent,
       });
     }
 
@@ -711,81 +708,90 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       doc
         .font("NotoSans")
         .fontSize(9)
-        .fillColor(colors.text)
-        .text(item.label, 120, currentY, { width: 50 })
-        .text(item.value, 160, currentY, { width: 36, align: "right" });
+        .fillColor(item.color || colors.text)
+        .text(item.label, 110, currentY, { width: 60, align: "left" })
+        .text(item.value, 140, currentY, { width: 56, align: "right" });
       currentY += spacing.medium;
     });
 
-    // Total separator line
-    doc.lineWidth(2).strokeColor(colors.accent).moveTo(120, currentY).lineTo(196, currentY).stroke();
+    // Separator line before total
+    doc.lineWidth(1).strokeColor(colors.border).moveTo(110, currentY).lineTo(196, currentY).stroke();
+    currentY += spacing.small;
 
-    currentY += spacing.medium;
-
-    // Total amount
+    // Total amount with highlighted background
+    doc.rect(110, currentY - 2, 86, 18).fillColor(colors.accent).fill();
+    
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
     doc
       .font("NotoSans-Bold")
-      .fontSize(11)
-      .fillColor(colors.accent)
-      .text("TỔNG CỘNG:", 120, currentY, { width: 50 })
-      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 160, currentY, { width: 36, align: "right" });
+      .fontSize(10)
+      .fillColor("white")
+      .text("TỔNG CỘNG:", 115, currentY + 2, { width: 50, align: "left" })
+      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 145, currentY + 2, { width: 46, align: "right" });
 
-    currentY += spacing.xlarge;
+    currentY += spacing.xlarge + 5;
 
     // =============== PAYMENT STATUS ===============
-    doc.rect(15, currentY, contentWidth, 25).fillColor(colors.success).fill();
+    doc.rect(15, currentY, contentWidth, 22).fillColor(colors.success).fill();
 
     doc
       .font("NotoSans-Bold")
       .fontSize(10)
       .fillColor("white")
-      .text("✓ ĐÃ THANH TOÁN", 15, currentY + 8, { width: contentWidth, align: "center" });
+      .text("✓ ĐÃ THANH TOÁN", 15, currentY + 6, { width: contentWidth, align: "center" });
 
-    currentY += 35;
+    currentY += 30;
 
     // =============== QR CODE SECTION ===============
-    // QR code background
-    doc.rect(15, currentY, contentWidth, 110).fillColor("white").stroke();
+    // Add some spacing before QR section
+    currentY += spacing.medium;
 
-    const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 58, currentY + 15, { width: 80, align: "center" });
-
-    currentY += 105;
-
+    // QR code title
     doc
       .font("NotoSans")
       .fontSize(8)
-      .fillColor(colors.secondary)
+      .fillColor(colors.text)
       .text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
 
-    currentY += spacing.xlarge;
+    currentY += spacing.small;
+
+    // QR code with border
+    doc.rect(15, currentY, contentWidth, 90).fillColor("white").strokeColor(colors.border).stroke();
+
+    const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
+    doc.image(qrImage, 58, currentY + 10, { width: 70, align: "center" });
+
+    currentY += 100;
 
     // =============== FOOTER SECTION ===============
-    // Decorative line
-    doc
-      .lineWidth(1)
-      .strokeColor(colors.border)
-      .moveTo(20, currentY)
-      .lineTo(196, currentY)
-      .dash(3, { space: 3 })
-      .stroke();
-
+    // Add spacing before footer
     currentY += spacing.medium;
 
     // Thank you message
-    doc.font("NotoSans-Bold").fontSize(12).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
+    doc.font("NotoSans-Bold").fontSize(11).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
 
     currentY += spacing.medium;
 
+    // Decorative line
+    doc
+      .lineWidth(0.5)
+      .strokeColor(colors.border)
+      .moveTo(40, currentY)
+      .lineTo(176, currentY)
+      .dash(2, { space: 2 })
+      .stroke();
+
+    currentY += spacing.small;
+
+    // Timestamp
     doc
       .font("NotoSans")
       .fontSize(7)
       .fillColor(colors.secondary)
       .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
 
-    // Set final page height
-    doc.page.height = currentY + 30;
+    // Set final page height with some bottom padding
+    doc.page.height = currentY + 25;
 
     doc.end();
 
