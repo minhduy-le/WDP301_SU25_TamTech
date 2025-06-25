@@ -17,6 +17,7 @@ const initializeSocket = (server) => {
       ],
       methods: ["GET", "POST"],
       credentials: true,
+      allowedHeaders: ["Authorization", "token"],
     },
     transports: ["websocket", "polling"],
     allowUpgrades: true,
@@ -203,6 +204,7 @@ const initializeSocket = (server) => {
       description: err.description,
       context: err.context,
       type: err.type,
+      req: err.req?.headers,
     });
   });
 
