@@ -5,7 +5,7 @@ const ChatRoomUser = require("../models/ChatRoomUser");
 const User = require("../models/user");
 
 const initializeSocket = (server) => {
-  const io = socketIo("wss://wdp301-su25.space", {
+  const io = socketIo(server, {
     cors: {
       origin: [
         "https://wdp301-su25.space",
