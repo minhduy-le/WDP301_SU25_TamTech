@@ -203,6 +203,7 @@ const initializeSocket = (server) => {
       description: err.description,
       context: err.context,
       type: err.type,
+      req: err.req?.headers,
     });
   });
 
