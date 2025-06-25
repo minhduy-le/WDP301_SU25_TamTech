@@ -41,7 +41,7 @@ const statusMap: { [key: string]: string } & {
   Pending: string;
   Paid: string;
   Approved: string;
-  Repairing: string;
+  Preparing: string;
   Cooked: string;
   Delivering: string;
   Delivered: string;
@@ -50,7 +50,7 @@ const statusMap: { [key: string]: string } & {
   Pending: "Chờ thanh toán",
   Paid: "Đã thanh toán",
   Approved: "Xác nhận đơn",
-  Repairing: "Đang nấu ăn",
+  Preparing: "Đang nấu ăn",
   Cooked: "Đã nấu xong",
   Delivering: "Đang giao",
   Delivered: "Đã giao",
