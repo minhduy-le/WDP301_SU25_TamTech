@@ -30,7 +30,7 @@ export const useSocketConnection = (token: string | null) => {
       });
 
       socketInstance.on("connect_error", (err) => {
-        console.error("Socket: Connect error:", err.message, "Context:", err.context);
+        console.error("Socket: Connect error:", err.message);
         setIsConnected(false);
       });
 
