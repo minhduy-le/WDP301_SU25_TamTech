@@ -6,6 +6,7 @@ export interface Promotion {
   promotionTypeId: number;
   name: string;
   description: string;
+  barcode: string;
   code: string;
   startDate: Date;
   endDate: Date;
@@ -39,5 +40,16 @@ export const useGetPromotionByCode = (code: string) => {
       return response.data;
     },
     enabled: !!code,
+  });
+};
+
+export const useGetPromotionUser = (userId: number) => {
+  return useQuery<Promotion[], Error>({
+    queryKey: ["user", userId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`promotions/user/${userId}`);
+      return response.data;
+    },
+    enabled: !!userId,
   });
 };
