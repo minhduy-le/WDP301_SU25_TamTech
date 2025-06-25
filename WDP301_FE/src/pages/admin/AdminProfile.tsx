@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, Typography, Button, Form, Input, DatePicker, message, Modal } from "antd";
 import { EditOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import axios from "axios";
 
 const { Title, Text } = Typography;
 
@@ -16,7 +17,7 @@ const getAdminFromLocalStorage = () => {
     phone_number: "",
     date_of_birth: "",
     note: "",
-  };
+  };  
 };
 
 const AdminProfile: React.FC = () => {
@@ -65,10 +66,31 @@ const AdminProfile: React.FC = () => {
 
   const handleChangePassword = async () => {
     try {
-      await passwordForm.validateFields();
-      setIsPasswordModalOpen(false);
-      message.success("Đổi mật khẩu thành công!");
-    } catch {}
+      const values = await passwordForm.validateFields();
+      const token = localStorage.getItem("token");
+      
+      const response = await axios.post(
+        `https://wdp301-su25.space/api/auth/change-password`,
+        {
+          oldPassword: values.oldPassword,
+          newPassword: values.newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setIsPasswordModalOpen(false);
+        message.success("Đổi mật khẩu thành công!");
+        passwordForm.resetFields();
+      }
+    } catch (error: any) {
+      message.error(error.response?.data?.message || "Đổi mật khẩu thất bại");
+    }
   };
 
   return (
@@ -103,14 +125,14 @@ const AdminProfile: React.FC = () => {
             <Text type="secondary" style={{ display: "block", textAlign: "center", marginBottom: 24 }}>{admin.email}</Text>
             <div style={{ fontSize: 18, marginBottom: 24, textAlign: "center" }}>
               <div><b>Số điện thoại:</b> {admin.phone_number || <Text type="secondary">Chưa cập nhật</Text>}</div>
-              <div><b>Ngày sinh:</b> {admin.date_of_birth ? dayjs(admin.date_of_birth).format("DD/MM/YYYY") : <Text type="secondary">Chưa cập nhật</Text>}</div>
-              <div><b>Ghi chú:</b> {admin.note || <Text type="secondary">-</Text>}</div>
+              {/* <div><b>Ngày sinh:</b> {admin.date_of_birth ? dayjs(admin.date_of_birth).format("DD/MM/YYYY") : <Text type="secondary">Chưa cập nhật</Text>}</div>
+              <div><b>Ghi chú:</b> {admin.note || <Text type="secondary">-</Text>}</div> */}
             </div>
             <div style={{ display: "flex", justifyContent: "center", gap: 16 }}>
               <Button
                 icon={<LockOutlined />}
                 onClick={handleOpenPasswordModal}
-                style={{ borderRadius: 8, borderColor: "#4CAF50", color: "#4CAF50", fontWeight: 500 }}
+                style={{ borderRadius: 8, borderColor: "#4CAF50", color: "#4CAF50", fontWeight: 500,outline: "none" }}
               >
                 Đổi mật khẩu
               </Button>
@@ -176,7 +198,7 @@ const AdminProfile: React.FC = () => {
           onOk={handleChangePassword}
           okText="Đổi mật khẩu"
           cancelText="Hủy"
-          okButtonProps={{ style: { background: "#2E7D32", borderColor: "#2E7D32", borderRadius: 8 } }}
+          okButtonProps={{ style: { background: "#2E7D32", borderColor: "#2E7D32", borderRadius: 8, outline: "none" } }}
           cancelButtonProps={{ style: { borderRadius: 8 } }}
         >
           <Form form={passwordForm} layout="vertical">
@@ -184,8 +206,9 @@ const AdminProfile: React.FC = () => {
               name="oldPassword"
               label="Mật khẩu hiện tại"
               rules={[{ required: true, message: "Vui lòng nhập mật khẩu hiện tại" }]}
+              style={{ marginBottom: 0 }}
             >
-              <Input.Password size="large" />
+              <Input.Password size="large" style={{ marginBottom: 16 }} />
             </Form.Item>
             <Form.Item
               name="newPassword"
@@ -195,8 +218,9 @@ const AdminProfile: React.FC = () => {
                 { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" },
               ]}
               hasFeedback
+              style={{ marginBottom: 0 }}
             >
-              <Input.Password size="large" />
+              <Input.Password size="large" style={{ marginBottom: 16 }} />
             </Form.Item>
             <Form.Item
               name="confirmPassword"
