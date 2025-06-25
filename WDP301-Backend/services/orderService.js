@@ -584,7 +584,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     // Decorative line
     doc.lineWidth(2).strokeColor(colors.primary).moveTo(60, currentY).lineTo(156, currentY).stroke();
 
-    currentY += spacing.xlarge;
+    currentY += spacing.medium;
 
     // =============== INVOICE INFO SECTION ===============
     // Invoice title with background
@@ -619,11 +619,11 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     invoiceDetails.forEach((detail) => {
       doc
         .font("NotoSans")
-        .fontSize(9)
+        .fontSize(8)
         .fillColor(colors.text)
-        .text(detail.label, 20, currentY, { width: 50 })
-        .text(detail.value, 75, currentY, { width: 120 });
-      currentY += spacing.medium;
+        .text(detail.label, 20, currentY, { width: 45 })
+        .text(detail.value, 70, currentY, { width: 125 });
+      currentY += spacing.small + 2;
     });
 
     currentY += spacing.large;
@@ -674,7 +674,11 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     if (order.note) {
       doc.rect(15, currentY, contentWidth, 15).fillColor(colors.secondary).fill();
 
-      doc.font("NotoSans-Bold").fontSize(9).fillColor("white").text("GHI CHÚ", 20, currentY + 4);
+      doc
+        .font("NotoSans-Bold")
+        .fontSize(9)
+        .fillColor("white")
+        .text("GHI CHÚ", 20, currentY + 4);
 
       currentY += 20;
 
@@ -693,7 +697,11 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     // Summary items with proper spacing and alignment
     const summaryItems = [
       { label: "Tổng phụ:", value: `${order.order_amount.toLocaleString("vi-VN")} VND`, color: colors.text },
-      { label: "Phí vận chuyển:", value: `${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, color: colors.text },
+      {
+        label: "Phí vận chuyển:",
+        value: `${order.order_shipping_fee.toLocaleString("vi-VN")} VND`,
+        color: colors.text,
+      },
     ];
 
     if (order.order_discount_value > 0) {
@@ -707,86 +715,72 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     summaryItems.forEach((item) => {
       doc
         .font("NotoSans")
-        .fontSize(9)
+        .fontSize(8)
         .fillColor(item.color || colors.text)
-        .text(item.label, 110, currentY, { width: 60, align: "left" })
-        .text(item.value, 140, currentY, { width: 56, align: "right" });
-      currentY += spacing.medium;
+        .text(item.label, 100, currentY, { width: 70, align: "left" })
+        .text(item.value, 130, currentY, { width: 66, align: "right" });
+      currentY += spacing.small + 2;
     });
 
     // Separator line before total
-    doc.lineWidth(1).strokeColor(colors.border).moveTo(110, currentY).lineTo(196, currentY).stroke();
+    doc.lineWidth(1).strokeColor(colors.border).moveTo(100, currentY).lineTo(196, currentY).stroke();
     currentY += spacing.small;
 
     // Total amount with highlighted background
-    doc.rect(110, currentY - 2, 86, 18).fillColor(colors.accent).fill();
-    
+    doc
+      .rect(100, currentY - 2, 96, 18)
+      .fillColor(colors.accent)
+      .fill();
+
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
     doc
       .font("NotoSans-Bold")
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("white")
-      .text("TỔNG CỘNG:", 115, currentY + 2, { width: 50, align: "left" })
-      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 145, currentY + 2, { width: 46, align: "right" });
+      .text("TỔNG CỘNG:", 105, currentY + 2, { width: 60, align: "left" })
+      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 135, currentY + 2, { width: 56, align: "right" });
 
-    currentY += spacing.xlarge + 5;
+    currentY += spacing.large + 10;
 
     // =============== PAYMENT STATUS ===============
-    doc.rect(15, currentY, contentWidth, 22).fillColor(colors.success).fill();
+    doc.rect(15, currentY, contentWidth, 20).fillColor(colors.success).fill();
 
     doc
       .font("NotoSans-Bold")
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("white")
       .text("✓ ĐÃ THANH TOÁN", 15, currentY + 6, { width: contentWidth, align: "center" });
 
-    currentY += 30;
+    currentY += 25;
 
     // =============== QR CODE SECTION ===============
-    // Add some spacing before QR section
-    currentY += spacing.medium;
-
     // QR code title
     doc
       .font("NotoSans")
-      .fontSize(8)
+      .fontSize(7)
       .fillColor(colors.text)
       .text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
 
     currentY += spacing.small;
 
     // QR code with border
-    doc.rect(15, currentY, contentWidth, 90).fillColor("white").strokeColor(colors.border).stroke();
+    doc.rect(15, currentY, contentWidth, 80).fillColor("white").strokeColor(colors.border).stroke();
 
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 58, currentY + 10, { width: 70, align: "center" });
+    doc.image(qrImage, 63, currentY + 10, { width: 60, align: "center" });
 
-    currentY += 100;
+    currentY += 85;
 
     // =============== FOOTER SECTION ===============
-    // Add spacing before footer
-    currentY += spacing.medium;
-
     // Thank you message
-    doc.font("NotoSans-Bold").fontSize(11).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
-
-    currentY += spacing.medium;
-
-    // Decorative line
-    doc
-      .lineWidth(0.5)
-      .strokeColor(colors.border)
-      .moveTo(40, currentY)
-      .lineTo(176, currentY)
-      .dash(2, { space: 2 })
-      .stroke();
+    doc.font("NotoSans-Bold").fontSize(10).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
 
     currentY += spacing.small;
 
     // Timestamp
     doc
       .font("NotoSans")
-      .fontSize(7)
+      .fontSize(6)
       .fillColor(colors.secondary)
       .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
 
