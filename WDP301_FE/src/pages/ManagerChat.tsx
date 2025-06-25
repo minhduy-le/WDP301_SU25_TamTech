@@ -37,6 +37,15 @@ const ManagerChat = () => {
   const { user: authUser, token } = useAuthStore(); // <-- THAY ĐỔI: Lấy token để xác thực socket
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!token) {
+      console.error("No token available for socket connection");
+    } else {
+      console.log("Initializing socket with token:", token.substring(0, 10) + "...");
+      useSocketConnection(token);
+    }
+  }, [token]);
+
   // --- THAY ĐỔI: Khởi tạo kết nối socket ---
   // Hook này nên được gọi ở component cha (App.tsx) để duy trì kết nối
   // Nhưng để ví dụ, ta sẽ gọi ở đây.

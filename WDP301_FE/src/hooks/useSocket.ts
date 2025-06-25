@@ -14,6 +14,9 @@ export const useSocketConnection = (token: string | null) => {
       socketInstance = io(SOCKET_URL, {
         auth: { token },
         transports: ["websocket", "polling"],
+        reconnection: true, // Bật tính năng tái kết nối
+        reconnectionAttempts: 5, // Số lần thử lại
+        reconnectionDelay: 2000, // Độ trễ giữa các lần thử (2 giây)
       });
 
       socketInstance.on("connect", () => {
@@ -27,15 +30,12 @@ export const useSocketConnection = (token: string | null) => {
       });
 
       socketInstance.on("connect_error", (err) => {
-        console.error("Socket: Connection error:", err.message);
+        console.error("Socket: Connect error:", err.message, "Context:", err.context);
         setIsConnected(false);
-        setTimeout(() => {
-          socketInstance?.connect();
-        }, 2000);
       });
 
       socketInstance.on("disconnect", (reason) => {
-        console.log("Socket: Disconnected.", reason);
+        console.log("Socket: Disconnected due to", reason);
         setIsConnected(false);
         socketInstance = null;
       });
