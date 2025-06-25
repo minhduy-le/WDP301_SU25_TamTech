@@ -98,27 +98,20 @@ router.get("/", async (req, res) => {
 
 /**
  * @swagger
- * /api/feedback/{orderId}/{productId}:
+ * /api/feedback:
  *   post:
- *     summary: Create feedback for a product in an order
+ *     summary: Create feedback for multiple products in an order
  *     tags: [Feedback]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: orderId
  *         required: true
  *         schema:
  *           type: integer
  *           minimum: 1
  *         description: Order ID
- *       - in: path
- *         name: productId
- *         required: true
- *         schema:
- *           type: integer
- *           minimum: 1
- *         description: Product ID
  *     requestBody:
  *       required: true
  *       content:
@@ -126,50 +119,64 @@ router.get("/", async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - comment
- *               - rating
+ *               - feedbacks
  *             properties:
- *               comment:
- *                 type: string
- *                 minLength: 1
- *                 maxLength: 255
- *                 example: Great product, really enjoyed it!
- *               rating:
- *                 type: integer
- *                 minimum: 1
- *                 maximum: 5
- *                 example: 5
+ *               feedbacks:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - productId
+ *                     - comment
+ *                     - rating
+ *                   properties:
+ *                     productId:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 2
+ *                     comment:
+ *                       type: string
+ *                       minLength: 1
+ *                       maxLength: 255
+ *                       example: Great product, really enjoyed it!
+ *                     rating:
+ *                       type: integer
+ *                       minimum: 1
+ *                       maximum: 5
+ *                       example: 5
  *     responses:
  *       201:
- *         description: Feedback created successfully
+ *         description: Feedbacks created successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 feedback:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                     orderId:
- *                       type: integer
- *                     productId:
- *                       type: integer
- *                     userId:
- *                       type: integer
- *                     comment:
- *                       type: string
- *                     rating:
- *                       type: integer
- *                     isResponsed:
- *                       type: boolean
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
+ *                 feedbacks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       orderId:
+ *                         type: integer
+ *                       productId:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       comment:
+ *                         type: string
+ *                       rating:
+ *                         type: integer
+ *                       isResponsed:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
  *       400:
  *         description: Invalid input or feedback already exists
  *         content:
@@ -190,24 +197,29 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post("/:orderId/:productId", verifyToken, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
-    const orderId = parseInt(req.params.orderId);
-    const productId = parseInt(req.params.productId);
-    const { comment, rating } = req.body;
+    const orderId = parseInt(req.query.orderId);
+    const feedbacksData = req.body.feedbacks;
     const userId = req.userId;
 
-    const feedback = await feedbackService.createFeedback({
+    if (!Number.isInteger(orderId) || orderId < 1) {
+      return res.status(400).send("Order ID must be a positive integer");
+    }
+
+    if (!Array.isArray(feedbacksData) || feedbacksData.length === 0) {
+      return res.status(400).send("Feedbacks array is required and cannot be empty");
+    }
+
+    const createdFeedbacks = await feedbackService.createMultipleFeedbacks({
       orderId,
-      productId,
       userId,
-      comment,
-      rating,
+      feedbacks: feedbacksData,
     });
 
-    res.status(201).json({ feedback });
+    res.status(201).json({ feedbacks: createdFeedbacks });
   } catch (error) {
-    console.error("Error creating feedback:", error);
+    console.error("Error creating feedbacks:", error);
     if (
       error.message.includes("Order ID") ||
       error.message.includes("Product ID") ||

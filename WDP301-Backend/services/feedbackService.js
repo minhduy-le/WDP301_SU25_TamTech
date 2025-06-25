@@ -6,24 +6,15 @@ const User = require("../models/user");
 const Product = require("../models/product");
 
 const feedbackService = {
-  async createFeedback({ orderId, productId, userId, comment, rating }) {
+  async createMultipleFeedbacks({ orderId, userId, feedbacks }) {
     if (!Number.isInteger(orderId) || orderId < 1) {
       throw new Error("Order ID must be a positive integer");
-    }
-    if (!Number.isInteger(productId) || productId < 1) {
-      throw new Error("Product ID must be a positive integer");
     }
     if (!Number.isInteger(userId) || userId < 1) {
       throw new Error("User ID must be a positive integer");
     }
-    if (!comment || typeof comment !== "string" || comment.trim() === "") {
-      throw new Error("Comment cannot be empty");
-    }
-    if (comment.length > 255) {
-      throw new Error("Comment cannot exceed 255 characters");
-    }
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      throw new Error("Rating must be an integer between 1 and 5");
+    if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+      throw new Error("Feedbacks array is required and cannot be empty");
     }
 
     // Verify the order belongs to the user
@@ -35,33 +26,53 @@ const feedbackService = {
       throw new Error("Order not found or you are not authorized to provide feedback for this order");
     }
 
-    // Verify the product exists in the order
-    const orderItem = await OrderItem.findOne({
-      where: { orderId, productId },
-      attributes: ["orderItemId"],
-    });
-    if (!orderItem) {
-      throw new Error("Product not found in this order");
+    const createdFeedbacks = [];
+    for (const feedbackData of feedbacks) {
+      const { productId, comment, rating } = feedbackData;
+
+      if (!Number.isInteger(productId) || productId < 1) {
+        throw new Error("Product ID must be a positive integer");
+      }
+      if (!comment || typeof comment !== "string" || comment.trim() === "") {
+        throw new Error("Comment cannot be empty");
+      }
+      if (comment.length > 255) {
+        throw new Error("Comment cannot exceed 255 characters");
+      }
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        throw new Error("Rating must be an integer between 1 and 5");
+      }
+
+      // Verify the product exists in the order
+      const orderItem = await OrderItem.findOne({
+        where: { orderId, productId },
+        attributes: ["orderItemId"],
+      });
+      if (!orderItem) {
+        throw new Error(`Product with ID ${productId} not found in this order`);
+      }
+
+      // Check for existing feedback for this product in this order
+      const existingFeedback = await Feedback.findOne({
+        where: { orderId, productId, userId },
+      });
+      if (existingFeedback) {
+        throw new Error(`You have already provided feedback for product with ID ${productId} in this order`);
+      }
+
+      const feedback = await Feedback.create({
+        orderId,
+        productId,
+        userId,
+        comment: comment.trim(),
+        rating,
+        isResponsed: false,
+      });
+
+      createdFeedbacks.push(feedback);
     }
 
-    // Check for existing feedback for this product in this order
-    const existingFeedback = await Feedback.findOne({
-      where: { orderId, productId, userId },
-    });
-    if (existingFeedback) {
-      throw new Error("You have already provided feedback for this product in this order");
-    }
-
-    const feedback = await Feedback.create({
-      orderId,
-      productId,
-      userId,
-      comment: comment.trim(),
-      rating,
-      isResponsed: false,
-    });
-
-    return feedback;
+    return createdFeedbacks;
   },
 
   async getFeedbackByProductAndOrder(orderId, productId) {
@@ -72,7 +83,6 @@ const feedbackService = {
       throw new Error("Product ID must be a positive integer");
     }
 
-    // Verify the order and product exist
     const orderItem = await OrderItem.findOne({
       where: { orderId, productId },
       attributes: ["orderItemId"],
