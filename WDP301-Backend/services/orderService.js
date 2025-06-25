@@ -728,17 +728,17 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // Total amount with highlighted background
     doc
-      .rect(100, currentY - 2, 96, 18)
+      .rect(100, currentY - 2, 96, 16)
       .fillColor(colors.accent)
       .fill();
 
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
     doc
       .font("NotoSans-Bold")
-      .fontSize(9)
+      .fontSize(6)
       .fillColor("white")
-      .text("TỔNG CỘNG:", 105, currentY + 2, { width: 60, align: "left" })
-      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 135, currentY + 2, { width: 56, align: "right" });
+      .text("TỔNG CỘNG:", 105, currentY + 1, { width: 60, align: "left" })
+      .text(`${totalAmount.toLocaleString("vi-VN")} VND`, 135, currentY + 1, { width: 56, align: "right" });
 
     currentY += spacing.large + 10;
 
@@ -754,35 +754,44 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     currentY += 25;
 
     // =============== QR CODE SECTION ===============
+    // QR section with border containing everything
+    doc.rect(15, currentY, contentWidth, 120).fillColor("white").strokeColor(colors.success).lineWidth(2).stroke();
+
+    currentY += 10;
+
     // QR code title
     doc
       .font("NotoSans")
       .fontSize(7)
       .fillColor(colors.text)
-      .text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
+      .text("Quét mã để xem chi tiết đơn hàng", 15, currentY, { width: contentWidth, align: "center" });
 
-    currentY += spacing.small;
+    currentY += 15;
 
-    // QR code with border
-    doc.rect(15, currentY, contentWidth, 80).fillColor("white").strokeColor(colors.border).stroke();
-
+    // QR code image
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 63, currentY + 10, { width: 60, align: "center" });
+    doc.image(qrImage, 63, currentY, { width: 60 });
 
-    currentY += 85;
+    currentY += 70;
 
-    // =============== FOOTER SECTION ===============
     // Thank you message
-    doc.font("NotoSans-Bold").fontSize(10).fillColor(colors.primary).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
+    doc
+      .font("NotoSans-Bold")
+      .fontSize(10)
+      .fillColor(colors.primary)
+      .text("CẢM ƠN QUÝ KHÁCH!", 15, currentY, { width: contentWidth, align: "center" });
 
-    currentY += spacing.small;
+    currentY += 15;
 
     // Timestamp
     doc
       .font("NotoSans")
       .fontSize(6)
       .fillColor(colors.secondary)
-      .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
+      .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, 15, currentY, {
+        width: contentWidth,
+        align: "center",
+      });
 
     // Set final page height with some bottom padding
     doc.page.height = currentY + 25;
