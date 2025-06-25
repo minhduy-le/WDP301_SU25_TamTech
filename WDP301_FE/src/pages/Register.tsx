@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Input, Button, Form, message, DatePicker } from "antd";
 import "../style/Login.css";
 import APP_LOGIN from "../assets/login.png";
@@ -34,8 +33,37 @@ const Register = () => {
               registerForm.resetFields();
             }, 100);
           },
-          onError: (err: { message: any }) => {
-            message.error(`Lỗi tạo tài khoản: ${err.message}`);
+          onError: (error) => {
+            // message.error(`Lỗi tạo tài khoản: ${err.message}`);
+            const errorMessage = (error as unknown as { responseValue: string })
+              .responseValue;
+            if (
+              errorMessage === "Full name must be between 2 and 20 characters"
+            ) {
+              message.error("Họ tên phải từ 2 đến 20 ký tự");
+            } else if (
+              errorMessage ===
+              "Email must be valid and not exceed 100 characters"
+            ) {
+              message.error("Email phải hợp lệ và không quá 100 ký tự");
+            } else if (
+              errorMessage === "Phone number must be 10 or 11 digits"
+            ) {
+              message.error("Số điện thoại phải có 10 hoặc 11 chữ số");
+            } else if (
+              errorMessage === "Password must be between 6 and 250 characters"
+            ) {
+              message.error("Mật khẩu phải từ 6 đến 250 ký tự");
+            } else if (
+              errorMessage ===
+              "Date of birth must be valid and not in the future"
+            ) {
+              message.error(
+                "Ngày sinh phải hợp lệ và không được trong tương lai"
+              );
+            } else {
+              message.error(errorMessage);
+            }
           },
         });
       })

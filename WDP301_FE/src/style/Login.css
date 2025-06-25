@@ -52,7 +52,9 @@
 .input-field {
   margin-bottom: 20px;
   border-radius: 5px;
+  margin: 10px 0;
   height: 40px;
+  max-width: 100% !important;
   border: 1px solid #d9d9d9 !important;
   width: 100%;
   color: #da7339;
@@ -167,4 +169,12 @@
   display: block;
   text-align: right;
   margin-bottom: 20px;
+}
+
+:where(.css-dev-only-do-not-override-ut69n1).ant-input-affix-wrapper::before {
+  display: none !important;
+}
+
+.ant-input-password.input-field {
+  justify-content: space-between;
 }
