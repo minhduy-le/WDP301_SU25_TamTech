@@ -547,10 +547,10 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     };
 
     const spacing = {
-      small: 8,
-      medium: 12,
-      large: 16,
-      xlarge: 20,
+      small: 10,
+      medium: 15,
+      large: 20,
+      xlarge: 25,
     };
 
     let currentY = 15;
@@ -559,9 +559,9 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // =============== HEADER SECTION ===============
     // Company logo background
-    doc.rect(15, currentY, contentWidth, 45).fillColor(colors.light).fill();
+    doc.rect(15, currentY, contentWidth, 50).fillColor(colors.light).fill();
 
-    currentY += 8;
+    currentY += 10;
 
     // Company name with enhanced styling
     doc.font("NotoSans-Bold").fontSize(18).fillColor(colors.primary).text("TẤM TẮC", { align: "center" });
@@ -579,12 +579,12 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     doc.text("TP. Hồ Chí Minh | Tel: +84 909 123 456", { align: "center" });
 
-    currentY += spacing.large;
+    currentY += spacing.medium;
 
     // Decorative line
     doc.lineWidth(2).strokeColor(colors.primary).moveTo(60, currentY).lineTo(156, currentY).stroke();
 
-    currentY += spacing.large;
+    currentY += spacing.xlarge;
 
     // =============== INVOICE INFO SECTION ===============
     // Invoice title with background
@@ -626,7 +626,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       currentY += spacing.medium;
     });
 
-    currentY += spacing.small;
+    currentY += spacing.large;
 
     // =============== ITEMS TABLE SECTION ===============
     // Table header with background
@@ -649,7 +649,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       // Alternating row colors
       if (index % 2 === 0) {
         doc
-          .rect(15, currentY - 2, contentWidth, spacing.large)
+          .rect(15, currentY - 3, contentWidth, spacing.large + 2)
           .fillColor(colors.light)
           .fill();
       }
@@ -662,19 +662,19 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
         .text(item.quantity.toString(), 130, currentY, { width: 25, align: "center" })
         .text(`${item.price.toLocaleString("vi-VN")}`, 160, currentY, { width: 36, align: "right" });
 
-      currentY += spacing.medium;
+      currentY += spacing.medium + 2;
     });
 
     // Table bottom border
     doc.lineWidth(1).strokeColor(colors.border).moveTo(15, currentY).lineTo(201, currentY).stroke();
 
-    currentY += spacing.large;
+    currentY += spacing.xlarge;
 
     // =============== NOTES SECTION ===============
     if (order.note) {
-      doc.rect(15, currentY, contentWidth, 5).fillColor(colors.secondary).fill();
+      doc.rect(15, currentY, contentWidth, 8).fillColor(colors.secondary).fill();
 
-      currentY += 8;
+      currentY += spacing.medium;
 
       doc.font("NotoSans-Bold").fontSize(9).fillColor(colors.text).text("GHI CHÚ:", 20, currentY);
 
@@ -686,14 +686,14 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
         .fillColor(colors.secondary)
         .text(order.note, 20, currentY, { width: contentWidth - 10 });
 
-      currentY += spacing.large;
+      currentY += spacing.xlarge;
     }
 
     // =============== SUMMARY SECTION ===============
     // Summary background
-    doc.rect(15, currentY, contentWidth, 60).fillColor(colors.light).fill();
+    doc.rect(15, currentY, contentWidth, 70).fillColor(colors.light).fill();
 
-    currentY += 8;
+    currentY += spacing.medium;
 
     const summaryItems = [
       { label: "Tổng phụ:", value: `${order.order_amount.toLocaleString("vi-VN")} VND` },
@@ -720,7 +720,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     // Total separator line
     doc.lineWidth(2).strokeColor(colors.accent).moveTo(120, currentY).lineTo(196, currentY).stroke();
 
-    currentY += spacing.small;
+    currentY += spacing.medium;
 
     // Total amount
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
@@ -746,12 +746,12 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // =============== QR CODE SECTION ===============
     // QR code background
-    doc.rect(15, currentY, contentWidth, 100).fillColor("white").stroke();
+    doc.rect(15, currentY, contentWidth, 110).fillColor("white").stroke();
 
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
-    doc.image(qrImage, 58, currentY + 10, { width: 80, align: "center" });
+    doc.image(qrImage, 58, currentY + 15, { width: 80, align: "center" });
 
-    currentY += 95;
+    currentY += 105;
 
     doc
       .font("NotoSans")
@@ -759,7 +759,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       .fillColor(colors.secondary)
       .text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
 
-    currentY += spacing.large;
+    currentY += spacing.xlarge;
 
     // =============== FOOTER SECTION ===============
     // Decorative line
