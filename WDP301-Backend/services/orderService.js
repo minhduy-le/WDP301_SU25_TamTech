@@ -528,7 +528,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       },
     });
 
-    // Register custom fonts
+    // Register custom fonts with proper paths
     doc.registerFont("NotoSans", "./fonts/NotoSans-Regular.ttf");
     doc.registerFont("NotoSans-Bold", "./fonts/NotoSans-SemiBold.ttf");
 
@@ -656,14 +656,14 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
     currentY += lineSpacing * 1.5;
 
-    // QR Code
+    // QR Code and additional info
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
     doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
     currentY += 110;
     doc.font("NotoSans").fontSize(8).fillColor(textColor).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
     currentY += lineSpacing;
 
-    // Footer
+    // Footer with proper Vietnamese text
     doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
     currentY += lineSpacing;
 
@@ -674,6 +674,19 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       .fontSize(8)
       .fillColor(textColor)
       .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
+    currentY += lineSpacing;
+
+    // Ensure all text below QR code uses the correct font
+    doc
+      .font("NotoSans")
+      .fontSize(8)
+      .fillColor(textColor)
+      .text("Thành toán: Đã", 20, currentY, { continued: true })
+      .text("ITOA", { continued: true })
+      .text(" - Mã đơn hàng: ", { continued: true })
+      .text(order.orderId, { continued: true })
+      .text(" - Ngày tạo: ", { continued: true })
+      .text(new Date().toLocaleString("vi-VN"), { align: "left" });
 
     doc.page.height = currentY + doc.page.margins.bottom;
 
