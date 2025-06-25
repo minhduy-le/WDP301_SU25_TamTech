@@ -528,6 +528,10 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       },
     });
 
+    // Register custom fonts
+    doc.registerFont("NotoSans", "./fonts/NotoSans-Regular.ttf");
+    doc.registerFont("NotoSans-Bold", "./fonts/NotoSans-SemiBold.ttf");
+
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
 
@@ -541,9 +545,9 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     let currentY = 20;
 
     // Company header
-    doc.font("Helvetica-Bold").fontSize(16).fillColor(headerColor).text("TẤM TẮC", { align: "center" });
+    doc.font("NotoSans-Bold").fontSize(16).fillColor(headerColor).text("TẤM TẮC", { align: "center" });
     currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(10).fillColor(textColor).text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
+    doc.font("NotoSans").fontSize(10).fillColor(textColor).text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
     currentY += lineSpacing;
     doc.text("TP. Hồ Chí Minh | Tel: +84 909 123 456", { align: "center" });
     currentY += lineSpacing * 1.5;
@@ -554,13 +558,13 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // Invoice info
     doc
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fontSize(12)
       .fillColor(headerColor)
       .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
     currentY += lineSpacing;
     doc
-      .font("Helvetica")
+      .font("NotoSans")
       .fontSize(9)
       .fillColor(textColor)
       .text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
@@ -576,7 +580,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // Items table
     doc
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fontSize(10)
       .fillColor(headerColor)
       .text("SẢN PHẨM", 20, currentY)
@@ -589,7 +593,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     orderItems.forEach((item) => {
       const itemTotal = item.quantity * item.price;
-      doc.font("Helvetica").fontSize(9).fillColor(textColor).text(item.Product.name, 22, currentY, { width: 98 });
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(item.Product.name, 22, currentY, { width: 98 });
       doc.text(item.quantity.toString(), 120, currentY, { width: 30, align: "right" });
       doc.text(`${item.price.toLocaleString("vi-VN")} VND`, 160, currentY, { width: 36, align: "right" });
       currentY += lineSpacing;
@@ -601,15 +605,15 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     // Notes
     if (order.note) {
-      doc.font("Helvetica-Bold").fontSize(10).fillColor(headerColor).text("GHI CHÚ:", 20, currentY);
+      doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("GHI CHÚ:", 20, currentY);
       currentY += lineSpacing;
-      doc.font("Helvetica").fontSize(9).fillColor(textColor).text(order.note, 22, currentY, { width: 174 });
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(order.note, 22, currentY, { width: 174 });
       currentY += lineSpacing * 1.5;
     }
 
     // Summary
     doc
-      .font("Helvetica")
+      .font("NotoSans")
       .fontSize(9)
       .fillColor(textColor)
       .text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, 130, currentY, {
@@ -637,7 +641,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
 
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
     doc
-      .font("Helvetica-Bold")
+      .font("NotoSans-Bold")
       .fontSize(12)
       .fillColor(accentColor)
       .text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, 130, currentY, {
@@ -647,7 +651,7 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     currentY += lineSpacing * 1.5;
 
     // Payment and status
-    doc.font("Helvetica").fontSize(9).fillColor(textColor).text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
+    doc.font("NotoSans").fontSize(9).fillColor(textColor).text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
     currentY += lineSpacing;
     doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
     currentY += lineSpacing * 1.5;
@@ -656,17 +660,17 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
     doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
     currentY += 110;
-    doc.fontSize(8).fillColor(textColor).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
+    doc.font("NotoSans").fontSize(8).fillColor(textColor).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
     currentY += lineSpacing;
 
     // Footer
     doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
     currentY += lineSpacing;
 
-    doc.font("Helvetica-Bold").fontSize(10).fillColor(headerColor).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
+    doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
     currentY += lineSpacing;
     doc
-      .font("Helvetica")
+      .font("NotoSans")
       .fontSize(8)
       .fillColor(textColor)
       .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
