@@ -44,6 +44,26 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
+const statusMap: { [key: string]: string } & {
+  Pending: string;
+  Paid: string;
+  Approved: string;
+  Preparing: string;
+  Cooked: string;
+  Delivering: string;
+  Delivered: string;
+  Canceled: string;
+} = {
+  Pending: "Chờ thanh toán",
+  Paid: "Đã thanh toán",
+  Approved: "Xác nhận đơn",
+  Preparing: "Đang nấu ăn",
+  Cooked: "Đã nấu xong",
+  Delivering: "Đang giao",
+  Delivered: "Đã giao",
+  Canceled: "Đã hủy",
+};
+
 const { Option } = Select;
 
 const StaffOrderManagement = () => {
@@ -320,7 +340,8 @@ const StaffOrderManagement = () => {
               alignItems: "center",
             }}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {statusMap[status] ||
+              status.charAt(0).toUpperCase() + status.slice(1)}
           </Tag>
         );
       },
@@ -442,22 +463,24 @@ const StaffOrderManagement = () => {
               />
             </Tooltip>
           )}
-          <Tooltip title="In hóa đơn">
-            <Button
-              type="link"
-              icon={<PrintIcon />}
-              onClick={() => handlePrintInvoice(record.invoiceUrl)}
-              style={{
-                color: "#3B82F6",
-                fontWeight: 600,
-                padding: 0,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "#e8f5e9",
-              }}
-            />
-          </Tooltip>
+          {record.status != "Pending" && record.status != "Approved" && (
+            <Tooltip title="In hóa đơn">
+              <Button
+                type="link"
+                icon={<PrintIcon />}
+                onClick={() => handlePrintInvoice(record.invoiceUrl)}
+                style={{
+                  color: "#3B82F6",
+                  fontWeight: 600,
+                  padding: 0,
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "none",
+                  background: "#e8f5e9",
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -726,8 +749,9 @@ const StaffOrderManagement = () => {
                           gap: "6px",
                         }}
                       >
-                        {selectedOrder.status.charAt(0).toUpperCase() +
-                          selectedOrder.status.slice(1)}
+                        {statusMap[selectedOrder.status] ||
+                          selectedOrder.status.charAt(0).toUpperCase() +
+                            selectedOrder.status.slice(1)}
                       </Tag>
                     );
                   })()}
