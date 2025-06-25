@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { io, Socket, SocketOptions } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import type { SocketOptions } from "socket.io-client"; // Sử dụng type-only import
 
 const SOCKET_URL = "https://wdp301-su25.space/";
 
