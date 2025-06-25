@@ -37,7 +37,20 @@ const Login = () => {
     },
     onError: (error) => {
       const errorMessage = (error as { responseValue: string }).responseValue;
-      message.error(errorMessage);
+      // message.error(errorMessage);
+      if (errorMessage === "Account not activated") {
+        message.error("Tài khoản chưa được kích hoạt");
+      } else if (errorMessage === "Account is banned") {
+        message.error("Tài khoản đã bị cấm");
+      } else if (errorMessage === "Invalid credentials") {
+        message.error("Sai mật khẩu");
+      } else if (errorMessage === "Password must be at least 6 characters") {
+        message.error("Mật khẩu phải có ít nhất 6 ký tự");
+      } else if (errorMessage === "User not found") {
+        message.error("Không tìm thấy người dùng");
+      } else {
+        message.error(errorMessage);
+      }
     },
   });
 
@@ -57,7 +70,20 @@ const Login = () => {
     },
     onError: (error) => {
       const errorMessage = (error as { responseValue: string }).responseValue;
-      message.error(errorMessage);
+      // message.error(errorMessage);
+      if (errorMessage === "Invalid email from Google token") {
+        message.error("Email không hợp lệ từ token Google");
+      } else if (errorMessage === "Account is banned") {
+        message.error("Tài khoản đã bị cấm");
+      } else if (errorMessage === "Invalid Google token") {
+        message.error("Token Google không hợp lệ");
+      } else if (
+        errorMessage === "Network error: Unable to connect to Firebase"
+      ) {
+        message.error("Lỗi mạng: Không thể kết nối đến Firebase");
+      } else {
+        message.error("Lỗi đăng nhập bằng Google");
+      }
     },
   });
 

@@ -265,6 +265,14 @@ const UserInfomation = () => {
               errorObj.responseValue || "Thay đổi mật khẩu thất bại";
             if (errorMessage === "Incorrect old password") {
               message.error("Mật khẩu cũ không đúng");
+            } else if (
+              errorMessage === "Old password must be at least 6 characters"
+            ) {
+              message.error("Mật khẩu cũ phải có ít nhất 6 ký tự");
+            } else if (
+              errorMessage === "New password must be at least 6 characters"
+            ) {
+              message.error("Mật khẩu mới phải có ít nhất 6 ký tự");
             } else {
               message.error(errorMessage);
             }
