@@ -2,6 +2,7 @@ require("dotenv").config(); // Load environment variables from .env file
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getStorage } = require("firebase-admin/storage");
 const { getAuth } = require("firebase-admin/auth");
+const { getMessaging } = require("firebase-admin/messaging");
 
 // Construct the service account credentials from environment variables
 const serviceAccount = {
@@ -58,4 +59,23 @@ const uploadImageToFirebase = async (imageBuffer, fileName) => {
   return url;
 };
 
-module.exports = { uploadFileToFirebase, auth, uploadImageToFirebase }; // Export the modified function
+const sendPushNotification = async (fcmToken, title, body) => {
+  const message = {
+    notification: {
+      title,
+      body,
+    },
+    token: fcmToken,
+  };
+
+  try {
+    const response = await messaging.send(message);
+    console.log("Successfully sent message:", response);
+    return response;
+  } catch (error) {
+    console.error("Error sending message:", error.message);
+    throw error;
+  }
+};
+
+module.exports = { uploadFileToFirebase, auth, uploadImageToFirebase, sendPushNotification }; // Export the modified function

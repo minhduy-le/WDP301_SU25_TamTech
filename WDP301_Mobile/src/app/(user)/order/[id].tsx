@@ -8,53 +8,78 @@ import {
   Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
+import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
 import { currencyFormatter } from "@/utils/api";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Entypo from "@expo/vector-icons/Entypo";
+
+interface StatusInfo {
+  text: string;
+  color: string;
+}
+
+const STATUS_COLORS = {
+  PENDING: "rgba(52, 55, 252, 0.75)",
+  APPROVED: "rgba(0, 154, 5, 0.68)",
+  PREPARING: "rgba(255, 251, 0, 0.75)",
+  COOKED: APP_COLOR.ORANGE,
+  DELIVERING: "rgba(3, 169, 244, 0.72)",
+  DELIVERED: "rgba(76, 175, 80, 0.70)",
+  CANCELED: "rgba(244, 67, 54, 0.70)",
+  DEFAULT: "rgba(158, 158, 158, 0.70)",
+};
+
+const statusMap: Record<string, StatusInfo> = {
+  Pending: { text: "Chờ thanh toán", color: STATUS_COLORS.PENDING },
+  Paid: { text: "Đã thanh toán", color: STATUS_COLORS.APPROVED },
+  Approved: { text: "Đã xác nhận", color: STATUS_COLORS.APPROVED },
+  Preparing: { text: "Đang chuẩn bị", color: STATUS_COLORS.PREPARING },
+  Cooked: { text: "Đã nấu xong", color: STATUS_COLORS.COOKED },
+  Delivering: { text: "Đang giao", color: STATUS_COLORS.DELIVERING },
+  Delivered: { text: "Đã giao", color: STATUS_COLORS.DELIVERED },
+  Canceled: { text: "Đã hủy", color: STATUS_COLORS.CANCELED },
+};
+
+interface IOrderDetails {
+  orderId: number;
+  userId: number;
+  payment_time: string;
+  order_create_at: string;
+  order_address: string;
+  status: string;
+  fullName: string;
+  phone_number: string;
+  orderItemsCount: number;
+  orderItems: {
+    productId: number;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  order_shipping_fee: number;
+  order_discount_value: number;
+  order_amount: number;
+  order_subtotal: number;
+  invoiceUrl: string;
+  order_point_earn: number;
+  note: string;
+  payment_method: string;
+  isDatHo: boolean;
+  tenNguoiDatHo: string | null;
+  soDienThoaiNguoiDatHo: string | null;
+  certificationOfDelivered: string | null;
+  order_delivery_at: string | null;
+}
+
+import { useCurrentApp } from "@/context/app.context";
+
 const OrderDetailsPage = () => {
   const { id } = useLocalSearchParams();
-  const orderDetailsData = {
-    id: "#2701270005",
-    customerName: "Lê Minh Duy",
-    subTotal: 180000,
-    promotionCode: null,
-    discountValue: 0,
-    discountPercent: 0,
-    amount: 230000,
-    shipping_fee: 12000,
-    isPickUp: false,
-    delivery_at: "Mang đi",
-    orderStatus: "Đã hủy",
-    note: "Nhiều dưa chua",
-    payment_code: null,
-    payment_methods: "Chuyển khoản",
-    address: "Linh Trung, Thủ Đức, Thành phố Hồ Chí Minh",
-    phone: "0889679555",
-    pointUsed: 0,
-    pointEarned: 180,
-    createdAt: "2025-03-16T18:12:59.145+07:00",
-    orderItems: [
-      {
-        productImg:
-          "https://firebasestorage.googleapis.com/v0/b/four-gems.appspot.com/o/product%20image%2Fco%CC%9Bm%20ta%CC%82%CC%81m%20ga%CC%80%20nu%CC%9Bo%CC%9B%CC%81ng.jpg?alt=media&token=d1335d15-cf38-43eb-9dda-3d875b8e103e",
-        productId: 4,
-        productName: "Cơm tấm gà nướng",
-        orderId: 12,
-        quantity: 1,
-        price: 65000,
-        note: "",
-        feedback: null,
-        feedbackPoint: 0,
-        expiredFeedbackTime: null,
-        feedBackYet: false,
-      },
-    ],
-  };
-  const [orderDetails, setOrderDetails] =
-    useState<IOrderDetails>(orderDetailsData);
+  const { appState } = useCurrentApp();
+  const [orderDetails, setOrderDetails] = useState<IOrderDetails | null>(null);
+
   function formatDateToDDMMYYYY(isoDate: string): string {
     const date = new Date(isoDate);
     const day = String(date.getDate()).padStart(2, "0");
@@ -62,13 +87,22 @@ const OrderDetailsPage = () => {
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes}${" "}${day}/${month}/${year}`;
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
   }
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/orders/${id}`);
-        setOrderDetails(res.data.data);
+        const res = await axios.get(`${API_URL}/api/orders/${id}`, {
+          headers: {
+            Authorization: `Bearer ${appState?.token}`,
+          },
+        });
+        if (res?.data) {
+          setOrderDetails(res.data);
+        } else {
+          console.error("Failed to fetch order details");
+        }
       } catch (error) {
         console.error("Error fetching order details:", error);
       }
@@ -76,178 +110,91 @@ const OrderDetailsPage = () => {
     fetchOrderDetails();
   }, [id]);
 
-  const statusList = [
-    "Đặt hàng thành công",
-    "Đang chuẩn bị",
-    "Đang vận chuyển",
-    "Hoàn thành",
-    "Đã hủy",
+  // Define the status progression for the UI
+  const statusProgression = [
+    "Pending",
+    "Paid",
+    "Approved",
+    "Preparing",
+    "Cooked",
+    "Delivering",
+    "Delivered",
   ];
+
   const getCurrentStatusIndex = (status: string) => {
-    switch (status) {
-      case "Đặt hàng thành công":
-        return 0;
-      case "Đang chuẩn bị":
-        return 1;
-      case "Đang vận chuyển":
-        return 2;
-      case "Hoàn thành":
-        return 3;
-      case "Đã hủy":
-        return 4;
-      default:
-        return 5;
-    }
+    // Handle Canceled separately as it's not in the progression
+    if (status === "Canceled") return statusProgression.length;
+    return statusProgression.indexOf(status);
   };
-  const currentStatusIndex = getCurrentStatusIndex(orderDetails.orderStatus);
+
+  const currentStatusIndex = orderDetails
+    ? getCurrentStatusIndex(orderDetails.status)
+    : -1;
+
+  if (!orderDetails) {
+    return (
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Loading order details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const currentStatusInfo = statusMap[orderDetails.status] || {
+    text: orderDetails.status,
+    color: STATUS_COLORS.DEFAULT,
+  };
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
     >
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
           <View style={styles.headerTitle}>
-            <Text style={styles.title}>Giao hàng {id}</Text>
+            <Text style={styles.title}>Giao hàng #{id}</Text>
           </View>
           <View style={styles.contentItems}>
             <View>
               <Text style={styles.label}>Thời gian đặt hàng</Text>
               <Text style={styles.value}>
-                {formatDateToDDMMYYYY(orderDetails.createdAt)}
+                {formatDateToDDMMYYYY(orderDetails.order_create_at)}
               </Text>
             </View>
             <View>
               <Text style={styles.label}>Hóa đơn</Text>
-              <Text style={styles.value}>{orderDetails.id}</Text>
+              <Text style={styles.value}>{orderDetails.orderId}</Text>
             </View>
           </View>
           <View style={styles.contentItems}>
             <View>
               <Text style={styles.label}>Hình thức</Text>
-              <Text style={styles.value}>{orderDetails.delivery_at}</Text>
+              <Text style={styles.value}>{orderDetails.payment_method}</Text>
             </View>
             <View>
               <Text style={styles.label}>Địa chỉ</Text>
-              <Text style={styles.value}>{orderDetails.address}</Text>
+              <Text style={styles.value}>{orderDetails.order_address}</Text>
             </View>
           </View>
           <View style={styles.orderDetailsStatus}>
             <Text style={styles.statusLabel}>Trạng thái đơn hàng</Text>
             <View style={styles.statusLayout}>
-              <Text>
-                {(() => {
-                  switch (orderDetails.orderStatus) {
-                    case "Đang chuẩn bị":
-                      return (
-                        <View
-                          style={[
-                            styles.statusLayout,
-                            {
-                              backgroundColor: APP_COLOR.BROWN,
-                              borderRadius: 50,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            {orderDetails.orderStatus}
-                          </Text>
-                        </View>
-                      );
-                    case "Đang vận chuyển":
-                      return (
-                        <View
-                          style={[
-                            styles.statusLayout,
-                            {
-                              backgroundColor: APP_COLOR.DELIVERY,
-                              borderRadius: 50,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            {orderDetails.orderStatus}
-                          </Text>
-                        </View>
-                      );
-                    case "Hoàn thành":
-                      return (
-                        <View
-                          style={[
-                            styles.statusLayout,
-                            {
-                              backgroundColor: APP_COLOR.DONE,
-                              borderRadius: 50,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            {orderDetails.orderStatus}
-                          </Text>
-                        </View>
-                      );
-                    case "Đã hủy":
-                      return (
-                        <View
-                          style={[
-                            styles.statusLayout,
-                            {
-                              backgroundColor: APP_COLOR.CANCEL,
-                              borderRadius: 50,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            {orderDetails.orderStatus}
-                          </Text>
-                        </View>
-                      );
-                    case "Đặt hàng thành công":
-                      return (
-                        <View
-                          style={[
-                            styles.statusLayout,
-                            {
-                              backgroundColor: APP_COLOR.PENDING,
-                              borderRadius: 50,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: APP_COLOR.WHITE },
-                            ]}
-                          >
-                            {orderDetails.orderStatus}
-                          </Text>
-                        </View>
-                      );
-                    default:
-                      return null;
-                  }
-                })()}
-              </Text>
+              <View
+                style={[
+                  styles.statusLayout,
+                  {
+                    backgroundColor: currentStatusInfo.color,
+                    borderRadius: 50,
+                  },
+                ]}
+              >
+                <Text style={[styles.statusText, { color: APP_COLOR.WHITE }]}>
+                  {currentStatusInfo.text}
+                </Text>
+              </View>
             </View>
           </View>
           <View
@@ -261,7 +208,7 @@ const OrderDetailsPage = () => {
             }}
           >
             <View style={{ alignItems: "center", marginRight: 8 }}>
-              {statusList.map((status, idx) => (
+              {statusProgression.map((status, idx) => (
                 <View key={status} style={{ alignItems: "center" }}>
                   <View
                     style={{
@@ -269,7 +216,8 @@ const OrderDetailsPage = () => {
                       height: 16,
                       borderRadius: 8,
                       backgroundColor:
-                        idx <= currentStatusIndex
+                        idx <= currentStatusIndex &&
+                        orderDetails.status !== "Canceled"
                           ? APP_COLOR.BROWN
                           : APP_COLOR.BACKGROUND_ORANGE,
                       borderWidth: 2,
@@ -277,7 +225,7 @@ const OrderDetailsPage = () => {
                       zIndex: 2,
                     }}
                   />
-                  {idx < statusList.length - 1 && (
+                  {idx < statusProgression.length - 1 && (
                     <View
                       style={{
                         width: 3,
@@ -291,22 +239,38 @@ const OrderDetailsPage = () => {
               ))}
             </View>
             <View>
-              {statusList.map((status, idx) => (
+              {statusProgression.map((status, idx) => (
                 <Text
                   key={status}
                   style={{
                     color:
-                      idx === currentStatusIndex
+                      idx === currentStatusIndex &&
+                      orderDetails.status !== "Canceled"
                         ? APP_COLOR.ORANGE
                         : APP_COLOR.BROWN,
                     fontFamily:
-                      idx === currentStatusIndex ? FONTS.bold : FONTS.regular,
+                      idx === currentStatusIndex &&
+                      orderDetails.status !== "Canceled"
+                        ? FONTS.bold
+                        : FONTS.regular,
                     marginBottom: Platform.OS === "android" ? 18 : 22,
                   }}
                 >
-                  {status}
+                  {statusMap[status].text}
                 </Text>
               ))}
+              {/* Display Canceled status separately if applicable */}
+              {orderDetails.status === "Canceled" && (
+                <Text
+                  style={{
+                    color: APP_COLOR.ORANGE,
+                    fontFamily: FONTS.bold,
+                    marginBottom: Platform.OS === "android" ? 18 : 22,
+                  }}
+                >
+                  {statusMap.Canceled.text}
+                </Text>
+              )}
             </View>
           </View>
           <View
@@ -319,14 +283,12 @@ const OrderDetailsPage = () => {
           >
             <Text style={styles.labelIcon}>Thông tin nhận hàng</Text>
             <View style={styles.detailsContainer}>
-              <Text style={styles.customerValue}>
-                {orderDetailsData.customerName}
-              </Text>
+              <Text style={styles.customerValue}>{orderDetails.fullName}</Text>
               <Text
                 style={[styles.customerValue, { color: APP_COLOR.ORANGE }]}
-              >{`(${orderDetailsData.phone})`}</Text>
+              >{`(${orderDetails.phone_number})`}</Text>
             </View>
-            <View style={{ flexDirection: "row" }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Entypo
                 name="location-pin"
                 size={20}
@@ -343,7 +305,7 @@ const OrderDetailsPage = () => {
                   color: APP_COLOR.BROWN,
                 }}
               >
-                {orderDetailsData.address}
+                {orderDetails.order_address}
               </Text>
             </View>
           </View>
@@ -368,7 +330,7 @@ const OrderDetailsPage = () => {
                     <Text
                       style={[styles.itemValue, { fontFamily: FONTS.bold }]}
                     >
-                      {item.productName}
+                      {item.name}
                     </Text>
                     <Text style={[styles.itemValue]}>
                       {currencyFormatter(item.price)}
@@ -393,37 +355,37 @@ const OrderDetailsPage = () => {
             <View style={styles.detailsContainer}>
               <Text style={styles.totalValue}>Thành tiền</Text>
               <Text style={styles.totalValue}>
-                {currencyFormatter(orderDetailsData.amount)}
+                {currencyFormatter(orderDetails.order_amount)}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
               <Text style={styles.totalValue}>Phí giao hàng</Text>
               <Text style={styles.totalValue}>
-                {currencyFormatter(orderDetailsData.shipping_fee)}
+                {currencyFormatter(orderDetails.order_shipping_fee)}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
               <Text style={styles.totalValue}>Giảm giá</Text>
               <Text style={styles.totalValue}>
-                {currencyFormatter(orderDetailsData.discountValue)}
+                {currencyFormatter(orderDetails.order_discount_value)}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
               <Text style={styles.totalLabel}>Số tiền thanh toán</Text>
               <Text style={styles.totalLabel}>
                 {currencyFormatter(
-                  orderDetailsData.amount +
-                    orderDetailsData.shipping_fee -
-                    orderDetailsData.discountValue
+                  orderDetails.order_amount +
+                    orderDetails.order_shipping_fee -
+                    orderDetails.order_discount_value
                 )}
               </Text>
             </View>
             <View style={styles.detailsContainer}>
               <Text style={styles.totalLabel}>Điểm tích lũy</Text>
               <Text style={styles.totalLabel}>
-                {(orderDetailsData.amount +
-                  orderDetailsData.shipping_fee -
-                  orderDetailsData.discountValue) /
+                {(orderDetails.order_amount +
+                  orderDetails.order_shipping_fee -
+                  orderDetails.order_discount_value) /
                   1000}{" "}
                 điểm
               </Text>
@@ -432,9 +394,9 @@ const OrderDetailsPage = () => {
           <Text style={[styles.label, { width: "100%" }]}>
             Phương thức thanh toán
           </Text>
-          <Text style={styles.value}>{orderDetailsData.payment_methods}</Text>
+          <Text style={styles.value}>{orderDetails.payment_method}</Text>
           <Text style={styles.label}>Ghi chú</Text>
-          <Text style={styles.value}>{orderDetailsData.note}</Text>
+          <Text style={styles.value}>{orderDetails.note}</Text>
           <View style={{ flexDirection: "row" }}>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -444,10 +406,15 @@ const OrderDetailsPage = () => {
                 <Text style={styles.buttonText}>Hủy đơn</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.buttonFooter}
+                style={[
+                  styles.buttonFooter,
+                  { backgroundColor: APP_COLOR.ORANGE },
+                ]}
                 onPress={() => router.navigate("/(tabs)")}
               >
-                <Text style={styles.buttonText}>Về trang chủ</Text>
+                <Text style={[styles.buttonText, { color: APP_COLOR.WHITE }]}>
+                  Về trang chủ
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -466,18 +433,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     marginBottom: 10,
   },
-  img: {
-    width: 100,
-    height: 100,
-  },
   title: {
     fontSize: 25,
     marginVertical: "auto",
     fontFamily: FONTS.medium,
     color: APP_COLOR.BROWN,
-  },
-  headersContainer: {
-    marginTop: 8,
   },
   detailsContainer: { flexDirection: "row", justifyContent: "space-between" },
   label: {
@@ -524,10 +484,6 @@ const styles = StyleSheet.create({
   contentItems: {
     flexDirection: "row",
   },
-  itemLabel: {
-    fontSize: 20,
-    fontFamily: FONTS.medium,
-  },
   itemValue: {
     fontSize: 15,
     fontFamily: FONTS.medium,
@@ -547,50 +503,11 @@ const styles = StyleSheet.create({
     marginHorizontal: "auto",
     marginVertical: "auto",
   },
-  containerIcon: {
-    padding: 16,
-    backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
-    borderRadius: 10,
-  },
-  stepContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-    position: "relative",
-  },
-  left: {
-    alignItems: "center",
-    width: 24,
-    marginRight: 8,
-  },
-  verticalLine: {
-    position: "absolute",
-    top: 12,
-    bottom: -12,
-    width: 2,
-    backgroundColor: "#A0522D",
-    zIndex: -1,
-  },
-  circle: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: "#A0522D",
-    backgroundColor: "#FFEBDD",
-  },
-  circleDone: {
-    backgroundColor: "#A0522D",
-  },
   labelIcon: {
     color: APP_COLOR.BROWN,
     fontSize: 14,
     fontFamily: FONTS.bold,
     alignSelf: "center",
-  },
-  labelDone: {
-    fontWeight: "bold",
-    color: "#E85A1A",
   },
   buttonContainer: {
     marginHorizontal: "auto",
@@ -607,11 +524,12 @@ const styles = StyleSheet.create({
     width: 180,
     marginTop: 10,
     height: 42,
+    alignItems: "center",
   },
   buttonText: {
     color: APP_COLOR.BROWN,
     fontSize: 17,
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.bold,
     marginHorizontal: "auto",
   },
 });

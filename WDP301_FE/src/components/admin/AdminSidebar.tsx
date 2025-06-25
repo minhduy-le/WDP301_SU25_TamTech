@@ -11,6 +11,7 @@ import {
   DownOutlined,
   TeamOutlined,
   AuditOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
@@ -83,6 +84,11 @@ const AdminSidebar: React.FC = () => {
       key: "/admin/system-issues",
       icon: <AuditOutlined />,
       label: "Kiểm tra hệ thống",
+    },
+    {
+      key: "/admin/chat",
+      icon: <MessageOutlined />,
+      label: "Chat",
     },
     {
       key: "/admin/settings",

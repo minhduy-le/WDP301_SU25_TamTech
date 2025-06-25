@@ -146,7 +146,7 @@ const UserPassword = () => {
                       color:
                         isValid && dirty ? APP_COLOR.WHITE : APP_COLOR.WHITE,
                       fontFamily: FONTS.regular,
-                      fontSize: 17,
+                      fontSize: 15,
                     }}
                   >
                     {isValid && dirty

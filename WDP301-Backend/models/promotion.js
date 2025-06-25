@@ -1,3 +1,5 @@
+// WDP301-Backend/models/promotion.js
+
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
@@ -12,10 +14,6 @@ const Promotion = sequelize.define(
     promotionTypeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: "promotion_types",
-        key: "promotionTypeId",
-      },
     },
     name: {
       type: DataTypes.STRING(100),
@@ -23,6 +21,10 @@ const Promotion = sequelize.define(
     },
     description: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    barcode: {
+      type: DataTypes.STRING(755),
       allowNull: true,
     },
     code: {
@@ -63,10 +65,15 @@ const Promotion = sequelize.define(
     createBy: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: "users",
-        key: "id",
-      },
+    },
+    forUser: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    isUsedBySpecificUser: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

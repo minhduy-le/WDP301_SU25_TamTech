@@ -9,6 +9,7 @@ const OrderItem = require("./orderItem");
 const PaymentMethod = require("./paymentMethod");
 const OrderStatus = require("./orderStatus");
 const Feedback = require("./feedback");
+const FeedbackResponse = require("./FeedbackResponse");
 const ChatRoom = require("./chatRoom");
 const ChatRoomUser = require("./ChatRoomUser");
 const Message = require("./message");
@@ -21,6 +22,7 @@ const ScheduleShipper = require("./ScheduleShipper");
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
 Product.belongsTo(Store, { foreignKey: "storeId", as: "Store" });
 Product.hasMany(ProductRecipe, { foreignKey: "productId", as: "ProductRecipes" });
+Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
 
 Store.hasMany(Product, { foreignKey: "storeId", as: "Products" });
 Store.hasMany(Material, { foreignKey: "storeId", as: "Materials" });
@@ -38,6 +40,7 @@ Order.belongsTo(OrderStatus, { foreignKey: "status_id", as: "OrderStatus" });
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "OrderItems" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "Orders" });
+User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
 
 OrderItem.belongsTo(Order, { foreignKey: "orderId", as: "Order" });
 OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
@@ -46,8 +49,11 @@ Product.hasMany(OrderItem, { foreignKey: "productId", as: "OrderItems" });
 
 Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
-Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
-User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+Feedback.hasMany(FeedbackResponse, { foreignKey: "feedbackId", as: "FeedbackResponses" });
+
+FeedbackResponse.belongsTo(Feedback, { foreignKey: "feedbackId", as: "Feedback" });
+FeedbackResponse.belongsTo(User, { foreignKey: "repliedBy", as: "RepliedBy" });
+User.hasMany(FeedbackResponse, { foreignKey: "repliedBy", as: "FeedbackResponses" });
 
 // Define relationships for chat-related models
 ChatRoom.hasMany(ChatRoomUser, { foreignKey: "chatRoomId", as: "ChatRoomUsers" });
@@ -90,6 +96,7 @@ module.exports = {
   PaymentMethod,
   OrderStatus,
   Feedback,
+  FeedbackResponse,
   ChatRoom,
   ChatRoomUser,
   Message,

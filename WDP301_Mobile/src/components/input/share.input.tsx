@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   text: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: FONTS.regular,
     color: APP_COLOR.BROWN,
   },

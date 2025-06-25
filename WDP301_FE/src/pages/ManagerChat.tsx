@@ -1,20 +1,20 @@
+// WDP301_FE/src/pages/ManagerChat.tsx
+
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
-import { useCreateChat } from "../hooks/chatsApi";
-import io, { Socket } from "socket.io-client";
 import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
 import "../style/StaffChat.css";
+import { useSocketConnection, useSocketListener, emitSocketEvent } from "../hooks/useSocket";
 
 dayjs.extend(customParseFormat);
 
-// --- Interfaces ---
 interface Chat {
   id: number;
   chatRoomId?: number;
@@ -27,161 +27,118 @@ interface Chat {
 }
 
 const ManagerChat = () => {
-  // --- State ---
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ id: number; fullName: string } | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
+  const [isSending, setIsSending] = useState(false); // <-- THAY ĐỔI: State để quản lý trạng thái gửi
   const [isLoadingChats, setIsLoadingChats] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
-  // --- Hooks ---
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
-  const { user: authUser, token } = useAuthStore();
-  const { mutate: createChat, isPending: isSending } = useCreateChat();
+  const { user: authUser, token } = useAuthStore(); // <-- THAY ĐỔI: Lấy token để xác thực socket
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- Functions ---
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  // --- THAY ĐỔI: Khởi tạo kết nối socket ---
+  // Hook này nên được gọi ở component cha (App.tsx) để duy trì kết nối
+  // Nhưng để ví dụ, ta sẽ gọi ở đây.
+  useSocketConnection(token);
+
+  const fetchMessages = async (userToFetchFor: { id: number; fullName: string } | null) => {
+    if (!authUser || !userToFetchFor) return;
+    setIsLoadingChats(true);
+    try {
+      // API GET để lấy lịch sử vẫn như cũ
+      const response = await axiosInstance.get<Chat[]>("/chat/messages", {
+        params: { limit: 100, offset: 0 },
+      });
+      const filteredChats = response.data.filter(
+        (chat) =>
+          (chat.senderId === authUser.id && chat.receiverId === userToFetchFor.id) ||
+          (chat.senderId === userToFetchFor.id && chat.receiverId === authUser.id)
+      );
+      setChats(
+        filteredChats
+          .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
+    } catch (error: string | any) {
+      message.error("Không thể tải tin nhắn.", error);
+    } finally {
+      setIsLoadingChats(false);
     }
   };
 
+  // --- THAY ĐỔI: Lắng nghe sự kiện 'message' từ socket.io ---
+  useSocketListener("message", (data: unknown) => {
+    const newMessage = data as Chat;
+    // Chỉ cập nhật UI nếu tin nhắn thuộc về cuộc hội thoại đang xem
+    if (
+      selectedUser &&
+      ((newMessage.senderId === authUser?.id && newMessage.receiverId === selectedUser.id) ||
+        (newMessage.senderId === selectedUser.id && newMessage.receiverId === authUser?.id))
+    ) {
+      console.log("Realtime message received:", newMessage);
+      message.info("Có tin nhắn mới!", 1.5);
+      setChats((prevChats) => [...prevChats, { ...newMessage, createdAt: new Date(newMessage.createdAt) }]);
+    }
+  });
+
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessages(selectedUser);
+    } else {
+      setChats([]); // Xóa tin nhắn cũ khi không chọn user nào
+    }
+  }, [selectedUser]);
+
+  // --- THAY ĐỔI: Logic gửi tin nhắn qua socket ---
   const handleSendMessage = () => {
     if (!selectedUser || !messageInput.trim() || !authUser) {
       message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
       return;
     }
-    if (!isConnected || !socket) {
-      message.error("Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc kết nối lại.");
-      return;
-    }
+
+    setIsSending(true);
 
     const messageData = {
       receiverId: selectedUser.id,
       content: messageInput.trim(),
     };
 
-    // Gửi tin nhắn qua API để lưu vào DB
-    createChat(messageData, {
-      onSuccess: () => {
-        setMessageInput("");
-        // Sau khi API thành công, gửi tin nhắn qua socket để real-time
-        socket.emit("sendMessage", messageData, (response: any) => {
-          if (response?.error) {
-            message.error(response.error || "Gửi tin nhắn qua socket thất bại");
-          } else {
-            message.success("Tin nhắn đã được gửi!");
-          }
-        });
-      },
-      onError: (error: any) => {
-        message.error(error.message || "Gửi tin nhắn thất bại!");
-      },
-    });
+    // Gửi sự kiện 'sendMessage' thay vì gọi API POST
+    emitSocketEvent("sendMessage", messageData);
+
+    // Giao diện người dùng có thể cập nhật ngay lập tức để tạo cảm giác "gửi tức thì"
+    // Tin nhắn thực sự sẽ được đẩy xuống từ server qua sự kiện 'message'
+    // nhưng ta có thể thêm tạm vào state để UI mượt hơn
+    const tempMessage = {
+      id: Date.now(), // ID tạm
+      senderId: authUser.id,
+      receiverId: selectedUser.id,
+      content: messageInput.trim(),
+      createdAt: new Date(),
+      Sender: { id: authUser.id, fullName: authUser.fullName },
+    };
+    setChats((prevChats) => [...prevChats, tempMessage]);
+
+    setMessageInput("");
+    setIsSending(false);
+    setTimeout(() => scrollToBottom(), 0); // Cuộn xuống dưới cùng
   };
 
-  const formatChatTime = (createdAt: Date) => {
-    const messageDate = dayjs(createdAt);
-    const today = dayjs();
-    const yesterday = dayjs().subtract(1, "day");
-
-    if (messageDate.isSame(today, "day")) return messageDate.format("HH:mm");
-    if (messageDate.isSame(yesterday, "day")) return `Hôm qua ${messageDate.format("HH:mm")}`;
-    return messageDate.format("HH:mm DD/MM/YYYY");
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
 
-  // --- Effects ---
-
-  // Hiệu ứng chính để quản lý kết nối socket
-  useEffect(() => {
-    if (!token || !authUser?.id) {
-      return;
-    }
-
-    // Khởi tạo socket.io-client sẽ tự động quản lý việc kết nối lại.
-    const newSocket = io("https://wdp301-su25.space", {
-      auth: { token },
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-    });
-
-    setSocket(newSocket);
-
-    // Lắng nghe các sự kiện từ socket
-    newSocket.on("connect", () => {
-      console.log("✅ WebSocket Connected:", newSocket.id);
-      setIsConnected(true);
-      message.success(`Kết nối chat thành công!`);
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("❌ WebSocket Disconnected");
-      setIsConnected(false);
-      message.warning("Mất kết nối với máy chủ chat.");
-    });
-
-    newSocket.on("message", (receivedMessage: Chat) => {
-      const isRelevant = receivedMessage.senderId === selectedUser?.id || receivedMessage.senderId === authUser.id;
-      if (isRelevant) {
-        setChats((prevChats) => {
-          if (prevChats.some((chat) => chat.id === receivedMessage.id)) {
-            return prevChats;
-          }
-          const updatedChats = [...prevChats, { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) }];
-          return updatedChats.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        });
-      }
-    });
-
-    // Hàm dọn dẹp: ngắt kết nối khi component unmount
-    return () => {
-      console.log("🧹 Cleaning up socket connection.");
-      newSocket.disconnect();
-    };
-  }, [token, authUser?.id]);
-
-  // Tải tin nhắn ban đầu khi chọn một người dùng mới
-  useEffect(() => {
-    if (!authUser || !selectedUser) {
-      setChats([]);
-      return;
-    }
-
-    const fetchInitialMessages = async () => {
-      setIsLoadingChats(true);
-      try {
-        const response = await axiosInstance.get<Chat[]>("/chat/messages", { params: { limit: 100, offset: 0 } });
-        const filteredChats = response.data.filter(
-          (chat) =>
-            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
-        );
-        setChats(
-          filteredChats
-            .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        );
-      } catch (error: any) {
-        message.error("Không thể tải tin nhắn.");
-      } finally {
-        setIsLoadingChats(false);
-      }
-    };
-
-    fetchInitialMessages();
-  }, [selectedUser, authUser]);
-
-  // Tự động cuộn xuống khi có tin nhắn mới
   useEffect(() => {
     scrollToBottom();
   }, [chats]);
 
-  // --- Render Logic ---
+  const formatChatTime = (createdAt: Date) => {
+    return dayjs(createdAt).format("HH:mm");
+  };
+
   const filteredAccounts =
     accounts?.filter(
       (account) =>
@@ -192,20 +149,7 @@ const ManagerChat = () => {
 
   return (
     <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
-      <div style={{ position: "fixed", top: 80, right: 20, zIndex: 1000 }}>
-        <div
-          style={{
-            padding: "5px 15px",
-            backgroundColor: isConnected ? "#4caf50" : "#f44336",
-            color: "white",
-            borderRadius: "12px",
-            fontSize: "12px",
-          }}
-        >
-          {isConnected ? `🟢 Đã kết nối` : `🔴 Mất kết nối`}
-        </div>
-      </div>
-
+      {/* Phần JSX giữ nguyên */}
       <Card
         style={{ width: 300, marginRight: 20, display: "flex", flexDirection: "column", borderRadius: "12px" }}
         bodyStyle={{ overflowY: "auto", flex: 1 }}
@@ -242,7 +186,7 @@ const ManagerChat = () => {
       <Card style={{ flex: 1, display: "flex", flexDirection: "column", borderRadius: "12px" }}>
         {selectedUser ? (
           <>
-            <div style={{ padding: "15px", borderBottom: "1px solid #f0f0f0", fontWeight: "bold", fontSize: 16 }}>
+            <div style={{ padding: 15, borderBottom: "1px solid #f0f0f0", fontWeight: "bold", fontSize: 16 }}>
               Chat với: {selectedUser.fullName}
             </div>
             <div
@@ -272,7 +216,7 @@ const ManagerChat = () => {
                 onChange={(e) => setMessageInput(e.target.value)}
                 onPressEnter={handleSendMessage}
                 placeholder="Nhập tin nhắn..."
-                disabled={!isConnected || isSending}
+                disabled={isSending}
                 suffix={
                   <Button
                     type="primary"

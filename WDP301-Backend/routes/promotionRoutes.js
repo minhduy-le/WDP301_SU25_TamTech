@@ -116,7 +116,8 @@ const handleError = (error, res) => {
     error.message.includes("Promotion name already exists") ||
     error.message.includes("Promotion code already exists") ||
     error.message.includes("Promotion type ID must be a positive integer") ||
-    error.message.includes("Invalid promotion ID")
+    error.message.includes("Invalid promotion ID") ||
+    error.message.includes("Invalid user ID")
   ) {
     return res.status(400).send(error.message);
   }
@@ -222,6 +223,7 @@ router.post("/", verifyToken, promotionValidation, validate, async (req, res) =>
 router.get("/", verifyToken, async (req, res) => {
   try {
     const promotions = await promotionService.getAllPromotions();
+    418;
     res.status(200).json(promotions);
   } catch (error) {
     handleError(error, res);
@@ -444,6 +446,74 @@ router.delete(
 
 /**
  * @swagger
+ * /api/promotions/user/{userId}:
+ *   get:
+ *     summary: Get active promotions for a specific user
+ *     tags: [Promotions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the user to retrieve promotions for
+ *     responses:
+ *       200:
+ *         description: List of active promotions for the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Promotion'
+ *       400:
+ *         description: Invalid user ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid user ID
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Unauthorized
+ *       404:
+ *         description: No promotions found for this user
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: No promotions found for this user
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Server error
+ */
+router.get(
+  "/user/:userId",
+  verifyToken,
+  [param("userId").isInt({ min: 1 }).withMessage("Invalid user ID")],
+  validate,
+  async (req, res) => {
+    try {
+      const promotions = await promotionService.getPromotionsByUserId(req.params.userId);
+      res.status(200).json(promotions);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     Promotion:
@@ -469,6 +539,11 @@ router.delete(
  *         code:
  *           type: string
  *           maxLength: 50
+ *         barcode:
+ *           type: string
+ *           maxLength: 100
+ *           description: URL to the barcode SVG stored in Firebase
+ *           example: https://storage.googleapis.com/course-ac11b.appspot.com/barcodes/WELCOME_16_1697051234567.svg
  *         promotionTypeId:
  *           type: integer
  *           minimum: 1
@@ -493,6 +568,10 @@ router.delete(
  *           type: boolean
  *         createBy:
  *           type: integer
+ *         forUser:
+ *           type: integer
+ *         isUsedBySpecificUser:
+ *           type: boolean
  *         createdAt:
  *           type: string
  *           format: date-time

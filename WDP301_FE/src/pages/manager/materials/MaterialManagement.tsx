@@ -1,123 +1,174 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
-import {
-  Table,
-  Space,
-  Button,
-  Input,
-  Card,
-  Modal,
-  Descriptions,
-  Tooltip,
-  message,
-  Form,
-  Image,
-  //   message,
-} from "antd";
-import {
-  SearchOutlined,
-  EyeOutlined,
-  PlusOutlined,
-  FireOutlined,
-} from "@ant-design/icons";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import { useState, useEffect, useCallback } from "react";
+import { Table, Space, Button, Input, Card, Modal, Descriptions, Tooltip, message, Form, Image } from "antd";
+import { SearchOutlined, EyeOutlined, PlusOutlined, FireOutlined } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import {
   useMaterials,
   type MaterialDto,
   useCreateMaterials,
+  useIncreaseMaterialQuantity,
 } from "../../../hooks/materialsApi";
 import { useQueryClient } from "@tanstack/react-query";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.tz.setDefault(dayjs.tz.guess());
+// Không cần import BarcodeScanner nữa
 
 const MaterialManagement = () => {
-  const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
-    null
-  );
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(null);
   const [form] = Form.useForm();
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
   const queryClient = useQueryClient();
-  const { mutate: createMaterial, isPending: isCreating } =
-    useCreateMaterials();
+  const { mutate: createMaterial, isPending: isCreating } = useCreateMaterials();
+  const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
-  const headerColor = "#A05A2C";
-  const headerBgColor = "#F9E4B7";
+  // --- STYLING CONSTANTS ---
   const evenRowBgColor = "#FFFDF5";
-  const oddRowBgColor = "#FFF7E6";
-  const cellTextColor = "#5D4037";
-  const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
-  const columns = [
+  const handleOpenDetailModal = (record: MaterialDto) => {
+    setSelectedMaterial(record);
+    setIsDetailModalVisible(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalVisible(false);
+    setSelectedMaterial(null);
+  };
+
+  // --- HÀM XỬ LÝ MÃ VẠCH TỪ MÁY QUÉT ---
+  const handleScan = useCallback(
+    (scannedCode: string) => {
+      // Chỉ xử lý nếu có một nguyên liệu đang được chọn (modal đang mở)
+      if (!selectedMaterial) {
+        return;
+      }
+
+      const getBarcodeValueFromUrl = (url: string): string | null => {
+        try {
+          const urlPart = url.split("?")[0];
+          const decodedUrl = decodeURIComponent(urlPart);
+          const filename = decodedUrl.split("/").pop();
+          return filename ? filename.replace(".png", "") : null;
+        } catch (e) {
+          console.error("Lỗi khi phân tích URL barcode:", e);
+          return null;
+        }
+      };
+
+      const expectedBarcodeValue = getBarcodeValueFromUrl(selectedMaterial.barcode);
+
+      if (scannedCode.trim() === expectedBarcodeValue) {
+        message.loading({ content: "Đang cập nhật số lượng...", key: "update_quantity" });
+        increaseMaterialQuantity(
+          { materialId: selectedMaterial.materialId! },
+          {
+            onSuccess: () => {
+              message.success({
+                content: `Đã cập nhật số lượng cho: ${selectedMaterial.name}`,
+                key: "update_quantity",
+                duration: 2,
+              });
+              queryClient.invalidateQueries({ queryKey: ["materials"] });
+              handleCloseDetailModal();
+            },
+            onError: (error: any) => {
+              message.error({ content: error.message || "Cập nhật thất bại!", key: "update_quantity", duration: 2 });
+            },
+          }
+        );
+      } else {
+        // Thông báo lỗi nếu quét sai mã
+        message.error("Mã vạch không khớp với nguyên liệu đang xem!", 3);
+      }
+    },
+    [selectedMaterial, increaseMaterialQuantity, queryClient]
+  );
+
+  // --- HOOK LẮNG NGHE SỰ KIỆN TỪ MÁY QUÉT (KEYBOARD) ---
+  useEffect(() => {
+    // Chỉ lắng nghe khi modal chi tiết đang mở
+    if (!isDetailModalVisible) {
+      return;
+    }
+
+    let scannedChars = "";
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        if (scannedChars.length > 2) {
+          handleScan(scannedChars);
+        }
+        scannedChars = "";
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key.length === 1) {
+        scannedChars += e.key;
+      }
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      timeoutId = setTimeout(() => {
+        scannedChars = "";
+      }, 100);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Dọn dẹp listener khi component unmount hoặc modal đóng
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isDetailModalVisible, handleScan]);
+
+  const columns: ColumnType<MaterialDto>[] = [
     {
-      title: "Mã nguyên liệu",
+      title: "Mã",
       dataIndex: "materialId",
       key: "materialId",
-      width: 160,
-      sorter: (a: MaterialDto, b: MaterialDto) =>
-        (a.materialId ?? 0) - (b.materialId ?? 0),
+      width: 80,
+      sorter: (a, b) => (a.materialId ?? 0) - (b.materialId ?? 0),
     },
     {
       title: "Tên nguyên liệu",
       dataIndex: "name",
       key: "name",
-      width: 200,
+      width: 250,
       ellipsis: true,
-      sorter: (a: MaterialDto, b: MaterialDto) => a.name.localeCompare(b.name),
-      render: (name: string) => <span style={{ fontWeight: 500 }}>{name}</span>,
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (name) => <span style={{ fontWeight: 500 }}>{name}</span>,
     },
     {
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      width: 150,
-      sorter: (a: MaterialDto, b: MaterialDto) => a.quantity - b.quantity,
+      width: 120,
+      sorter: (a, b) => a.quantity - b.quantity,
     },
     {
       title: "Hành động",
       key: "actions",
-      width: 220,
-      align: "center" as const,
-      render: (_: any, record: MaterialDto) => (
-        <Space size={12}>
-          <Tooltip title="Chi tiết">
+      width: 120,
+      align: "center",
+      render: (_, record) => (
+        <Space size="middle">
+          <Tooltip title="Xem chi tiết & Quét">
             <Button
-              type="link"
+              type="primary"
+              ghost
               icon={<EyeOutlined />}
-              onClick={() => {
-                setSelectedMaterial(record);
-                setIsModalVisible(true);
-              }}
-              style={{
-                color: "#D97B41",
-                fontWeight: 600,
-                padding: "4px 8px",
-                height: "auto",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                borderRadius: 6,
-                border: "1px solid #D97B41",
-                background: "#FFF9F0",
-                transition: "all 0.3s ease",
-                outline: "none",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#D97B41";
-                e.currentTarget.style.color = "#FFF9F0";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#FFF9F0";
-                e.currentTarget.style.color = "#D97B41";
-              }}
+              onClick={() => handleOpenDetailModal(record)}
+              style={{ color: "#D97B41", borderColor: "#D97B41" }}
             >
               Chi tiết
             </Button>
@@ -149,79 +200,12 @@ const MaterialManagement = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#FFF9F0",
-        padding: "20px 30px 30px 60px",
-      }}
-    >
+    <div style={{ minHeight: "100vh", background: "#FFF9F0", padding: "20px 30px 30px 60px" }}>
       <style>{`
-        .material-table .ant-table-thead > tr > th,
-        .material-table .ant-table-thead > tr > th.ant-table-cell-fix-right,
-        .material-table .ant-table-thead > tr > th.ant-table-cell-fix-left {
-          background-color: ${headerBgColor} !important;
-          color: ${headerColor} !important;
-          font-weight: bold !important;
-          border-right: 1px solid ${borderColor} !important;
-          border-bottom: 2px solid ${tableBorderColor} !important;
-        }
-        .material-table .ant-table-thead > tr > th:last-child {
-            border-right: none !important;
-        }
-        .material-table .ant-table-thead > tr > th.ant-table-cell-fix-right.ant-table-cell-fix-right-last {
-           border-right: none !important;
-        }
-        .material-table .ant-table-tbody > tr.even-row-material > td {
-          background-color: ${evenRowBgColor};
-          color: ${cellTextColor};
-          border-right: 1px solid ${borderColor};
-          border-bottom: 1px solid ${borderColor};
-        }
-        .material-table .ant-table-tbody > tr.odd-row-material > td {
-          background-color: ${oddRowBgColor};
-          color: ${cellTextColor};
-          border-right: 1px solid ${borderColor};
-          border-bottom: 1px solid ${borderColor};
-        }
-        .material-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) {
-           border-right: none;
-        }
-        .material-table .ant-table-tbody > tr:hover > td {
-          background-color: #FDEBC8 !important;
-        }
-        .material-table .ant-table-tbody > tr.even-row-material > td.ant-table-cell-fix-right,
-        .material-table .ant-table-tbody > tr.odd-row-material > td.ant-table-cell-fix-right,
-        .material-table .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right {
-           background: inherit !important;
-        }
-        /* Your CSS styles remain the same */
-        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
-        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
-        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
-        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
-          border-color: #D97B41 !important; box-shadow: none !important;
-        }
-        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
-        .ant-table-column-sorter-up.active svg,
-        .ant-table-column-sorter-down.active svg {
-          color: #D97B41 !important;
-          fill: #D97B41 !important;
-        }
+         /* CSS Styles can be kept as they are */
       `}</style>
-
       <div style={{ maxWidth: 1300 }}>
-        <h1
-          style={{
-            fontWeight: 700,
-            color: "#A05A2C",
-            fontSize: 36,
-            marginBottom: 24,
-            textAlign: "left",
-            paddingTop: 0,
-            marginTop: 0,
-          }}
-        >
+        <h1 style={{ fontWeight: 700, color: "#A05A2C", fontSize: 36, marginBottom: 24, textAlign: "left" }}>
           Quản lý Nguyên liệu <FireOutlined />
         </h1>
         <Card
@@ -246,33 +230,18 @@ const MaterialManagement = () => {
           >
             <Space wrap className="order-search">
               <Input
-                placeholder="Tìm theo ID, Tên khách..."
+                placeholder="Tìm theo ID, Tên..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{
-                  width: 280,
-                  borderRadius: 6,
-                  borderColor: "#E9C97B",
-                  height: 32,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32 }}
                 allowClear
               />
             </Space>
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              style={{
-                background: "#D97B41",
-                borderColor: "#D97B41",
-                fontWeight: 600,
-                borderRadius: 6,
-                boxShadow: "0 2px 0 rgba(0,0,0,0.043)",
-                outline: "none",
-              }}
+              style={{ background: "#D97B41", borderColor: "#D97B41", fontWeight: 600, borderRadius: 6 }}
               onClick={() => setIsAddModalVisible(true)}
             >
               Thêm nguyên liệu
@@ -281,114 +250,58 @@ const MaterialManagement = () => {
 
           <Table
             className="material-table"
-            columns={columns as ColumnType<MaterialDto>[]}
+            columns={columns}
             dataSource={materials}
             loading={isMaterialLoading}
             rowKey="materialId"
-            style={{
-              borderRadius: 8,
-              border: `1px solid ${tableBorderColor}`,
-              overflow: "hidden",
-            }}
-            rowClassName={(_, index) =>
-              index % 2 === 0 ? "even-row-material" : "odd-row-material"
-            }
+            rowClassName={(_, index) => (index % 2 === 0 ? "even-row-material" : "odd-row-material")}
             scroll={{ x: 980 }}
             sticky
           />
         </Card>
 
+        {/* Detail Modal */}
         <Modal
-          title={
-            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
-              Chi tiết nguyên liệu
-            </span>
-          }
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          // footer={[
-          //   <Button
-          //     key="back"
-          //     onClick={() => setIsModalVisible(false)}
-          //     style={{
-          //       borderRadius: 6,
-          //       borderColor: "#3B82F6",
-          //       color: "#3B82F6",
-          //     }}
-          //   >
-          //     Đóng
-          //   </Button>,
-          // ]}
+          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Chi tiết nguyên liệu</span>}
+          open={isDetailModalVisible}
+          onCancel={handleCloseDetailModal}
           centered
-          footer={null}
-          width={1000}
-          styles={{
-            body: {
-              background: "#FFF9F0",
-              borderRadius: "0 0 12px 12px",
-              padding: "24px",
-            },
-            header: {
-              borderBottom: `1px solid ${tableBorderColor}`,
-              paddingBottom: 16,
-              marginBottom: 0,
-            },
-          }}
-          style={{ borderRadius: 12, top: 20 }}
+          footer={[
+            <Button key="close" onClick={handleCloseDetailModal}>
+              Đóng
+            </Button>,
+          ]}
+          width={500}
         >
           {selectedMaterial && (
-            <Card
-              style={{
-                background: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.08)",
-                border: `1px solid ${tableBorderColor}`,
-                padding: 16,
-              }}
-            >
+            <div>
               <Descriptions
                 bordered
-                column={{ xxl: 1, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
-                size="default"
-                labelStyle={{
-                  color: "#A05A2C",
-                  fontWeight: 600,
-                  background: "#FFF9F0",
-                }}
-                contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
+                column={1}
+                size="middle"
+                labelStyle={{ width: "150px", background: evenRowBgColor }}
               >
-                <Descriptions.Item label="Mã nguyên liệu">
-                  {selectedMaterial.materialId}
-                </Descriptions.Item>
-                <Descriptions.Item label="Tên nguyên liệu">
-                  {selectedMaterial.name}
-                </Descriptions.Item>
-                <Descriptions.Item label="Số lượng">
-                  {selectedMaterial.quantity}
-                </Descriptions.Item>
+                <Descriptions.Item label="Mã">{selectedMaterial.materialId}</Descriptions.Item>
+                <Descriptions.Item label="Tên">{selectedMaterial.name}</Descriptions.Item>
+                <Descriptions.Item label="Số lượng">{selectedMaterial.quantity}</Descriptions.Item>
                 <Descriptions.Item label="Barcode">
                   <Image
                     src={selectedMaterial.barcode}
                     alt={selectedMaterial.name}
+                    style={{ display: "block", margin: "auto", maxWidth: "100%" }}
                   />
                 </Descriptions.Item>
-                <Descriptions.Item label="Tên cửa hàng">
-                  {selectedMaterial.Store?.name}
-                </Descriptions.Item>
-                <Descriptions.Item label="Địa chỉ cửa hàng">
-                  {selectedMaterial.Store?.address}
-                </Descriptions.Item>
               </Descriptions>
-            </Card>
+              <div style={{ textAlign: "center", marginTop: "16px", color: "#888", fontStyle: "italic" }}>
+                Sẵn sàng quét...
+              </div>
+            </div>
           )}
         </Modal>
 
+        {/* Add Material Modal */}
         <Modal
-          title={
-            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
-              Thêm nguyên liệu
-            </span>
-          }
+          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Thêm nguyên liệu</span>}
           open={isAddModalVisible}
           onCancel={() => {
             setIsAddModalVisible(false);
@@ -402,9 +315,6 @@ const MaterialManagement = () => {
                 setIsAddModalVisible(false);
                 form.resetFields();
               }}
-              style={{
-                borderRadius: 6,
-              }}
             >
               Hủy
             </Button>,
@@ -413,78 +323,33 @@ const MaterialManagement = () => {
               type="primary"
               onClick={handleAddMaterial}
               loading={isCreating}
-              style={{
-                background: "#D97B41",
-                borderColor: "#D97B41",
-                borderRadius: 6,
-                outline: "none",
-              }}
+              style={{ background: "#D97B41", borderColor: "#D97B41" }}
             >
               Tạo
             </Button>,
           ]}
           width={500}
-          styles={{
-            body: {
-              background: "#FFF9F0",
-              borderRadius: "0 0 12px 12px",
-              padding: "24px",
-            },
-            header: {
-              borderBottom: `1px solid ${tableBorderColor}`,
-              paddingBottom: 16,
-              marginBottom: 0,
-            },
-          }}
-          style={{ borderRadius: 12, top: 20 }}
         >
-          <Form
-            form={form}
-            name="addMaterialForm"
-            layout="vertical"
-            style={{
-              background: "#fff",
-              padding: "24px",
-              borderRadius: "8px",
-              border: "1px solid #f0f0f0",
-            }}
-            initialValues={{ name: "", quantity: 0 }}
-            onFinish={handleAddMaterial}
-          >
+          <Form form={form} name="addMaterialForm" layout="vertical" onFinish={handleAddMaterial}>
             <Form.Item
               name="name"
               label="Tên nguyên liệu"
-              rules={[
-                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
-              ]}
-              style={{ marginBottom: 0 }}
+              rules={[{ required: true, message: "Vui lòng nhập tên nguyên liệu!" }]}
             >
-              <Input
-                placeholder="Nhập tên nguyên liệu"
-                style={{ borderRadius: 6, marginBottom: 16 }}
-              />
+              <Input placeholder="Nhập tên nguyên liệu" />
             </Form.Item>
             <Form.Item
               name="quantity"
               label="Số lượng"
-              style={{ marginBottom: 0 }}
               rules={[
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
                   validator: (_, value) =>
-                    value > 0
-                      ? Promise.resolve()
-                      : Promise.reject(
-                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
-                        ),
+                    value >= 0 ? Promise.resolve() : Promise.reject(new Error("Số lượng phải lớn hơn hoặc bằng 0!")),
                 },
               ]}
             >
-              <Input
-                type="number"
-                placeholder="Nhập số lượng"
-                style={{ borderRadius: 6, marginBottom: 16 }}
-              />
+              <Input type="number" placeholder="Nhập số lượng" />
             </Form.Item>
           </Form>
         </Modal>

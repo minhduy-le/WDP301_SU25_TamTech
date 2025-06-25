@@ -1,5 +1,3 @@
-// socket.js - Fixed Version
-
 const socketIo = require("socket.io");
 const jwt = require("jsonwebtoken");
 const Message = require("../models/message");
@@ -7,23 +5,31 @@ const ChatRoomUser = require("../models/ChatRoomUser");
 const User = require("../models/user");
 
 const initializeSocket = (server) => {
-  // WDP301-Backend/config/socket.js
-
-  // WDP301-Backend/config/socket.js
-
   const io = socketIo(server, {
     cors: {
-      origin: ["https://wdp301-su25.space", "http://localhost:3000"],
+      origin: [
+        "https://wdp301-su25.space",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://wdp301-su25.space/",
+        "https://wdp301-su25.space/manager/chat",
+        "https://wdp301-su25.space/staff/chat",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
-      allowEIO3: true, // <-- Thêm dòng này
     },
-    transports: ["polling", "websocket"],
+    transports: ["websocket", "polling"],
+    allowUpgrades: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace("Bearer ", "");
+      const token =
+        socket.handshake.auth.token ||
+        socket.handshake.headers.authorization?.replace("Bearer ", "") ||
+        socket.handshake.query.token; // Thêm query token
 
       if (!token) {
         console.error("❌ Socket Auth Error: No token provided.");
@@ -55,9 +61,24 @@ const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     const userId = socket.userId;
-    console.log(`✅ User connected: ${userId} (Socket ID: ${socket.id})`);
+    console.log(`✅ User connected: ${userId} (Socket ID: ${socket.id}) - Transport: ${socket.conn.transport.name}`);
 
+    // Join user room
     socket.join(`user_${userId}`);
+
+    // Heartbeat để maintain connection
+    const heartbeat = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("heartbeat", { timestamp: Date.now() });
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 30000);
+
+    // Xử lý upgrade transport
+    socket.conn.on("upgrade", () => {
+      console.log(`🔄 User ${userId} upgraded to ${socket.conn.transport.name}`);
+    });
 
     socket.on("joinChatRoom", async (chatRoomId) => {
       try {
@@ -70,11 +91,19 @@ const initializeSocket = (server) => {
           console.log(`✅ User ${userId} joined chat room ${chatRoomId}`);
           socket.emit("joinedChatRoom", { chatRoomId, success: true });
         } else {
-          socket.emit("joinedChatRoom", { chatRoomId, success: false, error: "Not authorized to join this room" });
+          socket.emit("joinedChatRoom", {
+            chatRoomId,
+            success: false,
+            error: "Not authorized to join this room",
+          });
         }
       } catch (error) {
         console.error("❌ Error joining chat room:", error.message);
-        socket.emit("joinedChatRoom", { chatRoomId, success: false, error: "Failed to join room" });
+        socket.emit("joinedChatRoom", {
+          chatRoomId,
+          success: false,
+          error: "Failed to join room",
+        });
       }
     });
 
@@ -90,6 +119,7 @@ const initializeSocket = (server) => {
           return;
         }
 
+        // Validate chat room membership
         if (chatRoomId) {
           const chatRoomUser = await ChatRoomUser.findOne({
             where: { chatRoomId, userId: senderId },
@@ -123,25 +153,42 @@ const initializeSocket = (server) => {
           Receiver: receiver?.get({ plain: true }),
         };
 
+        // Emit message
         if (chatRoomId) {
           io.to(`room_${chatRoomId}`).emit("message", messageData);
         } else if (receiverId) {
           io.to(`user_${senderId}`).to(`user_${receiverId}`).emit("message", messageData);
         }
 
-        if (callback) callback({ success: true, message: "Message sent successfully", data: messageData });
+        if (callback)
+          callback({
+            success: true,
+            message: "Message sent successfully",
+            data: messageData,
+          });
       } catch (error) {
         console.error("❌ Error sending message:", error.message);
         if (callback) callback({ success: false, error: "Failed to send message" });
       }
     });
 
+    // Handle heartbeat response
+    socket.on("heartbeat-response", () => {
+      console.log(`💓 Heartbeat from user ${userId}`);
+    });
+
     socket.on("disconnect", (reason) => {
       console.log(`❌ User disconnected: ${socket.userId} (Socket ID: ${socket.id}) - Reason: ${reason}`);
+      clearInterval(heartbeat);
     });
 
     socket.on("ping", (callback) => {
-      if (callback) callback({ success: true, userId: socket.userId, timestamp: new Date().toISOString() });
+      if (callback)
+        callback({
+          success: true,
+          userId: socket.userId,
+          timestamp: new Date().toISOString(),
+        });
     });
 
     socket.on("error", (error) => {
@@ -149,6 +196,7 @@ const initializeSocket = (server) => {
     });
   });
 
+  // Global error handling
   io.engine.on("connection_error", (err) => {
     console.error("❌ Connection error:", {
       message: err.message,

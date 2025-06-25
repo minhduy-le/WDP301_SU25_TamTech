@@ -86,4 +86,29 @@ const getAllMaterials = async () => {
   }
 };
 
-module.exports = { createMaterial, getAllMaterials };
+const increaseMaterialQuantity = async (materialId) => {
+  try {
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      throw "Material not found";
+    }
+
+    // Increase quantity by 100
+    const newQuantity = material.quantity + 100;
+    if (newQuantity >= 10000) {
+      throw "Quantity cannot exceed 10000";
+    }
+
+    // Update quantity
+    material.quantity = newQuantity;
+    await material.save();
+    return {
+      materialId: material.materialId,
+      quantity: material.quantity,
+    };
+  } catch (error) {
+    throw error.message || error;
+  }
+};
+
+module.exports = { createMaterial, getAllMaterials, increaseMaterialQuantity };

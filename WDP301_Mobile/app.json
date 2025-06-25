@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "TamTac_App",
-    "slug": "TamTac_App",
-    "version": "1.0.0",
+    "name": "Tấm Tắc",
+    "slug": "Tấm Tắc",
+    "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./src/assets/icon.png",
+    "icon": "./src/assets/splash.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./src/assets/splash.png",
@@ -13,26 +13,31 @@
     },
     "ios": {
       "supportsTablet": true,
-      "scheme": "hoidanit-app",
-      "bundleIdentifier": "com.hoidanit.app",
+      "scheme": "tamtac-app",
+      "bundleIdentifier": "com.tamtac.app",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Sử dụng Face ID để đăng nhập nhanh"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "foregroundImage": "./src/assets/splash.png",
         "backgroundColor": "#ffffff"
       },
-      "scheme": "hoidanit-app",
-      "package": "com.hoidanit.app",
+      "scheme": "tamtac-app",
+      "package": "com.tamtac.app",
       "permissions": ["USE_BIOMETRICS"]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },
-    "scheme": "hoidanit-app",
-    "plugins": ["expo-router", "expo-font", "expo-local-authentication"],
+    "scheme": "tamtac-app",
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-local-authentication",
+      "expo-web-browser"
+    ],
     "experiments": {
       "typedRoutes": true
     }

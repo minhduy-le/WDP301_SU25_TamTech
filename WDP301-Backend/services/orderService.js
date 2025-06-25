@@ -519,54 +519,55 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
     console.log("Starting PDF generation for orderId:", orderId);
     const doc = new PDFDocument({
       size: [216, 600],
-      margin: 10,
+      margin: 20,
       info: {
         Title: `Hóa đơn #${order.orderId}`,
-        Author: "ABC Company Limited",
+        Author: "Tấm Tắc",
         Subject: "Hóa đơn bán hàng",
         Keywords: "hóa đơn, đơn hàng",
       },
     });
 
+    // Register custom fonts with proper paths
+    doc.registerFont("NotoSans", "./fonts/NotoSans-Regular.ttf");
+    doc.registerFont("NotoSans-Bold", "./fonts/NotoSans-SemiBold.ttf");
+
     const buffers = [];
     doc.on("data", buffers.push.bind(buffers));
 
-    const textColor = "#000000";
-    const lineColor = "#000000";
-    const lineSpacing = 12;
+    // Styling constants
+    const headerColor = "#1E3A8A";
+    const textColor = "#1F2937";
+    const accentColor = "#10B981";
+    const lineSpacing = 14;
+    const tableBorderColor = "#E5E7EB";
 
-    let currentY = 10;
+    let currentY = 20;
 
-    const drawDashedLine = (y, dashLength = 5, gapLength = 5) => {
-      doc.lineWidth(1).strokeColor(lineColor);
-      for (let x = doc.page.margins.left; x < doc.page.width - doc.page.margins.right; x += dashLength + gapLength) {
-        doc
-          .moveTo(x, y)
-          .lineTo(x + dashLength, y)
-          .stroke();
-      }
-    };
+    // Company header
+    doc.font("NotoSans-Bold").fontSize(16).fillColor(headerColor).text("TẤM TẮC", { align: "center" });
+    currentY += lineSpacing;
+    doc.font("NotoSans").fontSize(10).fillColor(textColor).text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
+    currentY += lineSpacing;
+    doc.text("TP. Hồ Chí Minh | Tel: +84 909 123 456", { align: "center" });
+    currentY += lineSpacing * 1.5;
 
-    doc.font("Helvetica-Bold").fontSize(12).fillColor(textColor).text("ABC COMPANY LIMITED", { align: "center" });
-    currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text("123 Đường Kinh Doanh, Quận 1", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("TP. Hồ Chí Minh", { align: "center" });
-    currentY += lineSpacing;
-    doc.text("Điện thoại: +84 909 123 456", { align: "center" });
+    // Dashed line
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
     currentY += lineSpacing;
 
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
+    // Invoice info
     doc
-      .font("Helvetica-Bold")
-      .fontSize(10)
+      .font("NotoSans-Bold")
+      .fontSize(12)
+      .fillColor(headerColor)
       .text(`HÓA ĐƠN #${order.orderId.toString().padStart(6, "0")}`, { align: "center" });
     currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
+    doc
+      .font("NotoSans")
+      .fontSize(9)
+      .fillColor(textColor)
+      .text(`Ngày: ${new Date(order.order_create_at).toLocaleDateString("vi-VN")}`, { align: "left" });
     currentY += lineSpacing;
     doc.text(`Thời gian: ${new Date(order.payment_time || new Date()).toLocaleTimeString("vi-VN")}`, { align: "left" });
     currentY += lineSpacing;
@@ -575,79 +576,117 @@ async function generateAndUploadInvoice(order, orderId, transaction) {
       currentY += lineSpacing;
       doc.text(`Đặt hộ: ${order.tenNguoiDatHo} - SĐT: ${order.soDienThoaiNguoiDatHo}`, { align: "left" });
     }
+    currentY += lineSpacing * 1.5;
+
+    // Items table
+    doc
+      .font("NotoSans-Bold")
+      .fontSize(10)
+      .fillColor(headerColor)
+      .text("SẢN PHẨM", 20, currentY)
+      .text("SỐ LƯỢNG", 120, currentY, { width: 30, align: "right" })
+      .text("GIÁ", 160, currentY, { width: 36, align: "right" });
     currentY += lineSpacing;
 
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
-    doc.font("Helvetica-Bold").fontSize(8).text("Sản phẩm", { align: "left" });
-    currentY += lineSpacing;
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Số lượng x Giá = Tổng", { align: "right" });
-    currentY += lineSpacing;
+    doc.lineWidth(0.5).strokeColor(tableBorderColor).moveTo(20, currentY).lineTo(196, currentY).stroke();
+    currentY += 2;
 
     orderItems.forEach((item) => {
       const itemTotal = item.quantity * item.price;
-      doc.text(`${item.Product.name}`, { align: "left" });
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(item.Product.name, 22, currentY, { width: 98 });
+      doc.text(item.quantity.toString(), 120, currentY, { width: 30, align: "right" });
+      doc.text(`${item.price.toLocaleString("vi-VN")} VND`, 160, currentY, { width: 36, align: "right" });
       currentY += lineSpacing;
-      doc.text(`${item.quantity} x ${item.price.toLocaleString("vi-VN")} = ${itemTotal.toLocaleString("vi-VN")} VND`, {
-        align: "right",
-      });
-      currentY += lineSpacing;
+      doc.lineWidth(0.5).strokeColor(tableBorderColor).moveTo(20, currentY).lineTo(196, currentY).stroke();
+      currentY += 2;
     });
 
-    drawDashedLine(currentY);
     currentY += lineSpacing;
 
+    // Notes
     if (order.note) {
-      doc.font("Helvetica-Bold").fontSize(8).text("Ghi chú:", { align: "left" });
+      doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("GHI CHÚ:", 20, currentY);
       currentY += lineSpacing;
-      doc.font("Helvetica").fontSize(8).text(order.note, { align: "left", width: 190 });
-      currentY += lineSpacing * 2;
+      doc.font("NotoSans").fontSize(9).fillColor(textColor).text(order.note, 22, currentY, { width: 174 });
+      currentY += lineSpacing * 1.5;
     }
 
-    doc.font("Helvetica").fontSize(8);
-    doc.text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, { align: "right" });
+    // Summary
+    doc
+      .font("NotoSans")
+      .fontSize(9)
+      .fillColor(textColor)
+      .text(`Tổng phụ: ${order.order_amount.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
     currentY += lineSpacing;
-    doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, { align: "right" });
+    doc.text(`Phí vận chuyển: ${order.order_shipping_fee.toLocaleString("vi-VN")} VND`, 130, currentY, {
+      width: 66,
+      align: "right",
+    });
     currentY += lineSpacing;
 
     if (order.order_discount_value > 0) {
-      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, { align: "right" });
+      doc.text(`Giảm giá: -${order.order_discount_value.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
       currentY += lineSpacing;
     }
 
-    drawDashedLine(currentY);
+    // Total line
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(130, currentY).lineTo(196, currentY).stroke();
     currentY += lineSpacing;
 
-    doc.font("Helvetica-Bold").fontSize(10);
     const totalAmount = order.order_subtotal - (order.order_discount_value || 0);
-    doc.text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, { align: "right" });
-    currentY += lineSpacing;
+    doc
+      .font("NotoSans-Bold")
+      .fontSize(12)
+      .fillColor(accentColor)
+      .text(`Tổng cộng: ${totalAmount.toLocaleString("vi-VN")} VND`, 130, currentY, {
+        width: 66,
+        align: "right",
+      });
+    currentY += lineSpacing * 1.5;
 
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
+    // Payment and status
+    doc.font("NotoSans").fontSize(9).fillColor(textColor).text("Thanh toán: Thanh toán trực tuyến", { align: "left" });
     currentY += lineSpacing;
     doc.text("Trạng thái: ĐÃ THANH TOÁN", { align: "left" });
-    currentY += lineSpacing;
+    currentY += lineSpacing * 1.5;
 
-    drawDashedLine(currentY);
-    currentY += lineSpacing;
-
+    // QR Code and additional info
     const qrImage = Buffer.from(qrCodeUrl.split(",")[1], "base64");
     doc.image(qrImage, 58, currentY, { width: 100, align: "center" });
     currentY += 110;
-    doc.fontSize(6).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
+    doc.font("NotoSans").fontSize(8).fillColor(textColor).text("Quét mã để xem chi tiết đơn hàng", { align: "center" });
     currentY += lineSpacing;
 
-    drawDashedLine(currentY);
+    // Footer with proper Vietnamese text
+    doc.lineWidth(1).strokeColor("#D1D5DB").moveTo(20, currentY).lineTo(196, currentY).dash(5, { space: 5 }).stroke();
     currentY += lineSpacing;
 
-    doc.font("Helvetica").fontSize(8);
-    doc.text("Cảm ơn bạn đã mua sắm cùng chúng tôi!", { align: "center" });
+    doc.font("NotoSans-Bold").fontSize(10).fillColor(headerColor).text("CẢM ƠN QUÝ KHÁCH!", { align: "center" });
     currentY += lineSpacing;
-    doc.text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
+    doc
+      .font("NotoSans")
+      .fontSize(8)
+      .fillColor(textColor)
+      .text(`Được tạo vào ${new Date().toLocaleString("vi-VN")}`, { align: "center" });
     currentY += lineSpacing;
+
+    // Ensure all text below QR code uses the correct font
+    doc
+      .font("NotoSans")
+      .fontSize(8)
+      .fillColor(textColor)
+      .text("Thành toán: Đã", 20, currentY, { continued: true })
+      .text("ITOA", { continued: true })
+      .text(" - Mã đơn hàng: ", { continued: true })
+      .text(order.orderId, { continued: true })
+      .text(" - Ngày tạo: ", { continued: true })
+      .text(new Date().toLocaleString("vi-VN"), { align: "left" });
 
     doc.page.height = currentY + doc.page.margins.bottom;
 

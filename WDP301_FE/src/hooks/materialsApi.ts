@@ -25,16 +25,12 @@ export interface MaterialDto {
 
 interface MutationVariables {
   materialId: number;
-  data: MaterialDto;
+  data?: Partial<MaterialDto>; // Optional data for flexibility
 }
 
 const fetchMaterials = async (): Promise<MaterialDto[]> => {
   const response = await axiosInstance.get("materials");
-  const {
-    status,
-    message: responseMessage,
-    data,
-  } = response.data as GenericApiResponse<MaterialDto[]>;
+  const { status, message: responseMessage, data } = response.data as GenericApiResponse<MaterialDto[]>;
   if (status >= 200 && status < 300 && data) {
     return Array.isArray(data) ? data : [];
   }
@@ -62,16 +58,8 @@ export const useGetMaterialById = (materialId: number) => {
     queryKey: ["materials", materialId],
     queryFn: async () => {
       const response = await axiosInstance.get(`materials/${materialId}`);
-      const {
-        // status,
-        // message: responseMessage,
-        material,
-      } = response.data as MaterialDetailApiResponse;
+      const { material } = response.data as MaterialDetailApiResponse;
 
-      // if (status >= 200 && status < 300 && product) {
-      //   return product;
-      // }
-      // throw new Error(responseMessage || "Không thể tải chi tiết sản phẩm");
       if (!material) {
         throw new Error("Không thể tải chi tiết sản phẩm");
       }
@@ -85,11 +73,21 @@ export const useUpdateMaterial = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, MutationVariables>({
-    mutationFn: async ({
-      materialId,
-      data,
-    }: MutationVariables): Promise<void> => {
+    mutationFn: async ({ materialId, data }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`materials/${materialId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+    },
+  });
+};
+
+export const useIncreaseMaterialQuantity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { materialId: number }>({
+    mutationFn: async ({ materialId }: { materialId: number }): Promise<void> => {
+      await axiosInstance.put(`materials/${materialId}/scan`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });

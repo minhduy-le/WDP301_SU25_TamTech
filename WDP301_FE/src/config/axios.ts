@@ -2,6 +2,7 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: "https://wdp301-su25.space/api/",
+  // baseURL: "http://localhost:3000/api/",
   headers: {
     "Content-Type": "application/json",
     Accept: "*/*",

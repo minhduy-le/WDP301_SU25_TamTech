@@ -1,20 +1,10 @@
 import React, { useEffect, useState } from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  Pressable,
-  FlatList,
-  Modal,
-  Platform,
-} from "react-native";
+import { Image, StyleSheet, Text, View, Platform } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import * as Location from "expo-location";
 import { APP_COLOR, BASE_URL } from "@/utils/constant";
 import logo from "@/assets/logo.png";
 import { FONTS } from "@/theme/typography";
-import axios from "axios";
 import { useCurrentApp } from "@/context/app.context";
 interface HeaderHomeProps {
   onBranchSelect: (id: string) => void;
@@ -27,8 +17,6 @@ interface IPropsBranches {
 }
 const styles = StyleSheet.create({
   container: {
-    marginTop: Platform.OS === "ios" ? 30 : 20,
-    marginBottom: Platform.OS === "ios" ? 20 : 0,
     paddingTop: 20,
     gap: 3,
     height: 50,
@@ -94,10 +82,10 @@ const HeaderHome: React.FC<HeaderHomeProps> = ({ onBranchSelect }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/branches/distance?destination=${locationReal}`
-        );
-        setBranchInfo(res.data.data);
+        // const res = await axios.get(
+        //   `${BASE_URL}/branches/distance?destination=${locationReal}`
+        // );
+        // setBranchInfo(res.data.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }

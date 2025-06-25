@@ -11,7 +11,7 @@ import BannerHome from "./banner.home";
 import { APP_COLOR } from "@/utils/constant";
 import { FONTS } from "@/theme/typography";
 import { useRouter } from "expo-router";
-const data1 = [
+const icon = [
   {
     key: 1,
     name: "Best Seller",
@@ -40,7 +40,13 @@ const data1 = [
     key: 5,
     name: "Thông tin",
     source: require("@/assets/icons/thong-tin.png"),
-    targetScreen: "information",
+    targetScreen: "account",
+  },
+  {
+    key: 6,
+    name: "Thông báo",
+    source: require("@/assets/icons/thong-bao.png"),
+    targetScreen: "notification",
   },
 ];
 const IconItem = ({ item }: any) => {
@@ -63,8 +69,8 @@ const IconItem = ({ item }: any) => {
 };
 
 const TopListHome = () => {
-  const topRowData = data1.filter((_, index) => index % 2 === 0);
-  const bottomRowData = data1.filter((_, index) => index % 2 !== 0);
+  const topRowData = icon.filter((_, index) => index % 2 === 0);
+  const bottomRowData = icon.filter((_, index) => index % 2 !== 0);
   return (
     <View>
       <BannerHome />
@@ -100,7 +106,7 @@ const styles = StyleSheet.create({
   },
   staggeredRow: {
     marginTop: 10,
-    marginLeft: 15,
+    marginLeft: 20,
   },
   iconWrapper: {
     marginHorizontal: 8,

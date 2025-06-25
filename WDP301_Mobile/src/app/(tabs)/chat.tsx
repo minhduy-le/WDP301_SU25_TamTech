@@ -1,14 +1,6 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  Image,
-  Pressable,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import demo from "@/assets/demo.jpg";
 import { APP_COLOR } from "@/utils/constant";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,11 +13,8 @@ interface User {
 }
 import { jwtDecode } from "jwt-decode";
 import { FONTS } from "@/theme/typography";
-import logo from "@/assets/logo.png";
-
 const ChatList = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
-
   const users: User[] = [
     {
       id: "1",
@@ -115,10 +104,15 @@ const ChatList = () => {
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
     >
-      <View style={styles.container}>
+      {/* <View style={styles.container}>
         <View
           style={{
             paddingHorizontal: 20,
@@ -142,8 +136,11 @@ const ChatList = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
         />
-      </View>
-    </SafeAreaView>
+      </View> */}
+      <Text style={{ color: APP_COLOR.BROWN, fontFamily: FONTS.regular }}>
+        Vui lòng đăng nhập để sử dụng tính năng này.
+      </Text>
+    </View>
   );
 };
 

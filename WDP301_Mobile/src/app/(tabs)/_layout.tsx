@@ -91,7 +91,6 @@ const TabLayout = () => {
         },
         headerShown: false,
         tabBarLabelStyle: {
-          paddingBottom: 5,
           fontFamily: FONTS.bold,
           fontSize: 12,
         },
@@ -99,9 +98,7 @@ const TabLayout = () => {
         tabBarInactiveTintColor: APP_COLOR.BROWN,
         tabBarStyle: {
           borderTopWidth: 0,
-          marginBottom: Platform.OS === "android" ? 20 : 0,
-          height: 80,
-          paddingBottom: 5,
+          height: 55,
           backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
         },
         tabBarLabel:

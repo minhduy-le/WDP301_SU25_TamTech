@@ -54,7 +54,7 @@ const CustomerChangePassword = () => {
         });
 
         if (res.statusCode === 400) {
-          router.replace("/(auth)/login");
+          router.replace("/(auth)/welcome");
         }
       }
     } catch (error: any) {

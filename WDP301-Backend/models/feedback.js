@@ -25,10 +25,13 @@ const Feedback = sequelize.define(
         key: "id",
       },
     },
-    isFeedback: {
-      type: DataTypes.BOOLEAN,
+    orderId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: true,
+      references: {
+        model: "orders",
+        key: "orderId",
+      },
     },
     comment: {
       type: DataTypes.STRING(255),
@@ -41,6 +44,11 @@ const Feedback = sequelize.define(
         min: 1,
         max: 5,
       },
+    },
+    isResponsed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

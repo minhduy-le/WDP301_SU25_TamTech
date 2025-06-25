@@ -4,13 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Card, Avatar, message } from "antd";
 import { SearchOutlined, SendOutlined } from "@ant-design/icons";
 import { useGetAccounts } from "../hooks/accountApi";
-import { useCreateChat } from "../hooks/chatsApi";
-import io, { Socket } from "socket.io-client";
 import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useAuthStore } from "../hooks/usersApi";
 import "../style/StaffChat.css";
+import { useSocketConnection, useSocketListener, emitSocketEvent } from "../hooks/useSocket";
 
 dayjs.extend(customParseFormat);
 
@@ -36,20 +35,20 @@ const StaffChat = () => {
   const [messageInput, setMessageInput] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   // --- Hooks ---
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore();
-  const { mutate: createChat, isPending: isSending } = useCreateChat();
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // --- THAY ĐỔI: Sử dụng hook để quản lý kết nối, không cần state cho socket và isConnected nữa ---
+  const { isConnected } = useSocketConnection(token);
 
   // --- Functions ---
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   };
 
@@ -58,88 +57,58 @@ const StaffChat = () => {
       message.error("Vui lòng chọn người nhận và nhập tin nhắn.");
       return;
     }
-    if (!isConnected || !socket) {
-      message.error(
-        "Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc kết nối lại."
-      );
+    if (!isConnected) {
+      message.error("Chưa kết nối đến máy chủ chat. Vui lòng đợi hoặc tải lại trang.");
       return;
     }
 
+    setIsSending(true);
     const messageData = {
       receiverId: selectedUser.id,
       content: messageInput.trim(),
     };
 
-    createChat(messageData, {
-      onSuccess: () => {
-        setMessageInput("");
-        socket.emit("sendMessage", messageData, (response: any) => {
-          if (response?.error) {
-            message.error(response.error || "Gửi tin nhắn qua socket thất bại");
-          } else {
-            message.success("Tin nhắn đã được gửi!");
-          }
-        });
-      },
-      onError: (error: any) => {
-        message.error(error.message || "Gửi tin nhắn thất bại!");
-      },
-    });
+    // Chỉ cần phát sự kiện 'sendMessage'. Server sẽ xử lý việc lưu và gửi lại.
+    emitSocketEvent("sendMessage", messageData);
+
+    // Thêm tin nhắn tạm thời vào UI để có cảm giác tức thì
+    const tempMessage: Chat = {
+      id: Date.now(),
+      senderId: authUser.id,
+      receiverId: selectedUser.id,
+      content: messageInput.trim(),
+      createdAt: new Date(),
+      Sender: { id: authUser.id, fullName: authUser.fullName },
+    };
+    setChats((prevChats) => [...prevChats, tempMessage]);
+
+    setMessageInput("");
+    setIsSending(false);
+    setTimeout(() => scrollToBottom(), 0);
   };
 
   const formatChatTime = (createdAt: Date) => {
     const messageDate = dayjs(createdAt);
-    const today = dayjs();
-    const yesterday = dayjs().subtract(1, "day");
-
-    if (messageDate.isSame(today, "day")) return messageDate.format("HH:mm");
-    if (messageDate.isSame(yesterday, "day"))
-      return `Hôm qua ${messageDate.format("HH:mm")}`;
-    return messageDate.format("HH:mm DD/MM/YYYY");
+    return messageDate.format("HH:mm");
   };
 
   // --- Effects ---
 
-  // Quản lý kết nối socket
-  useEffect(() => {
-    if (!token || !authUser?.id) return;
+  // --- THAY ĐỔI: Sử dụng hook để lắng nghe tin nhắn mới ---
+  useSocketListener("message", (data: unknown) => {
+    const receivedMessage = data as Chat;
+    // Chỉ cập nhật UI nếu tin nhắn thuộc về cuộc hội thoại đang xem
+    if (
+      selectedUser &&
+      ((receivedMessage.senderId === authUser?.id && receivedMessage.receiverId === selectedUser.id) ||
+        (receivedMessage.senderId === selectedUser.id && receivedMessage.receiverId === authUser?.id))
+    ) {
+      // Thêm tin nhắn thật từ server
+      setChats((prev) => [...prev, { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) }]);
+    }
+  });
 
-    const newSocket = io("wss://wdp301-su25.space", {
-      auth: { token },
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-    });
-    setSocket(newSocket);
-
-    newSocket.on("connect", () => setIsConnected(true));
-    newSocket.on("disconnect", () => setIsConnected(false));
-    newSocket.on("message", (receivedMessage: Chat) => {
-      const isRelevant =
-        receivedMessage.senderId === selectedUser?.id ||
-        receivedMessage.senderId === authUser.id;
-      if (isRelevant) {
-        setChats((prev) =>
-          [
-            ...prev,
-            {
-              ...receivedMessage,
-              createdAt: new Date(receivedMessage.createdAt),
-            },
-          ].sort(
-            (a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          )
-        );
-      }
-    });
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [token, authUser?.id]);
-
-  // Tải tin nhắn ban đầu
+  // Tải tin nhắn ban đầu (logic này giữ nguyên)
   useEffect(() => {
     if (!authUser || !selectedUser) {
       setChats([]);
@@ -154,19 +123,13 @@ const StaffChat = () => {
         });
         const filteredChats = response.data.filter(
           (chat) =>
-            (chat.senderId === authUser.id &&
-              chat.receiverId === selectedUser.id) ||
-            (chat.senderId === selectedUser.id &&
-              chat.receiverId === authUser.id)
+            (chat.senderId === authUser.id && chat.receiverId === selectedUser.id) ||
+            (chat.senderId === selectedUser.id && chat.receiverId === authUser.id)
         );
         setChats(
           filteredChats
             .map((chat) => ({ ...chat, createdAt: new Date(chat.createdAt) }))
-            .sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-            )
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         );
       } catch {
         message.error("Không thể tải tin nhắn.");
@@ -187,18 +150,12 @@ const StaffChat = () => {
     accounts?.filter(
       (account) =>
         account.fullName.toLowerCase().includes(searchText.toLowerCase()) &&
-        (account.role === "Manager" || account.role === "Admin") && // Nhân viên chỉ chat với Manager/Admin
+        (account.role === "Manager" || account.role === "Admin") &&
         account.id !== authUser?.id
     ) || [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        padding: "20px",
-        height: "calc(100vh - 100px)",
-      }}
-    >
+    <div style={{ display: "flex", padding: "20px", height: "calc(100vh - 100px)" }}>
       <div
         style={{
           position: "fixed",
@@ -210,19 +167,14 @@ const StaffChat = () => {
           color: "white",
           borderRadius: "12px",
           fontSize: "12px",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
         }}
       >
         {isConnected ? `🟢 Đã kết nối` : `🔴 Mất kết nối`}
       </div>
 
       <Card
-        style={{
-          width: 300,
-          marginRight: 20,
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: "12px",
-        }}
+        style={{ width: 300, marginRight: 20, display: "flex", flexDirection: "column", borderRadius: "12px" }}
         bodyStyle={{ overflowY: "auto", flex: 1 }}
       >
         <Input
@@ -237,29 +189,14 @@ const StaffChat = () => {
           dataSource={filteredAccounts}
           renderItem={(account) => (
             <List.Item
-              onClick={() =>
-                setSelectedUser({ id: account.id, fullName: account.fullName })
-              }
-              style={{
-                cursor: "pointer",
-                padding: "12px",
-                borderRadius: "8px",
-              }}
+              onClick={() => setSelectedUser({ id: account.id, fullName: account.fullName })}
+              style={{ cursor: "pointer", padding: "12px", borderRadius: "8px" }}
               className={selectedUser?.id === account.id ? "active-user" : ""}
             >
               <List.Item.Meta
-                avatar={
-                  <Avatar style={{ backgroundColor: "#1890ff" }}>
-                    {account.fullName[0]}
-                  </Avatar>
-                }
+                avatar={<Avatar style={{ backgroundColor: "#1890ff" }}>{account.fullName[0]}</Avatar>}
                 title={
-                  <span
-                    style={{
-                      fontWeight:
-                        selectedUser?.id === account.id ? "bold" : "normal",
-                    }}
-                  >
+                  <span style={{ fontWeight: selectedUser?.id === account.id ? "bold" : "normal" }}>
                     {account.fullName}
                   </span>
                 }
@@ -269,63 +206,31 @@ const StaffChat = () => {
         />
       </Card>
 
-      <Card
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: "12px",
-          height: "100%",
-          overflowY: "auto",
-        }}
-      >
+      <Card style={{ flex: 1, display: "flex", flexDirection: "column", borderRadius: "12px" }}>
         {selectedUser ? (
           <>
-            <div
-              style={{
-                padding: 15,
-                paddingTop: 0,
-                borderBottom: "1px solid #f0f0f0",
-                fontWeight: "bold",
-                fontSize: 16,
-              }}
-            >
+            <div style={{ padding: 15, borderBottom: "1px solid #f0f0f0", fontWeight: "bold", fontSize: 16 }}>
               Chat với: {selectedUser.fullName}
             </div>
             <div
               ref={chatContainerRef}
               className="chat-container-user"
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                padding: "20px",
-                background: "#f5f5f5",
-                // maxHeight: "calc(100% - 89%)",
-                // minHeight: "-webkit-fill-available",
-              }}
+              style={{ flex: 1, overflowY: "auto", padding: "20px", background: "#f5f5f5" }}
             >
               {isLoadingChats ? (
-                <p style={{ textAlign: "center", color: "#888" }}>
-                  Đang tải tin nhắn...
-                </p>
+                <p style={{ textAlign: "center", color: "#888" }}>Đang tải tin nhắn...</p>
               ) : chats.length ? (
                 chats.map((chat) => (
                   <div
                     key={chat.id}
-                    className={`message-bubble ${
-                      chat.senderId === authUser?.id ? "sent" : "received"
-                    }`}
+                    className={`message-bubble ${chat.senderId === authUser?.id ? "sent" : "received"}`}
                   >
                     <div>{chat.content}</div>
-                    <small className="message-time">
-                      {formatChatTime(chat.createdAt)}
-                    </small>
+                    <small className="message-time">{formatChatTime(chat.createdAt)}</small>
                   </div>
                 ))
               ) : (
-                <p style={{ textAlign: "center", color: "#888" }}>
-                  Chưa có tin nhắn nào.
-                </p>
+                <p style={{ textAlign: "center", color: "#888" }}>Chưa có tin nhắn nào.</p>
               )}
             </div>
             <div style={{ padding: "15px", borderTop: "1px solid #f0f0f0" }}>
@@ -348,9 +253,7 @@ const StaffChat = () => {
             </div>
           </>
         ) : (
-          <div style={{ textAlign: "center", margin: "auto", color: "#888" }}>
-            Chọn một quản lý để bắt đầu chat.
-          </div>
+          <div style={{ textAlign: "center", margin: "auto", color: "#888" }}>Chọn một quản lý để bắt đầu chat.</div>
         )}
       </Card>
     </div>
