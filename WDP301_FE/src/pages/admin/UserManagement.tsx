@@ -351,7 +351,6 @@ const UserManagement: React.FC = () => {
       align: "center",
       render: (_, userRecord) => (
         <Space size="small">
-                   {" "}
           <Button
             type="primary"
             icon={<EditOutlined />}
@@ -363,7 +362,6 @@ const UserManagement: React.FC = () => {
               outline: "none",
             }}
           />
-                   {" "}
           {userRecord.status === "active" && (
             <Popconfirm
               title={`Bạn có chắc chắn muốn khóa tài khoản ${userRecord.fullName}?`}
@@ -382,18 +380,15 @@ const UserManagement: React.FC = () => {
                 style: { borderRadius: "6px", outline: "none" },
               }}
             >
-                         {" "}
               <Button
                 danger
                 icon={<StopOutlined />}
                 style={{ borderRadius: "6px", outline: "none" }}
               >
-                              Khóa            {" "}
+                 Khóa 
               </Button>
-                       {" "}
             </Popconfirm>
           )}
-                 {" "}
         </Space>
       ),
     },
