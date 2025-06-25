@@ -28,12 +28,13 @@ interface OrderHistoryProps {
 }
 
 interface FeedbackItem {
+  orderId: number;
   productId: number;
   name: string;
   quantity: number;
   price: string;
-  rating: number;
-  comment: string;
+  rating?: number;
+  comment?: string;
 }
 
 const statusMap: { [key: string]: string } & {
@@ -69,13 +70,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     orderItems: FeedbackItem[];
   } | null>(null);
 
-  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [loadingButtons, setLoadingButtons] = useState<Record<number, boolean>>(
     {}
   );
-  const [submittingFeedback, setSubmittingFeedback] = useState<
-    Record<number, boolean>
-  >({});
 
   const { mutate: createFeedback } = useCreateFeedback();
 
@@ -89,10 +87,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   };
 
   const showModal = (order: OrderHistory) => {
-    setLoadingButtons((prev) => ({ ...prev, [order.orderId]: true }));
-
+    // Không đặt loadingButtons thành true ngay khi mở modal, chỉ khi gửi feedback
     const actions = getActionsForStatus(order.status);
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
+      orderId: order.orderId,
       productId: item.productId,
       name: item.name,
       quantity: item.quantity,
@@ -112,84 +110,86 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       actions: actions,
       orderItems: feedbackItems,
     });
-    setFeedbackItems(feedbackItems);
+    setFeedbacks(feedbackItems);
     setIsModalVisible(true);
   };
 
   const handleOk = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !feedbacks.length) return;
 
-    const itemsToSubmit = feedbackItems.filter(
-      (item) => item.rating > 0 || item.comment.trim()
+    const hasValidFeedback = feedbacks.some(
+      (item) => (item.rating ?? 0) > 0 || item.comment?.trim()
     );
-
-    if (itemsToSubmit.length === 0) {
-      setIsModalVisible(false);
-      setFeedbackItems([]);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+    if (!hasValidFeedback) {
+      message.warning("Vui lòng nhập ít nhất một đánh giá hoặc nhận xét!");
       return;
     }
 
-    setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: true }));
+    // Đặt trạng thái loading khi bắt đầu gửi
+    setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
     try {
-      const promises = itemsToSubmit.map(
-        (item) =>
-          new Promise<void>((resolve, reject) => {
-            createFeedback(
-              {
-                productId: item.productId,
-                feedbackData: {
-                  comment: item.comment,
-                  rating: item.rating,
-                },
-              },
-              {
-                onSuccess: () => {
-                  message.success(`Đánh giá cho ${item.name} đã được gửi!`);
-                  resolve();
-                },
-                onError: (error: any) => {
-                  message.error(
-                    `Đã xảy ra lỗi khi gửi đánh giá cho ${item.name}.`
-                  );
-                  console.error(error);
-                  reject(error);
-                },
+      // Gửi feedback cho từng productId
+      await Promise.all(
+        feedbacks.map(
+          (item) =>
+            new Promise<void>((resolve, reject) => {
+              if ((item.rating ?? 0) > 0 || (item.comment ?? "").trim()) {
+                createFeedback(
+                  {
+                    orderId: item.orderId,
+                    productId: item.productId,
+                    feedbackData: {
+                      comment: item.comment || "",
+                      rating: item.rating || 0,
+                    },
+                  },
+                  {
+                    onSuccess: () => resolve(),
+                    onError: (error: any) => {
+                      message.error(
+                        `Lỗi khi gửi đánh giá cho sản phẩm ${item.name}.`
+                      );
+                      console.error(error);
+                      reject(error);
+                    },
+                  }
+                );
+              } else {
+                resolve(); // Bỏ qua nếu không có feedback
               }
-            );
-          })
+            })
+        )
       );
 
-      await Promise.all(promises);
-
-      setIsModalVisible(false);
-      setFeedbackItems([]);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      message.success(
+        `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi thành công!`
+      );
     } catch (error) {
+      message.error("Một số đánh giá không được gửi. Vui lòng thử lại.");
       console.error("Feedback submission failed:", error);
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+    } finally {
+      // Reset trạng thái loading dù thành công hay thất bại
+      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setIsModalVisible(false);
     }
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setFeedbackItems([]);
     if (selectedOrder) {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
     }
   };
 
   const handleRatingChange = (index: number, value: number) => {
-    setFeedbackItems((prev) =>
+    setFeedbacks((prev) =>
       prev.map((item, i) => (i === index ? { ...item, rating: value } : item))
     );
   };
 
   const handleCommentChange = (index: number, value: string) => {
-    setFeedbackItems((prev) =>
+    setFeedbacks((prev) =>
       prev.map((item, i) => (i === index ? { ...item, comment: value } : item))
     );
   };
@@ -203,6 +203,8 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         return ["Đánh giá", "Đặt lại"];
       case "Canceled":
         return ["Đặt lại"];
+      case "Paid":
+        return ["Đánh giá"];
       case "Preparing":
       case "Delivering":
         return ["Đặt tiếp"];
@@ -242,7 +244,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               const actions = getActionsForStatus(order.status);
               const itemCount = order.orderItems ? order.orderItems.length : 0;
               const isLoading = loadingButtons[order.orderId] || false;
-              const isSubmitting = submittingFeedback[order.orderId] || false;
               const total = calculateTotal(order);
               return (
                 <Col
@@ -328,7 +329,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                 }}
                               >
                                 {action}
-                                {isSubmitting && (
+                                {isLoading && (
                                   <LoadingOutlined
                                     style={{ marginLeft: 8, fontSize: 14 }}
                                     spin
@@ -373,8 +374,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                     ? order.orderItems.length
                     : 0;
                   const isLoading = loadingButtons[order.orderId] || false;
-                  const isSubmitting =
-                    submittingFeedback[order.orderId] || false;
                   const total = calculateTotal(order);
                   return (
                     <Col
@@ -462,7 +461,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                     }}
                                   >
                                     {action}
-                                    {isSubmitting && (
+                                    {isLoading && (
                                       <LoadingOutlined
                                         style={{ marginLeft: 8, fontSize: 14 }}
                                         spin
@@ -519,12 +518,8 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
             key="submit"
             className="submt-button-feedback"
             onClick={handleOk}
-            loading={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
-            disabled={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
+            loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
+            disabled={selectedOrder ? loadingButtons[selectedOrder.id] : false}
           >
             Gửi đánh giá
           </Button>,
@@ -541,84 +536,86 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         }}
       >
         {selectedOrder && selectedOrder.orderItems.length > 0 ? (
-          selectedOrder.orderItems.map((item, index) => (
-            <div key={index} className="feedback-item">
-              <Row>
-                <Col
-                  span={17}
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      color: "#2d1e1a",
-                    }}
+          selectedOrder.orderItems.map((item, index) => {
+            const feedback =
+              feedbacks.find((f) => f.productId === item.productId) || item;
+            return (
+              <div key={index} className="feedback-item">
+                <Row>
+                  <Col
+                    span={17}
+                    style={{ display: "flex", flexDirection: "column" }}
                   >
-                    {item.name}
-                  </Text>
-                </Col>
-                <Col span={7} style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#2d1e1a",
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  </Col>
+                  <Col span={7} style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#DA7339",
+                      }}
+                    >
+                      {item.price}
+                    </Text>
+                  </Col>
+                </Row>
+                <Col span={24}>
                   <Text
                     style={{
                       fontFamily: "Montserrat, sans-serif",
                       color: "#DA7339",
                     }}
                   >
-                    {item.price}
+                    Đánh giá món ăn
                   </Text>
                 </Col>
-              </Row>
-              <Col span={24}>
-                <Text
-                  style={{
-                    fontFamily: "Montserrat, sans-serif",
-                    color: "#DA7339",
-                  }}
-                >
-                  Đánh giá món ăn
-                </Text>
-              </Col>
-              <Row style={{ marginTop: "5px", alignItems: "center" }}>
-                <Col span={7} style={{ textAlign: "left" }}>
-                  <Rate
-                    defaultValue={item.rating}
-                    onChange={(value) => handleRatingChange(index, value)}
-                    style={{ color: "#78A243" }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
-                  />
-                </Col>
-                <Col span={17}>
-                  <Input
-                    placeholder="Nhận xét"
-                    defaultValue={item.comment}
-                    onChange={(e) => handleCommentChange(index, e.target.value)}
+                <Row style={{ marginTop: "5px", alignItems: "center" }}>
+                  <Col span={7} style={{ textAlign: "left" }}>
+                    <Rate
+                      value={feedback.rating}
+                      onChange={(value) => handleRatingChange(index, value)}
+                      style={{ color: "#78A243" }}
+                      disabled={
+                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                      }
+                    />
+                  </Col>
+                  <Col span={17}>
+                    <Input
+                      placeholder="Nhận xét"
+                      value={feedback.comment}
+                      onChange={(e) =>
+                        handleCommentChange(index, e.target.value)
+                      }
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        width: "100%",
+                      }}
+                      disabled={
+                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                      }
+                    />
+                  </Col>
+                </Row>
+                {index < selectedOrder.orderItems.length - 1 && (
+                  <hr
                     style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      width: "100%",
+                      border: "0",
+                      borderTop: "1px solid #000",
+                      margin: "10px 0",
                     }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
                   />
-                </Col>
-              </Row>
-              {index < selectedOrder.orderItems.length - 1 && (
-                <hr
-                  style={{
-                    border: "0",
-                    borderTop: "1px solid #000",
-                    margin: "10px 0",
-                  }}
-                />
-              )}
-            </div>
-          ))
+                )}
+              </div>
+            );
+          })
         ) : (
           <Text>Không có món nào để đánh giá.</Text>
         )}
