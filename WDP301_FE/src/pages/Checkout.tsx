@@ -17,7 +17,7 @@ import {
 } from "antd";
 import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
@@ -25,6 +25,7 @@ import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser } from "../hooks/profileApi";
 import { useCartStore } from "../store/cart.store";
 import { useGetPromotionByCode, type Promotion } from "../hooks/promotionApi";
+import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -70,6 +71,7 @@ const Checkout = () => {
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
+  const inputref = useRef<google.maps.places.SearchBox | null>(null);
 
   const { data: userProfile } = useGetProfileUser(userId || 0);
 
@@ -96,6 +98,32 @@ const Checkout = () => {
   };
 
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: "AIzaSyDKVRe6WPuIsGQVmZ2uiUZE3BYhvc5DGFk",
+    libraries: ["places"],
+  });
+
+  console.log(isLoaded);
+
+  const handleOnPlacesChanged = () => {
+    if (inputref.current) {
+      const places = inputref.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.formatted_address) {
+          let cleanedAddress = place.formatted_address;
+          cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+          setDetailedAddressProxy(cleanedAddress);
+        } else {
+          message.error("Không thể lấy địa chỉ từ Google Maps.");
+        }
+      } else {
+        message.error("Không tìm thấy địa chỉ nào.");
+      }
+    }
+  };
 
   // Initialize selectedItems with quantities from initialSelectedItems
   useEffect(() => {
@@ -151,30 +179,76 @@ const Checkout = () => {
     }
   };
 
+  // const handleAddressBlur = () => {
+  //   if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
+  //     const selectedWardName = selectedWard;
+  //     const selectedDistrict = districts.find(
+  //       (district) => district.districtId === selectedDistrictId
+  //     );
+  //     const deliverAddress =
+  //       `${detailedAddressProxy}, ${selectedWardName}, ${selectedDistrict?.name}, TPHCM`.trim();
+  //     calculateShipping(
+  //       { deliver_address: deliverAddress },
+  //       {
+  //         onSuccess: (data: any) => {
+  //           setDeliveryFee(data.fee || 0);
+  //           message.success("Phí giao hàng đã được cập nhật.");
+  //         },
+  //         onError: (error: any) => {
+  //           console.error("Error calculating shipping:", error);
+  //           message.error(
+  //             "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+  //           );
+  //           setDeliveryFee(22000);
+  //         },
+  //       }
+  //     );
+  //   }
+  // };
+
   const handleAddressBlur = () => {
-    if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
-      const selectedWardName = selectedWard;
-      const selectedDistrict = districts.find(
-        (district) => district.districtId === selectedDistrictId
-      );
-      const deliverAddress =
-        `${detailedAddressProxy}, ${selectedWardName}, ${selectedDistrict?.name}, TPHCM`.trim();
-      calculateShipping(
-        { deliver_address: deliverAddress },
-        {
-          onSuccess: (data: any) => {
-            setDeliveryFee(data.fee || 0);
-            message.success("Phí giao hàng đã được cập nhật.");
-          },
-          onError: (error: any) => {
-            console.error("Error calculating shipping:", error);
-            message.error(
-              "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-            );
-            setDeliveryFee(22000);
-          },
-        }
-      );
+    if (detailedAddressProxy) {
+      if (selectedDistrictId && selectedWard) {
+        const selectedDistrict = districts.find(
+          (district) => district.districtId === selectedDistrictId
+        );
+        const deliverAddress =
+          `${detailedAddressProxy}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim();
+        calculateShipping(
+          { deliver_address: deliverAddress },
+          {
+            onSuccess: (data: any) => {
+              setDeliveryFee(data.fee || 0);
+              message.success("Phí giao hàng đã được cập nhật.");
+            },
+            onError: (error: any) => {
+              console.error("Error calculating shipping:", error);
+              message.error(
+                "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+              );
+              setDeliveryFee(22000);
+            },
+          }
+        );
+      } else {
+        const deliverAddress = detailedAddressProxy.trim();
+        calculateShipping(
+          { deliver_address: deliverAddress },
+          {
+            onSuccess: (data: any) => {
+              setDeliveryFee(data.fee || 0);
+              message.success("Phí giao hàng đã được cập nhật.");
+            },
+            onError: (error: any) => {
+              console.error("Error calculating shipping:", error);
+              message.error(
+                "Không thể tính phí giao hàng. Sử dụng phí mặc định."
+              );
+              setDeliveryFee(22000);
+            },
+          }
+        );
+      }
     }
   };
 
@@ -470,16 +544,21 @@ const Checkout = () => {
                       </Select>
                     </Col>
                   </Row>
-                  <Input
-                    placeholder="Địa chỉ chi tiết"
-                    style={{
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                    value={detailedAddressProxy}
-                    onChange={(e) => setDetailedAddressProxy(e.target.value)}
-                    onBlur={handleAddressBlur}
-                  />
+                  <StandaloneSearchBox
+                    onLoad={(ref) => (inputref.current = ref)}
+                    onPlacesChanged={handleOnPlacesChanged}
+                  >
+                    <Input
+                      placeholder="Địa chỉ chi tiết"
+                      style={{
+                        background: "transparent",
+                        fontFamily: "'Montserrat', sans-serif",
+                      }}
+                      value={detailedAddressProxy}
+                      onChange={(e) => setDetailedAddressProxy(e.target.value)}
+                      onBlur={handleAddressBlur}
+                    />
+                  </StandaloneSearchBox>
                   <div className="delivery-info">
                     <Radio.Group
                       value={deliveryTimeOption}

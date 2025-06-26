@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 
 interface CreateFeedback {
+  productId: number;
   comment: string;
   rating: number;
 }
@@ -68,17 +69,14 @@ export const useCreateFeedback = () => {
   return useMutation({
     mutationFn: async ({
       orderId,
-      productId,
       feedbackData,
     }: {
       orderId: number;
-      productId: number;
-      feedbackData: CreateFeedback;
+      feedbackData: CreateFeedback[];
     }) => {
-      const response = await axiosInstance.post(
-        `feedback/${orderId}/${productId}`,
-        feedbackData
-      );
+      const response = await axiosInstance.post(`feedback/${orderId}`, {
+        feedbacks: feedbackData,
+      });
       return response.data as FeedbackResponseDto;
     },
   });

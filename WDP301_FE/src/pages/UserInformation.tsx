@@ -47,41 +47,6 @@ interface Contact {
   isDefault: boolean;
 }
 
-// const contacts = [
-//   {
-//     id: 1,
-//     name: "Truong Quang Hieu Trung",
-//     phone: "0888777888",
-//     address:
-//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-//     isDefault: false,
-//   },
-//   {
-//     id: 2,
-//     name: "Truong Quang Hieu Trung",
-//     phone: "0888777888",
-//     address:
-//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-//     isDefault: false,
-//   },
-//   {
-//     id: 3,
-//     name: "Truong Quang Hieu Trung",
-//     phone: "0888777888",
-//     address:
-//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-//     isDefault: true,
-//   },
-//   {
-//     id: 4,
-//     name: "Truong Quang Hieu Trung",
-//     phone: "0888777888",
-//     address:
-//       "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-//     isDefault: false,
-//   },
-// ];
-
 const UserInfomation = () => {
   const [activePage, setActivePage] = useState("1");
   const [isModalVisible, setIsModalVisible] = useState(false);
