@@ -125,42 +125,41 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       return;
     }
 
-    // Đặt trạng thái loading khi bắt đầu gửi
     setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
     try {
-      // Gửi feedback cho từng productId
-      await Promise.all(
-        feedbacks.map(
-          (item) =>
-            new Promise<void>((resolve, reject) => {
-              if ((item.rating ?? 0) > 0 || (item.comment ?? "").trim()) {
-                createFeedback(
-                  {
-                    orderId: item.orderId,
-                    productId: item.productId,
-                    feedbackData: {
-                      comment: item.comment || "",
-                      rating: item.rating || 0,
-                    },
-                  },
-                  {
-                    onSuccess: () => resolve(),
-                    onError: (error: any) => {
-                      message.error(
-                        `Lỗi khi gửi đánh giá cho sản phẩm ${item.name}.`
-                      );
-                      console.error(error);
-                      reject(error);
-                    },
-                  }
-                );
-              } else {
-                resolve(); // Bỏ qua nếu không có feedback
-              }
-            })
-        )
-      );
+      // Chuẩn bị mảng feedbacks để gửi
+      const feedbackData = feedbacks
+        .filter((item) => (item.rating ?? 0) > 0 || (item.comment ?? "").trim())
+        .map((item) => ({
+          productId: item.productId,
+          comment: item.comment || "",
+          rating: item.rating || 0,
+        }));
+
+      if (feedbackData.length === 0) {
+        message.warning("Không có đánh giá nào để gửi!");
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        createFeedback(
+          {
+            orderId: selectedOrder.id,
+            feedbackData, // Gửi mảng feedbacks
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: (error: any) => {
+              message.error(
+                `Lỗi khi gửi đánh giá cho đơn hàng ${selectedOrder.id}.`
+              );
+              console.error(error);
+              reject(error);
+            },
+          }
+        );
+      });
 
       message.success(
         `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi thành công!`
@@ -169,7 +168,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       message.error("Một số đánh giá không được gửi. Vui lòng thử lại.");
       console.error("Feedback submission failed:", error);
     } finally {
-      // Reset trạng thái loading dù thành công hay thất bại
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
       setIsModalVisible(false);
     }
