@@ -174,33 +174,60 @@ const UserInfomation = () => {
   };
 
   const handleOk = () => {
-    updateForm.validateFields().then((values) => {
-      const formattedValues = {
-        ...values,
-        date_of_birth: values.date_of_birth
-          ? dayjs(values.date_of_birth).format("YYYY-MM-DD")
-          : "",
-      };
-      updateProfile(
-        {
-          id: userId || 0,
-          data: formattedValues,
-        },
-        {
-          onSuccess: () => {
-            refetch();
-            message.success("Cập nhật thông tin cá nhân thành công");
-            setIsModalVisible(false);
-          },
-          onError: (error) => {
-            message.success("Cập nhật thông tin cá nhân thất bại");
-            console.error("Update failed:", error);
-          },
-        }
-      );
-    });
-  };
+    updateForm
+      .validateFields()
+      .then((values) => {
+        const currentDate = dayjs();
+        const formattedValues = {
+          ...values,
+          date_of_birth: values.date_of_birth
+            ? dayjs(values.date_of_birth).format("YYYY-MM-DD")
+            : "",
+        };
 
+        // Validate email must contain @
+        if (!values.email.includes("@")) {
+          message.error("Email phải chứa ký tự '@'!");
+          return;
+        }
+
+        // Validate date of birth must be in the past
+        const dob = dayjs(values.date_of_birth);
+        if (dob.isSame(currentDate, "day") || dob.isAfter(currentDate)) {
+          message.error("Ngày sinh phải là ngày trong quá khứ!");
+          return;
+        }
+
+        // Validate phone number must be 10 or 11 digits
+        const phone = values.phone_number.replace(/\D/g, ""); // Remove non-digit characters
+        if (!/^\d{10}$|^\d{11}$/.test(phone)) {
+          message.error("Số điện thoại phải có 10 hoặc 11 số!");
+          return;
+        }
+
+        updateProfile(
+          {
+            id: userId || 0,
+            data: formattedValues,
+          },
+          {
+            onSuccess: () => {
+              refetch();
+              message.success("Cập nhật thông tin cá nhân thành công");
+              setIsModalVisible(false);
+            },
+            onError: (error) => {
+              message.error("Cập nhật thông tin cá nhân thất bại");
+              console.error("Update failed:", error);
+            },
+          }
+        );
+      })
+      .catch((error) => {
+        // Handle validation errors if any (though we handle them manually above)
+        console.error("Validation failed:", error);
+      });
+  };
   const handleCancel = () => {
     setIsModalVisible(false);
   };
@@ -530,7 +557,7 @@ const UserInfomation = () => {
           <Form.Item
             name="date_of_birth"
             label="Ngày sinh*"
-            rules={[{ required: true, message: "Vui lòng nhập ngày sinh!" }]}
+            rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}
           >
             <DatePicker format="DD/MM/YYYY" className="select-date-of-birth" />
           </Form.Item>
@@ -545,8 +572,8 @@ const UserInfomation = () => {
           </Form.Item>
           <Form.Item
             name="email"
-            label="Email"
-            rules={[{ type: "email", message: "Email không hợp lệ!" }]}
+            label="Email*"
+            rules={[{ required: true, message: "Vui lòng nhập email!" }]}
           >
             <Input />
           </Form.Item>
