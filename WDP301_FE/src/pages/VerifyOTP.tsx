@@ -58,12 +58,14 @@ const VerifyOTP = () => {
       </div>
       <div className="form-section">
         <div className="form-content">
-          <p className="subtitle">Mã OTP vừa được gửi vào {email}.</p>
           <h1 className="title">
             Tấm <span className="login-brown">ngon,</span>{" "}
             <span className="login-green">Tắc </span>
             <span className="login-brown">nhớ!</span>
           </h1>
+          <p className="subtitle" style={{ marginBottom: 0 }}>
+            Mã OTP vừa được gửi vào {email}.
+          </p>
           <p className="subtitle">Nhập OTP để kích hoạt tài khoản.</p>
           <Form
             form={form}
@@ -79,7 +81,7 @@ const VerifyOTP = () => {
                 className="input-field"
                 style={{
                   width: "-webkit-fill-available",
-                  marginBottom: 30,
+                  color: "#632713",
                 }}
                 formatter={(str) => str.replace(/\D/g, "")}
                 {...sharedProps}

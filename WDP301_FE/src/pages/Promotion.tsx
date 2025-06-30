@@ -11,11 +11,7 @@ const Promotion = () => {
   const userId = user?.id;
 
   // Sử dụng hook để lấy danh sách promotion của user
-  const {
-    data: userPromotions,
-    isLoading,
-    isError,
-  } = useGetPromotionUser(userId ?? 0);
+  const { data: userPromotions, isLoading } = useGetPromotionUser(userId ?? 0);
 
   // Chuyển đổi dữ liệu từ API thành định dạng phù hợp với giao diện
   const vouchers = userPromotions
@@ -32,7 +28,7 @@ const Promotion = () => {
     : [];
 
   if (isLoading) return <Spin size="large" />;
-  if (isError) return <Text type="danger">Lỗi khi tải khuyến mãi</Text>;
+  // if (isError) return <Text type="danger">Lỗi khi tải khuyến mãi</Text>;
 
   return (
     <div className="voucher-container">
@@ -71,7 +67,9 @@ const Promotion = () => {
             </Col>
           ))
         ) : (
-          <Text>Không có khuyến mãi nào cho tài khoản của bạn.</Text>
+          <Text style={{ fontFamily: "Montserrat, sans-serif" }}>
+            Không có khuyến mãi nào cho tài khoản của bạn.
+          </Text>
         )}
       </Row>
     </div>

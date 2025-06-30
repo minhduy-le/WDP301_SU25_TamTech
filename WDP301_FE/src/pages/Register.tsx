@@ -61,6 +61,14 @@ const Register = () => {
               message.error(
                 "Ngày sinh phải hợp lệ và không được trong tương lai"
               );
+            } else if (errorMessage === "Phone number already exists") {
+              message.error(
+                "Số điện thoại đã được sử dụng. Vui lòng sử dụng số khác."
+              );
+            } else if (errorMessage === "Email already exists") {
+              message.error(
+                "Email đã được sử dụng. Vui lòng sử dụng email khác."
+              );
             } else {
               message.error(errorMessage);
             }

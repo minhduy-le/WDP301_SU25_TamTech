@@ -178,3 +178,10 @@
 .ant-input-password.input-field {
   justify-content: space-between;
 }
+
+.ant-otp-input {
+  font-weight: 700;
+  font-size: 26px !important;
+  color: #632713;
+  font-family: "Montserrat", sans-serif;
+}
