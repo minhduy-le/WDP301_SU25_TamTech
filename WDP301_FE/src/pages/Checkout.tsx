@@ -14,6 +14,7 @@ import {
   Divider,
   TimePicker,
   message,
+  Spin,
 } from "antd";
 import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
@@ -98,6 +99,7 @@ const Checkout = () => {
   };
 
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+  const [isLoadingButton, setIsLoadingButton] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -222,10 +224,16 @@ const Checkout = () => {
               message.success("Phí giao hàng đã được cập nhật.");
             },
             onError: (error: any) => {
-              console.error("Error calculating shipping:", error);
-              message.error(
-                "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-              );
+              if (
+                error.response.data?.message ===
+                "Delivery address must be in the format: street name, ward, district, city"
+              ) {
+                message.error(
+                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                );
+              } else {
+                message.error(error.response.data?.message);
+              }
               setDeliveryFee(22000);
             },
           }
@@ -240,10 +248,16 @@ const Checkout = () => {
               message.success("Phí giao hàng đã được cập nhật.");
             },
             onError: (error: any) => {
-              console.error("Error calculating shipping:", error);
-              message.error(
-                "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-              );
+              if (
+                error.response.data?.message ===
+                "Delivery address must be in the format: street name, ward, district, city"
+              ) {
+                message.error(
+                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                );
+              } else {
+                message.error(error.response.data?.message);
+              }
               setDeliveryFee(22000);
             },
           }
@@ -324,6 +338,8 @@ const Checkout = () => {
       }),
     };
 
+    setIsLoadingButton(true);
+
     createOrder(orderData, {
       onSuccess: (data: any) => {
         message.success("Đặt hàng thành công!");
@@ -334,6 +350,7 @@ const Checkout = () => {
           );
         });
         updateCartItems(updatedCartItems);
+        setIsLoadingButton(false);
       },
       onError: (error) => {
         const errorMessage = error.response.data;
@@ -346,6 +363,7 @@ const Checkout = () => {
         } else {
           message.error(errorMessage);
         }
+        setIsLoadingButton(false);
       },
     });
   };
@@ -852,8 +870,16 @@ const Checkout = () => {
               className="submit-button"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
               onClick={handleOrderSubmit}
+              disabled={isLoadingButton}
             >
-              Đặt hàng
+              {isLoading ? (
+                <>
+                  <Spin />
+                  Đặt hàng
+                </>
+              ) : (
+                "Đặt hàng"
+              )}
             </Button>
           </Card>
         </Col>

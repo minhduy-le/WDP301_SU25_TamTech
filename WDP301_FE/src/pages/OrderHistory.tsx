@@ -74,6 +74,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const [loadingButtons, setLoadingButtons] = useState<Record<number, boolean>>(
     {}
   );
+  const [isLoadingCreateFeedback, setIsLoadingCreateFeedback] = useState(false);
 
   const { mutate: createFeedback } = useCreateFeedback();
 
@@ -111,6 +112,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       orderItems: feedbackItems,
     });
     setFeedbacks(feedbackItems);
+    setIsLoadingCreateFeedback(false);
     setIsModalVisible(true);
   };
 
@@ -124,6 +126,8 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       message.warning("Vui lòng nhập ít nhất một đánh giá hoặc nhận xét!");
       return;
     }
+
+    setIsLoadingCreateFeedback(true);
 
     setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
@@ -169,6 +173,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       console.error("Feedback submission failed:", error);
     } finally {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setIsLoadingCreateFeedback(false);
       setIsModalVisible(false);
     }
   };
@@ -178,6 +183,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     if (selectedOrder) {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
     }
+    setIsLoadingCreateFeedback(false);
   };
 
   const handleRatingChange = (index: number, value: number) => {
@@ -519,6 +525,9 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
             loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
             disabled={selectedOrder ? loadingButtons[selectedOrder.id] : false}
           >
+            {isLoadingCreateFeedback && (
+              <LoadingOutlined style={{ marginRight: 8, fontSize: 14 }} spin />
+            )}
             Gửi đánh giá
           </Button>,
         ]}

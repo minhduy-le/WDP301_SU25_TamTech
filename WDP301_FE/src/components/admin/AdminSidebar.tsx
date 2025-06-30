@@ -11,12 +11,12 @@ import {
   DownOutlined,
   TeamOutlined,
   AuditOutlined,
-  MessageOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
+import { MessageCircle } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -87,7 +87,7 @@ const AdminSidebar: React.FC = () => {
     },
     {
       key: "/admin/chat",
-      icon: <MessageOutlined />,
+      icon: <MessageCircle />,
       label: "Chat",
     },
     {
