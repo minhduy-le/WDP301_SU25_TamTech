@@ -361,7 +361,14 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               );
             })
           ) : (
-            <div style={{ padding: "0 34px" }}>Chưa có lịch sử mua hàng</div>
+            <div
+              style={{
+                padding: "0 34px",
+                fontFamily: "Montserrat, sans-serif",
+              }}
+            >
+              Chưa có lịch sử mua hàng
+            </div>
           )}
         </Tabs.TabPane>
 
@@ -494,7 +501,14 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                   );
                 })
             ) : (
-              <div style={{ padding: "0 34px" }}>Chưa có lịch sử mua hàng</div>
+              <div
+                style={{
+                  padding: "0 34px",
+                  fontFamily: "Montserrat, sans-serif",
+                }}
+              >
+                Chưa có lịch sử mua hàng
+              </div>
             )}
           </Tabs.TabPane>
         ))}

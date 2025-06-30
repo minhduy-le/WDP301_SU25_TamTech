@@ -262,7 +262,8 @@ const ManagerChat = () => {
           account.fullName.toLowerCase().includes(searchText.toLowerCase()) &&
           (account.role === "Manager" ||
             account.role === "Admin" ||
-            account.role === "Shipper") &&
+            account.role === "Shipper" ||
+            account.role === "Staff") &&
           account.id !== authUser?.id
       )
       ?.filter((account) =>

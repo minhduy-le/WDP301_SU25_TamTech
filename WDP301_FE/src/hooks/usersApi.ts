@@ -211,8 +211,20 @@ export const useAuthStore = create<AuthState>((set) => {
 export const useRegister = () => {
   return useMutation({
     mutationFn: async (newAccount: RegisterDto) => {
-      const response = await axiosInstance.post(`auth/register`, newAccount);
-      return response.data;
+      try {
+        const response = await axiosInstance.post(`auth/register`, newAccount);
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          throw new Error(errorMessage);
+        }
+      }
     },
   });
 };
