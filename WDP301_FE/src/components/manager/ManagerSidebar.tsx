@@ -19,6 +19,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
+import { MessageCircle } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -69,7 +70,7 @@ const ManagerSidebar: React.FC = () => {
     },
     {
       key: "/manager/chat",
-      icon: <MessageOutlined />,
+      icon: <MessageCircle />,
       label: "Chat",
     },
   ];

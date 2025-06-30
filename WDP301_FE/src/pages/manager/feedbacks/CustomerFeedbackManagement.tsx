@@ -449,7 +449,7 @@ const CustomerFeedbackManagement = () => {
                   contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
                 >
                   <Descriptions.Item label="Khách hàng">
-                    {selectedFeedback.User.fullName.toString()}
+                    {selectedFeedback.User.fullName}
                   </Descriptions.Item>
                   <Descriptions.Item label="Comment">
                     {selectedFeedback.comment}
