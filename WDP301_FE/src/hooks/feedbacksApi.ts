@@ -74,7 +74,7 @@ export const useCreateFeedback = () => {
       orderId: number;
       feedbackData: CreateFeedback[];
     }) => {
-      const response = await axiosInstance.post(`feedback/${orderId}`, {
+      const response = await axiosInstance.post(`feedback?orderId=${orderId}`, {
         feedbacks: feedbackData,
       });
       return response.data as FeedbackResponseDto;
@@ -126,5 +126,23 @@ export const useResponseFeedback = () => {
       );
       return response.data as FeedbackDto; // Giả định API trả về FeedbackDto sau khi phản hồi
     },
+  });
+};
+
+export const useGetFeedbackByOrder = (orderId: number, productId: number) => {
+  return useQuery<FeedbackDto, Error>({
+    queryKey: ["feedback", orderId, productId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(
+        `feedback/${orderId}/${productId}`
+      );
+      const { feedbacks } = response.data as FeedbackDetailApiResponse;
+
+      if (!feedbacks) {
+        throw new Error("Không thể tải chi tiết đánh giá");
+      }
+      return feedbacks;
+    },
+    enabled: !!orderId,
   });
 };

@@ -15,9 +15,11 @@ import {
 import { LoadingOutlined } from "@ant-design/icons";
 import "../style/OrderHistory.css";
 import IMAGE from "../assets/login.png";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useGetOrderHistory, type OrderHistory } from "../hooks/ordersApi";
 import { useCreateFeedback } from "../hooks/feedbacksApi";
+import { useQueries } from "@tanstack/react-query";
+import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import { getFormattedPrice } from "../utils/formatPrice";
 
@@ -35,6 +37,7 @@ interface FeedbackItem {
   price: string;
   rating?: number;
   comment?: string;
+  hasFeedback?: boolean;
 }
 
 const statusMap: { [key: string]: string } & {
@@ -87,9 +90,27 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     return itemTotal + order_shipping_fee;
   };
 
+  const { data: orderHistory, isLoading: isOrderHistoryLoading } =
+    useGetOrderHistory();
+
+  // Sử dụng useQueries để fetch feedback cho tất cả productIds trong order
+  const feedbackQueries = useQueries({
+    queries: selectedOrder
+      ? selectedOrder.orderItems.map((item) => ({
+          queryKey: ["feedback", selectedOrder.id, item.productId],
+          queryFn: () =>
+            axiosInstance
+              .get(`feedback/${selectedOrder.id}/${item.productId}`)
+              .then((res) => res.data.feedbacks || []),
+          enabled: !!selectedOrder,
+        }))
+      : [],
+  });
+
   const showModal = (order: OrderHistory) => {
-    // Không đặt loadingButtons thành true ngay khi mở modal, chỉ khi gửi feedback
     const actions = getActionsForStatus(order.status);
+
+    // Chuẩn bị feedbackItems ban đầu
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
       orderId: order.orderId,
       productId: item.productId,
@@ -98,7 +119,9 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       price: `${getFormattedPrice(item.price)} x${item.quantity}`,
       rating: 0,
       comment: "",
+      hasFeedback: false,
     }));
+
     setSelectedOrder({
       id: order.orderId,
       status: order.status,
@@ -132,7 +155,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
     try {
-      // Chuẩn bị mảng feedbacks để gửi
       const feedbackData = feedbacks
         .filter((item) => (item.rating ?? 0) > 0 || (item.comment ?? "").trim())
         .map((item) => ({
@@ -150,7 +172,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         createFeedback(
           {
             orderId: selectedOrder.id,
-            feedbackData, // Gửi mảng feedbacks
+            feedbackData,
           },
           {
             onSuccess: () => resolve(),
@@ -198,17 +220,12 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     );
   };
 
-  const { data: orderHistory, isLoading: isOrderHistoryLoading } =
-    useGetOrderHistory();
-
   const getActionsForStatus = (status: string) => {
     switch (status) {
       case "Delivered":
         return ["Đánh giá", "Đặt lại"];
       case "Canceled":
         return ["Đặt lại"];
-      case "Paid":
-        return ["Đánh giá"];
       case "Preparing":
       case "Delivering":
         return ["Đặt tiếp"];
@@ -228,11 +245,37 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     { text: "Đã hủy", value: "Canceled" },
   ];
 
-  const sortedOrderHistory = orderHistory
-    ? [...orderHistory].sort((a, b) =>
-        dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
-      )
-    : [];
+  const sortedOrderHistory = useMemo(
+    () =>
+      orderHistory
+        ? [...orderHistory].sort((a, b) =>
+            dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
+          )
+        : [],
+    [orderHistory]
+  );
+
+  // Cập nhật feedbackItems khi có dữ liệu từ tất cả các feedbackQueries
+  useEffect(() => {
+    if (selectedOrder && feedbackQueries.length > 0) {
+      const allFeedbacks = feedbackQueries
+        .map((query) => query.data || [])
+        .flat(); // Kết hợp tất cả mảng feedback từ các query
+      console.log("All feedbacks:", allFeedbacks); // Debug dữ liệu
+      const updatedFeedbacks = selectedOrder.orderItems.map((item) => {
+        const matchingFeedback = allFeedbacks.find(
+          (fb: any) => fb.productId === item.productId
+        );
+        return {
+          ...item,
+          rating: matchingFeedback?.rating || item.rating || 0,
+          comment: matchingFeedback?.comment || item.comment || "",
+          hasFeedback: !!matchingFeedback,
+        };
+      });
+      setFeedbacks(updatedFeedbacks);
+    }
+  }, [feedbackQueries, selectedOrder]);
 
   return (
     <div className="order-history-container">
@@ -243,12 +286,13 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         <Tabs.TabPane tab="Tất cả" key="all">
           {isOrderHistoryLoading ? (
             <Skeleton active style={{ padding: "0 34px" }} />
-          ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
+          ) : sortedOrderHistory.length > 0 ? (
             sortedOrderHistory.map((order) => {
               const actions = getActionsForStatus(order.status);
-              const itemCount = order.orderItems ? order.orderItems.length : 0;
+              const itemCount = order.orderItems.length;
               const isLoading = loadingButtons[order.orderId] || false;
               const total = calculateTotal(order);
+
               return (
                 <Col
                   key={order.orderId}
@@ -376,16 +420,16 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
           <Tabs.TabPane tab={text} key={value}>
             {isOrderHistoryLoading ? (
               <Skeleton active style={{ padding: "0 34px" }} />
-            ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
+            ) : sortedOrderHistory.filter((order) => order.status === value)
+                .length > 0 ? (
               sortedOrderHistory
                 .filter((order) => order.status === value)
                 .map((order) => {
                   const actions = getActionsForStatus(order.status);
-                  const itemCount = order.orderItems
-                    ? order.orderItems.length
-                    : 0;
+                  const itemCount = order.orderItems.length;
                   const isLoading = loadingButtons[order.orderId] || false;
                   const total = calculateTotal(order);
+
                   return (
                     <Col
                       key={order.orderId}
@@ -531,20 +575,31 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
-        footer={[
-          <Button
-            key="submit"
-            className="submt-button-feedback"
-            onClick={handleOk}
-            loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
-            disabled={selectedOrder ? loadingButtons[selectedOrder.id] : false}
-          >
-            {isLoadingCreateFeedback && (
-              <LoadingOutlined style={{ marginRight: 8, fontSize: 14 }} spin />
-            )}
-            Gửi đánh giá
-          </Button>,
-        ]}
+        footer={
+          !feedbacks.every((feedback) => feedback.hasFeedback)
+            ? [
+                <Button
+                  key="submit"
+                  className="submt-button-feedback"
+                  onClick={handleOk}
+                  loading={
+                    selectedOrder ? loadingButtons[selectedOrder.id] : false
+                  }
+                  disabled={
+                    selectedOrder ? loadingButtons[selectedOrder.id] : false
+                  }
+                >
+                  {isLoadingCreateFeedback && (
+                    <LoadingOutlined
+                      style={{ marginRight: 8, fontSize: 14 }}
+                      spin
+                    />
+                  )}
+                  Gửi đánh giá
+                </Button>,
+              ]
+            : null
+        }
         width={700}
         className="modal-feedback"
         style={{
@@ -604,7 +659,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                       onChange={(value) => handleRatingChange(index, value)}
                       style={{ color: "#78A243" }}
                       disabled={
-                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                        selectedOrder
+                          ? loadingButtons[selectedOrder.id] ||
+                            feedback.hasFeedback
+                          : false
                       }
                     />
                   </Col>
@@ -620,7 +678,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                         width: "100%",
                       }}
                       disabled={
-                        selectedOrder ? loadingButtons[selectedOrder.id] : false
+                        selectedOrder
+                          ? loadingButtons[selectedOrder.id] ||
+                            feedback.hasFeedback
+                          : false
                       }
                     />
                   </Col>
