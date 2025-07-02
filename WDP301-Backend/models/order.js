@@ -163,6 +163,11 @@ const Order = sequelize.define(
         key: "id",
       },
     },
+    isRefund: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     tableName: "orders",

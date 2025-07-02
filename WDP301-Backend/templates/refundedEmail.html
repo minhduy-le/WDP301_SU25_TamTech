@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thông báo hoàn tiền</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .header {
+        background-color: #2563eb;
+        color: #ffffff;
+        padding: 20px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .content {
+        padding: 20px;
+        color: #1e293b;
+      }
+      .content p {
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      .order-details {
+        background-color: #f1f5f9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+      }
+      .order-details p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      .footer {
+        background-color: #64748b;
+        color: #ffffff;
+        padding: 10px;
+        text-align: center;
+        font-size: 12px;
+      }
+      .footer a {
+        color: #ffffff;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Tấm Tắc</h1>
+      </div>
+      <div class="content">
+        <p>Kính gửi {{fullName}},</p>
+        <p>
+          Chúng tôi xin thông báo rằng đơn hàng của bạn đã được hủy và số tiền đã được hoàn lại. Dưới đây là thông tin
+          chi tiết:
+        </p>
+        <div class="order-details">
+          <p><strong>Mã đơn hàng:</strong> #{{orderId}}</p>
+          <p><strong>Số tiền hoàn lại:</strong> {{orderAmount}} VND</p>
+          <p><strong>Ngày đặt hàng:</strong> {{orderDate}}</p>
+        </div>
+        <p>
+          Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email
+          <a href="mailto:support@tam tac.vn">support@tam tac.vn</a> hoặc số điện thoại +84 909 123 456.
+        </p>
+        <p>Xin cảm ơn bạn đã tin tưởng và ủng hộ Tấm Tắc!</p>
+      </div>
+      <div class="footer">
+        <p>Tấm Tắc - 123 Đường Kinh Doanh, Quận 1, TP. Hồ Chí Minh</p>
+        <p><a href="https://tam tac.vn">www.tam tac.vn</a></p>
+      </div>
+    </div>
+  </body>
+</html>

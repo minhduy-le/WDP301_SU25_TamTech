@@ -16,6 +16,9 @@ const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
+const nodemailer = require("nodemailer");
+const fs = require("fs").promises;
+const path = require("path");
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -414,6 +417,7 @@ const getOrderDetails = async (req, res) => {
         "soDienThoaiNguoiDatHo",
         "certificationOfDelivered",
         "order_delivery_at",
+        "isRefund",
       ],
       include: [
         {
@@ -1446,6 +1450,7 @@ const getAllOrders = async (req, res) => {
         "note",
         "payment_method_id",
         "userId",
+        "isRefund",
       ],
       include: [
         {
@@ -1503,6 +1508,7 @@ const getAllOrders = async (req, res) => {
       order_point_earn: order.order_point_earn,
       note: order.note,
       payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+      isRefund: order.isRefund,
     }));
 
     console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
@@ -1608,6 +1614,156 @@ const getPaidOrders = async (req, res) => {
   }
 };
 
+const setOrderToCanceled = async (req, res) => {
+  console.log("setOrderToCanceled called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 2) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res
+        .status(400)
+        .send(
+          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Canceled.`
+        );
+    }
+
+    order.status_id = 5; // Canceled
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order status updated to Canceled for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Order status updated to Canceled",
+      orderId: parsedOrderId,
+      status: "Canceled",
+    });
+  } catch (error) {
+    console.error("Error in setOrderToCanceled:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to update order status");
+  }
+};
+
+const sendRefundEmail = async (req, res) => {
+  console.log("sendRefundEmail called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [
+        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
+        { model: User, as: "User", attributes: ["fullName", "email"] },
+      ],
+      transaction,
+    });
+
+    if (!order) {
+      console.log("Order not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(404).send("Order not found");
+    }
+
+    if (order.status_id !== 5) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+      console.log("Invalid status for sending refund email, orderId:", parsedOrderId, "Current status:", currentStatus);
+      await transaction.rollback();
+      return res.status(400).send("Order must be in Canceled status to send refund email");
+    }
+
+    if (!order.User || !order.User.email) {
+      console.log("User email not found for orderId:", parsedOrderId);
+      await transaction.rollback();
+      return res.status(400).send("User email not found");
+    }
+
+    if (order.isRefund) {
+      console.log("Refund email not sent as isRefund is already true for orderId:", parsedOrderId);
+      return res.status(400).send("Refund email already processed for this order");
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const emailTemplate = await fs.readFile(path.join(__dirname, "../templates/refundedEmail.html"), "utf-8");
+    const formattedEmail = emailTemplate
+      .replace("{{orderId}}", order.orderId.toString().padStart(6, "0"))
+      .replace("{{fullName}}", order.User.fullName || "Khách hàng")
+      .replace("{{orderAmount}}", order.order_subtotal.toLocaleString("vi-VN"))
+      .replace("{{orderDate}}", new Date(order.order_create_at).toLocaleDateString("vi-VN"));
+
+    const mailOptions = {
+      from: '"Tấm Tắc" <' + process.env.EMAIL_USER + ">",
+      to: order.User.email,
+      subject: `Thông báo hoàn tiền đơn hàng #${order.orderId.toString().padStart(6, "0")}`,
+      html: formattedEmail,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("Refund email sent successfully for orderId:", parsedOrderId);
+
+    order.isRefund = true;
+    await order.save({ transaction });
+
+    await transaction.commit();
+    console.log("Order updated with isRefund: true for orderId:", parsedOrderId);
+
+    res.status(200).json({
+      message: "Refund email sent successfully",
+      orderId: parsedOrderId,
+    });
+  } catch (error) {
+    console.error("Error in sendRefundEmail:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to send refund email");
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -1620,4 +1776,6 @@ module.exports = {
   getAllOrders,
   getPaidOrders,
   getOrderDetails,
+  setOrderToCanceled,
+  sendRefundEmail,
 };
