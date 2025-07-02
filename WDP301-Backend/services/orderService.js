@@ -10,6 +10,7 @@ const {
   ProductRecipe,
   Material,
   Promotion,
+  ReasonCancel,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -976,92 +977,29 @@ const handlePaymentSuccess = async (req, res) => {
 };
 
 const getUserOrders = async (req, res) => {
-  console.log("getUserOrders called at:", new Date().toISOString());
-  console.log("User ID:", req.userId);
-
   const userId = req.userId;
-
   try {
     const orders = await Order.findAll({
       where: { userId },
-      attributes: [
-        "orderId",
-        "payment_time",
-        "order_create_at",
-        "order_address",
-        "status_id",
-        "order_shipping_fee",
-        "order_discount_value",
-        "order_amount",
-        "order_subtotal",
-        "invoiceUrl",
-        "order_point_earn",
-        "note",
-        "payment_method_id",
-      ],
       include: [
-        {
-          model: User,
-          as: "User",
-          attributes: ["fullName", "phone_number"],
-        },
-        {
-          model: OrderItem,
-          as: "OrderItems",
-          attributes: ["productId", "quantity", "price"],
-          include: [
-            {
-              model: Product,
-              as: "Product",
-              attributes: ["name"],
-            },
-          ],
-        },
-        {
-          model: OrderStatus,
-          as: "OrderStatus",
-          attributes: ["status"],
-        },
-        {
-          model: PaymentMethod,
-          as: "PaymentMethod",
-          attributes: ["name"],
-        },
+        { model: OrderItem, as: "OrderItems", include: [{ model: Product, as: "Product", attributes: ["name"] }] },
+        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
+        { model: ReasonCancel, as: "ReasonCancels", attributes: ["reason"] },
       ],
     });
 
-    console.log("Fetched orders:", orders.length);
-
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
-      payment_time: order.payment_time,
-      order_create_at: order.order_create_at,
-      order_address: order.order_address,
-      status: order.OrderStatus ? order.OrderStatus.status : null,
-      fullName: order.User ? order.User.fullName : null,
-      phone_number: order.User ? order.User.phone_number : null,
+      status: order.OrderStatus?.status,
+      reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
       orderItemsCount: order.OrderItems.length,
-      orderItems: order.OrderItems.map((item) => ({
-        productId: item.productId,
-        name: item.Product ? item.Product.name : null,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      order_shipping_fee: order.order_shipping_fee,
-      order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
       order_subtotal: order.order_subtotal,
-      invoiceUrl: order.invoiceUrl,
-      order_point_earn: order.order_point_earn,
-      note: order.note,
-      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
     }));
 
-    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
     res.status(200).json(formattedOrders);
   } catch (error) {
-    console.error("Error in getUserOrders:", error.message, error.stack);
-    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+    res.status(500).json({ message: "Failed to retrieve user orders", error: error.message });
   }
 };
 
@@ -1429,92 +1367,29 @@ const setOrderToDelivered = async (req, res) => {
 };
 
 const getAllOrders = async (req, res) => {
-  console.log("getAllOrders called at:", new Date().toISOString());
-  console.log("User ID:", req.userId, "User role:", req.userRole);
-
-  const userRole = req.userRole;
-
   try {
     const orders = await Order.findAll({
-      attributes: [
-        "orderId",
-        "payment_time",
-        "order_create_at",
-        "order_address",
-        "status_id",
-        "order_shipping_fee",
-        "order_discount_value",
-        "order_amount",
-        "invoiceUrl",
-        "order_point_earn",
-        "note",
-        "payment_method_id",
-        "userId",
-        "isRefund",
-      ],
       include: [
-        {
-          model: User,
-          as: "User",
-          attributes: ["id", "fullName", "phone_number"],
-        },
-        {
-          model: OrderItem,
-          as: "OrderItems",
-          attributes: ["productId", "quantity", "price"],
-          include: [
-            {
-              model: Product,
-              as: "Product",
-              attributes: ["name"],
-            },
-          ],
-        },
-        {
-          model: OrderStatus,
-          as: "OrderStatus",
-          attributes: ["status"],
-        },
-        {
-          model: PaymentMethod,
-          as: "PaymentMethod",
-          attributes: ["name"],
-        },
+        { model: User, as: "User", attributes: ["id", "fullName"] },
+        { model: OrderItem, as: "OrderItems", include: [{ model: Product, as: "Product", attributes: ["name"] }] },
+        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
+        { model: ReasonCancel, as: "ReasonCancels", attributes: ["reason"] },
       ],
-      order: [["order_create_at", "DESC"]],
     });
-
-    console.log("Fetched all orders:", orders.length);
 
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
       userId: order.userId,
-      payment_time: order.payment_time,
-      order_create_at: order.order_create_at,
-      order_address: order.order_address,
-      status: order.OrderStatus ? order.OrderStatus.status : null,
-      fullName: order.User ? order.User.fullName : null,
-      phone_number: order.User ? order.User.phone_number : null,
-      orderItems: order.OrderItems.map((item) => ({
-        productId: item.productId,
-        name: item.Product ? item.Product.name : null,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      order_shipping_fee: order.order_shipping_fee,
-      order_discount_value: order.order_discount_value,
+      fullName: order.User?.fullName,
+      status: order.OrderStatus?.status,
+      reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
+      orderItemsCount: order.OrderItems.length,
       order_amount: order.order_amount,
-      invoiceUrl: order.invoiceUrl,
-      order_point_earn: order.order_point_earn,
-      note: order.note,
-      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
-      isRefund: order.isRefund,
+      order_subtotal: order.order_subtotal,
     }));
 
-    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
     res.status(200).json(formattedOrders);
   } catch (error) {
-    console.error("Error in getAllOrders:", error.message, error.stack);
     res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
   }
 };
@@ -1614,61 +1489,51 @@ const getPaidOrders = async (req, res) => {
   }
 };
 
-const setOrderToCanceled = async (req, res) => {
-  console.log("setOrderToCanceled called at:", new Date().toISOString());
-  console.log("Request params:", req.params);
-  console.log("User ID:", req.userId, "User role:", req.userRole);
-
-  const { orderId } = req.params;
-  const userId = req.userId;
-  const userRole = req.userRole;
-
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).send("Invalid order ID");
-  }
-
+const setOrderToCanceled = async (orderId, reason, userId) => {
   const transaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({
-      where: { orderId: parsedOrderId },
-      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
-      transaction,
-    });
-
+    console.log(`Starting transaction for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId }, transaction });
     if (!order) {
-      console.log("Order not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).send("Order not found");
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw new Error("Order not found");
     }
 
-    if (order.status_id !== 2) {
-      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
-      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
-      await transaction.rollback();
-      return res
-        .status(400)
-        .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Paid to transition to Canceled.`
-        );
+    if (order.status_id === 5) {
+      console.log(`Order ${orderId} is already canceled`);
+      throw new Error("Order is already canceled");
+    }
+    if (!reason || reason.trim() === "") {
+      console.log(`Reason is missing or empty for orderId: ${orderId}`);
+      throw new Error("Reason for cancellation is required");
     }
 
-    order.status_id = 5; // Canceled
+    order.status_id = 5; // Canceled status
     await order.save({ transaction });
+    console.log(`Order ${orderId} status updated to canceled`);
+
+    await ReasonCancel.create(
+      {
+        orderId,
+        userId,
+        reason,
+        createdAt: new Date(),
+      },
+      { transaction }
+    );
+    console.log(`ReasonCancel created for orderId: ${orderId}`);
 
     await transaction.commit();
-    console.log("Order status updated to Canceled for orderId:", parsedOrderId);
-
-    res.status(200).json({
-      message: "Order status updated to Canceled",
-      orderId: parsedOrderId,
-      status: "Canceled",
-    });
+    console.log(`Transaction committed for orderId: ${orderId}`);
+    return { success: true, message: "Order canceled successfully" };
   } catch (error) {
-    console.error("Error in setOrderToCanceled:", error.message, error.stack);
-    await transaction.rollback();
-    return res.status(500).send("Failed to update order status");
+    if (transaction.finished !== "rollback") {
+      console.error(`Rolling back transaction for orderId: ${orderId} due to error: ${error.message}`);
+      await transaction.rollback();
+    } else {
+      console.warn(`Transaction already rolled back for orderId: ${orderId}`);
+    }
+    throw error;
   }
 };
 

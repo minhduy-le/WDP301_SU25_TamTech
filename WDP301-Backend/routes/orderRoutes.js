@@ -12,8 +12,8 @@ const {
   getAllOrders,
   getPaidOrders,
   getOrderDetails,
-  setOrderToCanceled,
   sendRefundEmail,
+  setOrderToCanceled,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -1153,6 +1153,8 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                     nullable: true
  *                   isRefund:
  *                     type: boolean
+ *                   reason:
+ *                     type: string
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -1296,9 +1298,9 @@ router.get("/paid", verifyToken, getPaidOrders);
 
 /**
  * @swagger
- * /api/orders/{orderId}/cancel:
- *   put:
- *     summary: Set order status to Canceled
+ * /api/orders/cancel/{orderId}:
+ *   post:
+ *     summary: Cancel an order by ID with a reason
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -1308,31 +1310,31 @@ router.get("/paid", verifyToken, getPaidOrders);
  *         required: true
  *         schema:
  *           type: integer
- *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: The reason for canceling the order
+ *                 example: "Customer changed mind"
  *     responses:
  *       200:
- *         description: Order status updated to Canceled
+ *         description: Order canceled successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
- *                 orderId:
- *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Canceled
  *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Pending. It must be Paid to transition to Canceled.'
- *       401:
- *         description: Unauthorized
+ *         description: Reason for cancellation is required, order not found, or already canceled
  *         content:
  *           application/json:
  *             schema:
@@ -1340,31 +1342,21 @@ router.get("/paid", verifyToken, getPaidOrders);
  *               properties:
  *                 message:
  *                   type: string
- *                 status:
- *                   type: integer
- *       403:
- *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff or Admin can set orders to Canceled'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
+ *                 example:
+ *                   message: "Reason for cancellation is required"
  *       500:
  *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
  */
-router.put("/:orderId/cancel", verifyToken, setOrderToCanceled);
+router.post("/cancel/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+    const result = await setOrderToCanceled(orderId, reason, req.userId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to cancel order", error: error.message });
+  }
+});
 
 /**
  * @swagger
