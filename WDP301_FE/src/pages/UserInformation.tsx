@@ -216,9 +216,15 @@ const UserInfomation = () => {
               message.success("Cập nhật thông tin cá nhân thành công");
               setIsModalVisible(false);
             },
-            onError: (error) => {
-              message.error("Cập nhật thông tin cá nhân thất bại");
-              console.error("Update failed:", error);
+            onError: (error: any) => {
+              const errorMessage = error.message;
+              if (errorMessage === "Email already exists") {
+                message.error("Email đã tồn tại");
+              } else if (errorMessage === "Phone number already exists") {
+                message.error("Số điện thoại đã tồn tại");
+              } else {
+                message.error(errorMessage || "Cập nhật thất bại");
+              }
             },
           }
         );
