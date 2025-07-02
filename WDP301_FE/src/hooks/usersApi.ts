@@ -286,6 +286,15 @@ export const useVerifyOTP = () => {
   });
 };
 
+export const useResendOTP = () => {
+  return useMutation({
+    mutationFn: async (resendOTP: ForgorPasswordDto) => {
+      const response = await axiosInstance.post(`auth/resend-otp`, resendOTP);
+      return response.data;
+    },
+  });
+};
+
 export const useLoginGoogle = () => {
   return useMutation({
     mutationFn: async (newAccount: GoogleLoginDto) => {
