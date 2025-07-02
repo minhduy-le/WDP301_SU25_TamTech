@@ -33,6 +33,7 @@ import { useGetProfileUser, useUpdateProfile } from "../hooks/profileApi";
 import "../style/AddressOrder.css";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { useGetAddressUser } from "../hooks/locationsApi";
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -56,38 +57,38 @@ const UserInfomation = () => {
     useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: 1,
-      name: "Truong Quang Hieu Trung",
-      phone: "0888777888",
-      address:
-        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-      isDefault: false,
-    },
-    {
-      id: 2,
-      name: "Truong Quang Hieu Trung",
-      phone: "0888777888",
-      address:
-        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-      isDefault: false,
-    },
-    {
-      id: 3,
-      name: "Truong Quang Hieu Trung",
-      phone: "0888777888",
-      address:
-        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-      isDefault: true,
-    },
-    {
-      id: 4,
-      name: "Truong Quang Hieu Trung",
-      phone: "0888777888",
-      address:
-        "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
-      isDefault: false,
-    },
+    // {
+    //   id: 1,
+    //   name: "Truong Quang Hieu Trung",
+    //   phone: "0888777888",
+    //   address:
+    //     "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    //   isDefault: false,
+    // },
+    // {
+    //   id: 2,
+    //   name: "Truong Quang Hieu Trung",
+    //   phone: "0888777888",
+    //   address:
+    //     "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    //   isDefault: false,
+    // },
+    // {
+    //   id: 3,
+    //   name: "Truong Quang Hieu Trung",
+    //   phone: "0888777888",
+    //   address:
+    //     "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    //   isDefault: true,
+    // },
+    // {
+    //   id: 4,
+    //   name: "Truong Quang Hieu Trung",
+    //   phone: "0888777888",
+    //   address:
+    //     "Lô E2a-7, Đường D1, Long Thanh My, Thành Phố Thủ Đức, Hồ Chí Minh",
+    //   isDefault: false,
+    // },
   ]);
   const [updateForm] = Form.useForm();
   const [changePasswordForm] = Form.useForm();
@@ -98,6 +99,7 @@ const UserInfomation = () => {
   const userId = user?.id;
 
   const { data: userProfile, refetch } = useGetProfileUser(userId || 0);
+  const { data: addressUser } = useGetAddressUser();
   const { mutate: updateProfile } = useUpdateProfile();
   const { mutate: changePassword } = useChangePassword();
 
@@ -109,6 +111,19 @@ const UserInfomation = () => {
     const savedOrder = localStorage.getItem("selectedOrder");
     return savedOrder ? JSON.parse(savedOrder) : null;
   });
+
+  useEffect(() => {
+    if (addressUser && addressUser.length > 0) {
+      const updatedContacts = addressUser.map((address, index) => ({
+        id: index + 1,
+        name: userProfile?.user.fullName || "Truong Quang Hieu Trung",
+        phone: userProfile?.user.phone_number || "0888777888",
+        address,
+        isDefault: index === 0, // Đặt địa chỉ đầu tiên là mặc định
+      }));
+      setContacts(updatedContacts);
+    }
+  }, [addressUser, userProfile]);
 
   const handleMenuClick = (e: { key: string }) => {
     setActivePage(e.key);
@@ -441,7 +456,7 @@ const UserInfomation = () => {
                         xl={12}
                         span={12}
                       >
-                        {contact.isDefault && (
+                        {/* {contact.isDefault && (
                           <div
                             style={{
                               fontWeight: 400,
@@ -453,12 +468,8 @@ const UserInfomation = () => {
                           >
                             Default
                           </div>
-                        )}
-                        <Card
-                          className={`contact-card ${
-                            contact.isDefault ? "default-card" : ""
-                          }`}
-                        >
+                        )} */}
+                        <Card className={"contact-card"}>
                           <div className="edit-contact-icon">
                             <EditOutlined
                               style={{ fontSize: 18 }}

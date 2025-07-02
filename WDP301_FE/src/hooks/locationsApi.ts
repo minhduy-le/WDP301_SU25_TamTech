@@ -43,3 +43,16 @@ export const useWardByDistrictId = (districtId: number | null) => {
     enabled: !!districtId,
   });
 };
+
+const fetchAddressUser = async (): Promise<string[]> => {
+  const response = await axiosInstance.get("location/addresses/user");
+  const { data } = response.data as GenericApiResponse<string[]>;
+  return Array.isArray(data) ? data : [];
+};
+
+export const useGetAddressUser = () => {
+  return useQuery<string[], Error>({
+    queryKey: ["addresses"],
+    queryFn: fetchAddressUser,
+  });
+};
