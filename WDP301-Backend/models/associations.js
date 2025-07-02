@@ -17,6 +17,7 @@ const Promotion = require("./promotion");
 const PromotionType = require("./promotionType");
 const Schedule = require("./schedule");
 const ScheduleShipper = require("./ScheduleShipper");
+const Blog = require("./blog");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -84,6 +85,10 @@ ScheduleShipper.belongsTo(Schedule, { foreignKey: "scheduleId", as: "Schedule" }
 ScheduleShipper.belongsTo(User, { foreignKey: "shipperId", as: "Shipper" });
 User.hasMany(ScheduleShipper, { foreignKey: "shipperId", as: "ScheduleShippers" });
 
+// Define relationship for Blog
+Blog.belongsTo(User, { foreignKey: "authorId", as: "Author" });
+User.hasMany(Blog, { foreignKey: "authorId", as: "Blogs" });
+
 module.exports = {
   Product,
   ProductType,
@@ -104,4 +109,5 @@ module.exports = {
   PromotionType,
   Schedule,
   ScheduleShipper,
+  Blog,
 };
