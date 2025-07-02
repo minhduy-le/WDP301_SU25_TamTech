@@ -199,6 +199,26 @@ const Menu = () => {
     setVisibleProducts((prev) => prev + 9);
   };
 
+  const handleAddProduct = (product: ProductDto) => {
+    if (!user?.id) {
+      message.error("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng");
+      return;
+    }
+
+    const cartItem = {
+      userId: user.id,
+      productId: product.productId,
+      productName: product.name,
+      addOns: [],
+      quantity: 1,
+      price: Number(product.price),
+      totalPrice: Number(product.price),
+    };
+
+    addToCart(cartItem);
+    message.success("Thêm vào giỏ hàng thành công");
+  };
+
   const totalPrice = productDetail
     ? Number(productDetail.price) * quantity +
       addOnProductQueries.reduce((sum, { typeId, query }) => {
@@ -277,12 +297,21 @@ const Menu = () => {
                         <div className="card-price">
                           {Number(product.price).toLocaleString("vi-VN")}đ
                         </div>
-                        <Button
-                          className="add-button"
-                          onClick={() => showModal(product)}
-                        >
-                          Thêm
-                        </Button>
+                        {productTypeId === 1 ? (
+                          <Button
+                            className="add-button"
+                            onClick={() => showModal(product)}
+                          >
+                            Thêm
+                          </Button>
+                        ) : (
+                          <Button
+                            className="add-button"
+                            onClick={() => handleAddProduct(product)}
+                          >
+                            Thêm
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </Card>

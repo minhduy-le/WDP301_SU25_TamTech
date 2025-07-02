@@ -5,7 +5,8 @@ import { jwtDecode } from "jwt-decode";
 import axiosInstance from "../config/axios";
 import { useMutation } from "@tanstack/react-query";
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../config/firebase";
+import { auth, googleProvider, messaging } from "../config/firebase";
+import { getToken } from "firebase/messaging";
 
 export interface LoginDto {
   email: string;
@@ -79,6 +80,41 @@ export const useAuthStore = create<AuthState>((set) => {
     };
   };
 
+  const requestNotificationPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        console.warn("Notification permission not granted");
+        return null;
+      }
+      return permission;
+    } catch (err) {
+      console.error("Error requesting notification permission:", err);
+      return null;
+    }
+  };
+
+  const registerServiceWorker = async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js",
+          {
+            scope: "/firebase-cloud-messaging-push-scope",
+          }
+        );
+        console.log("Service Worker registered:", registration);
+        return registration;
+      } else {
+        console.warn("Service Worker is not supported in this browser.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Service Worker registration failed:", error);
+      return null;
+    }
+  };
+
   return {
     ...loadStoredAuth(),
 
@@ -108,6 +144,27 @@ export const useAuthStore = create<AuthState>((set) => {
 
           localStorage.setItem("user", JSON.stringify(user));
           localStorage.setItem("token", data.token);
+
+          await registerServiceWorker();
+
+          // Request notification permission before fetching FCM token
+          const permission = await requestNotificationPermission();
+          let fcmToken: string | null = null;
+          if (permission === "granted") {
+            fcmToken = await getToken(messaging, {
+              vapidKey:
+                "BOYKZ4MFMfEBL8WJTLid1bmd-m0Hbq8Aru3jlJTbylPWiHpdxyiKlhU97BtPw3K44Uyn4BLqzzVmsptNvwatdRI",
+            }).catch((err) => {
+              console.error("Lỗi khi lấy fcmToken:", err);
+              return null;
+            });
+          }
+
+          if (fcmToken) {
+            console.log("FCM Token:", fcmToken); // Log fcmToken ra console
+            // Optional: Send fcmToken to server
+            // await axiosInstance.post("auth/update-fcm-token", { fcmToken });
+          }
 
           set({ user, token: data.token, error: null });
           return {
@@ -164,6 +221,27 @@ export const useAuthStore = create<AuthState>((set) => {
 
           localStorage.setItem("user", JSON.stringify(user));
           localStorage.setItem("token", data.token);
+
+          await registerServiceWorker();
+
+          // Request notification permission before fetching FCM token
+          const permission = await requestNotificationPermission();
+          let fcmToken: string | null = null;
+          if (permission === "granted") {
+            fcmToken = await getToken(messaging, {
+              vapidKey:
+                "BOYKZ4MFMfEBL8WJTLid1bmd-m0Hbq8Aru3jlJTbylPWiHpdxyiKlhU97BtPw3K44Uyn4BLqzzVmsptNvwatdRI",
+            }).catch((err) => {
+              console.error("Lỗi khi lấy fcmToken:", err);
+              return null;
+            });
+          }
+
+          if (fcmToken) {
+            console.log("FCM Token:", fcmToken); // Log fcmToken ra console
+            // Optional: Send fcmToken to server
+            // await axiosInstance.post("auth/update-fcm-token", { fcmToken });
+          }
 
           set({ user, token: data.token, error: null });
           return {
