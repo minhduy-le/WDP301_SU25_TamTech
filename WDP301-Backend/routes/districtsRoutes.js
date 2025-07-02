@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { getAllDistricts, getWardsByDistrict } = require("../services/districtsService");
+const { getAllDistricts, getWardsByDistrict, getUserOrderAddresses } = require("../services/districtsService");
+const verifyToken = require("../middlewares/verifyToken");
 
 console.log("Loading districtsRoutes.js version 2025-05-24-ghn-hcmc-wards-api");
 
@@ -150,6 +151,63 @@ router.get("/wards", async (req, res) => {
     console.error("Error in GET /api/wards:", error.message);
     res.status(500).json({
       message: "Failed to retrieve wards",
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/location/addresses/user:
+ *   get:
+ *     summary: Retrieve unique order addresses for the authenticated user
+ *     description: Fetches a list of unique addresses from orders placed by the authenticated user.
+ *     tags: [Location]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved unique order addresses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unique order addresses retrieved successfully
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     example: 123 Đường Láng, Phường Bến Nghé, Quận 1, TP.HCM
+ *       401:
+ *         description: Unauthorized, token missing or invalid
+ *       500:
+ *         description: Failed to retrieve addresses due to an internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to retrieve user order addresses
+ *                 error:
+ *                   type: string
+ *                   example: Failed to retrieve user order addresses
+ */
+router.get("/addresses/user", verifyToken, async (req, res) => {
+  try {
+    const addresses = await getUserOrderAddresses(req.userId);
+    res.status(200).json({
+      message: "Unique order addresses retrieved successfully",
+      data: addresses,
+    });
+  } catch (error) {
+    console.error("Error in GET /api/location/addresses:", error.message);
+    res.status(500).json({
+      message: "Failed to retrieve user order addresses",
       error: error.message,
     });
   }
