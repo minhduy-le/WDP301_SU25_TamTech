@@ -12,6 +12,8 @@ const {
   getAllOrders,
   getPaidOrders,
   getOrderDetails,
+  setOrderToCanceled,
+  sendRefundEmail,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -1149,6 +1151,8 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                   phone_number:
  *                     type: string
  *                     nullable: true
+ *                   isRefund:
+ *                     type: boolean
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -1289,5 +1293,146 @@ router.get("/", verifyToken, getAllOrders);
  *                   type: string
  */
 router.get("/paid", verifyToken, getPaidOrders);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cancel:
+ *   put:
+ *     summary: Set order status to Canceled
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Order status updated to Canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *                 status:
+ *                   type: string
+ *                   example: Canceled
+ *       400:
+ *         description: Invalid input or invalid status transition
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Invalid status transition: Order is currently Pending. It must be Paid to transition to Canceled.'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff or Admin can set orders to Canceled'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to update order status'
+ */
+router.put("/:orderId/cancel", verifyToken, setOrderToCanceled);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/refund-email:
+ *   post:
+ *     summary: Send refund email for a canceled order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Refund email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 orderId:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input or order not in Canceled status
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order must be in Canceled status to send refund email'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user role not allowed)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: Only Staff or Admin can send refund emails'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Failed to send refund email'
+ */
+router.post("/:orderId/refund-email", verifyToken, sendRefundEmail);
 
 module.exports = router;
