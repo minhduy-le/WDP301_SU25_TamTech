@@ -21,6 +21,26 @@ const updateUserProfile = async (userId, updateData) => {
 
   const { fullName, email, phone_number, date_of_birth } = updateData;
 
+  // Check if email already exists for another user
+  if (email && email !== user.email) {
+    const existingEmail = await User.findOne({
+      where: { email, id: { [User.Sequelize.Op.ne]: userId } },
+    });
+    if (existingEmail) {
+      throw new Error("Email already exists");
+    }
+  }
+
+  // Check if phone number already exists for another user
+  if (phone_number && phone_number !== user.phone_number) {
+    const existingPhone = await User.findOne({
+      where: { phone_number, id: { [User.Sequelize.Op.ne]: userId } },
+    });
+    if (existingPhone) {
+      throw new Error("Phone number already exists");
+    }
+  }
+
   await user.update({
     fullName: fullName || user.fullName,
     email: email || user.email,
