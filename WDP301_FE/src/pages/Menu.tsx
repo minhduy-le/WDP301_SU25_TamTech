@@ -79,6 +79,9 @@ const Menu = () => {
   } = useGetProductById(String(selectedProductId));
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isQuantityModalVisible, setIsQuantityModalVisible] = useState(false);
+  const [selectedQuantityProduct, setSelectedQuantityProduct] =
+    useState<ProductDto | null>(null);
 
   const [addOnQuantities, setAddOnQuantities] = useState<
     Record<string, number>
@@ -199,24 +202,46 @@ const Menu = () => {
     setVisibleProducts((prev) => prev + 9);
   };
 
-  const handleAddProduct = (product: ProductDto) => {
+  const showQuantityModal = (product: ProductDto) => {
+    setSelectedQuantityProduct(product);
+    setQuantity(1); // Reset quantity khi mở modal
+    setIsQuantityModalVisible(true);
+  };
+
+  const handleQuantityModalClose = () => {
+    setIsQuantityModalVisible(false);
+    setSelectedQuantityProduct(null);
+    setQuantity(1);
+  };
+
+  const handleAddProductToCart = () => {
     if (!user?.id) {
       message.error("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng");
       return;
     }
 
-    const cartItem = {
-      userId: user.id,
-      productId: product.productId,
-      productName: product.name,
-      addOns: [],
-      quantity: 1,
-      price: Number(product.price),
-      totalPrice: Number(product.price),
-    };
+    if (selectedQuantityProduct && user?.id) {
+      const cartItem = {
+        userId: user.id,
+        productId: selectedQuantityProduct.productId,
+        productName: selectedQuantityProduct.name,
+        addOns: [],
+        quantity,
+        price: Number(selectedQuantityProduct.price),
+        totalPrice: Number(selectedQuantityProduct.price) * quantity,
+      };
 
-    addToCart(cartItem);
-    message.success("Thêm vào giỏ hàng thành công");
+      addToCart(cartItem);
+      message.success("Thêm vào giỏ hàng thành công");
+      handleQuantityModalClose();
+    }
+  };
+
+  const handleQuantityChangeForModal = (change: number) => {
+    const newQuantity = quantity + change;
+    if (newQuantity >= 1 && newQuantity <= 10) {
+      setQuantity(newQuantity);
+    }
   };
 
   const totalPrice = productDetail
@@ -307,7 +332,7 @@ const Menu = () => {
                         ) : (
                           <Button
                             className="add-button"
-                            onClick={() => handleAddProduct(product)}
+                            onClick={() => showQuantityModal(product)}
                           >
                             Thêm
                           </Button>
@@ -472,6 +497,68 @@ const Menu = () => {
             </>
           ) : (
             <div>Không có chi tiết món ăn</div>
+          )}
+        </div>
+      </Modal>
+
+      <Modal
+        visible={isQuantityModalVisible}
+        onCancel={handleQuantityModalClose}
+        footer={null}
+        className="menu-modal"
+        centered
+        width={400}
+      >
+        <div className="modal-content">
+          {selectedQuantityProduct ? (
+            <>
+              <Row>
+                <Col span={24} style={{ textAlign: "center" }}>
+                  <Text className="modal-title">
+                    {selectedQuantityProduct.name.toUpperCase()}
+                  </Text>
+                </Col>
+              </Row>
+              <div
+                className="modal-quantity"
+                style={{
+                  textAlign: "center",
+                  justifyContent: "center",
+                  margin: "10px 0",
+                }}
+              >
+                <div className="quantity-selector">
+                  <Button
+                    className="quantity-button minus-button"
+                    onClick={() => handleQuantityChangeForModal(-1)}
+                    disabled={quantity === 1}
+                  >
+                    −
+                  </Button>
+                  <Text className="quantity-number">{quantity}</Text>
+                  <Button
+                    className="quantity-button plus-button"
+                    onClick={() => handleQuantityChangeForModal(1)}
+                    disabled={quantity === 10}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+              <div className="modal-buttons" style={{ textAlign: "center" }}>
+                <Button
+                  className="add-to-cart-button"
+                  onClick={handleAddProductToCart}
+                >
+                  {(
+                    Number(selectedQuantityProduct.price) * quantity
+                  ).toLocaleString("vi-VN")}
+                  đ - Thêm vào giỏ hàng
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div>Không có sản phẩm được chọn</div>
           )}
         </div>
       </Modal>

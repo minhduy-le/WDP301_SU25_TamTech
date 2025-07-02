@@ -373,8 +373,16 @@ const Checkout = () => {
       prevItems.map((item) => {
         if (item.productId === productId && item.quantity < 10) {
           const newQuantity = item.quantity + 1;
-          const newTotalPrice = item.price * newQuantity;
-          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+          const addOnTotalPrice = item.addOns.reduce(
+            (sum, addOn) => sum + addOn.price * addOn.quantity,
+            0
+          );
+          const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
+          return {
+            ...item,
+            quantity: newQuantity,
+            totalPrice: newTotalPrice,
+          };
         }
         return item;
       })
@@ -387,8 +395,16 @@ const Checkout = () => {
       prevItems.map((item) => {
         if (item.productId === productId && item.quantity > 1) {
           const newQuantity = item.quantity - 1;
-          const newTotalPrice = item.price * newQuantity;
-          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+          const addOnTotalPrice = item.addOns.reduce(
+            (sum, addOn) => sum + addOn.price * addOn.quantity,
+            0
+          );
+          const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
+          return {
+            ...item,
+            quantity: newQuantity,
+            totalPrice: newTotalPrice,
+          };
         }
         return item;
       })
@@ -661,11 +677,13 @@ const Checkout = () => {
                   key={item.productId}
                 >
                   <Row style={{ justifyContent: "space-between" }}>
-                    <Col>
+                    <Col span={17}>
                       <Text
                         style={{
                           fontFamily: "'Montserrat', sans-serif",
                           fontSize: 17,
+                          display: "block",
+                          height: 30,
                         }}
                       >
                         {item.productName}
@@ -673,46 +691,93 @@ const Checkout = () => {
                       {item.addOns.length > 0 && (
                         <>
                           {item.addOns.map((addOn, index) => (
-                            <Text
-                              key={index}
-                              className="sub-item"
-                              style={{ fontFamily: "'Montserrat', sans-serif" }}
-                            >
-                              • {addOn.productTypeName}
-                            </Text>
+                            <Row style={{ flexWrap: "nowrap" }}>
+                              <Text
+                                key={index}
+                                className="sub-item"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                  width: "-webkit-fill-available",
+                                }}
+                              >
+                                • {addOn.productTypeName} x{addOn.quantity}
+                              </Text>
+                              {/* <Text
+                                key={index}
+                                className="sub-item"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                  color: "#DA7339",
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  marginRight: 13,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {addOn.price}đ
+                              </Text> */}
+                            </Row>
                           ))}
                         </>
                       )}
                     </Col>
-                    <Col>
-                      <div className="order-price">
-                        <Text
-                          style={{
-                            fontFamily: "'Montserrat', sans-serif",
-                            color: "#DA7339",
-                            fontSize: 15,
-                            fontWeight: 700,
-                            marginRight: 13,
-                          }}
-                        >
-                          {(item.totalPrice / item.quantity).toLocaleString()}đ
-                        </Text>
-                        <div className="quantity-controls">
-                          <Button
-                            disabled={item.quantity === 1}
-                            onClick={() => handleDecrement(item.productId)}
+                    <Col span={7}>
+                      <Row>
+                        <div className="order-price">
+                          <Text
+                            style={{
+                              fontFamily: "'Montserrat', sans-serif",
+                              color: "#DA7339",
+                              fontSize: 15,
+                              fontWeight: 700,
+                              marginRight: 13,
+                            }}
                           >
-                            -
-                          </Button>
-                          <span>{item.quantity}</span>
-                          <Button
-                            onClick={() => handleIncrement(item.productId)}
-                            disabled={item.quantity === 10}
-                          >
-                            +
-                          </Button>
+                            {/* {(item.totalPrice / item.quantity).toLocaleString()}đ */}
+                            {item.price.toLocaleString()}đ
+                          </Text>
+                          <div className="quantity-controls">
+                            <Button
+                              disabled={item.quantity === 1}
+                              onClick={() => handleDecrement(item.productId)}
+                            >
+                              -
+                            </Button>
+                            <span>{item.quantity}</span>
+                            <Button
+                              onClick={() => handleIncrement(item.productId)}
+                              disabled={item.quantity === 10}
+                            >
+                              +
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      </Row>
+                      {item.addOns.length > 0 && (
+                        <Col>
+                          {item.addOns.map((addOn, index) => (
+                            <Row style={{ flexWrap: "nowrap" }}>
+                              <Text
+                                key={index}
+                                className="sub-item"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                  color: "#DA7339",
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  whiteSpace: "nowrap",
+                                  margin: 0,
+                                }}
+                              >
+                                {(
+                                  addOn.price * addOn.quantity
+                                ).toLocaleString()}
+                                đ
+                              </Text>
+                            </Row>
+                          ))}
+                        </Col>
+                      )}
                     </Col>
                   </Row>
                 </div>
