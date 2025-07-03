@@ -47,26 +47,37 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
   }, [token, user, setUser, setToken, logout]);
 
   useEffect(() => {
-    const publicPages = [
+    const publicRoutes = [
       "/",
       "/login",
       "/register",
       "/verify-email",
       "/verify-otp",
-      "/menu",
       "/forgot-password",
+      "/menu",
       "/product/:productId",
       "/blog",
+      "/blog/:id",
     ];
 
+    const matchDynamicRoute = (routePattern: string, path: string) => {
+      const dynamicRoutePattern = routePattern
+        .replace(/:productId/, "[0-9]+")
+        .replace(/:id/, "[0-9]+");
+      const regex = new RegExp(`^${dynamicRoutePattern}$`);
+      return regex.test(path);
+    };
+
     if (!user || !user.role) {
-      if (location.pathname.startsWith("/product/")) {
+      if (
+        publicRoutes.some((route) =>
+          matchDynamicRoute(route, location.pathname)
+        ) ||
+        publicRoutes.includes(location.pathname)
+      ) {
         return;
       }
-
-      if (!publicPages.includes(location.pathname)) {
-        navigate("/login", { replace: true });
-      }
+      navigate("/login", { replace: true });
       return;
     }
 
@@ -109,20 +120,19 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       ],
     };
 
-    const matchDynamicRoute = (route: string, path: string) => {
-      const dynamicRoutePattern = route
-        .replace(/:productId/, "[0-9]+")
-        .replace(/:orderId/, "[0-9]+");
-      const regex = new RegExp(`^${dynamicRoutePattern}$`);
-      return regex.test(path);
-    };
-
     const userRole = user.role as UserRole;
     const allowedPages = restrictedPages[userRole] || [];
     const isAllowed =
-      publicPages.includes(location.pathname) ||
+      publicRoutes.some((route) =>
+        matchDynamicRoute(route, location.pathname)
+      ) ||
+      publicRoutes.includes(location.pathname) ||
       allowedPages.some((route) => {
-        if (route.includes(":productId") || route.includes(":orderId")) {
+        if (
+          route.includes(":productId") ||
+          route.includes(":orderId") ||
+          route.includes(":id")
+        ) {
           return matchDynamicRoute(route, location.pathname);
         }
         return route === location.pathname;

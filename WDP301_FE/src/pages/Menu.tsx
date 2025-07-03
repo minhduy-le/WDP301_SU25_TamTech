@@ -275,7 +275,7 @@ const Menu = () => {
           {isProductTypesLoading ? (
             <Skeleton />
           ) : isProductTypesError ? (
-            <div>Error loading categories. Please try again later.</div>
+            <div>Lỗi load loại sản phẩm. Vui lòng thử lại.</div>
           ) : productTypes && productTypes.length > 0 ? (
             productTypes.map((type) => (
               <div
