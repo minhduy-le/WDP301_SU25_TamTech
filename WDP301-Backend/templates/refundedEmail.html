@@ -1,69 +1,36 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thông báo hoàn tiền</title>
+    <title>Tấm Tắc</title>
     <style>
       body {
-        font-family: "Arial", sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 0;
+        font-family: Arial, sans-serif;
+        color: #333;
       }
       .container {
         max-width: 600px;
-        margin: 20px auto;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
+        margin: 0 auto;
+        padding: 20px;
       }
       .header {
-        background-color: #2563eb;
-        color: #ffffff;
-        padding: 20px;
         text-align: center;
-      }
-      .header h1 {
-        margin: 0;
-        font-size: 24px;
       }
       .content {
-        padding: 20px;
-        color: #1e293b;
-      }
-      .content p {
-        margin: 10px 0;
-        line-height: 1.6;
-      }
-      .order-details {
-        background-color: #f1f5f9;
-        padding: 15px;
-        border-radius: 6px;
         margin-top: 20px;
       }
-      .order-details p {
-        margin: 5px 0;
-        font-size: 14px;
-      }
       .footer {
-        background-color: #64748b;
-        color: #ffffff;
-        padding: 10px;
+        margin-top: 20px;
         text-align: center;
         font-size: 12px;
-      }
-      .footer a {
-        color: #ffffff;
-        text-decoration: none;
+        color: #777;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>Tấm Tắc</h1>
+        <h2>Tấm Tắc</h2>
       </div>
       <div class="content">
         <p>Kính gửi {{fullName}},</p>
@@ -71,20 +38,34 @@
           Chúng tôi xin thông báo rằng đơn hàng của bạn đã được hủy và số tiền đã được hoàn lại. Dưới đây là thông tin
           chi tiết:
         </p>
-        <div class="order-details">
-          <p><strong>Mã đơn hàng:</strong> #{{orderId}}</p>
-          <p><strong>Số tiền hoàn lại:</strong> {{orderAmount}} VND</p>
-          <p><strong>Ngày đặt hàng:</strong> {{orderDate}}</p>
-        </div>
+        <ul>
+          <li><strong>Mã đơn hàng:</strong> #{{orderId}}</li>
+          <li><strong>Số tiền hoàn lại:</strong> {{orderAmount}} VND</li>
+          <li><strong>Ngày đặt hàng:</strong> {{orderDate}}</li>
+          {{#if certificationRefund}}
+          <li>
+            <strong>Chứng từ hoàn tiền:</strong>
+            <a href="{{certificationRefund}}">Xem chứng từ</a><br />
+            <img
+              src="{{certificationRefund}}"
+              alt="Refund Certification"
+              style="max-width: 100%; height: auto; margin-top: 10px"
+            />
+          </li>
+          {{/if}}
+        </ul>
         <p>
           Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email
-          <a href="mailto:support@tam tac.vn">support@tam tac.vn</a> hoặc số điện thoại +84 909 123 456.
+          <a href="mailto:support@tam tac.vn">support@tam tac.vn</a> hoặc số điện thoại
+          <strong>+84 909 123 456</strong>.
         </p>
         <p>Xin cảm ơn bạn đã tin tưởng và ủng hộ Tấm Tắc!</p>
       </div>
       <div class="footer">
-        <p>Tấm Tắc - 123 Đường Kinh Doanh, Quận 1, TP. Hồ Chí Minh</p>
-        <p><a href="https://tam tac.vn">www.tam tac.vn</a></p>
+        <p>
+          Tấm Tắc - 123 Đường Kinh Doanh, Quận 1, TP. Hồ Chí Minh<br />
+          <a href="http://www.tam tac.vn">www.tam tac.vn</a>
+        </p>
       </div>
     </div>
   </body>

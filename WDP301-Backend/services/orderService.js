@@ -20,6 +20,7 @@ const { Readable } = require("stream");
 const nodemailer = require("nodemailer");
 const fs = require("fs").promises;
 const path = require("path");
+const handlebars = require("handlebars"); // Thêm dòng này
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -1620,23 +1621,23 @@ const getPaidOrders = async (req, res) => {
   }
 };
 
-const setOrderToCanceled = async (orderId, reason, userId) => {
+const setOrderToCanceled = async (orderId, reason, userId, bankName, bankNumber) => {
   const transaction = await sequelize.transaction();
   try {
     console.log(`Starting transaction for orderId: ${orderId}`);
     const order = await Order.findOne({ where: { orderId }, transaction });
     if (!order) {
       console.log(`Order not found for orderId: ${orderId}`);
-      throw new Error("Order not found");
+      throw Object.assign(new Error("Order not found"), { status: 404 });
     }
 
     if (order.status_id === 5) {
       console.log(`Order ${orderId} is already canceled`);
-      throw new Error("Order is already canceled");
+      throw Object.assign(new Error("Order is already canceled"), { status: 400 });
     }
     if (!reason || reason.trim() === "") {
       console.log(`Reason is missing or empty for orderId: ${orderId}`);
-      throw new Error("Reason for cancellation is required");
+      throw Object.assign(new Error("Reason for cancellation is required"), { status: 400 });
     }
 
     order.status_id = 5; // Canceled status
@@ -1648,11 +1649,14 @@ const setOrderToCanceled = async (orderId, reason, userId) => {
         orderId,
         userId,
         reason,
+        bankName: bankName || null,
+        bankNumber: bankNumber || null,
+        certificationRefund: null, // Initially null, updated later
         createdAt: new Date(),
       },
       { transaction }
     );
-    console.log(`ReasonCancel created for orderId: ${orderId}`);
+    console.log(`ReasonCancel created for orderId: ${orderId} with bankName: ${bankName}, bankNumber: ${bankNumber}`);
 
     await transaction.commit();
     console.log(`Transaction committed for orderId: ${orderId}`);
@@ -1668,55 +1672,116 @@ const setOrderToCanceled = async (orderId, reason, userId) => {
   }
 };
 
-const sendRefundEmail = async (req, res) => {
-  console.log("sendRefundEmail called at:", new Date().toISOString());
-  console.log("Request params:", req.params);
-  console.log("User ID:", req.userId, "User role:", req.userRole);
-
-  const { orderId } = req.params;
-  const userId = req.userId;
-  const userRole = req.userRole;
-
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).send("Invalid order ID");
-  }
-
+const uploadRefundCertification = async (orderId, userId, file) => {
   const transaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({
-      where: { orderId: parsedOrderId },
-      include: [
-        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
-        { model: User, as: "User", attributes: ["fullName", "email"] },
-      ],
-      transaction,
-    });
-
+    console.log(`Starting upload for refund certification for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId }, transaction });
     if (!order) {
-      console.log("Order not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).send("Order not found");
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw Object.assign(new Error("Order not found"), { status: 404 });
     }
 
     if (order.status_id !== 5) {
-      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
-      console.log("Invalid status for sending refund email, orderId:", parsedOrderId, "Current status:", currentStatus);
-      await transaction.rollback();
-      return res.status(400).send("Order must be in Canceled status to send refund email");
+      console.log(`Order ${orderId} is not canceled`);
+      throw Object.assign(new Error("Order must be canceled to upload refund certification"), { status: 400 });
     }
 
-    if (!order.User || !order.User.email) {
-      console.log("User email not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(400).send("User email not found");
+    if (!file) {
+      console.log(`No file provided for orderId: ${orderId}`);
+      throw Object.assign(new Error("Refund certification image is required"), { status: 400 });
     }
 
-    if (order.isRefund) {
-      console.log("Refund email not sent as isRefund is already true for orderId:", parsedOrderId);
-      return res.status(400).send("Refund email already processed for this order");
+    const allowedMimes = ["image/jpeg", "image/png"];
+    if (!allowedMimes.includes(file.mimetype)) {
+      console.log(`Invalid image format for orderId: ${orderId}, Mime: ${file.mimetype}`);
+      throw Object.assign(new Error("Invalid image format. Only JPEG and PNG are allowed"), { status: 400 });
     }
+
+    let certificationRefundUrl;
+    try {
+      certificationRefundUrl = await uploadFileToFirebase(
+        file.buffer,
+        `refund_cert_${orderId}_${Date.now()}.${file.mimetype.split("/")[1]}`,
+        file.mimetype
+      );
+      console.log(`Image uploaded to Firebase for orderId: ${orderId}, URL: ${certificationRefundUrl}`);
+    } catch (uploadError) {
+      console.error(`Failed to upload image for orderId: ${orderId}`, uploadError.message);
+      throw Object.assign(new Error("Failed to upload certification image"), { status: 500 });
+    }
+
+    const reasonCancel = await ReasonCancel.findOne({ where: { orderId }, transaction });
+    if (!reasonCancel) {
+      console.log(`ReasonCancel not found for orderId: ${orderId}`);
+      throw Object.assign(new Error("ReasonCancel not found"), { status: 404 });
+    }
+
+    reasonCancel.certificationRefund = certificationRefundUrl;
+    await reasonCancel.save({ transaction });
+    console.log(`ReasonCancel updated with certificationRefund for orderId: ${orderId}`);
+
+    await transaction.commit();
+    console.log(`Transaction committed for orderId: ${orderId}`);
+    return {
+      success: true,
+      message: "Refund certification uploaded successfully",
+      certificationRefund: certificationRefundUrl,
+    };
+  } catch (error) {
+    if (transaction.finished !== "rollback") {
+      console.error(`Rolling back transaction for orderId: ${orderId} due to error: ${error.message}`);
+      await transaction.rollback();
+    } else {
+      console.warn(`Transaction already rolled back for orderId: ${orderId}`);
+    }
+    throw error;
+  }
+};
+
+const sendRefundEmail = async (orderId, userId) => {
+  try {
+    console.log(`Preparing refund email for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId } });
+    if (!order) {
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw new Error("Order not found");
+    }
+
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      console.log(`User not found for userId: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    const reasonCancel = await ReasonCancel.findOne({ where: { orderId } });
+    if (!reasonCancel) {
+      console.log(`ReasonCancel not found for orderId: ${orderId}`);
+      throw new Error("ReasonCancel not found");
+    }
+
+    // Cập nhật isRefund thành true
+    await order.update({ isRefund: true });
+
+    const emailTemplatePath = path.join(__dirname, "../templates/refundedEmail.html");
+    const emailTemplateSource = await fs.readFile(emailTemplatePath, "utf8");
+    const template = handlebars.compile(emailTemplateSource);
+
+    const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    const templateData = {
+      fullName: user.fullName || "Khách hàng",
+      orderId,
+      orderAmount: order.order_subtotal.toLocaleString("vi-VN"), // Sửa thành order_subtotal
+      orderDate,
+      certificationRefund: reasonCancel.certificationRefund || null,
+    };
+
+    const htmlContent = template(templateData);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -1726,37 +1791,18 @@ const sendRefundEmail = async (req, res) => {
       },
     });
 
-    const emailTemplate = await fs.readFile(path.join(__dirname, "../templates/refundedEmail.html"), "utf-8");
-    const formattedEmail = emailTemplate
-      .replace("{{orderId}}", order.orderId.toString().padStart(6, "0"))
-      .replace("{{fullName}}", order.User.fullName || "Khách hàng")
-      .replace("{{orderAmount}}", order.order_subtotal.toLocaleString("vi-VN"))
-      .replace("{{orderDate}}", new Date(order.order_create_at).toLocaleDateString("vi-VN"));
-
-    const mailOptions = {
-      from: '"Tấm Tắc" <' + process.env.EMAIL_USER + ">",
-      to: order.User.email,
-      subject: `Thông báo hoàn tiền đơn hàng #${order.orderId.toString().padStart(6, "0")}`,
-      html: formattedEmail,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log("Refund email sent successfully for orderId:", parsedOrderId);
-
-    order.isRefund = true;
-    await order.save({ transaction });
-
-    await transaction.commit();
-    console.log("Order updated with isRefund: true for orderId:", parsedOrderId);
-
-    res.status(200).json({
-      message: "Refund email sent successfully",
-      orderId: parsedOrderId,
+    await transporter.sendMail({
+      from: '"Tấm Tắc" <support@tam tac.vn>',
+      to: user.email,
+      subject: `Thông báo hoàn tiền đơn hàng #${orderId}`,
+      html: htmlContent,
     });
+
+    console.log(`Refund email sent successfully for orderId: ${orderId}`);
+    return { success: true, message: "Refund email sent successfully" };
   } catch (error) {
-    console.error("Error in sendRefundEmail:", error.message, error.stack);
-    await transaction.rollback();
-    return res.status(500).send("Failed to send refund email");
+    console.error(`Failed to send refund email for orderId: ${orderId}`, error.message);
+    throw error;
   }
 };
 
@@ -1774,4 +1820,5 @@ module.exports = {
   getOrderDetails,
   setOrderToCanceled,
   sendRefundEmail,
+  uploadRefundCertification,
 };
