@@ -99,7 +99,8 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                     <ul className="item-description-list">
                       {item.addOns.map((addOn, index) => (
                         <li key={index} className="item-description">
-                          {addOn.productTypeName} x{addOn.quantity}
+                          {addOn.productTypeName}
+                          {/* x{addOn.quantity} */}
                         </li>
                       ))}
                     </ul>
@@ -107,12 +108,43 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                 </Col>
                 <Col
                   span={5}
-                  style={{ textAlign: "right", display: "flex", gap: 5 }}
+                  style={{
+                    textAlign: "right",
+                    display: "flex",
+                    gap: 5,
+                    flexDirection: "column",
+                  }}
                 >
-                  <Text className="item-price">
-                    {(item.totalPrice / item.quantity).toLocaleString()}đ
-                  </Text>
-                  <Text className="item-quantity">x{item.quantity}</Text>
+                  <div
+                    style={{ display: "flex", gap: 5, justifyContent: "end" }}
+                  >
+                    <Text className="item-price">
+                      {/* {(item.totalPrice / item.quantity).toLocaleString()}đ */}
+                      {item.price.toLocaleString()}đ
+                    </Text>
+                    <Text className="item-quantity">x{item.quantity}</Text>
+                  </div>
+                  {item.addOns.length > 0 && (
+                    <div>
+                      {item.addOns.map((addOn, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            display: "flex",
+                            gap: 5,
+                            justifyContent: "end",
+                          }}
+                        >
+                          <Text className="item-price">
+                            {addOn.price.toLocaleString()}đ
+                          </Text>
+                          <Text className="item-quantity">
+                            x{addOn.quantity}
+                          </Text>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Col>
                 <Col
                   span={2}

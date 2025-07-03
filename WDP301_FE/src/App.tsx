@@ -40,6 +40,7 @@ import MaterialManagement from "./pages/manager/materials/MaterialManagement";
 import ManagerProfile from "./pages/manager/ManagerProfile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChatAdmin from "./pages/admin/ChatAdmin";
+import BlogDetail from "./pages/BlogDetail";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -86,6 +87,7 @@ function App() {
             <Route path="/user-information" element={<UserInfomation />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
           </Route>
           <Route element={<LayoutWithSidebarManager />}>
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
