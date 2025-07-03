@@ -977,28 +977,90 @@ const handlePaymentSuccess = async (req, res) => {
 };
 
 const getUserOrders = async (req, res) => {
+  console.log("getUserOrders called at:", new Date().toISOString());
+  console.log("User ID:", req.userId);
+
   const userId = req.userId;
+
   try {
     const orders = await Order.findAll({
       where: { userId },
-      include: [
-        { model: OrderItem, as: "OrderItems", include: [{ model: Product, as: "Product", attributes: ["name"] }] },
-        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
-        { model: ReasonCancel, as: "ReasonCancels", attributes: ["reason"] },
+      attributes: [
+        "orderId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
       ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]],
     });
+
+    console.log("Fetched user orders:", orders.length);
 
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
-      status: order.OrderStatus?.status,
-      reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
       orderItemsCount: order.OrderItems.length,
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
-      order_subtotal: order.order_subtotal,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
     }));
 
+    console.log("Returning formatted user orders:", formattedOrders.length);
     res.status(200).json(formattedOrders);
   } catch (error) {
+    console.error("Error in getUserOrders:", error.message, error.stack);
     res.status(500).json({ message: "Failed to retrieve user orders", error: error.message });
   }
 };
@@ -1367,29 +1429,98 @@ const setOrderToDelivered = async (req, res) => {
 };
 
 const getAllOrders = async (req, res) => {
+  console.log("getAllOrders called at:", new Date().toISOString());
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const userRole = req.userRole;
+
   try {
     const orders = await Order.findAll({
-      include: [
-        { model: User, as: "User", attributes: ["id", "fullName"] },
-        { model: OrderItem, as: "OrderItems", include: [{ model: Product, as: "Product", attributes: ["name"] }] },
-        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
-        { model: ReasonCancel, as: "ReasonCancels", attributes: ["reason"] },
+      attributes: [
+        "orderId",
+        "userId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+        "isRefund",
       ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+        {
+          model: ReasonCancel,
+          as: "ReasonCancels",
+          attributes: ["reason"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]],
     });
+
+    console.log("Fetched all orders:", orders.length);
 
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
       userId: order.userId,
-      fullName: order.User?.fullName,
-      status: order.OrderStatus?.status,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      isRefund: order.isRefund,
       reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
-      orderItemsCount: order.OrderItems.length,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
-      order_subtotal: order.order_subtotal,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
     }));
 
+    console.log("Returning formatted orders:", formattedOrders.length);
     res.status(200).json(formattedOrders);
   } catch (error) {
+    console.error("Error in getAllOrders:", error.message, error.stack);
     res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
   }
 };
