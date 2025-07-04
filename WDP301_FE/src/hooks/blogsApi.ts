@@ -33,17 +33,17 @@ export interface BlogDto {
 
 interface MutationVariables {
   id: number;
-  blog: BlogDto;
+  blog: CreateBlog;
 }
 
-interface CreateBlog {
+export interface CreateBlog {
   title: string;
   content: string;
   image: string;
 }
 
 const fetchBlogs = async (): Promise<BlogDto[]> => {
-  const response = await axiosInstance.get("blogs/active");
+  const response = await axiosInstance.get("blogs");
   const {
     status,
     message: responseMessage,
@@ -62,11 +62,39 @@ export const useBlogs = () => {
   });
 };
 
+const fetchBlogsActive = async (): Promise<BlogDto[]> => {
+  const response = await axiosInstance.get("blogs/active");
+  const {
+    status,
+    message: responseMessage,
+    blogs,
+  } = response.data as BlogApiResponse;
+  if (status >= 200 && status < 300 && blogs) {
+    return Array.isArray(blogs) ? blogs : [];
+  }
+  throw new Error(responseMessage || "Không thể tải danh sách blog");
+};
+
+export const useBlogActive = () => {
+  return useQuery<BlogDto[], Error>({
+    queryKey: ["blogs"],
+    queryFn: fetchBlogsActive,
+  });
+};
+
 export const useCreateBlogs = () => {
   return useMutation({
     mutationFn: async (newBlog: CreateBlog) => {
-      const response = await axiosInstance.post(`blogs`, newBlog);
-      return response.data as BlogDetailApiResponse;
+      try {
+        const response = await axiosInstance.post(`blogs`, newBlog);
+        return response.data as BlogDetailApiResponse;
+      } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorData = error.response.data;
+          throw new Error(errorData.message || "Lỗi không xác định");
+        }
+        throw error;
+      }
     },
     onError: (error: any) => {
       if (axios.isAxiosError(error) && error.response) {
@@ -79,7 +107,7 @@ export const useCreateBlogs = () => {
   });
 };
 
-export const useGetBlogById = (id: string) => {
+export const useGetBlogById = (id: number) => {
   return useQuery<BlogDto, Error>({
     queryKey: ["blogs", id],
     queryFn: async () => {

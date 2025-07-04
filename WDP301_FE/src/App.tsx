@@ -41,6 +41,7 @@ import ManagerProfile from "./pages/manager/ManagerProfile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChatAdmin from "./pages/admin/ChatAdmin";
 import BlogDetail from "./pages/BlogDetail";
+import BlogManagement from "./pages/BlogManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -124,6 +125,7 @@ function App() {
             <Route path="/staff/orders" element={<StaffOrderManagement />} />
             <Route path="/staff/profile" element={<StaffProfile />} />
             <Route path="/staff/chat" element={<StaffChat />} />
+            <Route path="/staff/blog" element={<BlogManagement />} />
           </Route>
         </Routes>
       </AuthGuardProvider>

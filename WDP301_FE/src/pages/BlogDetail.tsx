@@ -12,11 +12,13 @@ const BlogDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const blogId = id ? parseInt(id, 10) : 0;
+
   const {
     data: blog,
     isLoading: isLoadingBlog,
     isError: isErrorBlog,
-  } = useGetBlogById(id || "");
+  } = useGetBlogById(blogId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

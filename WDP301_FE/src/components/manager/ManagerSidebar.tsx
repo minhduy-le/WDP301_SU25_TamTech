@@ -19,7 +19,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Clipboard } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -45,7 +45,7 @@ const ManagerSidebar: React.FC = () => {
     },
     {
       key: "/manager/materials",
-      icon: <ShoppingOutlined />,
+      icon: <Clipboard />,
       label: "Quản lý nguyên liệu",
     },
     {

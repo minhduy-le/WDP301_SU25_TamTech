@@ -1,6 +1,6 @@
 import { Row, Col, Card, Typography, Button, Skeleton } from "antd";
 import "../style/Blog.css";
-import { useBlogs } from "../hooks/blogsApi";
+import { useBlogActive } from "../hooks/blogsApi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,7 +11,7 @@ const Blog = () => {
     data: blogs,
     isLoading: isLoadingBlogs,
     isError: isErrorBlogs,
-  } = useBlogs();
+  } = useBlogActive();
 
   const [visibleBlogs, setVisibleBlogs] = useState(9);
 

@@ -72,6 +72,10 @@ export interface Notification {
   updatedAt: string;
 }
 
+interface CancelOrder {
+  reason: string;
+}
+
 // Add the new hook to fetch notifications
 const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await axiosInstance.get<Notification[]>("notifications");
@@ -110,12 +114,16 @@ export const useCreateOrder = () => {
 export const useCalculateShipping = () => {
   return useMutation({
     mutationFn: async (calculateShip: CalculateShipping) => {
-      const response = await axiosInstance.post(`orders/shipping/calculate`, calculateShip);
+      const response = await axiosInstance.post(
+        `orders/shipping/calculate`,
+        calculateShip
+      );
       return response.data as ShippingResponseDto;
     },
     onError: (error: any) => {
       if (axios.isAxiosError(error) && error.response) {
-        const errorMessage = error.response.data?.message || error.response.data;
+        const errorMessage =
+          error.response.data?.message || error.response.data;
         throw new Error(errorMessage);
       } else {
         throw new Error("An unexpected error occurred");
@@ -183,6 +191,24 @@ export const useCookOrder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useCancelOrder = () => {
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      cancelReason,
+    }: {
+      orderId: number;
+      cancelReason: CancelOrder;
+    }) => {
+      const response = await axiosInstance.post(
+        `orders/cancel/${orderId}`,
+        cancelReason
+      );
+      return response.data;
     },
   });
 };

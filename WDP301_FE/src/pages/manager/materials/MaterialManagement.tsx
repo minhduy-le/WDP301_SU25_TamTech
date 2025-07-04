@@ -1,7 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import { Table, Space, Button, Input, Card, Modal, Descriptions, Tooltip, message, Form, Image } from "antd";
-import { SearchOutlined, EyeOutlined, PlusOutlined, FireOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Space,
+  Button,
+  Input,
+  Card,
+  Modal,
+  Descriptions,
+  Tooltip,
+  message,
+  Form,
+  Image,
+} from "antd";
+import {
+  SearchOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  FireOutlined,
+} from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import {
   useMaterials,
@@ -14,18 +31,26 @@ import { useQueryClient } from "@tanstack/react-query";
 // Không cần import BarcodeScanner nữa
 
 const MaterialManagement = () => {
-  const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
+    null
+  );
   const [form] = Form.useForm();
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
   const queryClient = useQueryClient();
-  const { mutate: createMaterial, isPending: isCreating } = useCreateMaterials();
+  const { mutate: createMaterial, isPending: isCreating } =
+    useCreateMaterials();
   const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
   // --- STYLING CONSTANTS ---
+  const headerColor = "#A05A2C";
+  const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
+  const oddRowBgColor = "#FFF7E6";
+  const cellTextColor = "#5D4037";
+  const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
   const handleOpenDetailModal = (record: MaterialDto) => {
@@ -58,10 +83,15 @@ const MaterialManagement = () => {
         }
       };
 
-      const expectedBarcodeValue = getBarcodeValueFromUrl(selectedMaterial.barcode);
+      const expectedBarcodeValue = getBarcodeValueFromUrl(
+        selectedMaterial.barcode
+      );
 
       if (scannedCode.trim() === expectedBarcodeValue) {
-        message.loading({ content: "Đang cập nhật số lượng...", key: "update_quantity" });
+        message.loading({
+          content: "Đang cập nhật số lượng...",
+          key: "update_quantity",
+        });
         increaseMaterialQuantity(
           { materialId: selectedMaterial.materialId! },
           {
@@ -75,7 +105,11 @@ const MaterialManagement = () => {
               handleCloseDetailModal();
             },
             onError: (error: any) => {
-              message.error({ content: error.message || "Cập nhật thất bại!", key: "update_quantity", duration: 2 });
+              message.error({
+                content: error.message || "Cập nhật thất bại!",
+                key: "update_quantity",
+                duration: 2,
+              });
             },
           }
         );
@@ -133,7 +167,7 @@ const MaterialManagement = () => {
 
   const columns: ColumnType<MaterialDto>[] = [
     {
-      title: "Mã",
+      title: "Mã nguyên liệu",
       dataIndex: "materialId",
       key: "materialId",
       width: 80,
@@ -146,7 +180,11 @@ const MaterialManagement = () => {
       width: 250,
       ellipsis: true,
       sorter: (a, b) => a.name.localeCompare(b.name),
-      render: (name) => <span style={{ fontWeight: 500 }}>{name}</span>,
+      render: (name) => (
+        <Tooltip title={name}>
+          <span style={{ fontWeight: 600, color: "#D97B41" }}>{name}</span>
+        </Tooltip>
+      ),
     },
     {
       title: "Số lượng",
@@ -200,12 +238,43 @@ const MaterialManagement = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FFF9F0", padding: "20px 30px 30px 60px" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#FFF9F0",
+        padding: "20px 30px 30px 60px",
+      }}
+    >
       <style>{`
-         /* CSS Styles can be kept as they are */
+        /* Your CSS styles remain the same */
+        .ant-table-thead > tr > th { background-color: ${headerBgColor} !important; color: ${headerColor} !important; font-weight: bold !important; border-right: 1px solid ${borderColor} !important; border-bottom: 2px solid ${tableBorderColor} !important; }
+        .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { border-right: none !important; }
+        .promo-table .ant-table-tbody > tr.even-row-promo > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr.odd-row-promo > td { background-color: ${oddRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { border-right: none; }
+        .promo-table .ant-table-tbody > tr:hover > td { background-color: #FDEBC8 !important; }
+        .promo-table .ant-table-cell-fix-right { background: inherit !important; }
+        .promo-table .ant-table-thead > tr > th.ant-table-cell-fix-right { background-color: ${headerBgColor} !important; }
+        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
+        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
+        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
+        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
+          border-color: #D97B41 !important; box-shadow: none !important;
+        }
+        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
+        .ant-select-selector { border-color: #E9C97B !important; }
+        .ant-select-selector:hover { border-color: #D97B41 !important; }
       `}</style>
       <div style={{ maxWidth: 1300 }}>
-        <h1 style={{ fontWeight: 700, color: "#A05A2C", fontSize: 36, marginBottom: 24, textAlign: "left" }}>
+        <h1
+          style={{
+            fontWeight: 700,
+            color: "#A05A2C",
+            fontSize: 36,
+            marginBottom: 24,
+            textAlign: "left",
+          }}
+        >
           Quản lý Nguyên liệu <FireOutlined />
         </h1>
         <Card
@@ -230,18 +299,28 @@ const MaterialManagement = () => {
           >
             <Space wrap className="order-search">
               <Input
-                placeholder="Tìm theo ID, Tên..."
+                placeholder="Tìm theo mã, tên..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 280, borderRadius: 6, borderColor: "#E9C97B", height: 32 }}
+                style={{
+                  width: 280,
+                  borderRadius: 6,
+                  borderColor: "#E9C97B",
+                  height: 32,
+                }}
                 allowClear
               />
             </Space>
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              style={{ background: "#D97B41", borderColor: "#D97B41", fontWeight: 600, borderRadius: 6 }}
+              style={{
+                background: "#D97B41",
+                borderColor: "#D97B41",
+                fontWeight: 600,
+                borderRadius: 6,
+              }}
               onClick={() => setIsAddModalVisible(true)}
             >
               Thêm nguyên liệu
@@ -254,7 +333,14 @@ const MaterialManagement = () => {
             dataSource={materials}
             loading={isMaterialLoading}
             rowKey="materialId"
-            rowClassName={(_, index) => (index % 2 === 0 ? "even-row-material" : "odd-row-material")}
+            style={{
+              borderRadius: 8,
+              border: `1px solid ${tableBorderColor}`,
+              overflow: "hidden",
+            }}
+            rowClassName={(_, index) =>
+              index % 2 === 0 ? "even-row-material" : "odd-row-material"
+            }
             scroll={{ x: 980 }}
             sticky
           />
@@ -262,7 +348,11 @@ const MaterialManagement = () => {
 
         {/* Detail Modal */}
         <Modal
-          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Chi tiết nguyên liệu</span>}
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Chi tiết nguyên liệu
+            </span>
+          }
           open={isDetailModalVisible}
           onCancel={handleCloseDetailModal}
           centered
@@ -281,18 +371,35 @@ const MaterialManagement = () => {
                 size="middle"
                 labelStyle={{ width: "150px", background: evenRowBgColor }}
               >
-                <Descriptions.Item label="Mã">{selectedMaterial.materialId}</Descriptions.Item>
-                <Descriptions.Item label="Tên">{selectedMaterial.name}</Descriptions.Item>
-                <Descriptions.Item label="Số lượng">{selectedMaterial.quantity}</Descriptions.Item>
+                <Descriptions.Item label="Mã">
+                  {selectedMaterial.materialId}
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên">
+                  {selectedMaterial.name}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số lượng">
+                  {selectedMaterial.quantity}
+                </Descriptions.Item>
                 <Descriptions.Item label="Barcode">
                   <Image
                     src={selectedMaterial.barcode}
                     alt={selectedMaterial.name}
-                    style={{ display: "block", margin: "auto", maxWidth: "100%" }}
+                    style={{
+                      display: "block",
+                      margin: "auto",
+                      maxWidth: "100%",
+                    }}
                   />
                 </Descriptions.Item>
               </Descriptions>
-              <div style={{ textAlign: "center", marginTop: "16px", color: "#888", fontStyle: "italic" }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  marginTop: "16px",
+                  color: "#888",
+                  fontStyle: "italic",
+                }}
+              >
                 Sẵn sàng quét...
               </div>
             </div>
@@ -301,7 +408,11 @@ const MaterialManagement = () => {
 
         {/* Add Material Modal */}
         <Modal
-          title={<span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>Thêm nguyên liệu</span>}
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Thêm nguyên liệu
+            </span>
+          }
           open={isAddModalVisible}
           onCancel={() => {
             setIsAddModalVisible(false);
@@ -330,11 +441,18 @@ const MaterialManagement = () => {
           ]}
           width={500}
         >
-          <Form form={form} name="addMaterialForm" layout="vertical" onFinish={handleAddMaterial}>
+          <Form
+            form={form}
+            name="addMaterialForm"
+            layout="vertical"
+            onFinish={handleAddMaterial}
+          >
             <Form.Item
               name="name"
               label="Tên nguyên liệu"
-              rules={[{ required: true, message: "Vui lòng nhập tên nguyên liệu!" }]}
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
+              ]}
             >
               <Input placeholder="Nhập tên nguyên liệu" />
             </Form.Item>
@@ -345,7 +463,11 @@ const MaterialManagement = () => {
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
                   validator: (_, value) =>
-                    value >= 0 ? Promise.resolve() : Promise.reject(new Error("Số lượng phải lớn hơn hoặc bằng 0!")),
+                    value >= 0
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
+                        ),
                 },
               ]}
             >

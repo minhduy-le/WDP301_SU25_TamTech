@@ -28,7 +28,7 @@ import { useAuthStore } from "../../hooks/usersApi";
 import { useGetNotifications, type Notification } from "../../hooks/ordersApi"; // Import hook and type
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Scroll } from "lucide-react";
 dayjs.extend(relativeTime);
 
 const { Header, Sider, Content } = Layout;
@@ -77,6 +77,11 @@ const StaffSidebar = () => {
       key: "/staff/orders",
       icon: <ShoppingFilled />,
       label: "Quản lý đơn hàng",
+    },
+    {
+      key: "/staff/blog",
+      icon: <Scroll />,
+      label: "Quản lý blog",
     },
     {
       key: "/staff/chat",
