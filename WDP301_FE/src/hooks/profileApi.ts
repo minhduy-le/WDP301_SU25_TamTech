@@ -84,7 +84,6 @@ export const useUpdateProfile = () => {
     onError: (error: any) => {
       if (axios.isAxiosError(error) && error.response) {
         const errorData = error.response.data;
-        console.log("API Error Response:", errorData); // Debug để kiểm tra
         throw new Error(errorData.message || "Lỗi không xác định");
       } else {
         throw new Error("An unexpected error occurred");
