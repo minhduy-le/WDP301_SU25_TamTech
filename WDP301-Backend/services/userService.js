@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { auth } = require("../config/firebase");
+const FcmToken = require("../models/fcmToken");
 
 // Current date for date_of_birth validation
 const currentDate = new Date("2025-05-26T10:53:00+07:00");
@@ -196,6 +197,78 @@ const userService = {
         phone_number: user.phone_number,
         role: user.role || "user",
         date_of_birth: user.date_of_birth, //them date_of_birth
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return { token };
+  },
+
+  async loginUserWeb(email, password, fcmToken) {
+    // Input validation
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!password) {
+      throw "Password cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+    if (password.length < 6) {
+      throw "Password must be at least 6 characters";
+    }
+    if (password.length > 250) {
+      throw "Password cannot exceed 250 characters";
+    }
+    if (fcmToken && typeof fcmToken !== "string") {
+      throw "FCM token must be a string";
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw "User not found";
+    }
+
+    // Check account status
+    if (!user.isActive) {
+      throw "Account not activated";
+    }
+    if (user.isBan) {
+      throw "Account is banned";
+    }
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw "Invalid credentials";
+    }
+
+    // Handle FCM token if provided
+    if (fcmToken && fcmToken.trim() !== "") {
+      const existingToken = await FcmToken.findOne({
+        where: { userId: user.id, fcmToken },
+      });
+
+      if (!existingToken) {
+        await FcmToken.create({
+          userId: user.id,
+          fcmToken,
+        });
+      }
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone_number: user.phone_number,
+        role: user.role || "User",
+        date_of_birth: user.date_of_birth,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }

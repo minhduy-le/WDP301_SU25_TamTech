@@ -249,6 +249,91 @@ router.post("/login", async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/login-web:
+ *   post:
+ *     summary: Log in a user for web with optional FCM token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *               fcmToken:
+ *                 type: string
+ *                 description: Optional Firebase Cloud Messaging token
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid input
+ *       401:
+ *         description: Invalid credentials or account not activated
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid credentials
+ *       404:
+ *         description: User not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/login-web", async (req, res) => {
+  try {
+    const { email, password, fcmToken } = req.body;
+    const result = await userService.loginUserWeb(email, password, fcmToken);
+    res.status(200).json({ token: result.token });
+  } catch (error) {
+    console.error("Error in /login-web route:", error, error.stack);
+    if (typeof error === "string") {
+      if (error === "User not found") {
+        res.status(404).send(error);
+      } else if (
+        error === "Invalid credentials" ||
+        error === "Account not activated" ||
+        error === "Account is banned"
+      ) {
+        res.status(401).send(error);
+      } else {
+        res.status(400).send(error);
+      }
+    } else {
+      res.status(500).send("Server error");
+    }
+  }
+});
+
+/**
+ * @swagger
  * /api/auth/resend-otp:
  *   post:
  *     summary: Resend OTP to user email

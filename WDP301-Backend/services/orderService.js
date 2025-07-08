@@ -11,6 +11,7 @@ const {
   Material,
   Promotion,
   ReasonCancel,
+  FcmToken,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -21,6 +22,7 @@ const nodemailer = require("nodemailer");
 const fs = require("fs").promises;
 const path = require("path");
 const handlebars = require("handlebars"); // Thêm dòng này
+const { sendPushNotification } = require("../config/firebase");
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -70,6 +72,7 @@ const createOrder = async (req, res) => {
     soDienThoaiNguoiDatHo,
   });
 
+  // Validation logic (giữ nguyên)
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
     return res.status(400).send("Order items are required");
@@ -112,7 +115,7 @@ const createOrder = async (req, res) => {
     }
   }
 
-  console.log("Starting promotion validation");
+  // Promotion validation (giữ nguyên)
   if (promotion_code || order_discount_value) {
     if (!promotion_code) {
       console.log("Missing promotion_code when order_discount_value is provided:", order_discount_value);
@@ -179,6 +182,7 @@ const createOrder = async (req, res) => {
   console.log("Transaction started");
 
   try {
+    // Product and material validation (giữ nguyên)
     for (const item of orderItems) {
       const product = await Product.findOne({
         where: { productId: item.productId, isActive: true },
@@ -242,6 +246,7 @@ const createOrder = async (req, res) => {
       }
     }
 
+    // Calculate order details (giữ nguyên)
     const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     console.log("Calculated order_amount:", order_amount);
 
@@ -346,6 +351,135 @@ const createOrder = async (req, res) => {
 
     await transaction.commit();
     console.log("Transaction committed successfully");
+
+    // Send push notifications to Staff and Manager
+    console.log(`[${order.orderId}] Starting notification process for Staff and Manager users...`);
+    const staffAndManagers = await User.findAll({
+      where: { role: ["Staff", "Manager"] },
+      attributes: ["id", "fullName", "role"],
+      include: [{ model: FcmToken, as: "FcmTokens", attributes: ["fcmToken"] }],
+    });
+
+    console.log(`[${order.orderId}] Found ${staffAndManagers.length} Staff/Manager users`);
+    if (staffAndManagers.length === 0) {
+      console.warn(`[${order.orderId}] No Staff or Manager users found for notifications`);
+    } else {
+      console.log(
+        `[${order.orderId}] Users: ${JSON.stringify(
+          staffAndManagers.map((u) => ({ id: u.id, fullName: u.fullName, role: u.role })),
+          null,
+          2
+        )}`
+      );
+    }
+
+    const notificationPromises = [];
+    for (const staffOrManager of staffAndManagers) {
+      if (staffOrManager.FcmTokens && staffOrManager.FcmTokens.length > 0) {
+        console.log(
+          `[${order.orderId}] User ${staffOrManager.id} (${staffOrManager.fullName}, ${staffOrManager.role}) has ${staffOrManager.FcmTokens.length} FCM tokens`
+        );
+        for (const token of staffOrManager.FcmTokens) {
+          if (token.fcmToken) {
+            console.log(
+              `[${order.orderId}] Preparing notification for user ${staffOrManager.id} with token: ${token.fcmToken}`
+            );
+            notificationPromises.push(
+              sendPushNotification(token.fcmToken, `Order #${order.orderId}`, "Khách đã đặt hàng thành công", {
+                orderId: order.orderId.toString(),
+                userId: staffOrManager.id.toString(),
+              })
+                .then((response) => {
+                  console.log(
+                    `[${order.orderId}] Notification sent successfully to user ${staffOrManager.id}: ${response}`
+                  );
+                  return { status: "fulfilled", userId: staffOrManager.id, response, fcmToken: token.fcmToken };
+                })
+                .catch((error) => {
+                  console.error(
+                    `[${order.orderId}] Failed to send notification to user ${staffOrManager.id}: ${error.message}`,
+                    error.stack
+                  );
+                  return { status: "rejected", userId: staffOrManager.id, error, fcmToken: token.fcmToken };
+                })
+            );
+          } else {
+            console.warn(
+              `[${order.orderId}] Empty FCM token for user ${staffOrManager.id} (${staffOrManager.fullName})`
+            );
+          }
+        }
+      } else {
+        console.warn(
+          `[${order.orderId}] No FCM tokens found for user ${staffOrManager.id} (${staffOrManager.fullName}, ${staffOrManager.role})`
+        );
+      }
+    }
+
+    if (notificationPromises.length === 0) {
+      console.warn(`[${order.orderId}] No notifications sent: No valid FCM tokens found for Staff or Manager users`);
+    } else {
+      console.log(`[${order.orderId}] Sending ${notificationPromises.length} notifications...`);
+      const results = await Promise.allSettled(notificationPromises);
+      let hasErrors = false;
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          console.log(
+            `[${order.orderId}] Notification ${index + 1} for user ${result.value.userId} sent successfully: ${
+              result.value.response
+            }`
+          );
+        } else {
+          hasErrors = true;
+          console.error(
+            `[${order.orderId}] Notification ${index + 1} for user ${result.reason.userId} failed: ${
+              result.reason.error.message
+            }`
+          );
+          if (result.reason.error.code === "messaging/registration-token-not-registered") {
+            console.log(
+              `[${order.orderId}] Removing invalid FCM token for user ${result.reason.userId}: ${result.reason.fcmToken}`
+            );
+            FcmToken.destroy({ where: { fcmToken: result.reason.fcmToken } });
+          }
+        }
+      });
+      if (hasErrors) {
+        console.warn(`[${order.orderId}] Some notifications failed to send, but proceeding with response`);
+      } else {
+        console.log(`[${order.orderId}] All notifications sent successfully`);
+      }
+    }
+
+    // Thêm thử nghiệm gửi thông báo đến userId hiện tại (để debug)
+    console.log(`[${order.orderId}] Attempting to send test notification to current user (userId: ${userId})`);
+    const currentUserTokens = await FcmToken.findAll({ where: { userId }, attributes: ["fcmToken"] });
+    if (currentUserTokens.length > 0) {
+      console.log(`[${order.orderId}] Found ${currentUserTokens.length} FCM tokens for user ${userId}`);
+      for (const token of currentUserTokens) {
+        console.log(`[${order.orderId}] Sending test notification to user ${userId} with token: ${token.fcmToken}`);
+        try {
+          const response = await sendPushNotification(
+            token.fcmToken,
+            `Test Order #${order.orderId}`,
+            "Test notification for order creation",
+            { orderId: order.orderId.toString(), userId: userId.toString() }
+          );
+          console.log(`[${order.orderId}] Test notification sent to user ${userId}: ${response}`);
+        } catch (error) {
+          console.error(
+            `[${order.orderId}] Failed to send test notification to user ${userId}: ${error.message}`,
+            error.stack
+          );
+          if (error.code === "messaging/registration-token-not-registered") {
+            console.log(`[${order.orderId}] Removing invalid FCM token for user ${userId}: ${token.fcmToken}`);
+            await FcmToken.destroy({ where: { fcmToken: token.fcmToken } });
+          }
+        }
+      }
+    } else {
+      console.warn(`[${order.orderId}] No FCM tokens found for current user ${userId}`);
+    }
 
     const savedOrder = await Order.findOne({
       where: { orderId: order.orderId },
