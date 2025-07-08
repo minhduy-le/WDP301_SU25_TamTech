@@ -19,6 +19,7 @@ const Schedule = require("./schedule");
 const ScheduleShipper = require("./ScheduleShipper");
 const Blog = require("./blog");
 const ReasonCancel = require("./reasonCancel");
+const FcmToken = require("./fcmToken");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -91,6 +92,10 @@ User.hasMany(ScheduleShipper, { foreignKey: "shipperId", as: "ScheduleShippers" 
 Blog.belongsTo(User, { foreignKey: "authorId", as: "Author" });
 User.hasMany(Blog, { foreignKey: "authorId", as: "Blogs" });
 
+// Define relationship for User and FcmToken
+User.hasMany(FcmToken, { foreignKey: "userId", as: "FcmTokens" });
+FcmToken.belongsTo(User, { foreignKey: "userId", as: "User" });
+
 module.exports = {
   Product,
   ProductType,
@@ -113,4 +118,5 @@ module.exports = {
   ScheduleShipper,
   Blog,
   ReasonCancel,
+  FcmToken,
 };
