@@ -110,6 +110,7 @@ function App() {
               path="/manager/staffs/staffid"
               element={<DetailManageStaff />}
             />
+            <Route path="/manager/blog" element={<BlogManagement />} />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
@@ -125,7 +126,6 @@ function App() {
             <Route path="/staff/orders" element={<StaffOrderManagement />} />
             <Route path="/staff/profile" element={<StaffProfile />} />
             <Route path="/staff/chat" element={<StaffChat />} />
-            <Route path="/staff/blog" element={<BlogManagement />} />
           </Route>
         </Routes>
       </AuthGuardProvider>

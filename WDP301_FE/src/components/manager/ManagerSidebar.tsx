@@ -19,7 +19,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
-import { MessageCircle, Clipboard } from "lucide-react";
+import { MessageCircle, Clipboard, Scroll } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -67,6 +67,11 @@ const ManagerSidebar: React.FC = () => {
       key: "/manager/staffs",
       icon: <UserOutlined />,
       label: "Quản lý nhân viên",
+    },
+    {
+      key: "/manager/blog",
+      icon: <Scroll />,
+      label: "Quản lý blog",
     },
     {
       key: "/manager/chat",
