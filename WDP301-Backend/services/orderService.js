@@ -1940,6 +1940,114 @@ const sendRefundEmail = async (orderId, userId) => {
   }
 };
 
+const getLatestOrder = async (req, res) => {
+  console.log("getLatestOrder called at:", new Date().toISOString());
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  try {
+    // Kiểm tra role User
+    if (userRole === "User") {
+      console.log("Unauthorized access attempt by User with userId:", userId);
+      return res.status(403).send("Users cannot access latest order");
+    }
+
+    // Kiểm tra role hợp lệ
+    if (!["Staff", "Admin", "Shipper"].includes(userRole)) {
+      console.log("Unauthorized access attempt by userId:", userId, "with role:", userRole);
+      return res.status(403).send("Unauthorized: Invalid role");
+    }
+
+    // Lấy đơn hàng mới nhất (không giới hạn userId cho Staff, Admin, Shipper)
+    const order = await Order.findOne({
+      attributes: [
+        "orderId",
+        "userId",
+        "payment_time",
+        "order_create_at",
+        "order_address",
+        "status_id",
+        "order_shipping_fee",
+        "order_discount_value",
+        "order_amount",
+        "invoiceUrl",
+        "order_point_earn",
+        "note",
+        "payment_method_id",
+      ],
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes: ["id", "fullName", "phone_number"],
+        },
+        {
+          model: OrderItem,
+          as: "OrderItems",
+          attributes: ["productId", "quantity", "price"],
+          include: [
+            {
+              model: Product,
+              as: "Product",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: OrderStatus,
+          as: "OrderStatus",
+          attributes: ["status"],
+        },
+        {
+          model: PaymentMethod,
+          as: "PaymentMethod",
+          attributes: ["name"],
+        },
+      ],
+      order: [["order_create_at", "DESC"]], // Sắp xếp theo thời gian tạo mới nhất
+    });
+
+    if (!order) {
+      console.log("No order found");
+      return res.status(404).send("No order found");
+    }
+
+    // Định dạng response theo schema Swagger
+    const formattedOrder = {
+      orderId: order.orderId,
+      userId: order.userId,
+      payment_time: order.payment_time,
+      order_create_at: order.order_create_at,
+      order_address: order.order_address,
+      status: order.OrderStatus ? order.OrderStatus.status : null,
+      fullName: order.User ? order.User.fullName : null,
+      phone_number: order.User ? order.User.phone_number : null,
+      orderItems: order.OrderItems.map((item) => ({
+        productId: item.productId,
+        name: item.Product ? item.Product.name : null,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      orderItemsCount: order.OrderItems.length,
+      order_shipping_fee: order.order_shipping_fee,
+      order_discount_value: order.order_discount_value,
+      order_amount: order.order_amount,
+      invoiceUrl: order.invoiceUrl,
+      order_point_earn: order.order_point_earn,
+      note: order.note,
+      payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+    };
+
+    console.log("Returning latest order:", formattedOrder.orderId);
+    res.status(200).json(formattedOrder);
+  } catch (error) {
+    console.error("Error in getLatestOrder:", error.message, error.stack);
+    res.status(500).json({ message: "Failed to retrieve latest order", error: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -1955,4 +2063,5 @@ module.exports = {
   setOrderToCanceled,
   sendRefundEmail,
   uploadRefundCertification,
+  getLatestOrder,
 };

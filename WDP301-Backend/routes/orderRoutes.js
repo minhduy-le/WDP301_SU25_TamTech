@@ -15,6 +15,7 @@ const {
   sendRefundEmail,
   setOrderToCanceled,
   uploadRefundCertification,
+  getLatestOrder,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -726,6 +727,80 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
  *                   type: string
  */
 router.get("/:orderId", verifyToken, getOrderDetails);
+
+/**
+ * @swagger
+ * /api/orders/latest/order:
+ *   get:
+ *     summary: Retrieve the latest order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Details of the latest order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orderId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 payment_time:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                 order_create_at:
+ *                   type: string
+ *                   format: date-time
+ *                 order_address:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 fullName:
+ *                   type: string
+ *                 phone_number:
+ *                   type: string
+ *                   nullable: true
+ *                 orderItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       quantity:
+ *                         type: integer
+ *                       price:
+ *                         type: number
+ *                 orderItemsCount:
+ *                   type: integer
+ *                 order_shipping_fee:
+ *                   type: number
+ *                 order_discount_value:
+ *                   type: number
+ *                 order_amount:
+ *                   type: number
+ *                 invoiceUrl:
+ *                   type: string
+ *                   nullable: true
+ *                 order_point_earn:
+ *                   type: integer
+ *                 note:
+ *                   type: string
+ *                   nullable: true
+ *                 payment_method:
+ *                   type: string
+ *       404:
+ *         description: No order found
+ *       500:
+ *         description: Server error
+ */
+router.get("/latest/order", verifyToken, getLatestOrder);
 
 /**
  * @swagger
