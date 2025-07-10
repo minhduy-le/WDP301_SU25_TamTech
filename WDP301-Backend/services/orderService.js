@@ -10,12 +10,19 @@ const {
   ProductRecipe,
   Material,
   Promotion,
+  ReasonCancel,
+  FcmToken,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 const { Readable } = require("stream");
+const nodemailer = require("nodemailer");
+const fs = require("fs").promises;
+const path = require("path");
+const handlebars = require("handlebars"); // Thêm dòng này
+const { sendPushNotification } = require("../config/firebase");
 
 console.log("Loading orderService.js version 2025-05-28-frontend-redirect-v2");
 
@@ -65,6 +72,7 @@ const createOrder = async (req, res) => {
     soDienThoaiNguoiDatHo,
   });
 
+  // Validation logic (giữ nguyên)
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
     return res.status(400).send("Order items are required");
@@ -107,7 +115,7 @@ const createOrder = async (req, res) => {
     }
   }
 
-  console.log("Starting promotion validation");
+  // Promotion validation (giữ nguyên)
   if (promotion_code || order_discount_value) {
     if (!promotion_code) {
       console.log("Missing promotion_code when order_discount_value is provided:", order_discount_value);
@@ -174,6 +182,7 @@ const createOrder = async (req, res) => {
   console.log("Transaction started");
 
   try {
+    // Product and material validation (giữ nguyên)
     for (const item of orderItems) {
       const product = await Product.findOne({
         where: { productId: item.productId, isActive: true },
@@ -237,6 +246,7 @@ const createOrder = async (req, res) => {
       }
     }
 
+    // Calculate order details (giữ nguyên)
     const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     console.log("Calculated order_amount:", order_amount);
 
@@ -342,6 +352,135 @@ const createOrder = async (req, res) => {
     await transaction.commit();
     console.log("Transaction committed successfully");
 
+    // Send push notifications to Staff and Manager
+    console.log(`[${order.orderId}] Starting notification process for Staff and Manager users...`);
+    const staffAndManagers = await User.findAll({
+      where: { role: ["Staff", "Manager"] },
+      attributes: ["id", "fullName", "role"],
+      include: [{ model: FcmToken, as: "FcmTokens", attributes: ["fcmToken"] }],
+    });
+
+    console.log(`[${order.orderId}] Found ${staffAndManagers.length} Staff/Manager users`);
+    if (staffAndManagers.length === 0) {
+      console.warn(`[${order.orderId}] No Staff or Manager users found for notifications`);
+    } else {
+      console.log(
+        `[${order.orderId}] Users: ${JSON.stringify(
+          staffAndManagers.map((u) => ({ id: u.id, fullName: u.fullName, role: u.role })),
+          null,
+          2
+        )}`
+      );
+    }
+
+    const notificationPromises = [];
+    for (const staffOrManager of staffAndManagers) {
+      if (staffOrManager.FcmTokens && staffOrManager.FcmTokens.length > 0) {
+        console.log(
+          `[${order.orderId}] User ${staffOrManager.id} (${staffOrManager.fullName}, ${staffOrManager.role}) has ${staffOrManager.FcmTokens.length} FCM tokens`
+        );
+        for (const token of staffOrManager.FcmTokens) {
+          if (token.fcmToken) {
+            console.log(
+              `[${order.orderId}] Preparing notification for user ${staffOrManager.id} with token: ${token.fcmToken}`
+            );
+            notificationPromises.push(
+              sendPushNotification(token.fcmToken, `Order #${order.orderId}`, "Khách đã đặt hàng thành công", {
+                orderId: order.orderId.toString(),
+                userId: staffOrManager.id.toString(),
+              })
+                .then((response) => {
+                  console.log(
+                    `[${order.orderId}] Notification sent successfully to user ${staffOrManager.id}: ${response}`
+                  );
+                  return { status: "fulfilled", userId: staffOrManager.id, response, fcmToken: token.fcmToken };
+                })
+                .catch((error) => {
+                  console.error(
+                    `[${order.orderId}] Failed to send notification to user ${staffOrManager.id}: ${error.message}`,
+                    error.stack
+                  );
+                  return { status: "rejected", userId: staffOrManager.id, error, fcmToken: token.fcmToken };
+                })
+            );
+          } else {
+            console.warn(
+              `[${order.orderId}] Empty FCM token for user ${staffOrManager.id} (${staffOrManager.fullName})`
+            );
+          }
+        }
+      } else {
+        console.warn(
+          `[${order.orderId}] No FCM tokens found for user ${staffOrManager.id} (${staffOrManager.fullName}, ${staffOrManager.role})`
+        );
+      }
+    }
+
+    if (notificationPromises.length === 0) {
+      console.warn(`[${order.orderId}] No notifications sent: No valid FCM tokens found for Staff or Manager users`);
+    } else {
+      console.log(`[${order.orderId}] Sending ${notificationPromises.length} notifications...`);
+      const results = await Promise.allSettled(notificationPromises);
+      let hasErrors = false;
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          console.log(
+            `[${order.orderId}] Notification ${index + 1} for user ${result.value.userId} sent successfully: ${
+              result.value.response
+            }`
+          );
+        } else {
+          hasErrors = true;
+          console.error(
+            `[${order.orderId}] Notification ${index + 1} for user ${result.reason.userId} failed: ${
+              result.reason.error.message
+            }`
+          );
+          if (result.reason.error.code === "messaging/registration-token-not-registered") {
+            console.log(
+              `[${order.orderId}] Removing invalid FCM token for user ${result.reason.userId}: ${result.reason.fcmToken}`
+            );
+            FcmToken.destroy({ where: { fcmToken: result.reason.fcmToken } });
+          }
+        }
+      });
+      if (hasErrors) {
+        console.warn(`[${order.orderId}] Some notifications failed to send, but proceeding with response`);
+      } else {
+        console.log(`[${order.orderId}] All notifications sent successfully`);
+      }
+    }
+
+    // Thêm thử nghiệm gửi thông báo đến userId hiện tại (để debug)
+    console.log(`[${order.orderId}] Attempting to send test notification to current user (userId: ${userId})`);
+    const currentUserTokens = await FcmToken.findAll({ where: { userId }, attributes: ["fcmToken"] });
+    if (currentUserTokens.length > 0) {
+      console.log(`[${order.orderId}] Found ${currentUserTokens.length} FCM tokens for user ${userId}`);
+      for (const token of currentUserTokens) {
+        console.log(`[${order.orderId}] Sending test notification to user ${userId} with token: ${token.fcmToken}`);
+        try {
+          const response = await sendPushNotification(
+            token.fcmToken,
+            `Test Order #${order.orderId}`,
+            "Test notification for order creation",
+            { orderId: order.orderId.toString(), userId: userId.toString() }
+          );
+          console.log(`[${order.orderId}] Test notification sent to user ${userId}: ${response}`);
+        } catch (error) {
+          console.error(
+            `[${order.orderId}] Failed to send test notification to user ${userId}: ${error.message}`,
+            error.stack
+          );
+          if (error.code === "messaging/registration-token-not-registered") {
+            console.log(`[${order.orderId}] Removing invalid FCM token for user ${userId}: ${token.fcmToken}`);
+            await FcmToken.destroy({ where: { fcmToken: token.fcmToken } });
+          }
+        }
+      }
+    } else {
+      console.warn(`[${order.orderId}] No FCM tokens found for current user ${userId}`);
+    }
+
     const savedOrder = await Order.findOne({
       where: { orderId: order.orderId },
     });
@@ -414,6 +553,7 @@ const getOrderDetails = async (req, res) => {
         "soDienThoaiNguoiDatHo",
         "certificationOfDelivered",
         "order_delivery_at",
+        "isRefund",
       ],
       include: [
         {
@@ -989,7 +1129,6 @@ const getUserOrders = async (req, res) => {
         "order_shipping_fee",
         "order_discount_value",
         "order_amount",
-        "order_subtotal",
         "invoiceUrl",
         "order_point_earn",
         "note",
@@ -999,7 +1138,7 @@ const getUserOrders = async (req, res) => {
         {
           model: User,
           as: "User",
-          attributes: ["fullName", "phone_number"],
+          attributes: ["id", "fullName", "phone_number"],
         },
         {
           model: OrderItem,
@@ -1024,9 +1163,10 @@ const getUserOrders = async (req, res) => {
           attributes: ["name"],
         },
       ],
+      order: [["order_create_at", "DESC"]],
     });
 
-    console.log("Fetched orders:", orders.length);
+    console.log("Fetched user orders:", orders.length);
 
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
@@ -1036,28 +1176,27 @@ const getUserOrders = async (req, res) => {
       status: order.OrderStatus ? order.OrderStatus.status : null,
       fullName: order.User ? order.User.fullName : null,
       phone_number: order.User ? order.User.phone_number : null,
-      orderItemsCount: order.OrderItems.length,
       orderItems: order.OrderItems.map((item) => ({
         productId: item.productId,
         name: item.Product ? item.Product.name : null,
         quantity: item.quantity,
         price: item.price,
       })),
+      orderItemsCount: order.OrderItems.length,
       order_shipping_fee: order.order_shipping_fee,
       order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
-      order_subtotal: order.order_subtotal,
       invoiceUrl: order.invoiceUrl,
       order_point_earn: order.order_point_earn,
       note: order.note,
       payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
     }));
 
-    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
+    console.log("Returning formatted user orders:", formattedOrders.length);
     res.status(200).json(formattedOrders);
   } catch (error) {
     console.error("Error in getUserOrders:", error.message, error.stack);
-    res.status(500).json({ message: "Failed to retrieve orders", error: error.message });
+    res.status(500).json({ message: "Failed to retrieve user orders", error: error.message });
   }
 };
 
@@ -1434,6 +1573,7 @@ const getAllOrders = async (req, res) => {
     const orders = await Order.findAll({
       attributes: [
         "orderId",
+        "userId",
         "payment_time",
         "order_create_at",
         "order_address",
@@ -1445,7 +1585,7 @@ const getAllOrders = async (req, res) => {
         "order_point_earn",
         "note",
         "payment_method_id",
-        "userId",
+        "isRefund",
       ],
       include: [
         {
@@ -1475,6 +1615,11 @@ const getAllOrders = async (req, res) => {
           as: "PaymentMethod",
           attributes: ["name"],
         },
+        {
+          model: ReasonCancel,
+          as: "ReasonCancels",
+          attributes: ["reason"],
+        },
       ],
       order: [["order_create_at", "DESC"]],
     });
@@ -1490,6 +1635,8 @@ const getAllOrders = async (req, res) => {
       status: order.OrderStatus ? order.OrderStatus.status : null,
       fullName: order.User ? order.User.fullName : null,
       phone_number: order.User ? order.User.phone_number : null,
+      isRefund: order.isRefund,
+      reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
       orderItems: order.OrderItems.map((item) => ({
         productId: item.productId,
         name: item.Product ? item.Product.name : null,
@@ -1505,7 +1652,7 @@ const getAllOrders = async (req, res) => {
       payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
     }));
 
-    console.log("Returning formatted orders:", JSON.stringify(formattedOrders, null, 2));
+    console.log("Returning formatted orders:", formattedOrders.length);
     res.status(200).json(formattedOrders);
   } catch (error) {
     console.error("Error in getAllOrders:", error.message, error.stack);
@@ -1608,6 +1755,191 @@ const getPaidOrders = async (req, res) => {
   }
 };
 
+const setOrderToCanceled = async (orderId, reason, userId, bankName, bankNumber) => {
+  const transaction = await sequelize.transaction();
+  try {
+    console.log(`Starting transaction for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId }, transaction });
+    if (!order) {
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw Object.assign(new Error("Order not found"), { status: 404 });
+    }
+
+    if (order.status_id === 5) {
+      console.log(`Order ${orderId} is already canceled`);
+      throw Object.assign(new Error("Order is already canceled"), { status: 400 });
+    }
+    if (!reason || reason.trim() === "") {
+      console.log(`Reason is missing or empty for orderId: ${orderId}`);
+      throw Object.assign(new Error("Reason for cancellation is required"), { status: 400 });
+    }
+
+    order.status_id = 5; // Canceled status
+    await order.save({ transaction });
+    console.log(`Order ${orderId} status updated to canceled`);
+
+    await ReasonCancel.create(
+      {
+        orderId,
+        userId,
+        reason,
+        bankName: bankName || null,
+        bankNumber: bankNumber || null,
+        certificationRefund: null, // Initially null, updated later
+        createdAt: new Date(),
+      },
+      { transaction }
+    );
+    console.log(`ReasonCancel created for orderId: ${orderId} with bankName: ${bankName}, bankNumber: ${bankNumber}`);
+
+    await transaction.commit();
+    console.log(`Transaction committed for orderId: ${orderId}`);
+    return { success: true, message: "Order canceled successfully" };
+  } catch (error) {
+    if (transaction.finished !== "rollback") {
+      console.error(`Rolling back transaction for orderId: ${orderId} due to error: ${error.message}`);
+      await transaction.rollback();
+    } else {
+      console.warn(`Transaction already rolled back for orderId: ${orderId}`);
+    }
+    throw error;
+  }
+};
+
+const uploadRefundCertification = async (orderId, userId, file) => {
+  const transaction = await sequelize.transaction();
+  try {
+    console.log(`Starting upload for refund certification for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId }, transaction });
+    if (!order) {
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw Object.assign(new Error("Order not found"), { status: 404 });
+    }
+
+    if (order.status_id !== 5) {
+      console.log(`Order ${orderId} is not canceled`);
+      throw Object.assign(new Error("Order must be canceled to upload refund certification"), { status: 400 });
+    }
+
+    if (!file) {
+      console.log(`No file provided for orderId: ${orderId}`);
+      throw Object.assign(new Error("Refund certification image is required"), { status: 400 });
+    }
+
+    const allowedMimes = ["image/jpeg", "image/png"];
+    if (!allowedMimes.includes(file.mimetype)) {
+      console.log(`Invalid image format for orderId: ${orderId}, Mime: ${file.mimetype}`);
+      throw Object.assign(new Error("Invalid image format. Only JPEG and PNG are allowed"), { status: 400 });
+    }
+
+    let certificationRefundUrl;
+    try {
+      certificationRefundUrl = await uploadFileToFirebase(
+        file.buffer,
+        `refund_cert_${orderId}_${Date.now()}.${file.mimetype.split("/")[1]}`,
+        file.mimetype
+      );
+      console.log(`Image uploaded to Firebase for orderId: ${orderId}, URL: ${certificationRefundUrl}`);
+    } catch (uploadError) {
+      console.error(`Failed to upload image for orderId: ${orderId}`, uploadError.message);
+      throw Object.assign(new Error("Failed to upload certification image"), { status: 500 });
+    }
+
+    const reasonCancel = await ReasonCancel.findOne({ where: { orderId }, transaction });
+    if (!reasonCancel) {
+      console.log(`ReasonCancel not found for orderId: ${orderId}`);
+      throw Object.assign(new Error("ReasonCancel not found"), { status: 404 });
+    }
+
+    reasonCancel.certificationRefund = certificationRefundUrl;
+    await reasonCancel.save({ transaction });
+    console.log(`ReasonCancel updated with certificationRefund for orderId: ${orderId}`);
+
+    await transaction.commit();
+    console.log(`Transaction committed for orderId: ${orderId}`);
+    return {
+      success: true,
+      message: "Refund certification uploaded successfully",
+      certificationRefund: certificationRefundUrl,
+    };
+  } catch (error) {
+    if (transaction.finished !== "rollback") {
+      console.error(`Rolling back transaction for orderId: ${orderId} due to error: ${error.message}`);
+      await transaction.rollback();
+    } else {
+      console.warn(`Transaction already rolled back for orderId: ${orderId}`);
+    }
+    throw error;
+  }
+};
+
+const sendRefundEmail = async (orderId, userId) => {
+  try {
+    console.log(`Preparing refund email for orderId: ${orderId}`);
+    const order = await Order.findOne({ where: { orderId } });
+    if (!order) {
+      console.log(`Order not found for orderId: ${orderId}`);
+      throw new Error("Order not found");
+    }
+
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      console.log(`User not found for userId: ${userId}`);
+      throw new Error("User not found");
+    }
+
+    const reasonCancel = await ReasonCancel.findOne({ where: { orderId } });
+    if (!reasonCancel) {
+      console.log(`ReasonCancel not found for orderId: ${orderId}`);
+      throw new Error("ReasonCancel not found");
+    }
+
+    // Cập nhật isRefund thành true
+    await order.update({ isRefund: true });
+
+    const emailTemplatePath = path.join(__dirname, "../templates/refundedEmail.html");
+    const emailTemplateSource = await fs.readFile(emailTemplatePath, "utf8");
+    const template = handlebars.compile(emailTemplateSource);
+
+    const orderDate = new Date(order.createdAt).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+
+    const templateData = {
+      fullName: user.fullName || "Khách hàng",
+      orderId,
+      orderAmount: order.order_subtotal.toLocaleString("vi-VN"), // Sửa thành order_subtotal
+      orderDate,
+      certificationRefund: reasonCancel.certificationRefund || null,
+    };
+
+    const htmlContent = template(templateData);
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: '"Tấm Tắc" <support@tam tac.vn>',
+      to: user.email,
+      subject: `Thông báo hoàn tiền đơn hàng #${orderId}`,
+      html: htmlContent,
+    });
+
+    console.log(`Refund email sent successfully for orderId: ${orderId}`);
+    return { success: true, message: "Refund email sent successfully" };
+  } catch (error) {
+    console.error(`Failed to send refund email for orderId: ${orderId}`, error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -1620,4 +1952,7 @@ module.exports = {
   getAllOrders,
   getPaidOrders,
   getOrderDetails,
+  setOrderToCanceled,
+  sendRefundEmail,
+  uploadRefundCertification,
 };

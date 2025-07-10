@@ -12,6 +12,9 @@ const {
   getAllOrders,
   getPaidOrders,
   getOrderDetails,
+  sendRefundEmail,
+  setOrderToCanceled,
+  uploadRefundCertification,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -1149,6 +1152,10 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                   phone_number:
  *                     type: string
  *                     nullable: true
+ *                   isRefund:
+ *                     type: boolean
+ *                   reason:
+ *                     type: string
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -1289,5 +1296,202 @@ router.get("/", verifyToken, getAllOrders);
  *                   type: string
  */
 router.get("/paid", verifyToken, getPaidOrders);
+
+/**
+ * @swagger
+ * /api/orders/cancel/{orderId}:
+ *   post:
+ *     summary: Cancel an order by ID with a reason and optional bank details
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: The reason for canceling the order
+ *                 example: "Customer changed mind"
+ *               bankName:
+ *                 type: string
+ *                 description: Name of the bank for refund (optional)
+ *                 example: "VietinBank"
+ *                 nullable: true
+ *               bankNumber:
+ *                 type: string
+ *                 description: Bank account number for refund (optional)
+ *                 example: "1234567890"
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Order canceled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Reason for cancellation is required, order not found, or already canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 example:
+ *                   message: "Reason for cancellation is required"
+ *       500:
+ *         description: Server error
+ */
+router.post("/cancel/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason, bankName, bankNumber } = req.body;
+    const result = await setOrderToCanceled(orderId, reason, req.userId, bankName, bankNumber);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to cancel order" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/upload-refunded-certification/{orderId}:
+ *   post:
+ *     summary: Upload refund certification image for a canceled order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the canceled order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Refund certification image (JPEG or PNG)
+ *     responses:
+ *       200:
+ *         description: Refund certification uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 certificationRefund:
+ *                   type: string
+ *                   description: URL of the uploaded certification image
+ *       400:
+ *         description: Invalid file format, order not found, or order not canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.post("/upload-refunded-certification/:orderId", verifyToken, upload.single("file"), async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const file = req.file;
+    const result = await uploadRefundCertification(orderId, req.userId, file);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to upload refund certification" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/send-refunded-email/{orderId}:
+ *   post:
+ *     summary: Send refund email for a canceled order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the canceled order
+ *     responses:
+ *       200:
+ *         description: Refund email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Order not found or not canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.post("/send-refunded-email/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ where: { orderId } });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    if (order.status_id !== 5) {
+      return res.status(400).json({ message: "Order must be canceled to send refund email" });
+    }
+    const result = await sendRefundEmail(orderId, req.userId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to send refund email" });
+  }
+});
 
 module.exports = router;
