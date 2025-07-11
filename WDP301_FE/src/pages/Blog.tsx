@@ -41,15 +41,15 @@ const Blog = () => {
         ) : isErrorBlogs ? (
           <div>Lỗi loading loại sản phẩm. Vui lòng thử lại.</div>
         ) : blogs && blogs.length > 0 ? (
-          <div>
+          <>
             {blogs.slice(0, visibleBlogs).map((post) => (
               // blogs.map((post) => (
               <Col
                 key={post.id}
                 xs={24}
                 sm={12}
-                md={6}
-                lg={6}
+                md={8}
+                lg={8}
                 style={{ maxWidth: "-webkit-fill-available" }}
               >
                 <Card className="blog-card">
@@ -79,7 +79,7 @@ const Blog = () => {
                 </Button>
               </div>
             )}
-          </div>
+          </>
         ) : (
           <div>Không có blog.</div>
         )}
