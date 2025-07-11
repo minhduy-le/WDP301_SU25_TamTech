@@ -29,9 +29,9 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       }
     }
 
-    if (token) {
+    if (token && user) {
       try {
-        const decoded = jwtDecode<{ exp: number }>(token);
+        const decoded = jwtDecode<{ role: string; exp: number }>(token);
         const currentTime = Math.floor(Date.now() / 1000);
 
         if (decoded.exp < currentTime) {
@@ -68,7 +68,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       return regex.test(path);
     };
 
-    if (!user || !user.role) {
+    if (!user || !token) {
       if (
         publicRoutes.some((route) =>
           matchDynamicRoute(route, location.pathname)
@@ -81,6 +81,15 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       return;
     }
 
+    const decoded = jwtDecode<{
+      id: number;
+      role: string;
+      fullName: string;
+      email: string;
+      phone_number: string;
+      exp: number;
+    }>(token);
+
     const roleRedirects: Record<UserRole, string> = {
       User: "/",
       Staff: "/staff/orders",
@@ -90,7 +99,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     };
 
     if (location.pathname === "/") {
-      navigate(roleRedirects[user.role as UserRole], { replace: true });
+      navigate(roleRedirects[decoded.role as UserRole], { replace: true });
       return;
     }
 
@@ -121,7 +130,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       ],
     };
 
-    const userRole = user.role as UserRole;
+    const userRole = decoded.role as UserRole;
     const allowedPages = restrictedPages[userRole] || [];
     const isAllowed =
       publicRoutes.some((route) =>
@@ -142,7 +151,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     if (!isAllowed) {
       navigate("/forbidden", { replace: true });
     }
-  }, [user, location, navigate]);
+  }, [user, location, navigate, token]);
 
   return (
     <AuthGuardContext.Provider value={{}}>{children}</AuthGuardContext.Provider>

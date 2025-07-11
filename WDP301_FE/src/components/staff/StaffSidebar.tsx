@@ -75,7 +75,7 @@ const StaffSidebar = () => {
   const menuItems = [
     {
       key: "/staff/orders",
-      icon: <ShoppingFilled />,
+      icon: <ShoppingFilled style={{ marginRight: 12 }} />,
       label: "Quản lý đơn hàng",
     },
     {
