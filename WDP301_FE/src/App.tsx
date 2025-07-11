@@ -42,6 +42,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ChatAdmin from "./pages/admin/ChatAdmin";
 import BlogDetail from "./pages/BlogDetail";
 import BlogManagement from "./pages/BlogManagement";
+import ReportManagement from "./pages/admin/ReportManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -114,6 +115,7 @@ function App() {
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/dashboard" element={<ReportManagement />} />
             <Route
               path="/admin/system-issues"
               element={<SystemIssuesReport />}
