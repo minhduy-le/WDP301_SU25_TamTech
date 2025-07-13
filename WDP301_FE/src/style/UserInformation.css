@@ -154,11 +154,18 @@
 }
 
 .modal-edit-profile .ant-input,
+.modal-edit-profile .ant-select,
 .modal-edit-contact .ant-input,
 .modal-edit-profile .ant-input-affix-wrapper {
   background: #ebd187 !important;
   font-family: "Montserrat", sans-serif;
 }
+
+.modal-edit-profile .ant-select-selection-placeholder,
+.modal-edit-profile .ant-select-selection-item {
+  color: #da7339;
+}
+
 .update-profile-btn,
 .update-contact-btn {
   background-color: #78a243 !important;
