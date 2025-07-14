@@ -191,6 +191,120 @@ router.get("/", verifyToken, async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/accounts/phone/{phoneNumber}:
+ *   get:
+ *     summary: Get a user by phone number (non-User role only)
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: phoneNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Phone number of the user
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone_number:
+ *                       type: string
+ *                     date_of_birth:
+ *                       type: string
+ *                       format: date
+ *                     note:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [Admin, Staff, Shipper, Manager]
+ *                       description: Role of the user (excludes User role)
+ *                     isActive:
+ *                       type: boolean
+ *                       description: Indicates whether the user account is active
+ *       400:
+ *         description: Invalid phone number
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid phone number format
+ *       403:
+ *         description: Forbidden - Users with 'User' role are not allowed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *             example:
+ *               status: 403
+ *               message: "Access denied: Users with 'User' role are not allowed to access this endpoint"
+ *       404:
+ *         description: User not found or has User role
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/phone/:phoneNumber", verifyToken, async (req, res, next) => {
+  try {
+    // Check if the requesting user has 'User' role
+    if (req.userRole && req.userRole.toLowerCase() === "user") {
+      console.log(
+        `[DEBUG] GET /api/accounts/phone/:phoneNumber: Access denied for userId: ${req.userId} with role: ${req.userRole}`
+      );
+      return res.status(403).json({
+        status: 403,
+        message: "Access denied: Users with 'User' role are not allowed to access this endpoint",
+      });
+    }
+
+    console.log(
+      `[DEBUG] GET /api/accounts/phone/:phoneNumber: Processing for phoneNumber: ${req.params.phoneNumber}, userId: ${req.userId}, userRole: ${req.userRole}`
+    );
+    const phoneNumber = req.params.phoneNumber;
+    const user = await accountService.getUserByPhoneNumber(phoneNumber);
+    res.status(200).json({
+      status: 200,
+      message: "User retrieved successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error(`[ERROR] GET /api/accounts/phone/:phoneNumber: ${error.message || error}`);
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
+  }
+});
+
+/**
+ * @swagger
  * /api/accounts/{id}:
  *   get:
  *     summary: Get a user by ID

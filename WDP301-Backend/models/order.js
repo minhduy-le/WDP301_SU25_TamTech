@@ -168,6 +168,18 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    platform: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    customerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "orders",

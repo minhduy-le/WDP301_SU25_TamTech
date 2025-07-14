@@ -55,8 +55,15 @@ const createOrder = async (req, res) => {
     isDatHo,
     tenNguoiDatHo,
     soDienThoaiNguoiDatHo,
+    platform,
+    customerId,
   } = req.body;
-  const userId = req.userId;
+  let userId = req.userId;
+
+  if (customerId) {
+    userId = customerId;
+  }
+
   const storeId = 1;
 
   console.log("Destructured parameters:", {
@@ -297,6 +304,8 @@ const createOrder = async (req, res) => {
         isDatHo: isDatHo || false,
         tenNguoiDatHo: tenNguoiDatHo || null,
         soDienThoaiNguoiDatHo: soDienThoaiNguoiDatHo || null,
+        platform: platform,
+        customerId: userId || null,
       },
       { transaction }
     );
@@ -1093,12 +1102,15 @@ const handlePaymentSuccess = async (req, res) => {
         return res.status(500).json({ message: "Failed to commit transaction", error: commitError.message });
       }
 
-      console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
-      return res.redirect(
-        `${FRONTEND_DOMAIN}/payment-success?orderId=${parsedOrderId}&code=${paymentStatus.code}&status=${
-          paymentStatus.status
-        }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
-      );
+      // Determine redirect URL based on platform
+      const redirectPath =
+        order.platform === "mobile" ? `${FRONTEND_DOMAIN}/staff/payment-success` : `${FRONTEND_DOMAIN}/payment-success`;
+      const redirectUrl = `${redirectPath}?orderId=${parsedOrderId}&code=${paymentStatus.code}&status=${
+        paymentStatus.status
+      }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`;
+
+      console.log("Redirecting to:", redirectUrl);
+      return res.redirect(redirectUrl);
     } else {
       console.log("Payment failed for orderId:", parsedOrderId, paymentStatus);
       await transaction.rollback();
