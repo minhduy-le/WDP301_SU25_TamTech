@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const httpErrors = require("http-errors");
 const bcrypt = require("bcrypt");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
 // Current date for date_of_birth validation
 const currentDate = new Date("2025-05-26T10:28:00+07:00");
@@ -92,13 +92,65 @@ const getAllUsers = async (loggedInUserId) => {
     const users = await User.findAll({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
       where: {
-        id: { [Op.ne]: loggedInUserId } // Exclude the logged-in user
+        id: { [Op.ne]: loggedInUserId }, // Exclude the logged-in user
       },
     });
     return users;
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     throw "Internal server error";
+  }
+};
+
+const getUserByPhoneNumber = async (phoneNumber) => {
+  try {
+    // Log input
+    console.log(`[DEBUG] getUserByPhoneNumber: Received phoneNumber: ${phoneNumber}`);
+
+    // Validate phone number input
+    if (!phoneNumber || typeof phoneNumber !== "string") {
+      console.log(`[DEBUG] getUserByPhoneNumber: Invalid input - phoneNumber is ${phoneNumber}`);
+      throw "Phone number is required and must be a string";
+    }
+
+    // Validate phone number format
+    const phoneStr = phoneNumber.replace(/\D/g, ""); // Remove non-digits
+    console.log(`[DEBUG] getUserByPhoneNumber: Sanitized phone number: ${phoneStr}`);
+    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
+      console.log(`[DEBUG] getUserByPhoneNumber: Invalid phone number format - length: ${phoneStr.length}`);
+      throw "Invalid phone number format (must be 10 or 11 digits)";
+    }
+
+    // Check if user exists without role filter
+    const userWithoutRoleFilter = await User.findOne({
+      attributes: ["id", "fullName", "email", "phone_number", "role"],
+      where: { phone_number: phoneNumber },
+    });
+    console.log(`[DEBUG] getUserByPhoneNumber: User without role filter: ${JSON.stringify(userWithoutRoleFilter)}`);
+
+    // Query with role filter
+    const user = await User.findOne({
+      attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
+      where: {
+        phone_number: phoneNumber,
+        role: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("role")), { [Op.ne]: "user" }), // Case-insensitive
+      },
+    });
+
+    console.log(`[DEBUG] getUserByPhoneNumber: User with role filter: ${JSON.stringify(user)}`);
+
+    if (!user) {
+      console.log(
+        `[DEBUG] getUserByPhoneNumber: No user found or user has 'User' role for phoneNumber: ${phoneNumber}`
+      );
+      throw "User not found or has User role";
+    }
+
+    console.log(`[DEBUG] getUserByPhoneNumber: Returning user with role: ${user.role}`);
+    return user;
+  } catch (error) {
+    console.error(`[ERROR] getUserByPhoneNumber: ${error.message || error}`);
+    throw error;
   }
 };
 
@@ -213,4 +265,4 @@ const deactivateUser = async (userId) => {
   }
 };
 
-module.exports = { createUser, getAllUsers, getUserById, updateUser, deactivateUser };
+module.exports = { createUser, getAllUsers, getUserById, updateUser, deactivateUser, getUserByPhoneNumber };
