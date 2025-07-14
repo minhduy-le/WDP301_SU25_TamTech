@@ -257,9 +257,9 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                   type: integer
  *                 message:
  *                   type: string
- *               example:
- *                 status: 403
- *                 message: Access denied: Users with 'User' role are not allowed to access this endpoint
+ *             example:
+ *               status: 403
+ *               message: "Access denied: Users with 'User' role are not allowed to access this endpoint"
  *       404:
  *         description: User not found or has User role
  *       401:
@@ -269,6 +269,20 @@ router.get("/", verifyToken, async (req, res, next) => {
  */
 router.get("/phone/:phoneNumber", verifyToken, async (req, res, next) => {
   try {
+    // Check if the requesting user has 'User' role
+    if (req.userRole && req.userRole.toLowerCase() === "user") {
+      console.log(
+        `[DEBUG] GET /api/accounts/phone/:phoneNumber: Access denied for userId: ${req.userId} with role: ${req.userRole}`
+      );
+      return res.status(403).json({
+        status: 403,
+        message: "Access denied: Users with 'User' role are not allowed to access this endpoint",
+      });
+    }
+
+    console.log(
+      `[DEBUG] GET /api/accounts/phone/:phoneNumber: Processing for phoneNumber: ${req.params.phoneNumber}, userId: ${req.userId}, userRole: ${req.userRole}`
+    );
     const phoneNumber = req.params.phoneNumber;
     const user = await accountService.getUserByPhoneNumber(phoneNumber);
     res.status(200).json({
@@ -277,6 +291,7 @@ router.get("/phone/:phoneNumber", verifyToken, async (req, res, next) => {
       data: user,
     });
   } catch (error) {
+    console.error(`[ERROR] GET /api/accounts/phone/:phoneNumber: ${error.message || error}`);
     if (typeof error === "string") {
       res.status(400).send(error);
     } else {

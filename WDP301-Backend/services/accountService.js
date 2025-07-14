@@ -121,7 +121,7 @@ const getUserByPhoneNumber = async (phoneNumber) => {
       throw "Invalid phone number format (must be 10 or 11 digits)";
     }
 
-    // Check if user exists without role filter
+    // Check user without role filter for debugging
     const userWithoutRoleFilter = await User.findOne({
       attributes: ["id", "fullName", "email", "phone_number", "role"],
       where: { phone_number: phoneNumber },
