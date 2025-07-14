@@ -59,16 +59,12 @@ const createOrder = async (req, res) => {
     customerId,
   } = req.body;
   let userId = req.userId;
-  const storeId = 1;
 
   if (customerId) {
-    const customer = await User.findOne({ where: { id: customerId } });
-    if (!customer) {
-      console.log("Customer not found for customerId:", customerId);
-      return res.status(400).send(`Customer with ID ${customerId} not found`);
-    }
     userId = customerId;
   }
+
+  const storeId = 1;
 
   console.log("Destructured parameters:", {
     orderItems,
@@ -105,10 +101,6 @@ const createOrder = async (req, res) => {
   if (!payment_method_id || ![1, 2, 3, 4].includes(payment_method_id)) {
     console.log("Invalid payment_method_id:", payment_method_id);
     return res.status(400).send("Valid payment method ID is required (1-4)");
-  }
-  if (platform !== "web" && platform !== "mobile") {
-    console.log("Invalid platform:", platform);
-    return res.status(400).send("Platform must be web or mobile");
   }
 
   for (const item of orderItems) {
@@ -298,7 +290,6 @@ const createOrder = async (req, res) => {
       {
         storeId,
         userId,
-        customerId: customerId || null,
         order_amount,
         order_discount_percent: order_discount_percent.toFixed(2),
         order_discount_value: order_discount_value || 0,
@@ -313,7 +304,8 @@ const createOrder = async (req, res) => {
         isDatHo: isDatHo || false,
         tenNguoiDatHo: tenNguoiDatHo || null,
         soDienThoaiNguoiDatHo: soDienThoaiNguoiDatHo || null,
-        platform,
+        platform: platform,
+        customerId: userId || null,
       },
       { transaction }
     );
@@ -349,10 +341,7 @@ const createOrder = async (req, res) => {
       orderCode: order.orderId,
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
-      returnUrl:
-        platform === "mobile"
-          ? `${YOUR_DOMAIN}/staff/payment-success?orderId=${order.orderId}`
-          : `${YOUR_DOMAIN}/payment-success?orderId=${order.orderId}`,
+      returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
       cancelUrl: `${YOUR_DOMAIN}/api/orders/cancel?orderId=${order.orderId}`,
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
@@ -1113,12 +1102,15 @@ const handlePaymentSuccess = async (req, res) => {
         return res.status(500).json({ message: "Failed to commit transaction", error: commitError.message });
       }
 
-      console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
-      return res.redirect(
-        `${FRONTEND_DOMAIN}/payment-success?orderId=${parsedOrderId}&code=${paymentStatus.code}&status=${
-          paymentStatus.status
-        }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`
-      );
+      // Determine redirect URL based on platform
+      const redirectPath =
+        order.platform === "mobile" ? `${FRONTEND_DOMAIN}/staff/payment-success` : `${FRONTEND_DOMAIN}/payment-success`;
+      const redirectUrl = `${redirectPath}?orderId=${parsedOrderId}&code=${paymentStatus.code}&status=${
+        paymentStatus.status
+      }&invoiceUrl=${encodeURIComponent(invoiceUrl || "")}`;
+
+      console.log("Redirecting to:", redirectUrl);
+      return res.redirect(redirectUrl);
     } else {
       console.log("Payment failed for orderId:", parsedOrderId, paymentStatus);
       await transaction.rollback();

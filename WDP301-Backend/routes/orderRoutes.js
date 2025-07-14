@@ -173,6 +173,72 @@ router.post("/", verifyToken, createOrder);
 
 /**
  * @swagger
+ * /api/orders/payment-success:
+ *   get:
+ *     summary: Xử lý callback thanh toán thành công
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID của đơn hàng
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: >
+ *           Mã kết quả thanh toán (ví dụ: "00" cho thành công)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: >
+ *           Trạng thái thanh toán (ví dụ: "PAID")
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID giao dịch từ cổng thanh toán
+ *       - in: query
+ *         name: cancel
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Trạng thái hủy giao dịch (true/false)
+ *     responses:
+ *       302:
+ *         description: Chuyển hướng đến frontend với trạng thái thành công hoặc thất bại
+ *       400:
+ *         description: Dữ liệu đầu vào không hợp lệ hoặc đơn hàng đã được xử lý
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Đơn hàng đã được xử lý hoặc ở trạng thái không hợp lệ
+ *       404:
+ *         description: Không tìm thấy đơn hàng
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Không tìm thấy đơn hàng với ID 349
+ *       500:
+ *         description: Lỗi máy chủ
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Lỗi khi xử lý xác nhận thanh toán
+ */
+router.get("/payment-success", handlePaymentSuccess);
+
+/**
+ * @swagger
  * /api/orders/user:
  *   get:
  *     summary: Retrieve orders for the authenticated user
