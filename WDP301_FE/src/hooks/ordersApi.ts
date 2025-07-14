@@ -9,6 +9,7 @@ interface CreateOrder {
   order_shipping_fee: number;
   payment_method_id: number;
   order_address: string;
+  platform: string;
   note: string;
   promotion_code: string;
   isDatHo?: boolean;
