@@ -104,7 +104,10 @@ const standardizeProvince = (province) => {
  *                 description: "Payment method ID (1 for Vnpay, 2 for Momo, 3 for Zalopay, 4 for PayOS)"
  *               order_address:
  *                 type: string
- *                 description: Delivery address for the order
+ *                 description: Delivery address for the
+ *               platform:
+ *                 type: string
+ *                 description: Platform from which the order is placed (web or mobile)
  *               note:
  *                 type: string
  *                 description: Optional note for the order (e.g., special delivery instructions)

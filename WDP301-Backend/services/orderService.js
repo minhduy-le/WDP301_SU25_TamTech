@@ -55,6 +55,7 @@ const createOrder = async (req, res) => {
     isDatHo,
     tenNguoiDatHo,
     soDienThoaiNguoiDatHo,
+    platform,
   } = req.body;
   const userId = req.userId;
   const storeId = 1;
@@ -94,6 +95,10 @@ const createOrder = async (req, res) => {
   if (!payment_method_id || ![1, 2, 3, 4].includes(payment_method_id)) {
     console.log("Invalid payment_method_id:", payment_method_id);
     return res.status(400).send("Valid payment method ID is required (1-4)");
+  }
+  if (platform !== "web" && platform !== "mobile") {
+    console.log("Invalid platform:", platform);
+    return res.status(400).send("Platform must be web or mobile");
   }
 
   for (const item of orderItems) {
@@ -297,6 +302,7 @@ const createOrder = async (req, res) => {
         isDatHo: isDatHo || false,
         tenNguoiDatHo: tenNguoiDatHo || null,
         soDienThoaiNguoiDatHo: soDienThoaiNguoiDatHo || null,
+        platform,
       },
       { transaction }
     );

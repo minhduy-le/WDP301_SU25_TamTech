@@ -168,6 +168,10 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    platform: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
   },
   {
     tableName: "orders",
