@@ -172,6 +172,14 @@ const Order = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: true,
     },
+    customerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
   },
   {
     tableName: "orders",

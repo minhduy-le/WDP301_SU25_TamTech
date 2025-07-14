@@ -56,9 +56,19 @@ const createOrder = async (req, res) => {
     tenNguoiDatHo,
     soDienThoaiNguoiDatHo,
     platform,
+    customerId,
   } = req.body;
-  const userId = req.userId;
+  let userId = req.userId;
   const storeId = 1;
+
+  if (customerId) {
+    const customer = await User.findOne({ where: { id: customerId } });
+    if (!customer) {
+      console.log("Customer not found for customerId:", customerId);
+      return res.status(400).send(`Customer with ID ${customerId} not found`);
+    }
+    userId = customerId;
+  }
 
   console.log("Destructured parameters:", {
     orderItems,
@@ -288,6 +298,7 @@ const createOrder = async (req, res) => {
       {
         storeId,
         userId,
+        customerId: customerId || null,
         order_amount,
         order_discount_percent: order_discount_percent.toFixed(2),
         order_discount_value: order_discount_value || 0,
