@@ -1028,11 +1028,14 @@ const handlePaymentSuccess = async (req, res) => {
       }
       await transaction.commit();
       console.log("Redirecting to frontend success page for orderId:", parsedOrderId);
-      return res.redirect(
-        `${FRONTEND_DOMAIN}/payment-success?orderId=${parsedOrderId}&code=00&status=PAID&invoiceUrl=${encodeURIComponent(
-          invoiceUrl || ""
-        )}`
-      );
+      console.log("Order platform value:", order.platform); // Debug log
+      const redirectPath =
+        order.platform === "mobile" ? `${FRONTEND_DOMAIN}/staff/payment-success` : `${FRONTEND_DOMAIN}/payment-success`;
+      const redirectUrl = `${redirectPath}?orderId=${parsedOrderId}&code=00&status=PAID&invoiceUrl=${encodeURIComponent(
+        invoiceUrl || ""
+      )}`;
+      console.log("Redirect URL:", redirectUrl);
+      return res.redirect(redirectUrl);
     }
 
     const user = await User.findOne({

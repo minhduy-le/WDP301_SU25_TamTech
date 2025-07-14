@@ -73,7 +73,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat-message-ai", chatMessageAIRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/banks", bankRoutes);
-app.use("/api/pos/orders", orderRoutesPosApp);
+app.use("/api/pos-orders", orderRoutesPosApp);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");
