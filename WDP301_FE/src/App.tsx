@@ -35,7 +35,6 @@ import StaffOrderManagement from './pages/OrderManageStaff'
 import StaffProfile from './pages/StaffProfile'
 import StaffChat from './pages/StaffChat'
 import ManagerChat from './pages/ManagerChat'
-import DetailManageStaff from './pages/manager/staffs/DetailManageStaff'
 import MaterialManagement from './pages/manager/materials/MaterialManagement'
 import ManagerProfile from './pages/manager/ManagerProfile'
 import ForgotPassword from './pages/ForgotPassword'
@@ -110,10 +109,9 @@ function App() {
             />
             <Route path="/manager/chat" element={<ManagerChat />} />
             <Route
-              path="/manager/staffs/staffid"
-              element={<DetailManageStaff />}
+              path="/manager/blog"
+              element={<BlogManagement />}
             />
-            <Route path="/manager/blog" element={<BlogManagement />} />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
             <Route path="/admin/users" element={<UserManagement />} />

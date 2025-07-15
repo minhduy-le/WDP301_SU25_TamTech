@@ -82,12 +82,10 @@ const EmployeeManagement: React.FC = () => {
   const [filterRole, setFilterRole] = useState<string>("Tất cả");
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const handleShowDetail = async (employeeId: string) => {
-    setSelectedEmployeeId(employeeId);
     setDetailModalVisible(true);
     setLoadingDetail(true);
     try {
