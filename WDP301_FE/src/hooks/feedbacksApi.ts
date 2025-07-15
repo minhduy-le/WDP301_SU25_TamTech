@@ -35,7 +35,7 @@ export interface FeedbackDto {
   updatedAt: Date;
   User: {
     id: number;
-    fullName: number;
+    fullName: string;
   };
   Product: {
     productId: number;
