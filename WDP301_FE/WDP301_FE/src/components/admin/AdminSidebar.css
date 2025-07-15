@@ -1,0 +1,43 @@
+.admin-sidebar .ant-menu-item-selected {
+  background-color: #1B5E20 !important;
+}
+
+.admin-sidebar .ant-menu-item:hover {
+  background-color: #4CAF50 !important;
+}
+
+.admin-sidebar .ant-menu-submenu-title:hover {
+  background-color: #4CAF50 !important;
+}
+
+.admin-sidebar .ant-menu-item-selected .ant-menu-item-icon {
+  color: #fff !important;
+}
+
+.admin-sidebar .ant-menu-item .ant-menu-item-icon {
+  color: #E8F5E9 !important;
+}
+
+.admin-sidebar .ant-menu-submenu-title .ant-menu-item-icon {
+  color: #E8F5E9 !important;
+}
+
+.admin-sidebar .ant-menu-item-selected .ant-menu-title-content {
+  color: #fff !important;
+}
+
+.admin-sidebar .ant-menu-item .ant-menu-title-content {
+  color: #E8F5E9 !important;
+}
+
+.admin-sidebar .ant-menu-submenu-title .ant-menu-title-content {
+  color: #E8F5E9 !important;
+}
+
+.admin-sidebar .ant-menu-submenu-arrow {
+  color: #E8F5E9 !important;
+}
+
+.admin-sidebar .ant-menu-submenu-selected .ant-menu-submenu-arrow {
+  color: #fff !important;
+} 
