@@ -1,0 +1,179 @@
+.order-tracking-container {
+  background-color: #fff7e6;
+  font-family: "Montserrat", sans-serif;
+  padding: 0 8px;
+}
+
+.ant-steps-item-content {
+  font-family: "Montserrat", sans-serif;
+}
+
+.ship-status {
+  font-family: "Montserrat", sans-serif;
+  color: #2d1e1a;
+  display: flex;
+}
+
+.ship-status-bold {
+  color: #da7339;
+  font-weight: 700;
+}
+
+.content-col {
+  background-color: #ebd187;
+  padding: 30px !important;
+  border-radius: 10px;
+}
+
+.order-header {
+  font-size: 20px;
+  color: #2d1e1a;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-family: "Montserrat", sans-serif;
+}
+
+.order-info {
+  font-size: 16px;
+  color: #2d1e1a;
+  margin-bottom: 20px;
+}
+
+.tracking-timeline {
+  margin-bottom: 20px;
+}
+
+.ant-steps-item-icon {
+  background: transparent !important;
+  border: 5px solid #2d1e1a !important;
+}
+
+.ant-steps-item-icon:has(.ant-steps-finish-icon) {
+  background-color: #2d1e1a !important;
+  border: 1px solid #2d1e1a !important;
+}
+
+.shipping-info {
+  font-size: 15px;
+  color: #2d1e1a;
+  margin-bottom: 20px;
+}
+
+.order-items {
+  margin-bottom: 20px;
+}
+
+.item-title {
+  font-size: 16px;
+  color: #2d1e1a;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: center;
+  font-family: Montserrat, sans-serif;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  color: #2d1e1a;
+  margin-bottom: 5px;
+  font-family: Montserrat, sans-serif;
+}
+
+.item-row.total {
+  font-weight: bold;
+  font-size: 17px;
+  margin-top: 10px;
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.view-order {
+  background-color: #efe6db !important;
+  color: #2d1e1a !important;
+  border: none;
+  outline: none !important;
+  padding: 10px 20px;
+  font-size: 15px;
+  width: max-content;
+  font-family: "Montserrat", sans-serif;
+}
+
+.track-order {
+  background-color: #2d1e1a !important;
+  color: #efe6db !important;
+  border: none;
+  outline: none !important;
+  padding: 10px 20px;
+  font-size: 15px;
+  width: max-content;
+  font-family: "Montserrat", sans-serif;
+}
+
+.ant-steps-icon {
+  color: #ebd187 !important;
+}
+
+:where(.css-dev-only-do-not-override-1m2bkf9).ant-steps
+  .ant-steps-item-finish
+  > .ant-steps-item-container
+  > .ant-steps-item-tail::after {
+  background-color: #2d1e1a;
+}
+
+.menu-icon {
+  font-size: 30px;
+  width: 32px;
+  height: 32px;
+  margin-inline-start: 40px;
+  justify-content: center;
+  display: flex;
+  margin-bottom: 12px;
+}
+
+:where(.css-dev-only-do-not-override-1m2bkf9).ant-steps .ant-steps-item-tail {
+  top: 60px;
+}
+
+.menu-main-item {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.ant-steps-icon:has(.ant-steps-finish-icon) {
+  display: contents;
+}
+
+.ant-steps-icon {
+  display: none;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active {
+  border-bottom: 3px solid #da7339 !important;
+  z-index: 2;
+  background-color: #efe6db !important;
+}
+
+:where(.css-dev-only-do-not-override-1m2bkf9).ant-tabs .ant-tabs-tab:hover {
+  color: #da7339;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  background-color: #efe6db;
+  border: none;
+  color: #2d1e1a;
+  font-family: Montserrat, sans-serif;
+  font-size: 14px;
+  padding: 4px 12px;
+  outline: none !important;
+  width: 24px;
+  height: 24px;
+}
