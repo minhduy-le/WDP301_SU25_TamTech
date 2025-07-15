@@ -15,7 +15,7 @@ import {
 import { LoadingOutlined } from "@ant-design/icons";
 import "../style/OrderHistory.css";
 import IMAGE from "../assets/login.png";
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useGetOrderHistory, type OrderHistory } from "../hooks/ordersApi";
 import { useCreateFeedback } from "../hooks/feedbacksApi";
 import { useQueries } from "@tanstack/react-query";
@@ -26,7 +26,7 @@ import { getFormattedPrice } from "../utils/formatPrice";
 const { Title, Text } = Typography;
 
 interface OrderHistoryProps {
-  onDetailClick?: (orderId: number) => void;
+  onDetailClick?: (order: OrderHistory) => void;
 }
 
 interface FeedbackItem {
@@ -78,9 +78,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     {}
   );
   const [isLoadingCreateFeedback, setIsLoadingCreateFeedback] = useState(false);
-  const [sortedOrderHistory, setSortedOrderHistory] = useState<OrderHistory[]>(
-    []
-  );
 
   const { mutate: createFeedback } = useCreateFeedback();
 
@@ -109,22 +106,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         }))
       : [],
   });
-
-  useEffect(() => {
-    if (
-      isOrderHistoryLoading ||
-      !orderHistory ||
-      !Array.isArray(orderHistory)
-    ) {
-      setSortedOrderHistory([]);
-    } else {
-      setSortedOrderHistory(
-        [...orderHistory].sort((a, b) =>
-          dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
-        )
-      );
-    }
-  }, [orderHistory, isOrderHistoryLoading]);
 
   const showModal = (order: OrderHistory) => {
     const actions = getActionsForStatus(order.status);
@@ -264,6 +245,16 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     { text: "Đã hủy", value: "Canceled" },
   ];
 
+  const sortedOrderHistory = useMemo(
+    () =>
+      orderHistory
+        ? [...orderHistory].sort((a, b) =>
+            dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
+          )
+        : [],
+    [orderHistory]
+  );
+
   // Cập nhật feedbackItems khi có dữ liệu từ tất cả các feedbackQueries
   useEffect(() => {
     if (selectedOrder && feedbackQueries.length > 0) {
@@ -368,7 +359,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                           <Button
                             className="gray-button"
                             onClick={() =>
-                              onDetailClick && onDetailClick(order.orderId)
+                              onDetailClick && onDetailClick(order)
                             }
                           >
                             Chi tiết
@@ -507,7 +498,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                               <Button
                                 className="gray-button"
                                 onClick={() =>
-                                  onDetailClick && onDetailClick(order.orderId)
+                                  onDetailClick && onDetailClick(order)
                                 }
                               >
                                 Chi tiết

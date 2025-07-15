@@ -5,62 +5,32 @@ import APP_LOGIN from "../assets/login.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore, type LoginDto } from "../hooks/usersApi";
 import { useMutation } from "@tanstack/react-query";
-import { jwtDecode } from "jwt-decode";
 import Role from "../enums/role.enum";
 import GoogleIcon from "../components/icon/GoogleIcon";
 
 const Login = () => {
   const [loginForm] = Form.useForm();
-  const { login, googleLogin, setToken, setUser } = useAuthStore();
+  const { login, googleLogin } = useAuthStore();
   const navigate = useNavigate();
 
   const loginMutation = useMutation<
-    { success: boolean; message: string },
+    { success: boolean; message: string; role: string },
     unknown,
     LoginDto
   >({
     mutationFn: login,
     onSuccess: (response) => {
       if (response.success) {
-        const token = localStorage.getItem("token");
-        if (token) {
-          try {
-            const decoded = jwtDecode<{
-              id: number;
-              role: string;
-              fullName: string;
-              email: string;
-              phone_number: string;
-              exp: number;
-            }>(token);
-
-            const user = {
-              id: decoded.id,
-              fullName: decoded.fullName,
-              email: decoded.email,
-              phone_number: decoded.phone_number,
-            };
-            setUser(user);
-            setToken(token);
-
-            switch (decoded.role) {
-              case Role.ADMIN:
-                navigate("/admin/users");
-                break;
-              case Role.MANAGER:
-                navigate("/manager/dashboard");
-                break;
-              case Role.STAFF:
-                navigate("/staff/orders");
-                break;
-              default:
-                navigate("/");
-            }
-            message.success("Đăng nhập thành công");
-          } catch {
-            message.error("Lỗi giải mã token. Vui lòng thử lại.");
-          }
+        if (response.role === Role.ADMIN) {
+          navigate("/admin/users");
+        } else if (response.role === Role.MANAGER) {
+          navigate("/manager/dashboard");
+        } else if (response.role === Role.STAFF) {
+          navigate("/staff/orders");
+        } else {
+          navigate("/");
         }
+        message.success("Đăng nhập thành công");
       } else {
         message.error(response.message);
       }
@@ -85,7 +55,7 @@ const Login = () => {
   });
 
   const googleLoginMutation = useMutation<
-    { success: boolean; message: string },
+    { success: boolean; message: string; role: string },
     unknown,
     void
   >({

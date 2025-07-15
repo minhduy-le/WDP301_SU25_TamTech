@@ -316,14 +316,9 @@ const Checkout = () => {
 
     const paymentMethodId = paymentMethod ?? 0;
 
-    const selectedDistrict = districts.find(
-      (district) => district.districtId === selectedDistrictId
-    );
-
     let orderAddress = detailedAddress.trim();
     if (isDatHo && detailedAddressProxy) {
-      orderAddress =
-        `${detailedAddressProxy}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim();
+      orderAddress = detailedAddressProxy.trim();
     }
 
     const orderData = {
@@ -334,7 +329,6 @@ const Checkout = () => {
       order_shipping_fee: deliveryFee,
       payment_method_id: paymentMethodId,
       order_address: orderAddress,
-      platform: "Web",
       note: note || "",
       promotion_code: appliedPromotion ? promotionCode : "",
       ...(isDatHo && {
