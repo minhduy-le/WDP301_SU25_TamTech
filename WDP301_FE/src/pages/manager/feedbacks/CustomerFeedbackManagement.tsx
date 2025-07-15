@@ -129,7 +129,7 @@ const CustomerFeedbackManagement = () => {
       .filter((fb) => {
         const searchTextLower = searchText.toLowerCase();
         return (
-          fb.User.fullName.toString().toLowerCase().includes(searchTextLower) ||
+          fb.User.fullName.toLowerCase().includes(searchTextLower) ||
           fb.comment.toLowerCase().includes(searchTextLower.substring(0, 50))
         );
       })
@@ -167,9 +167,7 @@ const CustomerFeedbackManagement = () => {
       ellipsis: true,
       sorter: (a: FeedbackDto, b: FeedbackDto) =>
         a.User.fullName.toString().localeCompare(b.User.fullName.toString()),
-      render: (name: number) => (
-        <span style={{ fontWeight: 500 }}>{name.toString()}</span>
-      ),
+      render: (name: string) => <span style={{ fontWeight: 500 }}>{name}</span>,
     },
     {
       title: "Sản phẩm",
@@ -449,7 +447,7 @@ const CustomerFeedbackManagement = () => {
                   contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
                 >
                   <Descriptions.Item label="Khách hàng">
-                    {selectedFeedback.User.fullName}
+                    {selectedFeedback.User?.fullName || "Không xác định"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Comment">
                     {selectedFeedback.comment}

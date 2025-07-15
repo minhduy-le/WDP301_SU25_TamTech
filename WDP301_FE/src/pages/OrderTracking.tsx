@@ -55,6 +55,7 @@ const getStepIndex = (status: string) => {
     case "Pending":
       return 0;
     case "Paid":
+    case "Approved":
     case "Preparing":
       return 1;
     case "Cooked":
