@@ -8,6 +8,8 @@ import {
   Space,
   Tag,
   Tooltip,
+  Modal,
+  Spin,
 } from "antd";
 import { SearchOutlined, EyeOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -15,6 +17,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import DetailManageStaff from "./DetailManageStaff";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -78,6 +81,33 @@ const EmployeeManagement: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [filterRole, setFilterRole] = useState<string>("Tất cả");
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [detailData, setDetailData] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const handleShowDetail = async (employeeId: string) => {
+    setSelectedEmployeeId(employeeId);
+    setDetailModalVisible(true);
+    setLoadingDetail(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `https://wdp301-su25.space/api/accounts/${employeeId}`,
+        {
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setDetailData(res.data.data);
+    } catch (err) {
+      setDetailData(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
 
   const employees = useMemo((): Employee[] => {
     if (!accounts) return [];
@@ -169,7 +199,7 @@ const EmployeeManagement: React.FC = () => {
       align: "center" as const,
       width: 150,
       fixed: "right" as const,
-      render: (_: any, _record: Employee) => (
+      render: (_: any, record: Employee) => (
         <Space size="small">
           <Tooltip title="Xem chi tiết">
             <Button
@@ -189,6 +219,7 @@ const EmployeeManagement: React.FC = () => {
                 transition: "all 0.3s ease",
                 outline: "none",
               }}
+              onClick={() => handleShowDetail(record.employeeId)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "#D97B41";
                 e.currentTarget.style.color = "#FFF9F0";
@@ -367,6 +398,25 @@ const EmployeeManagement: React.FC = () => {
         </Card>
 
       </div>
+      <Modal
+        open={detailModalVisible}
+        onCancel={() => {
+          setDetailModalVisible(false);
+          setDetailData(null);
+        }}
+        footer={null}
+        width={500}
+        title={<span style={{ color: "#A05A2C", fontWeight: 600, fontSize: 22 }}>Chi tiết nhân viên</span>}
+        destroyOnClose
+      >
+        {loadingDetail ? (
+          <div style={{ textAlign: "center", padding: 40 }}><Spin /></div>
+        ) : detailData ? (
+          <DetailManageStaff account={detailData} />
+        ) : (
+          <div style={{ color: "red", textAlign: "center" }}>Không thể tải dữ liệu nhân viên.</div>
+        )}
+      </Modal>
     </div>
   );
 };

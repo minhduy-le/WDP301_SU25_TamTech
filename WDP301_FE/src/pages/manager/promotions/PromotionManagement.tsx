@@ -843,6 +843,40 @@ const PromotionManagement: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
+              <Row gutter={[16, 16]}>
+                <Col span={12}>
+                  <Form.Item
+                    style={{ marginBottom: 0 }}
+                    name="minOrderAmount"
+                    label={
+                      <span style={{ color: "#A05A2C" }}>
+                        Giá trị đơn hàng tối thiểu
+                      </span>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập giá trị đơn hàng tối thiểu!",
+                      },
+                      { type: "number", message: "Vui lòng nhập số!" },
+                    ]}
+                  >
+                    <InputNumber
+                      style={{
+                        width: "100%",
+                        borderRadius: 6,
+                        marginBottom: 16,
+                      }}
+                      min={0}
+                      placeholder="Nhập giá trị tối thiểu (VND)"
+                      formatter={(value) =>
+                        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                      parser={(value: any) => value!.replace(/[^0-9]/g, "")}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
               <Form.Item
                 style={{ marginBottom: 0 }}
                 name="dateRange"

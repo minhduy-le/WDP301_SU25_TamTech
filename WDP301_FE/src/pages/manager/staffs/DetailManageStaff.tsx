@@ -40,6 +40,18 @@ interface Employee {
     notes: Note[];
 }
 
+interface AccountDetailProps {
+  account: {
+    id: number;
+    fullName: string;
+    email: string;
+    phone_number: string;
+    date_of_birth: string;
+    note: string | null;
+    role: string;
+    isActive: boolean;
+  };
+}
 
 const DollarIcon = (props: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -94,392 +106,75 @@ const fakeEmployeeData: Employee = {
 };
 
 // --- COMPONENT CHÍNH ---
-const DetailManageStaff: React.FC = () => {
-    const [employee] = useState<Employee>(fakeEmployeeData);
-    const [newNote, setNewNote] = useState('');
-
-    const handleSaveNote = () => {
-        if (newNote.trim() === '') {
-            alert('Vui lòng nhập nội dung ghi chú.');
-            return;
+const DetailManageStaff: React.FC<AccountDetailProps> = ({ account }) => {
+  return (
+    <div className="staff-detail-page">
+      <style>{`
+        :root {
+          --primary-color: #d97706;
+          --primary-hover: #b45309;
+          --secondary-color: #78716c;
+          --success-color: #16a34a;
+          --danger-color: #dc2626;
+          --warning-color: #d97706;
+          --light-color: #fafaf9;
+          --dark-color: #44403c;
+          --border-color: #e7e5e4;
+          --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+          --font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-        // Trong thực tế, bạn sẽ gọi API để lưu ghi chú này
-        alert(`Đã lưu ghi chú mới: "${newNote}"`);
-        // Thêm ghi chú mới vào danh sách để UI cập nhật (tạm thời)
-        const addedNote: Note = {
-            id: Date.now(),
-            date: new Date().toLocaleDateString('vi-VN'),
-            content: newNote,
-            managerName: 'Current Manager' // Lấy tên manager đang đăng nhập
-        };
-        // Cập nhật state (trong ứng dụng thực)
-        console.log(addedNote);
-        setNewNote('');
-    };
-
-    return (
-        <div className="staff-detail-page">
-            <style>{`
-                :root {
-                    --primary-color: #d97706;
-                    --primary-hover: #b45309;
-                    --secondary-color: #78716c;
-                    --success-color: #16a34a;
-                    --danger-color: #dc2626;
-                    --warning-color: #d97706;
-                    --light-color: #fafaf9;
-                    --dark-color: #44403c;
-                    --border-color: #e7e5e4;
-                    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-                    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-                }
-
-                .staff-detail-page {
-                    font-family: var(--font-family);
-                    background-color: #f5f5f4;
-                    padding: 2rem;
-                    max-width: 1280px;
-                    margin: 0 auto;
-                    min-height: 100vh;
-                }
-
-                .card {
-                    background-color: white;
-                    border-radius: 1rem;
-                    box-shadow: var(--card-shadow);
-                    padding: 1.5rem;
-                    margin-bottom: 1.5rem;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                    border: 1px solid var(--border-color);
-                }
-
-                .card:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-                }
-
-                h2 {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                    margin-top: 0;
-                    margin-bottom: 1.5rem;
-                    color: var(--dark-color);
-                    border-bottom: 2px solid var(--border-color);
-                    padding-bottom: 0.75rem;
-                }
-                
-                /* Profile Header */
-                .profile-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 2rem;
-                    background: linear-gradient(to right, #ffffff, #fafaf9);
-                    border: 1px solid var(--border-color);
-                }
-
-                .profile-avatar {
-                    width: 100px;
-                    height: 100px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    border: 4px solid var(--primary-color);
-                    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1);
-                }
-
-                .profile-info h1 {
-                    margin: 0;
-                    font-size: 1.875rem;
-                    font-weight: 700;
-                    color: var(--dark-color);
-                }
-
-                .profile-info p {
-                    margin: 0.5rem 0 0 0;
-                    color: var(--secondary-color);
-                    font-size: 1rem;
-                }
-
-                .profile-actions {
-                    margin-left: auto;
-                    display: flex;
-                    gap: 1rem;
-                }
-
-                .btn {
-                    padding: 0.75rem 1.5rem;
-                    border: none;
-                    border-radius: 0.5rem;
-                    cursor: pointer;
-                    font-size: 0.875rem;
-                    font-weight: 500;
-                    transition: all 0.2s ease;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                }
-
-                .btn:hover {
-                    transform: translateY(-1px);
-                }
-
-                .btn-primary {
-                    background-color: var(--primary-color);
-                    color: white;
-                }
-
-                .btn-primary:hover {
-                    background-color: var(--primary-hover);
-                }
-
-                .btn-secondary {
-                    background-color: #fafaf9;
-                    color: var(--dark-color);
-                    border: 1px solid var(--border-color);
-                }
-
-                .btn-secondary:hover {
-                    background-color: #f5f5f4;
-                }
-
-                /* KPI Grid */
-                .kpi-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 1.5rem;
-                }
-
-                .kpi-item {
-                    display: flex;
-                    align-items: center;
-                    background-color: #fafaf9;
-                    padding: 1.5rem;
-                    border-radius: 1rem;
-                    border: 1px solid var(--border-color);
-                }
-
-                .kpi-icon {
-                    width: 48px;
-                    height: 48px;
-                    color: var(--primary-color);
-                    margin-right: 1rem;
-                    padding: 0.75rem;
-                    background-color: rgba(217, 119, 6, 0.1);
-                    border-radius: 0.75rem;
-                }
-
-                .kpi-text .value {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: var(--dark-color);
-                    line-height: 1.2;
-                }
-
-                .kpi-text .label {
-                    font-size: 0.875rem;
-                    color: var(--secondary-color);
-                    margin-top: 0.25rem;
-                }
-                
-                /* Tables */
-                table {
-                    width: 100%;
-                    border-collapse: separate;
-                    border-spacing: 0;
-                }
-
-                th, td {
-                    padding: 1rem;
-                    text-align: left;
-                    border-bottom: 1px solid var(--border-color);
-                }
-
-                th {
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    color: var(--secondary-color);
-                    background-color: #fafaf9;
-                }
-
-                tr:last-child td {
-                    border-bottom: none;
-                }
-
-                tr:hover td {
-                    background-color: #fafaf9;
-                }
-
-                .status-hoanthanh {
-                    color: var(--success-color);
-                    font-weight: 500;
-                }
-
-                .status-dahuy {
-                    color: var(--danger-color);
-                    font-weight: 500;
-                }
-
-                /* Notes Section */
-                .note-item {
-                    border-bottom: 1px dashed var(--border-color);
-                    padding: 1rem 0;
-                }
-
-                .note-item:last-child {
-                    border-bottom: none;
-                }
-
-                .note-content {
-                    margin: 0 0 0.5rem 0;
-                    color: var(--dark-color);
-                    line-height: 1.5;
-                }
-
-                .note-meta {
-                    font-size: 0.75rem;
-                    color: var(--secondary-color);
-                }
-
-                .note-input-area {
-                    margin-top: 1.5rem;
-                }
-
-                textarea {
-                    width: 100%;
-                    padding: 1rem;
-                    border-radius: 0.75rem;
-                    border: 1px solid var(--border-color);
-                    font-family: var(--font-family);
-                    min-height: 100px;
-                    margin-bottom: 1rem;
-                    resize: vertical;
-                    transition: border-color 0.2s ease;
-                }
-
-                textarea:focus {
-                    outline: none;
-                    border-color: var(--primary-color);
-                    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
-                }
-
-                @media (max-width: 768px) {
-                    .staff-detail-page {
-                        padding: 1rem;
-                    }
-
-                    .profile-header {
-                        flex-direction: column;
-                        text-align: center;
-                    }
-
-                    .profile-actions {
-                        margin: 1rem 0 0 0;
-                        flex-direction: column;
-                        width: 100%;
-                    }
-
-                    .btn {
-                        width: 100%;
-                    }
-                }
-            `}</style>
-
-            {/* --- 1. THÔNG TIN CÁ NHÂN --- */}
-            <div className="card profile-header">
-                <img src={employee.avatarUrl} alt={employee.name} className="profile-avatar" />
-                <div className="profile-info">
-                    <h1>{employee.name}</h1>
-                    <p>{employee.role} | {employee.email} | {employee.phone}</p>
-                </div>
-                <div className="profile-actions">
-                    <button className="btn btn-primary">Liên hệ</button>
-                </div>
-            </div>
-
-            {/* --- 2. HIỆU SUẤT LÀM VIỆC (KPIs) --- */}
-            <div className="card">
-                <h2>Hiệu suất Tháng này</h2>
-                <div className="kpi-grid">
-                    {employee.kpis.map((kpi, index) => (
-                        <div key={index} className="kpi-item">
-                            <kpi.icon className="kpi-icon" />
-                            <div className="kpi-text">
-                                <div className="value">{kpi.value}</div>
-                                <div className="label">{kpi.label}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* --- 3. LỊCH LÀM VIỆC & LỊCH SỬ BÁN HÀNG --- */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '25px' }}>
-                <div className="card">
-                    <h2>Lịch làm việc tuần này</h2>
-                    <table>
-                        <tbody>
-                            {employee.schedule.map((item, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        <strong>{item.day}</strong><br />
-                                        <small>{item.shift} ({item.time})</small>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="card">
-                    <h2>Lịch sử Bán hàng gần đây</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID Hóa đơn</th>
-                                <th>Ngày giờ</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {employee.salesHistory.map(sale => (
-                                <tr key={sale.id}>
-                                    <td>{sale.id}</td>
-                                    <td>{sale.date}</td>
-                                    <td>{sale.total.toLocaleString('vi-VN')} VNĐ</td>
-                                    <td className={sale.status === 'Hoàn thành' ? 'status-hoanthanh' : 'status-dahuy'}>
-                                        {sale.status}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* --- 4. GHI CHÚ & PHẢN HỒI --- */}
-            <div className="card">
-                <h2>Ghi chú & Phản hồi</h2>
-                <div className="notes-list">
-                    {employee.notes.map(note => (
-                        <div key={note.id} className="note-item">
-                            <p className="note-content">{note.content}</p>
-                            <div className="note-meta">
-                                Ghi chú bởi <strong>{note.managerName}</strong> vào ngày {note.date}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <div className="note-input-area">
-                    <textarea
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        placeholder={`Thêm ghi chú mới cho ${employee.name}...`}
-                    />
-                    <button className="btn btn-primary" onClick={handleSaveNote}>Lưu Ghi Chú</button>
-                </div>
-            </div>
+        .staff-detail-page {
+          font-family: var(--font-family);
+          background-color: #f5f5f4;
+          padding: 2rem;
+          max-width: 500px;
+          margin: 0 auto;
+          min-height: 100px;
+        }
+        .card {
+          background-color: white;
+          border-radius: 1rem;
+          box-shadow: var(--card-shadow);
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+          border: 1px solid var(--border-color);
+        }
+        .profile-header {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          background: linear-gradient(to right, #ffffff, #fafaf9);
+          border: 1px solid var(--border-color);
+        }
+        .profile-info h1 {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--dark-color);
+        }
+        .profile-info p {
+          margin: 0.5rem 0 0 0;
+          color: var(--secondary-color);
+          font-size: 1rem;
+        }
+        .profile-info .label {
+          font-weight: 600;
+          color: #a05a2c;
+          margin-right: 8px;
+        }
+      `}</style>
+      <div className="card profile-header">
+        <div className="profile-info">
+          <h1>{account.fullName}</h1>
+          <p><span className="label">Email:</span> {account.email}</p>
+          <p><span className="label">Số điện thoại:</span> {account.phone_number}</p>
+          <p><span className="label">Ngày sinh:</span> {account.date_of_birth}</p>
+          <p><span className="label">Vai trò:</span> {account.role}</p>
+          <p><span className="label">Trạng thái:</span> {account.isActive ? 'Đang làm việc' : 'Đã nghỉ'}</p>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
+
 export default DetailManageStaff;
