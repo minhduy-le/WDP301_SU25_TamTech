@@ -9,7 +9,6 @@ interface CreateOrder {
   order_shipping_fee: number;
   payment_method_id: number;
   order_address: string;
-  platform: string;
   note: string;
   promotion_code: string;
   isDatHo?: boolean;
@@ -75,20 +74,6 @@ export interface Notification {
 
 interface CancelOrder {
   reason: string;
-  bankName: string;
-  bankNumber: string;
-}
-
-interface Bank {
-  code: number;
-  desc: string;
-  data: [
-    {
-      id: number;
-      name: string;
-      code: string;
-    }
-  ];
 }
 
 // Add the new hook to fetch notifications
@@ -225,38 +210,5 @@ export const useCancelOrder = () => {
       );
       return response.data;
     },
-  });
-};
-
-export const useCancelOrderSendEmail = () => {
-  return useMutation({
-    mutationFn: async ({ orderId }: { orderId: number }) => {
-      const response = await axiosInstance.post(
-        `orders/send-refunded-email/${orderId}`
-      );
-      return response.data;
-    },
-  });
-};
-
-const fetchBank = async (): Promise<Bank> => {
-  const response = await axiosInstance.get<Bank>("banks");
-  return response.data;
-};
-
-export const useGetBank = () => {
-  return useQuery<Bank, Error>({
-    queryKey: ["user"],
-    queryFn: fetchBank,
-  });
-};
-export const useGetOrderById = (orderId: number) => {
-  return useQuery<OrderHistory, Error>({
-    queryKey: ["orders", orderId],
-    queryFn: async () => {
-      const response = await axiosInstance.get(`orders/${orderId}`);
-      return response.data;
-    },
-    enabled: !!orderId,
   });
 };

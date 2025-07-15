@@ -48,19 +48,20 @@ interface User {
   fullName: string;
   email: string;
   phone_number: string;
+  role: string;
 }
 
 interface AuthState {
   user: User | null;
   token: string | null;
   error: string | null;
-  login: (values: LoginDto) => Promise<{
-    success: boolean;
-    message: string;
-  }>;
+  login: (
+    values: LoginDto
+  ) => Promise<{ success: boolean; message: string; role: string }>;
   googleLogin: () => Promise<{
     success: boolean;
     message: string;
+    role: string;
   }>;
   logout: () => void;
   setUser: (user: User) => void;
@@ -135,6 +136,7 @@ export const useAuthStore = create<AuthState>((set) => {
 
           const user = {
             id: decoded.id,
+            role: decoded.role,
             fullName: decoded.fullName,
             email: decoded.email,
             phone_number: decoded.phone_number,
@@ -168,11 +170,12 @@ export const useAuthStore = create<AuthState>((set) => {
           return {
             success: true,
             message: data.message,
+            role: decoded.role,
           };
         } else {
           const errorMessage = data.message;
           set({ error: errorMessage });
-          return { success: false, message: errorMessage };
+          return { success: false, message: errorMessage, role: "" };
         }
       } catch (error) {
         if (axios.isAxiosError(error) && error.response) {
@@ -210,6 +213,7 @@ export const useAuthStore = create<AuthState>((set) => {
         if (data.token) {
           const user = {
             id: data.id,
+            role: data.role,
             fullName: data.fullName,
             email: data.email,
             phone_number: data.phone_number,
@@ -243,10 +247,11 @@ export const useAuthStore = create<AuthState>((set) => {
           return {
             success: true,
             message: data.message || "Google login successful",
+            role: data.role,
           };
         } else {
           set({ error: "Google login failed" });
-          return { success: false, message: "Google login failed" };
+          return { success: false, message: "Google login failed", role: "" };
         }
       } catch (error) {
         if (axios.isAxiosError(error) && error.response) {
