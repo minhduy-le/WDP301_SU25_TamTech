@@ -1,17 +1,7 @@
-import {
-  Row,
-  Col,
-  Button,
-  Steps,
-  Divider,
-  Modal,
-  Select,
-  Input,
-  Form,
-  message,
-} from "antd";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Row, Col, Button, Steps, Divider } from "antd";
 import "../style/OrderTracking.css";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
   ShoppingOutlined,
@@ -22,15 +12,6 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getFormattedPrice } from "../utils/formatPrice";
-import {
-  useGetOrderById,
-  useGetBank,
-  useCancelOrder,
-  useCancelOrderSendEmail,
-} from "../hooks/ordersApi";
-import { useQueryClient } from "@tanstack/react-query";
-
-const { Option } = Select;
 
 const items = [
   {
@@ -72,7 +53,7 @@ const getStepIndex = (status: string) => {
 };
 
 interface OrderTrackingProps {
-  orderId?: number;
+  order?: any;
   onBackClick?: () => void;
 }
 
@@ -96,26 +77,17 @@ const statusMap: { [key: string]: string } & {
   Canceled: "Đã hủy",
 };
 
-const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
-  const { data: order, isLoading } = useGetOrderById(orderId || 0);
+const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
   console.log("OrderTracking received order:", order);
   const originalPrice = order?.orderItems
     ? order.orderItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
+        (sum: number, item: { price: string; quantity: number }) =>
+          sum + parseFloat(item.price) * item.quantity,
         0
       )
     : 0;
 
   const currentStep = order ? getStepIndex(order.status) : 0;
-  const queryClient = useQueryClient();
-
-  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
-  const [form] = Form.useForm();
-
-  // Hooks
-  const { data: bankData } = useGetBank();
-  const cancelOrderMutation = useCancelOrder();
-  const sendEmailMutation = useCancelOrderSendEmail();
 
   useEffect(() => {
     const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
@@ -142,56 +114,14 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
     });
   }, []);
 
-  if (isLoading) {
-    return <div>Đang tải thông tin đơn hàng...</div>;
-  }
-
   if (!order) {
     return <div>Không tìm thấy thông tin đơn hàng.</div>;
   }
 
   const totalAmount =
-    originalPrice + order.order_shipping_fee - order.order_discount_value;
-
-  const handleCancelOrder = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        const cancelReason = {
-          reason: values.reason,
-          bankName: values.bankName,
-          bankNumber: values.bankNumber,
-        };
-
-        cancelOrderMutation.mutate(
-          { orderId: order.orderId, cancelReason },
-          {
-            onSuccess: () => {
-              sendEmailMutation.mutate(
-                { orderId: order.orderId },
-                {
-                  onSuccess: () => {
-                    message.success("Hủy đơn thành công và email đã được gửi!");
-                    setIsCancelModalVisible(false);
-                    form.resetFields();
-                    queryClient.invalidateQueries({ queryKey: ["orders"] });
-                  },
-                  onError: (error) => {
-                    message.error("Gửi email thất bại: " + error.message);
-                  },
-                }
-              );
-            },
-            onError: (error) => {
-              message.error("Hủy đơn thất bại: " + error.message);
-            },
-          }
-        );
-      })
-      .catch((info) => {
-        console.log("Validate Failed:", info);
-      });
-  };
+    originalPrice +
+    parseFloat(order.order_shipping_fee) -
+    parseFloat(order.order_discount_value);
 
   return (
     <div className="order-tracking-container">
@@ -267,7 +197,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
                       productId: number;
                       name: string;
                       quantity: number;
-                      price: number;
+                      price: string;
                     },
                     index: number
                   ) => (
@@ -314,7 +244,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
                 <span>Giảm giá</span>
                 <span>
                   <strong style={{ color: "#DA7339" }}>
-                    {order.order_discount_value.toLocaleString()}đ
+                    {parseFloat(order.order_discount_value).toLocaleString()}đ
                   </strong>
                 </span>
               </div>
@@ -322,7 +252,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
                 <span>Phí giao hàng</span>
                 <span>
                   <strong style={{ color: "#DA7339" }}>
-                    {order.order_shipping_fee.toLocaleString()}đ
+                    {parseFloat(order.order_shipping_fee).toLocaleString()}đ
                   </strong>
                 </span>
               </div>
@@ -332,85 +262,12 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
               </div>
             </div>
             <div className="button-group">
-              {order.status === "Paid" && (
-                <Button
-                  className="view-order"
-                  onClick={() => setIsCancelModalVisible(true)}
-                >
-                  Hủy đơn
-                </Button>
-              )}
+              <Button className="view-order">Hủy đơn</Button>
+              {/* <Button className="track-order">Theo dõi đơn hàng</Button> */}
             </div>
           </div>
         </Col>
       </Row>
-
-      <Modal
-        visible={isCancelModalVisible}
-        onOk={handleCancelOrder}
-        onCancel={() => {
-          setIsCancelModalVisible(false);
-          form.resetFields();
-        }}
-        okText="Xác nhận"
-        cancelText="Hủy"
-        footer={null}
-        className="modal-edit-profile"
-      >
-        <Form
-          form={form}
-          name="cancelOrderForm"
-          layout="vertical"
-          onFinish={handleCancelOrder}
-        >
-          <div className="edit-title">Hủy đơn hàng</div>
-          <Divider
-            style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }}
-          />
-          <Form.Item
-            name="reason"
-            label="Lý do hủy"
-            rules={[{ required: true, message: "Vui lòng nhập lý do hủy!" }]}
-          >
-            <Input placeholder="Nhập lý do hủy" />
-          </Form.Item>
-          <Form.Item
-            name="bankName"
-            label="Chọn ngân hàng"
-            rules={[{ required: true, message: "Vui lòng chọn ngân hàng!" }]}
-          >
-            <Select placeholder="Chọn ngân hàng">
-              {bankData?.data?.map((bank) => (
-                <Option key={bank.id} value={bank.name}>
-                  {bank.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="bankNumber"
-            label="Số tài khoản"
-            rules={[
-              { required: true, message: "Vui lòng nhập số tài khoản!" },
-              {
-                pattern: /^\d+$/,
-                message: "Số tài khoản phải là số!",
-              },
-            ]}
-          >
-            <Input placeholder="Nhập số tài khoản" />
-          </Form.Item>
-          <div style={{ textAlign: "center", marginTop: "20px" }}>
-            <Button
-              type="primary"
-              onClick={handleCancelOrder}
-              className="update-profile-btn"
-            >
-              Hủy đơn
-            </Button>
-          </div>
-        </Form>
-      </Modal>
     </div>
   );
 };
