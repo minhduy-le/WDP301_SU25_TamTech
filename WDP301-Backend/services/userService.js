@@ -12,7 +12,7 @@ const { auth } = require("../config/firebase");
 const FcmToken = require("../models/fcmToken");
 
 // Current date for date_of_birth validation
-const currentDate = new Date("2025-05-26T10:53:00+07:00");
+const currentDate = new Date();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
