@@ -42,11 +42,13 @@
 }
 
 .blog-grid {
-  justify-content: center;
+  /* justify-content: center;
   display: grid;
   grid-template-columns: repeat(3, 3fr);
   gap: 70px;
-  row-gap: 48px !important;
+  row-gap: 48px !important; */
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .blog-card {
