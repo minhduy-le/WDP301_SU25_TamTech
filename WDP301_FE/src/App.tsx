@@ -43,6 +43,7 @@ import BlogDetail from "./pages/BlogDetail";
 import BlogManagement from "./pages/BlogManagement";
 import { POSPage } from "./pages/POSPage";
 import POSSuccess from "./components/pos/POSSuccess";
+import ReportManagement from "./pages/admin/ReportManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -111,6 +112,7 @@ function App() {
             <Route path="/manager/blog" element={<BlogManagement />} />
           </Route>
           <Route element={<LayoutWithSidebarAdmin />}>
+            <Route path="/admin/dashboard" element={<ReportManagement />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route
               path="/admin/system-issues"

@@ -127,24 +127,6 @@ const Checkout = () => {
     }
   };
 
-  const handleOnPlacesChangedAddressUser = () => {
-    if (inputref.current) {
-      const places = inputref.current.getPlaces();
-      if (places && places.length > 0) {
-        const place = places[0];
-        if (place.formatted_address) {
-          let cleanedAddress = place.formatted_address;
-          cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
-          setDetailedAddress(cleanedAddress);
-        } else {
-          message.error("Không thể lấy địa chỉ từ Google Maps.");
-        }
-      } else {
-        message.error("Không tìm thấy địa chỉ nào.");
-      }
-    }
-  };
-
   // Initialize selectedItems with quantities from initialSelectedItems
   useEffect(() => {
     setSelectedItems(initialSelectedItems);
@@ -334,9 +316,14 @@ const Checkout = () => {
 
     const paymentMethodId = paymentMethod ?? 0;
 
+    const selectedDistrict = districts.find(
+      (district) => district.districtId === selectedDistrictId
+    );
+
     let orderAddress = detailedAddress.trim();
     if (isDatHo && detailedAddressProxy) {
-      orderAddress = detailedAddressProxy.trim();
+      orderAddress =
+        `${detailedAddressProxy}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim();
     }
 
     const orderData = {
@@ -347,6 +334,7 @@ const Checkout = () => {
       order_shipping_fee: deliveryFee,
       payment_method_id: paymentMethodId,
       order_address: orderAddress,
+      platform: "Web",
       note: note || "",
       promotion_code: appliedPromotion ? promotionCode : "",
       ...(isDatHo && {
@@ -502,21 +490,16 @@ const Checkout = () => {
                 disabled
               />
               {!isDatHo && (
-                <StandaloneSearchBox
-                  onLoad={(ref) => (inputref.current = ref)}
-                  onPlacesChanged={handleOnPlacesChangedAddressUser}
-                >
-                  <Input
-                    placeholder="Địa chỉ chi tiết"
-                    style={{
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                    value={detailedAddress}
-                    onChange={(e) => setDetailedAddress(e.target.value)}
-                    onBlur={handleAddressBlurUser}
-                  />
-                </StandaloneSearchBox>
+                <Input
+                  placeholder="Địa chỉ chi tiết"
+                  style={{
+                    background: "transparent",
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                  value={detailedAddress}
+                  onChange={(e) => setDetailedAddress(e.target.value)}
+                  onBlur={handleAddressBlurUser}
+                />
               )}
               <Row>
                 <Title
