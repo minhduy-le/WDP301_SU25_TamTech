@@ -136,6 +136,7 @@ const Navbar = () => {
           <Button
             type="text"
             icon={<BellIcon />}
+            className="icon-header"
             style={{ color: "#d97706", marginRight: "10px" }}
           />
           {user?.id ? (
@@ -143,6 +144,7 @@ const Navbar = () => {
               <Button
                 type="text"
                 icon={<AccountIcon />}
+                className="icon-header"
                 style={{ color: "#d97706", marginRight: "10px" }}
               />
             </Dropdown>
@@ -151,6 +153,7 @@ const Navbar = () => {
               type="text"
               icon={<AccountIcon />}
               style={{ color: "#d97706", marginRight: "10px" }}
+              className="icon-header"
               onClick={() => navigate("/login")}
             />
           )}
