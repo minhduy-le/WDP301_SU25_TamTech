@@ -522,6 +522,10 @@ router.get("/search", async (req, res) => {
  *                         type: integer
  *                       isActive:
  *                         type: boolean
+ *                       averageRating:
+ *                         type: number
+ *                         description: Xếp hạng trung bình của sản phẩm (0 nếu chưa có)
+ *                         example: 4.5
  *                       ProductType:
  *                         type: object
  *                         properties:

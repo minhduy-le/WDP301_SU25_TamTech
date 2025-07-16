@@ -177,6 +177,17 @@ const getProductsByType = async (productTypeId) => {
 
   const products = await Product.findAll({
     where: { productTypeId, isActive: true },
+    attributes: {
+      include: [
+        [
+          // Thêm subquery để tính trung bình rating và làm tròn 1 chữ số
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
