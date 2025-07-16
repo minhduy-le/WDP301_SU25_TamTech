@@ -21,18 +21,14 @@ const { Title } = Typography;
 
 dayjs.extend(customParseFormat);
 
-const BG_MAIN = "#E0E7FF";
-const BG_CARD = "#fff";
-const COLOR_ACCENT_DARK = "#1E40AF";
-const COLOR_USER = "#3B82F6";
-const COLOR_ADMIN = "#F4F4F4";
+const BG_MAIN = "#fefce8"; // amber-25
+const BG_CARD = "#ffffff"; // white
+const COLOR_ACCENT_DARK = "#92400e"; // amber-800
+const COLOR_USER = "#d97706"; // amber-600
+const COLOR_ADMIN = "#fffbeb"; // amber-50
 const COLOR_TEXT = "#333";
-// const COLOR_TEXT_SECONDARY = "#1E40AF";
-// const HEADER_BG_COLOR = "#1E3A8A";
-const EVEN_ROW_BG_COLOR = "#E0E7FF";
-// const ODD_ROW_BG_COLOR = "#D1E0FF";
-// const CELL_TEXT_COLOR = "#1E40AF";
-const BORDER_COLOR = "#3B82F6";
+const EVEN_ROW_BG_COLOR = "#fefce8"; // amber-25
+const BORDER_COLOR = "#fde68a"; // amber-200
 
 interface Chat {
   id: number;
@@ -289,7 +285,7 @@ const StaffChat = () => {
       style={{ background: BG_MAIN, minHeight: "90vh", padding: 24 }}
     >
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        <div
+        {/* <div
           style={{
             position: "fixed",
             top: 80,
@@ -304,7 +300,7 @@ const StaffChat = () => {
           }}
         >
           {isConnected ? `🟢 Đã kết nối` : `🔴 Mất kết nối`}
-        </div>
+        </div> */}
         <div style={{ display: "flex", gap: 24 }}>
           {/* Chat List */}
           <Card
@@ -377,7 +373,7 @@ const StaffChat = () => {
                   >
                     <List.Item.Meta
                       avatar={
-                        <Avatar style={{ backgroundColor: "#1890ff" }}>
+                        <Avatar style={{ backgroundColor: "#d97706" }}>
                           {account.fullName[0]}
                         </Avatar>
                       }

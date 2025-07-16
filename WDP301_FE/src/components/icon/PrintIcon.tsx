@@ -1,7 +1,7 @@
 const PrintIcon = () => {
   return (
     <svg
-      fill="#3B82F6"
+      fill="#d97706"
       width="16px"
       height="16px"
       viewBox="0 0 24 24"

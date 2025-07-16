@@ -87,7 +87,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       0
     );
     const order_shipping_fee = parseFloat(order.order_shipping_fee.toString());
-    return itemTotal + order_shipping_fee;
+    return itemTotal + order_shipping_fee - order.order_discount_value;
   };
 
   const { data: orderHistory, isLoading: isOrderHistoryLoading } =
