@@ -582,7 +582,7 @@ router.get("/type/:productTypeId", async (req, res) => {
  * @swagger
  * /api/products:
  *   get:
- *     summary: Get products with pagination and sort by price descending
+ *     summary: Get products with pagination, sort by price descending, and include average rating
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -626,6 +626,10 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                         type: integer
  *                       isActive:
  *                         type: boolean
+ *                       averageRating:
+ *                         type: number
+ *                         description: Average rating of the product (0 if no ratings)
+ *                         example: 4.50
  *                       ProductType:
  *                         type: object
  *                         properties:
