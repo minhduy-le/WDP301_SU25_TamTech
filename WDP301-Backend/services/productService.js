@@ -137,11 +137,26 @@ const getProducts = async ({ page, limit, offset }) => {
     throw new Error("Offset must be a non-negative integer");
   }
 
-  const { count, rows } = await Product.findAndCountAll({
+  // Lấy tổng số sản phẩm đang hoạt động để tính toán phân trang
+  const totalCount = await Product.count({ where: { isActive: true } });
+
+  // Lấy danh sách sản phẩm đã phân trang
+  const products = await Product.findAll({
     where: { isActive: true },
     limit,
     offset,
     order: [["price", "DESC"]],
+    attributes: {
+      include: [
+        [
+          // Thay đổi DECIMAL(10, 2) thành DECIMAL(10, 1)
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
@@ -150,8 +165,8 @@ const getProducts = async ({ page, limit, offset }) => {
   });
 
   return {
-    products: rows,
-    totalPages: Math.ceil(count / limit),
+    products: products,
+    totalPages: Math.ceil(totalCount / limit),
   };
 };
 
