@@ -127,6 +127,24 @@ const Checkout = () => {
     }
   };
 
+  const handleOnPlacesChangedAddressUser = () => {
+    if (inputref.current) {
+      const places = inputref.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.formatted_address) {
+          let cleanedAddress = place.formatted_address;
+          cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+          setDetailedAddress(cleanedAddress);
+        } else {
+          message.error("Không thể lấy địa chỉ từ Google Maps.");
+        }
+      } else {
+        message.error("Không tìm thấy địa chỉ nào.");
+      }
+    }
+  };
+
   // Initialize selectedItems with quantities from initialSelectedItems
   useEffect(() => {
     setSelectedItems(initialSelectedItems);
@@ -484,16 +502,21 @@ const Checkout = () => {
                 disabled
               />
               {!isDatHo && (
-                <Input
-                  placeholder="Địa chỉ chi tiết"
-                  style={{
-                    background: "transparent",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                  value={detailedAddress}
-                  onChange={(e) => setDetailedAddress(e.target.value)}
-                  onBlur={handleAddressBlurUser}
-                />
+                <StandaloneSearchBox
+                  onLoad={(ref) => (inputref.current = ref)}
+                  onPlacesChanged={handleOnPlacesChangedAddressUser}
+                >
+                  <Input
+                    placeholder="Địa chỉ chi tiết"
+                    style={{
+                      background: "transparent",
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                    value={detailedAddress}
+                    onChange={(e) => setDetailedAddress(e.target.value)}
+                    onBlur={handleAddressBlurUser}
+                  />
+                </StandaloneSearchBox>
               )}
               <Row>
                 <Title
