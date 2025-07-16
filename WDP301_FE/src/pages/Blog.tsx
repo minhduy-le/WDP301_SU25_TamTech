@@ -1,6 +1,6 @@
 import { Row, Col, Card, Typography, Button, Skeleton } from "antd";
 import "../style/Blog.css";
-import { useBlogActive } from "../hooks/blogsApi";
+import { useBlogs } from "../hooks/blogsApi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,7 +11,7 @@ const Blog = () => {
     data: blogs,
     isLoading: isLoadingBlogs,
     isError: isErrorBlogs,
-  } = useBlogActive();
+  } = useBlogs();
 
   const [visibleBlogs, setVisibleBlogs] = useState(9);
 
@@ -41,15 +41,20 @@ const Blog = () => {
         ) : isErrorBlogs ? (
           <div>Lỗi loading loại sản phẩm. Vui lòng thử lại.</div>
         ) : blogs && blogs.length > 0 ? (
-          <div>
+          <div
+            style={{
+              display: "flex",
+              width: "-webkit-fill-available",
+              justifyContent: "space-between",
+            }}
+          >
             {blogs.slice(0, visibleBlogs).map((post) => (
-              // blogs.map((post) => (
               <Col
                 key={post.id}
                 xs={24}
                 sm={12}
-                md={6}
-                lg={6}
+                md={7}
+                lg={7}
                 style={{ maxWidth: "-webkit-fill-available" }}
               >
                 <Card className="blog-card">
@@ -84,9 +89,6 @@ const Blog = () => {
           <div>Không có blog.</div>
         )}
       </Row>
-      {/* <div className="see-more">
-        <Button className="see-more-button">Xem thêm</Button>
-      </div> */}
     </div>
   );
 };
