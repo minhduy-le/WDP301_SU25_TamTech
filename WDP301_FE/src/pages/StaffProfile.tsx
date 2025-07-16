@@ -90,7 +90,7 @@ const StaffProfile = () => {
     <div
       style={{
         minHeight: "90vh",
-        background: "#E0E7FF",
+        background: "#fefce8", // amber-25
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -101,17 +101,17 @@ const StaffProfile = () => {
         bordered={false}
         style={{
           borderRadius: 24,
-          boxShadow: "0 4px 24px rgba(30,64,175,0.10)",
+          boxShadow: "0 4px 24px rgba(146,64,14,0.10)", // amber-800 với độ trong suốt
           width: 520,
           padding: "48px 32px",
-          background: "#fff",
+          background: "#ffffff", // white
           display: "flex",
           flexDirection: "column",
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <UserOutlined
-            style={{ fontSize: 96, color: "#3B82F6", marginBottom: 16 }}
+            style={{ fontSize: 96, color: "#d97706", marginBottom: 16 }} // amber-600
           />
         </div>
         {!editMode ? (
@@ -153,8 +153,8 @@ const StaffProfile = () => {
                 onClick={handleOpenPasswordModal}
                 style={{
                   borderRadius: 8,
-                  borderColor: "#3B82F6",
-                  color: "#3B82F6",
+                  borderColor: "#d97706", // amber-600
+                  color: "#d97706", // amber-600
                   fontWeight: 500,
                 }}
               >
@@ -165,8 +165,8 @@ const StaffProfile = () => {
                 icon={<EditOutlined />}
                 onClick={handleEdit}
                 style={{
-                  background: "#1E3A8A",
-                  borderColor: "#1E3A8A",
+                  background: "#92400e", // amber-800
+                  borderColor: "#92400e", // amber-800
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -225,8 +225,8 @@ const StaffProfile = () => {
                 type="primary"
                 onClick={handleSave}
                 style={{
-                  background: "#1E3A8A",
-                  borderColor: "#1E3A8A",
+                  background: "#92400e", // amber-800
+                  borderColor: "#92400e", // amber-800
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -252,8 +252,8 @@ const StaffProfile = () => {
           cancelText="Hủy"
           okButtonProps={{
             style: {
-              background: "#1E3A8A",
-              borderColor: "#1E3A8A",
+              background: "#92400e", // amber-800
+              borderColor: "#92400e", // amber-800
               borderRadius: 8,
             },
           }}

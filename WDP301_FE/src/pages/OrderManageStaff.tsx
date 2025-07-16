@@ -160,34 +160,23 @@ const StaffOrderManagement = () => {
   ): { tagBg: string; tagText: string; iconColor?: string } => {
     switch (status) {
       case "Pending":
-        return { tagBg: "#BFDBFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
+        return { tagBg: "#fffbeb", tagText: "#92400e", iconColor: "#92400e" }; // amber-50, amber-800
       case "Paid":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
       case "Approved":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
       case "Preparing":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
       case "Cooked":
-        return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
+        return { tagBg: "#fcd34d", tagText: "#fff", iconColor: "#fff" }; // amber-300, white
       case "Delivering":
-        return { tagBg: "#93C5FD", tagText: "#1E40AF", iconColor: "#1E40AF" };
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
       case "Delivered":
-        return { tagBg: "#60A5FA", tagText: "#fff", iconColor: "#fff" };
+        return { tagBg: "#fcd34d", tagText: "#fff", iconColor: "#fff" }; // amber-300, white
       case "Canceled":
-        return { tagBg: "#EF4444", tagText: "#fff", iconColor: "#fff" };
+        return { tagBg: "#E57373", tagText: "#fff", iconColor: "#fff" }; // Giữ màu đỏ nhẹ cho hủy
       default:
-        return { tagBg: "#E0E7FF", tagText: "#1E40AF" };
-
-      // case "pending":
-      //     return { tagBg: "#F9E4B7", tagText: "#A05A2C", iconColor: "#A05A2C" };
-      //   case "processing":
-      //     return { tagBg: "#FAD2A5", tagText: "#A05A2C", iconColor: "#A05A2C" };
-      //   case "completed":
-      //     return { tagBg: "#81C784", tagText: "#fff", iconColor: "#fff" };
-      //   case "cancelled":
-      //     return { tagBg: "#E57373", tagText: "#fff", iconColor: "#fff" };
-      //   default:
-      //     return { tagBg: "#E9C97B", tagText: "#A05A2C" };
+        return { tagBg: "#fffbeb", tagText: "#92400e" }; // amber-50, amber-800
     }
   };
 
@@ -214,14 +203,6 @@ const StaffOrderManagement = () => {
         return null;
     }
   };
-
-  const headerColor = "#e8f5e9";
-  const headerBgColor = "#1E3A8A";
-  const evenRowBgColor = "#E0E7FF";
-  const oddRowBgColor = "#D1E0FF";
-  const cellTextColor = "#1E40AF";
-  const borderColor = "#3B82F6";
-  const tableBorderColor = "#3B82F6";
 
   const handlePrintInvoice = (invoiceUrl: string) => {
     fetch(invoiceUrl, { method: "HEAD" })
@@ -272,12 +253,6 @@ const StaffOrderManagement = () => {
     },
     {
       title: "Tổng tiền",
-      // dataIndex: "order_amount",
-      // key: "order_amount",
-      // width: 120,
-      // sorter: (a: OrderHistory, b: OrderHistory) =>
-      //   a.order_amount - b.order_amount,
-      // render: (order_amount: number) => `${getFormattedPrice(order_amount)}`,
       dataIndex: "orderItems",
       key: "total_amount",
       width: 120,
@@ -362,13 +337,13 @@ const StaffOrderManagement = () => {
                 setIsModalVisible(true);
               }}
               style={{
-                color: "#3B82F6",
+                color: "#d97706", // amber-600
                 fontWeight: 600,
                 padding: 0,
                 outline: "none",
                 boxShadow: "none",
                 border: "none",
-                background: "#e8f5e9",
+                background: "#fefce8", // amber-25
               }}
             />
           </Tooltip>
@@ -382,7 +357,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
                 }}
               >
                 <Button
@@ -390,7 +365,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#3B82F6" }}
+                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
                     />
                   }
                   className="btn-action-status"
@@ -408,7 +383,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
                 }}
               >
                 <Button
@@ -416,7 +391,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <ClockCircleOutlined
-                      style={{ fontSize: 16, color: "#3B82F6" }}
+                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
                     />
                   }
                   className="btn-action-status"
@@ -434,7 +409,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#60A5FA", borderColor: "#60A5FA" },
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
                 }}
               >
                 <Button
@@ -442,7 +417,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#3B82F6" }}
+                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
                     />
                   }
                   className="btn-action-status"
@@ -463,20 +438,20 @@ const StaffOrderManagement = () => {
               />
             </Tooltip>
           )}
-          {record.status != "Pending" && record.status != "Approved" && (
+          {record.status !== "Pending" && record.status !== "Approved" && (
             <Tooltip title="In hóa đơn">
               <Button
                 type="link"
                 icon={<PrintIcon />}
                 onClick={() => handlePrintInvoice(record.invoiceUrl)}
                 style={{
-                  color: "#3B82F6",
+                  color: "#d97706",
                   fontWeight: 600,
                   padding: 0,
                   outline: "none",
                   boxShadow: "none",
                   border: "none",
-                  background: "#e8f5e9",
+                  background: "#fefce8", // amber-25
                 }}
               />
             </Tooltip>
@@ -503,19 +478,22 @@ const StaffOrderManagement = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "#E0E7FF",
+        background: "#fefce8", // amber-25
         padding: "20px 30px 30px 60px",
       }}
     >
       <style>{`
-        .order-table-staff .ant-table-thead > tr > th,
+        .order-table-staff .ant-table-thead > tr > th {
+          background-color: #fefce8 !important;
+          color: #92400e !important; 
+        }
         .order-table-staff .ant-table-thead > tr > th.ant-table-cell-fix-right,
         .order-table-staff .ant-table-thead > tr > th.ant-table-cell-fix-left {
-          background-color: ${headerBgColor} !important;
-          color: ${headerColor} !important;
+          background-color: #ffffff !important; // white
+          color: #92400e !important; // amber-800
           font-weight: bold !important;
-          border-right: 1px solid ${borderColor} !important;
-          border-bottom: 2px solid ${tableBorderColor} !important;
+          border-right: 1px solid #fde68a !important; // amber-200
+          border-bottom: 2px solid #fde68a !important; // amber-200
         }
         .order-table-staff .ant-table-thead > tr > th:last-child {
             border-right: none !important;
@@ -524,22 +502,22 @@ const StaffOrderManagement = () => {
            border-right: none !important;
         }
         .order-table-staff .ant-table-tbody > tr.even-row-order > td {
-          background-color: ${evenRowBgColor};
-          color: ${cellTextColor};
-          border-right: 1px solid ${borderColor};
-          border-bottom: 1px solid ${borderColor};
+          background-color: #ffffff; // white
+          color: #d97706; // amber-600
+          border-right: 1px solid #fde68a; // amber-200
+          border-bottom: 1px solid #fde68a; // amber-200
         }
         .order-table-staff .ant-table-tbody > tr.odd-row-order > td {
-          background-color: ${oddRowBgColor};
-          color: ${cellTextColor};
-          border-right: 1px solid ${borderColor};
-          border-bottom: 1px solid ${borderColor};
+          background-color: #ffffff; // white
+          color: #d97706; // amber-600
+          border-right: 1px solid #fde68a; // amber-200
+          border-bottom: 1px solid #fde68a; // amber-200
         }
         .order-table-staff .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) {
            border-right: none;
         }
         .order-table-staff .ant-table-tbody > tr:hover > td {
-          background-color: #add4ff !important;
+          background-color: #fcd34d !important; // amber-300
         }
         .order-table-staff .ant-table-tbody > tr.even-row-order > td.ant-table-cell-fix-right,
         .order-table-staff .ant-table-tbody > tr.odd-row-order > td.ant-table-cell-fix-right,
@@ -547,13 +525,13 @@ const StaffOrderManagement = () => {
            background: inherit !important;
         }
         .order-table-staff .ant-table-column-sorters .ant-table-column-sorter {
-           color: ${headerColor} !important;
+           color: #92400e !important; // amber-800
         }
         .order-table-staff .ant-table-filter-column .anticon-filter {
-           color: ${headerColor} !important;
+           color: #92400e !important; // amber-800
         }
         .order-search .ant-input-outlined input::placeholder {
-           color: ${cellTextColor} !important;
+           color: #d97706 !important; // amber-600
         }
         .ant-descriptions-item-content .ant-table-small{
            border-radius: 8px;
@@ -565,7 +543,7 @@ const StaffOrderManagement = () => {
             outline: none;
             box-shadow: none;
             border: none;
-            background: #e8f5e9 !important;
+            background: #fefce8 !important; // amber-25
         }
         .modal-assign-shipper .ant-modal-body {
           background: none !important;
@@ -577,7 +555,7 @@ const StaffOrderManagement = () => {
         <h1
           style={{
             fontWeight: 800,
-            color: "#1E40AF",
+            color: "#92400e", // amber-800
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
@@ -587,11 +565,11 @@ const StaffOrderManagement = () => {
         </h1>
         <Card
           style={{
-            background: "#fff",
+            background: "#ffffff", // white
             borderRadius: 12,
-            boxShadow: "0 6px 16px rgba(30, 64, 175, 0.08)",
+            boxShadow: "0 6px 16px rgba(146, 64, 14, 0.08)", // amber-800 với độ trong suốt
             padding: "16px 24px",
-            border: `1px solid ${tableBorderColor}`,
+            border: `1px solid #fde68a`, // amber-200
             marginBottom: 24,
           }}
         >
@@ -608,23 +586,24 @@ const StaffOrderManagement = () => {
             <Space wrap className="order-search">
               <Input
                 placeholder="Tìm theo ID, Tên khách..."
-                prefix={<SearchOutlined style={{ color: "#1E40AF" }} />}
+                prefix={<SearchOutlined style={{ color: "#92400e" }} />} // amber-800
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{
                   width: 280,
                   borderRadius: 6,
-                  borderColor: "#3B82F6",
+                  borderColor: "#fde68a", // amber-200
                   height: 32,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  background: "#fefce8", // amber-25
                 }}
                 allowClear
               />
               <Select
                 value={statusFilter}
-                style={{ width: 200, borderRadius: 6 }}
+                style={{ width: 200, borderRadius: 6, borderColor: "#fde68a" }} // amber-200
                 onChange={(value) => setStatusFilter(value)}
               >
                 <Option value="all">Tất cả trạng thái</Option>
@@ -648,7 +627,7 @@ const StaffOrderManagement = () => {
             rowKey="id"
             style={{
               borderRadius: 8,
-              border: `1px solid ${tableBorderColor}`,
+              border: `1px solid #fde68a`, // amber-200
               overflow: "hidden",
             }}
             rowClassName={(_, index) =>
@@ -661,35 +640,22 @@ const StaffOrderManagement = () => {
 
         <Modal
           title={
-            <span style={{ color: "#3B82F6", fontWeight: 700, fontSize: 22 }}>
-              Chi tiết đơn hàng
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              {" "}
             </span>
           }
           open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
-          // footer={[
-          //   <Button
-          //     key="back"
-          //     onClick={() => setIsModalVisible(false)}
-          //     style={{
-          //       borderRadius: 6,
-          //       borderColor: "#3B82F6",
-          //       color: "#3B82F6",
-          //     }}
-          //   >
-          //     Đóng
-          //   </Button>,
-          // ]}
           footer={null}
           width={1000}
           styles={{
             body: {
-              background: "#E0E7FF",
+              background: "#fefce8", // amber-25
               borderRadius: "0 0 12px 12px",
               padding: "24px",
             },
             header: {
-              borderBottom: `1px solid ${tableBorderColor}`,
+              borderBottom: `1px solid #fde68a`, // amber-200
               paddingBottom: 16,
               marginBottom: 0,
             },
@@ -699,10 +665,10 @@ const StaffOrderManagement = () => {
           {selectedOrder && (
             <Card
               style={{
-                background: "#fff",
+                background: "#ffffff", // white
                 borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.08)",
-                border: `1px solid ${tableBorderColor}`,
+                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.08)", // amber-600 với độ trong suốt
+                border: `1px solid #fde68a`, // amber-200
                 padding: 16,
               }}
             >
@@ -711,12 +677,11 @@ const StaffOrderManagement = () => {
                 column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
                 size="default"
                 labelStyle={{
-                  color: "#1E40AF",
+                  color: "#92400e", // amber-800
                   fontWeight: 600,
-                  background: "#E0E7FF",
-                  // width: "160px",
+                  background: "#fefce8", // amber-25
                 }}
-                contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
+                contentStyle={{ color: "#d97706", background: "#ffffff" }} // amber-600, white
               >
                 <Descriptions.Item label="Mã đơn hàng">
                   {selectedOrder.orderId}
@@ -759,7 +724,7 @@ const StaffOrderManagement = () => {
                 <Descriptions.Item label="Tổng tiền">
                   <span
                     style={{
-                      color: "#3B82F6",
+                      color: "#d97706", // amber-600
                       fontWeight: "bold",
                       fontSize: "1.1em",
                     }}
@@ -774,33 +739,45 @@ const StaffOrderManagement = () => {
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Phí vận chuyển">
-                  <span style={{ color: cellTextColor }}>
+                  <span style={{ color: "#d97706" }}>
+                    {" "}
+                    // amber-600
                     {getFormattedPrice(selectedOrder.order_shipping_fee)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Giảm giá">
-                  <span style={{ color: cellTextColor }}>
+                  <span style={{ color: "#d97706" }}>
+                    {" "}
+                    // amber-600
                     {getFormattedPrice(selectedOrder.order_discount_value)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Phương thức thanh toán">
-                  <span style={{ color: cellTextColor }}>
+                  <span style={{ color: "#d97706" }}>
+                    {" "}
+                    // amber-600
                     {selectedOrder.payment_method}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Địa chỉ giao hàng">
-                  <span style={{ color: cellTextColor }}>
+                  <span style={{ color: "#d97706" }}>
+                    {" "}
+                    // amber-600
                     {selectedOrder.order_address}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số điện thoại">
-                  <span style={{ color: cellTextColor }}>
+                  <span style={{ color: "#d97706" }}>
+                    {" "}
+                    // amber-600
                     {selectedOrder.phone_number}
                   </span>
                 </Descriptions.Item>
                 {selectedOrder.note && (
                   <Descriptions.Item label="Ghi chú" span={2}>
-                    <span style={{ color: cellTextColor }}>
+                    <span style={{ color: "#d97706" }}>
+                      {" "}
+                      // amber-600
                       {selectedOrder.note}
                     </span>
                   </Descriptions.Item>
@@ -815,7 +792,11 @@ const StaffOrderManagement = () => {
                         dataIndex: "name",
                         key: "name",
                         render: (text: string) => (
-                          <span style={{ color: cellTextColor }}>{text}</span>
+                          <span style={{ color: "#d97706" }}>
+                            {" "}
+                            // amber-600
+                            {text}
+                          </span>
                         ),
                       },
                       {
@@ -824,7 +805,11 @@ const StaffOrderManagement = () => {
                         key: "quantity",
                         align: "center" as const,
                         render: (text: number) => (
-                          <span style={{ color: cellTextColor }}>{text}</span>
+                          <span style={{ color: "#d97706" }}>
+                            {" "}
+                            // amber-600
+                            {text}
+                          </span>
                         ),
                       },
                       {
@@ -833,7 +818,9 @@ const StaffOrderManagement = () => {
                         key: "price",
                         align: "center" as const,
                         render: (price: number) => (
-                          <span style={{ color: cellTextColor }}>
+                          <span style={{ color: "#d97706" }}>
+                            {" "}
+                            // amber-600
                             {getFormattedPrice(price)}
                           </span>
                         ),
@@ -847,7 +834,7 @@ const StaffOrderManagement = () => {
                           item: { quantity: number; price: number }
                         ) => (
                           <span
-                            style={{ color: cellTextColor, fontWeight: 500 }}
+                            style={{ color: "#d97706", fontWeight: 500 }} // amber-600
                           >
                             {(item.quantity * item.price).toLocaleString()}đ
                           </span>
@@ -858,9 +845,9 @@ const StaffOrderManagement = () => {
                     rowKey="orderId"
                     size="small"
                     style={{
-                      background: evenRowBgColor,
+                      background: "#ffffff", // white
                       borderRadius: 8,
-                      border: `1px solid ${borderColor}`,
+                      border: `1px solid #fde68a`, // amber-200
                     }}
                   />
                 </Descriptions.Item>
@@ -871,8 +858,9 @@ const StaffOrderManagement = () => {
 
         <Modal
           title={
-            <span style={{ color: "#3B82F6", fontWeight: 700, fontSize: 22 }}>
-              Chọn Shipper Giao Hàng
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              {" "}
+              // amber-600 Chọn Shipper Giao Hàng
             </span>
           }
           centered
@@ -884,8 +872,8 @@ const StaffOrderManagement = () => {
               onClick={() => setIsAssignModalVisible(false)}
               style={{
                 borderRadius: 6,
-                borderColor: "#3B82F6",
-                color: "#3B82F6",
+                borderColor: "#fde68a", // amber-200
+                color: "#d97706", // amber-600
               }}
             >
               Hủy
@@ -900,8 +888,8 @@ const StaffOrderManagement = () => {
                 handleAssignShipper(currentOrderId, selectedShipperId)
               }
               style={{
-                background: "#60A5FA",
-                borderColor: "#60A5FA",
+                background: "#fcd34d", // amber-300
+                borderColor: "#fcd34d", // amber-300
                 borderRadius: 6,
               }}
             >
@@ -910,12 +898,12 @@ const StaffOrderManagement = () => {
           ]}
           styles={{
             body: {
-              background: "#E0E7FF",
+              background: "#fefce8", // amber-25
               borderRadius: "0 0 12px 12px",
               padding: "24px",
             },
             header: {
-              borderBottom: `1px solid ${tableBorderColor}`,
+              borderBottom: `1px solid #fde68a`, // amber-200
               paddingBottom: 16,
               marginBottom: 0,
             },
@@ -927,8 +915,8 @@ const StaffOrderManagement = () => {
             placeholder="Chọn shipper"
             style={{
               width: "100%",
-              border: "#4096ff",
-              background: "white",
+              border: "#fde68a", // amber-200
+              background: "#ffffff", // white
             }}
             onChange={(value) => setSelectedShipperId(value)}
             loading={isShippersLoading}

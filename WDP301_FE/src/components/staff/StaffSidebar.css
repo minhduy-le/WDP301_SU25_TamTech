@@ -1,13 +1,13 @@
 .staff-sidebar .ant-menu-item-selected {
-  background-color: #1e40af !important;
+  background-color: #d97706 !important; /* amber-800 */
 }
 
 .staff-sidebar .ant-menu-item:hover {
-  background-color: #60a5fa !important;
+  background-color: #f1cd57 !important; /* amber-200 */
 }
 
 .staff-sidebar .ant-menu-submenu-title:hover {
-  background-color: #60a5fa !important;
+  background-color: #fde68a !important; /* amber-200 */
 }
 
 .staff-sidebar .ant-menu-item-selected .ant-menu-item-icon {
@@ -15,11 +15,12 @@
 }
 
 .staff-sidebar .ant-menu-item .ant-menu-item-icon {
-  color: #e8f5e9 !important;
+  color: #fefce8 !important; /* amber-25 */
+  margin-right: 12px;
 }
 
 .staff-sidebar .ant-menu-submenu-title .ant-menu-item-icon {
-  color: #e8f5e9 !important;
+  color: #fefce8 !important; /* amber-25 */
 }
 
 .staff-sidebar .ant-menu-item-selected .ant-menu-title-content {
@@ -27,15 +28,15 @@
 }
 
 .staff-sidebar .ant-menu-item .ant-menu-title-content {
-  color: #e8f5e9 !important;
+  color: #fefce8 !important; /* amber-25 */
 }
 
 .staff-sidebar .ant-menu-submenu-title .ant-menu-title-content {
-  color: #e8f5e9 !important;
+  color: #fefce8 !important; /* amber-25 */
 }
 
 .staff-sidebar .ant-menu-submenu-arrow {
-  color: #e8f5e9 !important;
+  color: #fefce8 !important; /* amber-25 */
 }
 
 .staff-sidebar .ant-menu-submenu-selected .ant-menu-submenu-arrow {
