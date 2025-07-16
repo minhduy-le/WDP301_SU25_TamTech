@@ -16,6 +16,7 @@ import { useProductTypes } from "../hooks/productTypesApi";
 import { type UseQueryResult } from "@tanstack/react-query";
 import { useAuthStore } from "../hooks/usersApi";
 import { useCartStore } from "../store/cart.store";
+import { StarOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -309,8 +310,10 @@ const Menu = () => {
                         className="card-image"
                       />
                       <div className="card-rating">
-                        <span className="card-rating-star">★</span>
-                        <span>1000+</span>
+                        <span className="card-rating-star">
+                          <StarOutlined />
+                        </span>
+                        <span>{product.averageRating}</span>
                       </div>
                     </div>
                     <div className="card-content">

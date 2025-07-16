@@ -35,6 +35,7 @@ export interface ProductDto {
   createBy: string;
   storeId: number;
   isActive: boolean;
+  averageRating: number;
   ProductType: {
     productTypeId: number;
     name: string;
@@ -188,10 +189,10 @@ export const useBestSellerProducts = () => {
   return useQuery<ProductDto[], Error>({
     queryKey: ["best-seller-products"],
     queryFn: async () => {
-    const res = await axios.get(
-      "https://wdp301-su25.space/api/products/best-seller"
-    );
-    return res.data.products;
-  },
-});
+      const res = await axios.get(
+        "https://wdp301-su25.space/api/products/best-seller"
+      );
+      return res.data.products;
+    },
+  });
 };
