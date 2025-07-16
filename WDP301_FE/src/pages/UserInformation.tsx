@@ -107,7 +107,7 @@ const UserInfomation = () => {
     const savedState = localStorage.getItem("showOrderTracking");
     return savedState ? JSON.parse(savedState) : false;
   });
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(() => {
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(() => {
     const savedOrder = localStorage.getItem("selectedOrder");
     return savedOrder ? JSON.parse(savedOrder) : null;
   });
@@ -132,10 +132,10 @@ const UserInfomation = () => {
       const savedState = localStorage.getItem("showOrderTracking");
       const savedOrder = localStorage.getItem("selectedOrder");
       setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-      setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
+      setSelectedOrderId(savedOrder ? JSON.parse(savedOrder) : null);
     } else {
       setShowOrderTracking(false);
-      setSelectedOrder(null);
+      setSelectedOrderId(null);
       localStorage.setItem("showOrderTracking", JSON.stringify(false));
       localStorage.setItem("selectedOrder", JSON.stringify(null));
     }
@@ -149,7 +149,7 @@ const UserInfomation = () => {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrder(null);
+        setSelectedOrderId(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
         localStorage.setItem("selectedOrder", JSON.stringify(null));
       } else if (savedTab) {
@@ -158,10 +158,10 @@ const UserInfomation = () => {
           const savedState = localStorage.getItem("showOrderTracking");
           const savedOrder = localStorage.getItem("selectedOrder");
           setShowOrderTracking(savedState ? JSON.parse(savedState) : false);
-          setSelectedOrder(savedOrder ? JSON.parse(savedOrder) : null);
+          setSelectedOrderId(savedOrder ? JSON.parse(savedOrder) : null);
         } else {
           setShowOrderTracking(false);
-          setSelectedOrder(null);
+          setSelectedOrderId(null);
           localStorage.setItem("showOrderTracking", JSON.stringify(false));
           localStorage.setItem("selectedOrder", JSON.stringify(null));
         }
@@ -169,7 +169,7 @@ const UserInfomation = () => {
         setActivePage("1");
         localStorage.setItem("userInfoActiveTab", "1");
         setShowOrderTracking(false);
-        setSelectedOrder(null);
+        setSelectedOrderId(null);
         localStorage.setItem("showOrderTracking", JSON.stringify(false));
         localStorage.setItem("selectedOrder", JSON.stringify(null));
       }
@@ -228,7 +228,7 @@ const UserInfomation = () => {
           {
             onSuccess: () => {
               refetch();
-              message.success("Cập nhật thông tin cá nhân thành công");
+              message.success("Cập nhật thông tin thành công");
               setIsModalVisible(false);
             },
             onError: (error: any) => {
@@ -335,16 +335,16 @@ const UserInfomation = () => {
     editContactForm.resetFields();
   };
 
-  const showOrderTrackingDetails = (order: any) => {
-    setSelectedOrder(order);
+  const showOrderTrackingDetails = (orderId: number) => {
+    setSelectedOrderId(orderId);
     setShowOrderTracking(true);
     localStorage.setItem("showOrderTracking", JSON.stringify(true));
-    localStorage.setItem("selectedOrder", JSON.stringify(order));
+    localStorage.setItem("selectedOrder", JSON.stringify(orderId));
   };
 
   const handleBackToOrderHistory = () => {
     setShowOrderTracking(false);
-    setSelectedOrder(null);
+    setSelectedOrderId(null);
     localStorage.setItem("showOrderTracking", JSON.stringify(false));
     localStorage.setItem("selectedOrder", JSON.stringify(null));
   };
@@ -527,7 +527,7 @@ const UserInfomation = () => {
                   <OrderHistorys onDetailClick={showOrderTrackingDetails} />
                 ) : (
                   <OrderTracking
-                    order={selectedOrder}
+                    orderId={selectedOrderId ?? undefined}
                     onBackClick={handleBackToOrderHistory}
                   />
                 )}
