@@ -8,8 +8,9 @@ const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const { auth } = require("../config/firebase");
+const { auth, uploadFileToFirebase } = require("../config/firebase");
 const FcmToken = require("../models/fcmToken");
+const Promotion = require("../models/promotion");
 
 // Current date for date_of_birth validation
 const currentDate = new Date();
@@ -130,7 +131,7 @@ const userService = {
       throw "Email must be invalid";
     }
     if (otp.length !== 6) {
-      throw "Email must be 6 digits";
+      throw "OTP must be 6 digits";
     }
 
     const user = await User.findOne({ where: { email } });
@@ -151,8 +152,77 @@ const userService = {
       throw "Invalid or expired OTP";
     }
 
-    await user.update({ isActive: true });
-    await otpRecord.destroy();
+    // Start a transaction for user activation and promotion creation
+    const transaction = await User.sequelize.transaction();
+    try {
+      // Activate the user
+      await user.update({ isActive: true }, { transaction });
+      console.log("User activated successfully:", user.id);
+
+      // Delete OTP record
+      await otpRecord.destroy({ transaction });
+      console.log("OTP record deleted successfully");
+
+      // Create promotion
+      const promotionCode = `WELCOME_${user.id}`;
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+
+      // Generate barcode (text-based for simplicity)
+      const barcodeBuffer = Buffer.from(promotionCode, "utf-8");
+      const barcodeFileName = `barcode_${user.id}.txt`;
+
+      // Upload barcode to Firebase
+      let barcodeUrl;
+      try {
+        barcodeUrl = await uploadFileToFirebase(barcodeBuffer, barcodeFileName, "text/plain");
+        console.log("Barcode uploaded to Firebase:", barcodeUrl);
+      } catch (firebaseError) {
+        console.error("Firebase upload error:", firebaseError.message, firebaseError.stack);
+        throw new Error(`Failed to upload barcode to Firebase: ${firebaseError.message}`);
+      }
+
+      // Create promotion with specified attributes
+      try {
+        await Promotion.create(
+          {
+            promotionTypeId: 7,
+            name: "WELCOME",
+            description: "Welcome promotion for new users",
+            barcode: barcodeUrl,
+            code: promotionCode,
+            startDate,
+            endDate,
+            minOrderAmount: 0,
+            discountAmount: 15000,
+            NumberCurrentUses: 0,
+            maxNumberOfUses: 1,
+            isActive: true,
+            createBy: 1,
+            forUser: user.id,
+            isUsedBySpecificUser: true,
+            createdAt: startDate,
+            updatedAt: startDate,
+          },
+          { transaction }
+        );
+        console.log("Promotion created successfully for user:", user.id);
+      } catch (promotionError) {
+        console.error("Promotion creation error:", promotionError.message, promotionError.stack);
+        throw new Error(`Failed to create promotion: ${promotionError.message}`);
+      }
+
+      await transaction.commit();
+      console.log("Transaction committed successfully");
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction error in verifyOtp:", error.message, error.stack);
+      throw error.message.includes("Firebase") || error.message.includes("promotion")
+        ? error.message
+        : "Server error during OTP verification";
+    }
+
+    return { message: "Account verified successfully and welcome promotion created" };
   },
 
   async loginUser(email, password) {
