@@ -104,7 +104,13 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     }
 
     const restrictedPages: Record<UserRole, string[]> = {
-      Staff: ["/staff/orders", "/staff/profile", "/staff/chat"],
+      Staff: [
+        "/staff/orders",
+        "/staff/profile",
+        "/staff/chat",
+        "/staff/pos",          
+        "/staff/pos-success"    
+      ],
       User: ["/checkout", "/payment-success", "/user-information"],
       Shipper: [],
       Manager: [
