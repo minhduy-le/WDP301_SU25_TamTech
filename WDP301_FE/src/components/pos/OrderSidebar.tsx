@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   ShoppingCart,
   Trash2,
@@ -6,6 +6,7 @@ import {
   Minus,
   CreditCard,
   Tag,
+  ScanBarcode,
 } from 'lucide-react'
 import type { OrderItem } from '../../typings/pos.types'
 import { useGetPromotionByCode, type Promotion } from '../../hooks/promotionApi'
@@ -42,6 +43,8 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
     isError,
   } = useGetPromotionByCode(checkedPromo ? promotionCode : '')
 
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const handleApplyPromotion = async () => {
     setPromoError('')
     setDiscountAmount(0)
@@ -49,6 +52,13 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
     setCheckedPromo(false)
     if (!promotionCode.trim()) return
     setCheckedPromo(true)
+  }
+
+  // Bắt sự kiện Enter để tự động áp dụng mã
+  const handlePromoInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !discountAmount && !isFetching && promotionCode.trim()) {
+      handleApplyPromotion()
+    }
   }
 
   // Xử lý khi có kết quả từ API
@@ -205,41 +215,66 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                 Mã khuyến mãi
               </span>
             </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Nhập mã khuyến mãi..."
-                value={promotionCode}
-                onChange={(e) => setPromotionCode(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-amber-200 rounded focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none bg-white text-amber-800 placeholder:text-amber-400 shadow-sm"
-                disabled={!!discountAmount}
-              />
+            {/* Input mã khuyến mãi */}
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Nhập mã khuyến mãi..."
+              value={promotionCode}
+              onChange={(e) => setPromotionCode(e.target.value)}
+              onKeyDown={handlePromoInputKeyDown}
+              className="w-full h-10 px-3 text-sm rounded-lg outline-none bg-white text-amber-800 placeholder:text-amber-400 border border-amber-200 focus:ring-2 focus:ring-amber-300 focus:border-amber-400 shadow-sm"
+              disabled={!!discountAmount}
+              style={{ minWidth: 0, marginBottom: 8 }}
+            />
+            {/* Hàng nút bên dưới */}
+            <div className="flex flex-row gap-2">
+              {!discountAmount && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (inputRef.current) inputRef.current.focus()
+                  }}
+                  className="h-10 px-4 flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  title="Quét mã bằng máy quét barcode"
+                  disabled={!!discountAmount}
+                >
+                  <ScanBarcode className="h-5 w-5 mr-2" />
+                  Quét mã
+                </button>
+              )}
               {!discountAmount ? (
                 <button
                   onClick={handleApplyPromotion}
                   disabled={!promotionCode.trim() || isFetching}
-                  className="px-3 py-2 bg-amber-100 text-amber-700 text-sm font-medium rounded hover:bg-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-10 px-4 bg-amber-100 text-amber-700 text-sm font-medium rounded-lg hover:bg-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   {isFetching ? 'Đang kiểm tra...' : 'Áp dụng'}
                 </button>
               ) : (
                 <button
                   onClick={handleRemovePromotion}
-                  className="px-3 py-2 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 transition-colors"
+                  className="h-10 px-4 bg-white text-red-600 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm"
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   Hủy
                 </button>
               )}
             </div>
+            {/* Thông báo trạng thái mã khuyến mãi */}
             {promoError && (
-              <div className="mt-2 text-red-600 text-sm font-medium">
-                {promoError}
+              <div className="mt-2 flex items-center text-red-600 text-sm font-medium gap-1">
+                <span>⚠️</span>
+                <span>{promoError}</span>
               </div>
             )}
             {discountAmount > 0 && promotionInfo && (
-              <div className="mt-2 text-green-600 text-sm font-medium">
-                Giảm giá: -{discountAmount.toLocaleString()}đ (
-                {promotionInfo.name})
+              <div className="mt-2 flex items-center text-green-600 text-sm font-medium gap-1">
+                <span>✔️</span>
+                <span>
+                  Giảm giá: -{discountAmount.toLocaleString()}đ ({promotionInfo.name})
+                </span>
               </div>
             )}
           </div>
