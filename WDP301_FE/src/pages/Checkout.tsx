@@ -72,7 +72,8 @@ const Checkout = () => {
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
-  const inputref = useRef<google.maps.places.SearchBox | null>(null);
+  const inputrefUser = useRef<google.maps.places.SearchBox | null>(null);
+  const inputrefProxy = useRef<google.maps.places.SearchBox | null>(null);
 
   const { data: userProfile } = useGetProfileUser(userId || 0);
 
@@ -107,22 +108,212 @@ const Checkout = () => {
     libraries: ["places"],
   });
 
-  console.log(isLoaded);
+  console.log("Google Maps API loaded:", isLoaded);
 
-  const handleOnPlacesChanged = () => {
-    if (inputref.current) {
-      const places = inputref.current.getPlaces();
+  const handleOnPlacesChangedUser = () => {
+    if (inputrefUser.current && isLoaded) {
+      const places = inputrefUser.current.getPlaces();
       if (places && places.length > 0) {
         const place = places[0];
         if (place.formatted_address) {
           let cleanedAddress = place.formatted_address;
           cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
-          setDetailedAddressProxy(cleanedAddress);
+          setDetailedAddress(cleanedAddress);
+          const deliverAddress = cleanedAddress.trim();
+          calculateShipping(
+            { deliver_address: deliverAddress },
+            {
+              onSuccess: (data: any) => {
+                setDeliveryFee(data.fee || 0);
+                message.success("Phí giao hàng đã được cập nhật.");
+              },
+              onError: (error: any) => {
+                if (
+                  error.response.data?.message ===
+                  "Delivery address must be in the format: street name, ward, district, city"
+                ) {
+                  message.error(
+                    "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                  );
+                } else {
+                  message.error(error.response.data?.message);
+                }
+                setDeliveryFee(22000);
+              },
+            }
+          );
         } else {
           message.error("Không thể lấy địa chỉ từ Google Maps.");
         }
       } else {
         message.error("Không tìm thấy địa chỉ nào.");
+      }
+    } else {
+      message.error(
+        "Google Maps API chưa được tải. Vui lòng kiểm tra khóa API."
+      );
+    }
+  };
+
+  const handleOnPlacesChangedProxy = () => {
+    if (inputrefProxy.current && isLoaded) {
+      const places = inputrefProxy.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.formatted_address) {
+          let cleanedAddress = place.formatted_address;
+          cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+          setDetailedAddressProxy(cleanedAddress); // Cập nhật từ dropdown
+          const deliverAddress = cleanedAddress.trim();
+          if (selectedDistrictId && selectedWard) {
+            const selectedDistrict = districts.find(
+              (district) => district.districtId === selectedDistrictId
+            );
+            calculateShipping(
+              {
+                deliver_address:
+                  `${deliverAddress}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim(),
+              },
+              {
+                onSuccess: (data: any) => {
+                  setDeliveryFee(data.fee || 0);
+                  message.success("Phí giao hàng đã được cập nhật.");
+                },
+                onError: (error: any) => {
+                  if (
+                    error.response.data?.message ===
+                    "Delivery address must be in the format: street name, ward, district, city"
+                  ) {
+                    message.error(
+                      "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                    );
+                  } else {
+                    message.error(error.response.data?.message);
+                  }
+                  setDeliveryFee(22000);
+                },
+              }
+            );
+          } else {
+            calculateShipping(
+              { deliver_address: deliverAddress },
+              {
+                onSuccess: (data: any) => {
+                  setDeliveryFee(data.fee || 0);
+                  message.success("Phí giao hàng đã được cập nhật.");
+                },
+                onError: (error: any) => {
+                  if (
+                    error.response.data?.message ===
+                    "Delivery address must be in the format: street name, ward, district, city"
+                  ) {
+                    message.error(
+                      "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                    );
+                  } else {
+                    message.error(error.response.data?.message);
+                  }
+                  setDeliveryFee(22000);
+                },
+              }
+            );
+          }
+        } else {
+          message.error("Không thể lấy địa chỉ từ Google Maps.");
+        }
+      } else {
+        message.error("Không tìm thấy địa chỉ nào.");
+      }
+    } else {
+      message.error(
+        "Google Maps API chưa được tải. Vui lòng kiểm tra khóa API."
+      );
+    }
+  };
+
+  const handleAddressBlurUser = () => {
+    if (detailedAddress.trim()) {
+      const deliverAddress = detailedAddress.trim();
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
+          },
+          onError: (error: any) => {
+            if (
+              error.response.data?.message ===
+              "Delivery address must be in the format: street name, ward, district, city"
+            ) {
+              message.error(
+                "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+              );
+            } else {
+              message.error(error.response.data?.message);
+            }
+            setDeliveryFee(22000);
+          },
+        }
+      );
+    }
+  };
+
+  const handleAddressBlurProxy = () => {
+    if (detailedAddressProxy.trim()) {
+      const deliverAddress = detailedAddressProxy.trim();
+      if (selectedDistrictId && selectedWard) {
+        const selectedDistrict = districts.find(
+          (district) => district.districtId === selectedDistrictId
+        );
+        calculateShipping(
+          {
+            deliver_address:
+              `${deliverAddress}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim(),
+          },
+          {
+            onSuccess: (data: any) => {
+              setDeliveryFee(data.fee || 0);
+              message.success("Phí giao hàng đã được cập nhật.");
+            },
+            onError: (error: any) => {
+              if (
+                error.response.data?.message ===
+                "Delivery address must be in the format: street name, ward, district, city"
+              ) {
+                message.error(
+                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                );
+              } else {
+                message.error(error.response.data?.message);
+              }
+              setDeliveryFee(22000);
+            },
+          }
+        );
+      } else {
+        calculateShipping(
+          { deliver_address: deliverAddress },
+          {
+            onSuccess: (data: any) => {
+              setDeliveryFee(data.fee || 0);
+              message.success("Phí giao hàng đã được cập nhật.");
+            },
+            onError: (error: any) => {
+              if (
+                error.response.data?.message ===
+                "Delivery address must be in the format: street name, ward, district, city"
+              ) {
+                message.error(
+                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                );
+              } else {
+                message.error(error.response.data?.message);
+              }
+              setDeliveryFee(22000);
+            },
+          }
+        );
       }
     }
   };
@@ -152,119 +343,6 @@ const Checkout = () => {
 
   const { mutate: calculateShipping } = useCalculateShipping();
   const { mutate: createOrder } = useCreateOrder();
-
-  const handleAddressBlurUser = () => {
-    if (detailedAddress) {
-      const deliverAddress = detailedAddress.trim();
-      calculateShipping(
-        { deliver_address: deliverAddress },
-        {
-          onSuccess: (data: any) => {
-            setDeliveryFee(data.fee || 0);
-            message.success("Phí giao hàng đã được cập nhật.");
-          },
-          onError: (error: any) => {
-            if (
-              error.response.data?.message ===
-              "Delivery address must be in the format: street name, ward, district, city"
-            ) {
-              message.error(
-                "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-              );
-            } else {
-              message.error(error.response.data?.message);
-            }
-            setDeliveryFee(22000);
-          },
-        }
-      );
-    }
-  };
-
-  // const handleAddressBlur = () => {
-  //   if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
-  //     const selectedWardName = selectedWard;
-  //     const selectedDistrict = districts.find(
-  //       (district) => district.districtId === selectedDistrictId
-  //     );
-  //     const deliverAddress =
-  //       `${detailedAddressProxy}, ${selectedWardName}, ${selectedDistrict?.name}, TPHCM`.trim();
-  //     calculateShipping(
-  //       { deliver_address: deliverAddress },
-  //       {
-  //         onSuccess: (data: any) => {
-  //           setDeliveryFee(data.fee || 0);
-  //           message.success("Phí giao hàng đã được cập nhật.");
-  //         },
-  //         onError: (error: any) => {
-  //           console.error("Error calculating shipping:", error);
-  //           message.error(
-  //             "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-  //           );
-  //           setDeliveryFee(22000);
-  //         },
-  //       }
-  //     );
-  //   }
-  // };
-
-  const handleAddressBlur = () => {
-    if (detailedAddressProxy) {
-      if (selectedDistrictId && selectedWard) {
-        const selectedDistrict = districts.find(
-          (district) => district.districtId === selectedDistrictId
-        );
-        const deliverAddress =
-          `${detailedAddressProxy}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim();
-        calculateShipping(
-          { deliver_address: deliverAddress },
-          {
-            onSuccess: (data: any) => {
-              setDeliveryFee(data.fee || 0);
-              message.success("Phí giao hàng đã được cập nhật.");
-            },
-            onError: (error: any) => {
-              if (
-                error.response.data?.message ===
-                "Delivery address must be in the format: street name, ward, district, city"
-              ) {
-                message.error(
-                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-                );
-              } else {
-                message.error(error.response.data?.message);
-              }
-              setDeliveryFee(22000);
-            },
-          }
-        );
-      } else {
-        const deliverAddress = detailedAddressProxy.trim();
-        calculateShipping(
-          { deliver_address: deliverAddress },
-          {
-            onSuccess: (data: any) => {
-              setDeliveryFee(data.fee || 0);
-              message.success("Phí giao hàng đã được cập nhật.");
-            },
-            onError: (error: any) => {
-              if (
-                error.response.data?.message ===
-                "Delivery address must be in the format: street name, ward, district, city"
-              ) {
-                message.error(
-                  "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-                );
-              } else {
-                message.error(error.response.data?.message);
-              }
-              setDeliveryFee(22000);
-            },
-          }
-        );
-      }
-    }
-  };
 
   const handleApplyPromotion = () => {
     if (!promotionCode) {
@@ -490,21 +568,36 @@ const Checkout = () => {
                 disabled
               />
               {!isDatHo && (
-                <StandaloneSearchBox
-                  onLoad={(ref) => (inputref.current = ref)}
-                  onPlacesChanged={handleOnPlacesChanged}
-                >
-                  <Input
-                    placeholder="Địa chỉ chi tiết"
-                    style={{
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                    value={detailedAddress}
-                    onChange={(e) => setDetailedAddress(e.target.value)}
-                    onBlur={handleAddressBlurUser}
-                  />
-                </StandaloneSearchBox>
+                <>
+                  {isLoaded ? (
+                    <StandaloneSearchBox
+                      onLoad={(ref) => (inputrefUser.current = ref)}
+                      onPlacesChanged={handleOnPlacesChangedUser}
+                    >
+                      <Input
+                        placeholder="Địa chỉ chi tiết"
+                        style={{
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        value={detailedAddress}
+                        onChange={(e) => setDetailedAddress(e.target.value)}
+                        onBlur={handleAddressBlurUser} // Gọi khi blur để lấy giá trị nhập tay
+                      />
+                    </StandaloneSearchBox>
+                  ) : (
+                    <Input
+                      placeholder="Địa chỉ chi tiết (Đang tải Google Maps...)"
+                      style={{
+                        background: "transparent",
+                        fontFamily: "'Montserrat', sans-serif",
+                      }}
+                      value={detailedAddress}
+                      onChange={(e) => setDetailedAddress(e.target.value)}
+                      disabled
+                    />
+                  )}
+                </>
               )}
               <Row>
                 <Title
@@ -589,21 +682,36 @@ const Checkout = () => {
                       </Select>
                     </Col>
                   </Row>
-                  <StandaloneSearchBox
-                    onLoad={(ref) => (inputref.current = ref)}
-                    onPlacesChanged={handleOnPlacesChanged}
-                  >
+                  {isLoaded ? (
+                    <StandaloneSearchBox
+                      onLoad={(ref) => (inputrefProxy.current = ref)}
+                      onPlacesChanged={handleOnPlacesChangedProxy}
+                    >
+                      <Input
+                        placeholder="Địa chỉ chi tiết"
+                        style={{
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        value={detailedAddressProxy}
+                        onChange={(e) =>
+                          setDetailedAddressProxy(e.target.value)
+                        }
+                        onBlur={handleAddressBlurProxy} // Gọi khi blur để lấy giá trị nhập tay
+                      />
+                    </StandaloneSearchBox>
+                  ) : (
                     <Input
-                      placeholder="Địa chỉ chi tiết"
+                      placeholder="Địa chỉ chi tiết (Đang tải Google Maps...)"
                       style={{
                         background: "transparent",
                         fontFamily: "'Montserrat', sans-serif",
                       }}
                       value={detailedAddressProxy}
                       onChange={(e) => setDetailedAddressProxy(e.target.value)}
-                      onBlur={handleAddressBlur}
+                      disabled
                     />
-                  </StandaloneSearchBox>
+                  )}
                   <div className="delivery-info">
                     <Radio.Group
                       value={deliveryTimeOption}
