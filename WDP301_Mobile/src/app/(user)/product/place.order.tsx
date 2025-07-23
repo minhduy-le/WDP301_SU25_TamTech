@@ -2,9 +2,10 @@ import { useCurrentApp } from "@/context/app.context";
 import { FONTS } from "@/theme/typography";
 import { jwtDecode } from "jwt-decode";
 import { currencyFormatter } from "@/utils/api";
-import { APP_COLOR, BASE_URL } from "@/utils/constant";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { calculateTotalPrice } from "@/utils/cart";
+import { APP_COLOR, API_URL } from "@/utils/constant";
+import { router } from "expo-router";
+import { useEffect, useState, useCallback } from "react";
 import {
   Image,
   Pressable,
@@ -14,6 +15,9 @@ import {
   StyleSheet,
   Modal,
   Platform,
+  TextInput,
+  FlatList,
+  WebView,
 } from "react-native";
 import Toast from "react-native-root-toast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,7 +29,6 @@ import ShareButton from "@/components/button/share.button";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Feather from "@expo/vector-icons/Feather";
 import logo from "@/assets/logo.png";
 
 interface IOrderItem {
@@ -45,6 +48,7 @@ interface ICusInfor {
 interface IDetails {
   productId: number;
   quantity: number;
+  price: number;
 }
 const PlaceOrderPage = () => {
   const { restaurant, cart, setCart, locationReal } = useCurrentApp();
@@ -56,49 +60,37 @@ const PlaceOrderPage = () => {
   const [cusPhone, setCusPhone] = useState();
   const { branchId } = useCurrentApp();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [shippingFee, setShippingFee] = useState<number>(0);
   const dropdownItems = [
     { id: "1", title: "COD" },
-    { id: "2", title: "PAYOS" },
+    { id: "4", title: "PAYOS" },
   ];
-  const [addresses, setAddresses] = useState<ICusInfor[]>([
-    {
-      userId: 1,
-      fullName: "Home",
-      address: "Hồ Chí Minh, Việt Nam",
-      phone: "0889679561",
-    },
-    {
-      userId: 2,
-      fullName: "Office",
-      address: "Hà Nội, Việt Nam",
-      phone: "0889679561",
-    },
-    {
-      userId: 3,
-      fullName: "Friend's Place",
-      address: "Đà Nẵng, Việt Nam",
-      phone: "0889679561",
-    },
-  ]);
-  const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const [addresses, setAddresses] = useState<string[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [orderDetails, setOrderDetails] = useState<
     { productId: number; quantity: number }[]
   >([]);
   const [couponStatus, setCouponStatus] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
   const handleCreateOrder = async (
-    promotionCode: string,
-    note: string,
-    address: string,
-    phoneNumber: string,
-    branchId: number,
-    pointUsed: number,
-    pointEarned: number,
-    paymentMethodId: number,
     orderItems: any,
-    pickUp: boolean
+    order_discount_value: number,
+    promotion_code: string,
+    order_shipping_fee: number,
+    payment_method_id: number,
+    order_address: string,
+    note: string,
+    isDatHo: boolean,
+    tenNguoiDatHo: string,
+    soDienThoaiNguoiDatHo: string,
+    customerId: number | string,
+    platform: string = "app"
   ) => {
     try {
-      if (!decodeToken) {
+      if (!customerId) {
         Toast.show("Vui lòng đăng nhập để đặt hàng!", {
           duration: Toast.durations.LONG,
           textColor: "white",
@@ -107,36 +99,40 @@ const PlaceOrderPage = () => {
         });
         return;
       }
-      const numericPointUsed = Number(pointUsed) || 0;
-      console.log(
-        promotionCode,
-        note,
-        address,
-        phoneNumber,
-        branchId,
-        pointUsed,
-        pointEarned,
-        paymentMethodId,
-        orderItems,
-        pickUp
+      const token = await AsyncStorage.getItem("access_token");
+      const response = await axios.post(
+        `${API_URL}/api/orders/`,
+        {
+          orderItems,
+          order_discount_value,
+          promotion_code,
+          order_shipping_fee,
+          payment_method_id,
+          order_address,
+          platform,
+          note,
+          isDatHo,
+          tenNguoiDatHo,
+          soDienThoaiNguoiDatHo,
+          customerId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
       );
-
-      const response = await axios.post(`${BASE_URL}/orders/`, {
-        customerId: decodeToken,
-        promotionCode,
-        note,
-        address,
-        phoneNumber,
-        branchId: Number(branchId),
-        pointUsed: numericPointUsed,
-        pointEarned,
-        paymentMethodId,
-        orderItems,
-        pickUp,
-      });
-
       if (response.data) {
-        if (paymentMethodId === 2) {
+        if (response.data.checkoutUrl) {
+          router.push({
+            pathname: "/(user)/product/checkout.webview",
+            params: { url: response.data.checkoutUrl },
+          });
+          return;
+        }
+        if (payment_method_id === 2 && response.data.data?.payment_url) {
           const link = response.data.data.payment_url;
           try {
             await WebBrowser.openBrowserAsync(link);
@@ -157,7 +153,7 @@ const PlaceOrderPage = () => {
             opacity: 1,
           });
           setCart(0);
-          router.replace("/(tabs)");
+          router.navigate("/(auth)/order.success");
         }
       }
     } catch (error) {
@@ -183,6 +179,114 @@ const PlaceOrderPage = () => {
     }
   };
 
+  let timeout: any;
+  const debounce = <T extends (...args: any[]) => any>(
+    func: T,
+    waitFor: number
+  ) => {
+    return (...args: Parameters<T>): Promise<ReturnType<T>> =>
+      new Promise((resolve) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => resolve(func(...args)), waitFor);
+      });
+  };
+
+  const handleSearch = useCallback(
+    debounce(async (text: string) => {
+      setSearchTerm(text);
+      if (!text) return;
+      try {
+        const res = await axios.get(
+          `https://maps.googleapis.com/maps/api/place/queryautocomplete/json?input=${text}&language=vi&key=AIzaSyAwSwTDdF00hbh21k7LsX-4Htuwqm9MlPg`
+        );
+        if (res.data) {
+          setAddressSuggestions(res.data.predictions);
+        }
+      } catch (e) {
+        console.log("Google API error:", e);
+      }
+    }, 500),
+    []
+  );
+
+  const handleSelectAddressAuto = async (address: string) => {
+    const cleanedAddress = address.replace(/,\s*Việt Nam$/, "");
+    setSearchTerm(cleanedAddress);
+    setAddressSuggestions([]);
+    setSelectedAddress(cleanedAddress);
+    setShowSuggestions(false);
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      const res = await axios.post(
+        "https://wdp301-su25.space/api/orders/shipping/calculate",
+        {
+          deliver_address: cleanedAddress,
+          weight: 1000,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.data && res.data.fee) {
+        setShippingFee(res.data.fee);
+      }
+    } catch (e) {
+      setShippingFee(0);
+    }
+    Toast.show(`Đã chọn địa chỉ: ${cleanedAddress}`, {
+      duration: Toast.durations.LONG,
+      textColor: "white",
+      backgroundColor: APP_COLOR.ORANGE,
+      opacity: 1,
+    });
+  };
+
+  const handleSelectAddress = async (address: string) => {
+    const cleanedAddress = address.replace(/,\s*Việt Nam$/, "");
+    setSelectedAddress(cleanedAddress);
+    setModalVisible(false);
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      const res = await axios.post(
+        "https://wdp301-su25.space/api/orders/shipping/calculate",
+        {
+          deliver_address: cleanedAddress,
+          weight: 1000,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (res.data && res.data.fee) {
+        setShippingFee(res.data.fee);
+      }
+    } catch (e) {
+      setShippingFee(0);
+    }
+    Toast.show(`Đã chọn địa chỉ: ${cleanedAddress}`, {
+      duration: Toast.durations.LONG,
+      textColor: "white",
+      backgroundColor: APP_COLOR.ORANGE,
+      opacity: 1,
+    });
+  };
+
+  const handlePaymentMethodChange = (
+    value: string,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    setSelectedOption(value);
+    setFieldValue("paymentMethodId", Number(value));
+  };
+
   useEffect(() => {
     const getAccessToken = async () => {
       try {
@@ -200,30 +304,28 @@ const PlaceOrderPage = () => {
     getAccessToken();
   }, []);
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAddresses = async () => {
       try {
-        const resDefault = await axios.get(
-          `${BASE_URL}/information/default?customerId=${decodeToken}`
+        const token = await AsyncStorage.getItem("access_token");
+        if (!token) return;
+        const res = await axios.get(
+          "https://wdp301-su25.space/api/location/addresses/user",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              accept: "application/json",
+            },
+          }
         );
-        setSelectedAddress(resDefault.data.data);
-        setCusAddress(resDefault.data.data.address);
-        setCusPhone(resDefault.data.data.phone);
-        const resAddresses = await axios.get(
-          `${BASE_URL}/information/${decodeToken}`
-        );
-        if (resAddresses.data.data) {
-          setAddresses(resAddresses.data.data);
+        if (res.data && res.data.data) {
+          setAddresses(res.data.data);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching addresses:", error);
       }
     };
-
-    if (decodeToken) {
-      fetchData();
-    }
-  }, [decodeToken]);
-
+    fetchAddresses();
+  }, []);
   useEffect(() => {
     if (cart && restaurant && restaurant._id) {
       const result = [];
@@ -233,17 +335,13 @@ const PlaceOrderPage = () => {
       )) {
         if (currentItems.extra) {
           for (const [key, value] of Object.entries(currentItems.extra)) {
-            const option = currentItems.data.options?.find(
-              (item) => `${item.title}-${item.description}` === key
-            );
-            const addPrice = option?.additionalPrice ?? 0;
             result.push({
               image: currentItems.data.image,
               title: currentItems.data.name,
               option: key,
-              price: currentItems.data.price + addPrice,
+              price: currentItems.data.price,
               quantity: value,
-              productId: currentItems.data.productId,
+              productId: Number(currentItems.data.productId),
             });
           }
         } else {
@@ -253,13 +351,14 @@ const PlaceOrderPage = () => {
             option: "",
             price: currentItems.data.price,
             quantity: currentItems.quantity,
-            productId: currentItems.data.productId,
+            productId: Number(currentItems.data.productId),
           });
         }
 
         details.push({
-          productId: currentItems.data.productId,
+          productId: Number(currentItems.data.productId),
           quantity: currentItems.quantity,
+          price: currentItems.data.price,
         });
       }
       setOrderItems(result);
@@ -298,59 +397,6 @@ const PlaceOrderPage = () => {
       subscription.remove();
     };
   }, []);
-  const calculateTotalPrice = () => {
-    try {
-      if (!restaurant?._id) {
-        return 0;
-      }
-      const restaurantCart = cart[restaurant._id];
-      if (!restaurantCart || !restaurantCart.items) {
-        return 0;
-      }
-      const items = restaurantCart.items;
-      let total = 0;
-
-      Object.values(items).forEach((item: any) => {
-        const price = Number(
-          item?.data?.price ||
-            item?.data?.basePrice ||
-            item?.data?.productPrice ||
-            0
-        );
-        const quantity = Number(item?.quantity || 0);
-        total += price * quantity;
-      });
-      return total;
-    } catch (error) {
-      console.error("Lỗi tính tổng giá:", error);
-      return 0;
-    }
-  };
-  const handleSelectAddress = (address: any, locationReal: any) => {
-    if (locationReal) {
-      address.address = locationReal;
-    }
-    setSelectedAddress(address);
-    setModalVisible(false);
-    Toast.show(`Selected Address: ${address.fullName}`, {
-      duration: Toast.durations.LONG,
-      textColor: "white",
-      backgroundColor: APP_COLOR.ORANGE,
-      opacity: 1,
-    });
-  };
-
-  const handleCreateNewAddress = () => {
-    router.navigate("/(user)/account/customer.info");
-  };
-
-  const handlePaymentMethodChange = (
-    value: string,
-    setFieldValue: (field: string, value: any) => void
-  ) => {
-    setSelectedOption(value);
-    setFieldValue("paymentMethodId", Number(value));
-  };
 
   return (
     <SafeAreaView
@@ -373,7 +419,6 @@ const PlaceOrderPage = () => {
             flexDirection: "row",
             justifyContent: "space-between",
             position: "relative",
-            top: -5,
           }}
         >
           <Text
@@ -387,54 +432,84 @@ const PlaceOrderPage = () => {
           >
             Giao hàng
           </Text>
-          <Pressable onPress={() => setModalVisible(true)}>
+        </View>
+        <View
+          style={{
+            position: "relative",
+            minWidth: 200,
+            flex: 1,
+          }}
+        >
+          <TextInput
+            placeholder="Nhập địa chỉ của bạn"
+            value={searchTerm}
+            onFocus={() => setShowSuggestions(true)}
+            onChangeText={(text) => {
+              setSearchTerm(text);
+              handleSearch(text);
+              setShowSuggestions(true);
+            }}
+            style={{
+              borderWidth: 1,
+              borderColor: APP_COLOR.BROWN,
+              borderRadius: 10,
+              paddingVertical: 10,
+              color: APP_COLOR.BROWN,
+              backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+              marginVertical: 10,
+              minWidth: 200,
+            }}
+            placeholderTextColor={APP_COLOR.BROWN}
+          />
+          {showSuggestions && addressSuggestions.length > 0 && (
             <View
               style={{
-                backgroundColor: APP_COLOR.BROWN,
-                padding: 7,
-                borderRadius: 50,
+                position: "absolute",
+                top: 50,
+                left: 0,
+                right: 0,
+                backgroundColor: APP_COLOR.WHITE,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                zIndex: 100,
+                maxHeight: 200,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 5,
               }}
             >
-              <Feather name="edit-2" size={20} color={APP_COLOR.WHITE} />
+              <FlatList
+                data={addressSuggestions}
+                keyboardShouldPersistTaps="handled"
+                keyExtractor={(item) => item.place_id}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleSelectAddressAuto(item.description)}
+                  >
+                    <View style={{ padding: 10 }}>
+                      <Text>{item.description}</Text>
+                    </View>
+                  </Pressable>
+                )}
+              />
             </View>
-          </Pressable>
-        </View>
-        <Pressable style={{ paddingBottom: 10 }}>
-          <View
+          )}
+          <Text
             style={{
-              flexDirection: "row",
+              fontFamily: FONTS.regular,
+              fontSize: 17,
+              color: APP_COLOR.BROWN,
             }}
           >
-            <View style={styles.headerContainer}>
-              <View
-                style={[
-                  styles.customersInfo,
-                  { justifyContent: "space-between", width: "98%" },
-                ]}
-              >
-                <Text style={styles.cusInfo}>
-                  {selectedAddress
-                    ? selectedAddress.fullName
-                    : "FPT University"}
-                </Text>
-                <Text style={styles.cusInfo}>
-                  {selectedAddress ? selectedAddress.phone : "0889679561"}
-                </Text>
-              </View>
-              <View style={styles.customersInfo}>
-                <Text
-                  style={styles.cusInfo}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {selectedAddress
-                    ? selectedAddress.address
-                    : "Hồ Chí Minh, Việt Nam"}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </Pressable>
+            Chi phí giao hàng:{" "}
+            <Text style={styles.textInputText}>
+              {currencyFormatter(shippingFee)}
+            </Text>
+          </Text>
+        </View>
 
         <Text
           style={{
@@ -505,30 +580,23 @@ const PlaceOrderPage = () => {
               },
             ],
             pickUp: false,
+            proxyName: "",
+            proxyPhone: "",
           }}
           onSubmit={(values) => {
-            const numericPointUsed = Number(values.pointUsed) || 0;
-            if (numericPointUsed < 0) {
-              Toast.show("Điểm sử dụng không thể là số âm!", {
-                duration: Toast.durations.LONG,
-                textColor: "white",
-                backgroundColor: "red",
-                opacity: 1,
-              });
-              return;
-            }
-
             handleCreateOrder(
-              values.promotionCode,
-              values.note,
-              values.address,
-              values.phoneNumber,
-              values.branchId,
-              numericPointUsed,
-              values.pointEarned,
-              values.paymentMethodId,
               values.orderItems,
-              values.pickUp
+              discountAmount,
+              values.promotionCode,
+              shippingFee,
+              values.paymentMethodId,
+              selectedAddress,
+              values.note,
+              values.pickUp,
+              values.proxyName,
+              values.proxyPhone,
+              decodeToken,
+              "app"
             );
           }}
         >
@@ -567,6 +635,34 @@ const PlaceOrderPage = () => {
               cart,
               branchId,
             ]);
+            useEffect(() => {
+              const fetchPromotion = async () => {
+                if (values.promotionCode) {
+                  try {
+                    const token = await AsyncStorage.getItem("access_token");
+                    const res = await axios.get(
+                      `https://wdp301-su25.space/api/promotions/code/${values.promotionCode}`,
+                      {
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          accept: "*/*",
+                        },
+                      }
+                    );
+                    if (res.data && res.data.discountAmount) {
+                      setDiscountAmount(res.data.discountAmount);
+                    } else {
+                      setDiscountAmount(0);
+                    }
+                  } catch (e) {
+                    setDiscountAmount(0);
+                  }
+                } else {
+                  setDiscountAmount(0);
+                }
+              };
+              fetchPromotion();
+            }, [values.promotionCode]);
             return (
               <View style={styles.container}>
                 {orderItems?.length > 0 && (
@@ -633,7 +729,9 @@ const PlaceOrderPage = () => {
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(calculateTotalPrice() || 0)}
+                        {currencyFormatter(
+                          calculateTotalPrice(cart, restaurant?._id) || 0
+                        )}
                       </Text>
                     </View>
                     <View style={styles.textInputView}>
@@ -652,7 +750,7 @@ const PlaceOrderPage = () => {
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(20000)}
+                        {currencyFormatter(shippingFee)}
                       </Text>
                     </View>
                     <View style={styles.textInputView}>
@@ -662,7 +760,7 @@ const PlaceOrderPage = () => {
                           { fontFamily: FONTS.regular, fontSize: 17 },
                         ]}
                       >
-                        Giảm giá
+                        Mã Giảm giá
                       </Text>
                       <Text
                         style={{
@@ -671,7 +769,7 @@ const PlaceOrderPage = () => {
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(0)}
+                        {currencyFormatter(discountAmount)}
                       </Text>
                     </View>
                     <View style={styles.textInputView}>
@@ -690,7 +788,11 @@ const PlaceOrderPage = () => {
                           color: APP_COLOR.BROWN,
                         }}
                       >
-                        {currencyFormatter(calculateTotalPrice() + 20000 || 0)}
+                        {currencyFormatter(
+                          calculateTotalPrice(cart, restaurant?._id) +
+                            shippingFee -
+                            discountAmount || 0
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -705,20 +807,6 @@ const PlaceOrderPage = () => {
                     placeholder="Nhập mã khuyến mãi"
                   />
                 )}
-                <CustomerInforInput
-                  title="Sử dụng điểm"
-                  onChangeText={(text: any) => {
-                    const numericValue = Number(text) || 0;
-                    if (numericValue >= 0) {
-                      setFieldValue("pointUsed", numericValue);
-                    }
-                  }}
-                  onBlur={handleBlur("pointUsed")}
-                  value={String(values.pointUsed)}
-                  error={errors.pointUsed}
-                  touched={touched.pointUsed}
-                  keyboardType="numeric"
-                />
                 <View style={styles.dropdownContainer}>
                   <Text style={styles.dropdownLabel}>
                     Phương thức thanh toán
@@ -755,11 +843,34 @@ const PlaceOrderPage = () => {
                   )}
                 </View>
                 <CustomerInforInput
-                  title="Mang đi"
+                  title="Đặt hàng hộ"
                   value={values.pickUp}
                   setValue={(v) => setFieldValue("pickUp", v)}
                   isBoolean={true}
                 />
+                {values.pickUp && (
+                  <View style={{ marginBottom: 10 }}>
+                    <CustomerInforInput
+                      title="Tên người nhận hộ"
+                      onChangeText={handleChange("proxyName")}
+                      onBlur={handleBlur("proxyName ")}
+                      value={values.proxyName}
+                      error={errors.proxyName}
+                      touched={touched.proxyName}
+                      placeholder="Nhập tên người nhận hộ"
+                    />
+                    <CustomerInforInput
+                      title="Số điện thoại người nhận hộ"
+                      onChangeText={handleChange("proxyPhone")}
+                      onBlur={handleBlur("proxyPhone")}
+                      value={values.proxyPhone}
+                      error={errors.proxyPhone}
+                      touched={touched.proxyPhone}
+                      placeholder="Nhập số điện thoại người nhận hộ"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                )}
                 <CustomerInforInput
                   onChangeText={handleChange("note")}
                   onBlur={handleBlur("note")}
@@ -772,19 +883,20 @@ const PlaceOrderPage = () => {
                   loading={loading}
                   title="Tạo đơn hàng"
                   onPress={() => {
-                    // handleCreateOrder(
-                    //   values.promotionCode,
-                    //   values.note,
-                    //   values.address,
-                    //   values.phoneNumber,
-                    //   values.branchId,
-                    //   values.pointUsed,
-                    //   values.pointEarned,
-                    //   values.paymentMethodId,
-                    //   values.orderItems,
-                    //   values.pickUp
-                    // );
-                    router.navigate("/(auth)/order.success");
+                    handleCreateOrder(
+                      values.orderItems,
+                      discountAmount,
+                      values.promotionCode,
+                      shippingFee,
+                      values.paymentMethodId,
+                      selectedAddress,
+                      values.note,
+                      values.pickUp,
+                      values.proxyName,
+                      values.proxyPhone,
+                      decodeToken,
+                      "app"
+                    );
                   }}
                   textStyle={{
                     textTransform: "uppercase",
@@ -822,49 +934,21 @@ const PlaceOrderPage = () => {
                 marginBottom: 10,
               }}
             >
-              Chọn địa chỉ giao hàng
+              Địa chỉ giao hàng
             </Text>
             <ScrollView>
-              {addresses.map((address: any, index: number) => (
+              {addresses.map((address: string, index: number) => (
                 <Pressable
-                  key={`${address.userId}-${index}`}
-                  onPress={() => handleSelectAddress(address, locationReal)}
+                  key={`${address}-${index}`}
+                  onPress={() => handleSelectAddress(address)}
                   style={styles.addressItem}
                 >
                   <View>
-                    <Text style={styles.textNameInfor}>{address.fullName}</Text>
-                    {locationReal ? (
-                      <Text style={styles.textInfor}>{locationReal}</Text>
-                    ) : (
-                      <Text style={styles.textNameInfor}>
-                        {address.address}
-                      </Text>
-                    )}
+                    <Text style={styles.textNameInfor}>{address}</Text>
                   </View>
-                  <Text style={styles.textInfor}>{address.phone}</Text>
                 </Pressable>
               ))}
             </ScrollView>
-
-            <View style={{ flexDirection: "row" }}>
-              <Pressable
-                onPress={handleCreateNewAddress}
-                style={styles.modalButton}
-              >
-                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
-                  Tạo địa chỉ mới
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                style={styles.modalButton}
-              >
-                <Text style={{ color: "white", fontFamily: FONTS.regular }}>
-                  Đóng
-                </Text>
-              </Pressable>
-            </View>
           </View>
         </View>
       </Modal>

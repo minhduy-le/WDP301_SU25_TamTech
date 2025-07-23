@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import axios from "axios";
 import { API_URL, APP_COLOR } from "@/utils/constant";
 import debounce from "debounce";
@@ -18,6 +18,7 @@ import menu from "@/assets/Menu.png";
 import { FONTS } from "@/theme/typography";
 import { useCurrentApp } from "@/context/app.context";
 import { currencyFormatter } from "@/utils/api";
+import { getItemQuantity as getItemQuantityUtil } from "@/utils/cart";
 import Toast from "react-native-root-toast";
 
 interface IProduct {
@@ -36,7 +37,7 @@ const SearchPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<IProduct[]>([]);
   const { cart, setCart, restaurant } = useCurrentApp();
-  const [productTypeList, setProductTypeList] = useState<string[]>([]);
+  const [productTypeList, setProductTypeList] = useState<number[]>([]);
   const fetchProducts = useCallback(
     debounce(async (text: string) => {
       if (!text.trim()) {
@@ -54,9 +55,11 @@ const SearchPage = () => {
               a.ProductType.name.localeCompare(b.ProductType.name)
           );
           const products: IProduct[] = sortedProducts;
-          const productType: string[] = [
+          const productType: number[] = [
             ...new Set(
-              products.map((product: IProduct) => product.ProductType.name)
+              products.map(
+                (product: IProduct) => product.ProductType.productTypeId
+              )
             ),
           ];
           setProductTypeList(productType);
@@ -126,14 +129,12 @@ const SearchPage = () => {
     }
     setCart(newCart);
   };
-  const getItemQuantity = (itemId: string) => {
-    if (!restaurant?._id) return 0;
-    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
-  };
-  const handleFilterByProductName = async (productName: string) => {
+  const getItemQuantity = (itemId: string) =>
+    getItemQuantityUtil(cart, restaurant?._id, itemId);
+  const handleFilterByProductName = async (typeId: number) => {
     try {
       const res = await axios.get(
-        `https://wdp301-su25.space/api/products/search-by-type-name?typeName=${productName}`
+        `${API_URL}/api/products/search-by-name-and-type?name=${searchTerm}&productTypeId=${typeId}`
       );
       setProducts(res.data.products);
     } catch (error) {
@@ -173,15 +174,58 @@ const SearchPage = () => {
                   handleFilterByProductName(item);
                 }}
               >
-                <Text
-                  style={{
-                    color: APP_COLOR.BROWN,
-                    fontFamily: FONTS.medium,
-                    fontSize: 15,
-                  }}
-                >
-                  {item}
-                </Text>
+                {(() => {
+                  switch (item) {
+                    case 1:
+                      return (
+                        <Text
+                          style={{
+                            color: APP_COLOR.BROWN,
+                            fontFamily: FONTS.medium,
+                            fontSize: 15,
+                          }}
+                        >
+                          Đồ ăn
+                        </Text>
+                      );
+                    case 2:
+                      return (
+                        <Text
+                          style={{
+                            color: APP_COLOR.BROWN,
+                            fontFamily: FONTS.medium,
+                            fontSize: 15,
+                          }}
+                        >
+                          Thức uống
+                        </Text>
+                      );
+                    case 3:
+                      return (
+                        <Text
+                          style={{
+                            color: APP_COLOR.BROWN,
+                            fontFamily: FONTS.medium,
+                            fontSize: 15,
+                          }}
+                        >
+                          Món ăn kèm
+                        </Text>
+                      );
+                    default:
+                      return (
+                        <Text
+                          style={{
+                            color: APP_COLOR.BROWN,
+                            fontFamily: FONTS.medium,
+                            fontSize: 15,
+                          }}
+                        >
+                          Món canh
+                        </Text>
+                      );
+                  }
+                })()}
               </Pressable>
             ))}
           </ScrollView>

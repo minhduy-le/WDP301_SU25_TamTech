@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import { FONTS } from "@/theme/typography";
 import { currencyFormatter, getBestSellerAPI } from "@/utils/api";
+import { getItemQuantity as getItemQuantityUtil } from "@/utils/cart";
 import { useCurrentApp } from "@/context/app.context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import logo from "@/assets/logo.png";
@@ -94,10 +95,8 @@ const BestSellerPage = () => {
     setCart(newCart);
   };
 
-  const getItemQuantity = (itemId: string) => {
-    if (!restaurant?._id) return 0;
-    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
-  };
+  const getItemQuantity = (itemId: string) =>
+    getItemQuantityUtil(cart, restaurant?._id, itemId);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -116,14 +115,10 @@ const BestSellerPage = () => {
               <Image source={{ uri: item.image }} style={styles.productImage} />
               <View style={styles.productInfo}>
                 <View>
-                  <View style={styles.productHeader}>
-                    <Text numberOfLines={1} style={styles.productName}>
-                      {item.name}
-                    </Text>
-                    <View style={styles.soldBadge}>
-                      <Text style={styles.soldText}>Đã bán: 689</Text>
-                    </View>
-                  </View>
+                  <Text numberOfLines={1} style={styles.productName}>
+                    {item.name}
+                  </Text>
+
                   <Text style={styles.productPrice}>
                     {currencyFormatter(item.price)}
                   </Text>
@@ -232,11 +227,6 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
     marginLeft: 15,
-    justifyContent: "space-between",
-  },
-  productHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "space-between",
   },
   productName: {

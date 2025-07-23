@@ -1,9 +1,11 @@
 import { currencyFormatter } from "@/utils/api";
 import { jwtDecode } from "jwt-decode";
 import { API_URL, APP_COLOR } from "@/utils/constant";
-import { useCallback, useEffect, useState } from "react";
+import EvilIcons from "@expo/vector-icons/EvilIcons";
+import { useCallback, useState } from "react";
 import {
   Alert,
+  Dimensions,
   Image,
   Platform,
   Pressable,
@@ -20,6 +22,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { formatDateToDDMMYYYY } from "@/utils/function";
 interface IOrderHistoryCus {
   orderId: number;
   order_create_at: string;
@@ -59,6 +62,7 @@ const OrderPage = () => {
     Delivered: { text: "Đã giao", color: STATUS_COLORS.DELIVERED },
     Canceled: { text: "Đã hủy", color: STATUS_COLORS.CANCELED },
   };
+  const screenWidth = Dimensions.get("screen").width;
   const fetchOrderHistoryWithToken = useCallback(async () => {
     setToken(null);
     setIsLoading(true);
@@ -102,16 +106,6 @@ const OrderPage = () => {
       </View>
     );
   };
-
-  function formatDateToDDMMYYYY(isoDate: string): string {
-    const date = new Date(isoDate);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes} ${day}/${month}/${year}`;
-  }
 
   const handleViewDetails = (id: number) => {
     router.navigate({
@@ -204,7 +198,37 @@ const OrderPage = () => {
                 style={{ width: 150, height: 100, marginLeft: 35 }}
               />
             </View>
+            <Pressable
+              onPress={() => console.log("filter")}
+              style={{
+                flexDirection: "row",
+                backgroundColor: APP_COLOR.WHITE,
+                alignItems: "center",
+                paddingVertical: 10,
+                marginBottom: 10,
+                borderWidth: 1,
+                borderColor: APP_COLOR.BROWN,
+                borderRadius: 30,
+                marginHorizontal: 20,
+              }}
+            >
+              <EvilIcons
+                style={{ marginVertical: "auto", marginLeft: 10 }}
+                name="search"
+                size={20}
+                color={APP_COLOR.BROWN}
+              />
+              <Text
+                style={{
+                  color: APP_COLOR.BROWN,
+                  marginVertical: "auto",
+                }}
+              >
+                Tìm kiếm đơn hàng
+              </Text>
+            </Pressable>
           </View>
+
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={{ flex: 1, marginBottom: Platform.OS === "ios" ? -30 : -45 }}

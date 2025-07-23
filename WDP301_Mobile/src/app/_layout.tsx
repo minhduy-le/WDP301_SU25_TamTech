@@ -79,10 +79,6 @@ const RootLayout = () => {
               >
                 <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen
-                  name="(auth)/signup"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
                   name="(auth)/verify"
                   options={{ headerShown: false }}
                 />
@@ -114,10 +110,6 @@ const RootLayout = () => {
                     animation: "fade",
                     presentation: "transparentModal",
                   }}
-                />
-                <Stack.Screen
-                  name="(auth)/role.signup"
-                  options={{ headerShown: false }}
                 />
                 <Stack.Screen
                   name="(auth)/voucher"
@@ -199,16 +191,16 @@ const RootLayout = () => {
                   name="(user)/account/password"
                   options={{ headerShown: false }}
                 />
-                <Stack.Screen
-                  name="(user)/account/customer.info"
-                  options={{ headerTitle: "Nhập thông tin người dùng" }}
-                />
                 <Tabs.Screen
                   name="(user)/like/[id]"
                   options={{ headerShown: false }}
                 />
                 <Tabs.Screen
                   name="(user)/like/feedback.success"
+                  options={{ headerShown: false }}
+                />
+                <Tabs.Screen
+                  name="(user)/product/checkout.webview"
                   options={{ headerShown: false }}
                 />
               </Stack>

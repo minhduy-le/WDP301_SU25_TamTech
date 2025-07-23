@@ -27,9 +27,10 @@ import {
   getURLBaseBackend,
   processDataRestaurantMenu,
 } from "@/utils/api";
-import StickyFooter from "./order/sticky.footer";
-import ItemQuantity from "./order/item.quantity";
+
 import { useCurrentApp } from "@/context/app.context";
+import ItemQuantity from "../order/item.quantity";
+import StickyFooter from "../order/sticky.footer";
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList);
 

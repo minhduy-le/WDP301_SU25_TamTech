@@ -128,15 +128,6 @@ const CustomerInforInput = (props: IProps) => {
             >
               {value && <FontAwesome5 name="check" size={12} color="white" />}
             </TouchableOpacity>
-            <Text
-              style={{
-                fontFamily: FONTS.medium,
-                fontSize: 17,
-                color: APP_COLOR.BROWN,
-              }}
-            >
-              {value ? "Có" : "Không"}
-            </Text>
           </View>
         </View>
         {error && touched && (

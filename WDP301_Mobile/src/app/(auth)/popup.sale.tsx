@@ -1,11 +1,13 @@
 import { router } from "expo-router";
-import { Image, Pressable, Text, View } from "react-native";
+import { Dimensions, Image, Pressable, Text, View } from "react-native";
 import bannerImg from "@/assets/saleoff/banner.png";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
 import { APP_COLOR } from "@/utils/constant";
 
 const PopupSalePage = () => {
+  const screenHeight = Dimensions.get("screen").height;
+  const screenWidth = Dimensions.get("screen").width;
   return (
     <Pressable
       style={{
@@ -36,7 +38,7 @@ const PopupSalePage = () => {
               justifyContent: "center",
               alignItems: "center",
               position: "relative",
-              right: -120,
+              right: -135,
               top: 35,
               zIndex: 9999,
             }}
@@ -44,7 +46,7 @@ const PopupSalePage = () => {
             <AntDesign
               onPress={() => router.back()}
               name="close"
-              size={25}
+              size={28}
               color={APP_COLOR.BROWN}
             />
           </View>
@@ -52,8 +54,8 @@ const PopupSalePage = () => {
           <Image
             source={bannerImg}
             style={{
-              height: 700,
-              width: 300,
+              height: screenHeight * 0.85,
+              width: screenWidth * 0.85,
               borderRadius: 30,
             }}
           />
