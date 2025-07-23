@@ -490,16 +490,21 @@ const Checkout = () => {
                 disabled
               />
               {!isDatHo && (
-                <Input
-                  placeholder="Địa chỉ chi tiết"
-                  style={{
-                    background: "transparent",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                  value={detailedAddress}
-                  onChange={(e) => setDetailedAddress(e.target.value)}
-                  onBlur={handleAddressBlurUser}
-                />
+                <StandaloneSearchBox
+                  onLoad={(ref) => (inputref.current = ref)}
+                  onPlacesChanged={handleOnPlacesChanged}
+                >
+                  <Input
+                    placeholder="Địa chỉ chi tiết"
+                    style={{
+                      background: "transparent",
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                    value={detailedAddress}
+                    onChange={(e) => setDetailedAddress(e.target.value)}
+                    onBlur={handleAddressBlurUser}
+                  />
+                </StandaloneSearchBox>
               )}
               <Row>
                 <Title
