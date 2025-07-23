@@ -74,6 +74,9 @@ const Checkout = () => {
   const userId = user?.id;
   const inputrefUser = useRef<google.maps.places.SearchBox | null>(null);
   const inputrefProxy = useRef<google.maps.places.SearchBox | null>(null);
+  const [isAddressFromPlacesUser, setIsAddressFromPlacesUser] = useState(false);
+  const [isAddressFromPlacesProxy, setIsAddressFromPlacesProxy] =
+    useState(false);
 
   const { data: userProfile } = useGetProfileUser(userId || 0);
 
@@ -108,8 +111,6 @@ const Checkout = () => {
     libraries: ["places"],
   });
 
-  console.log("Google Maps API loaded:", isLoaded);
-
   const handleOnPlacesChangedUser = () => {
     if (inputrefUser.current && isLoaded) {
       const places = inputrefUser.current.getPlaces();
@@ -118,7 +119,14 @@ const Checkout = () => {
         if (place.formatted_address) {
           let cleanedAddress = place.formatted_address;
           cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+          const hoChiMinhIndex = cleanedAddress.indexOf("Hồ Chí Minh");
+          if (hoChiMinhIndex !== -1) {
+            cleanedAddress = cleanedAddress
+              .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+              .trim();
+          }
           setDetailedAddress(cleanedAddress);
+          setIsAddressFromPlacesUser(true); // Đặt trạng thái khi chọn từ Places
           const deliverAddress = cleanedAddress.trim();
           calculateShipping(
             { deliver_address: deliverAddress },
@@ -163,7 +171,14 @@ const Checkout = () => {
         if (place.formatted_address) {
           let cleanedAddress = place.formatted_address;
           cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
-          setDetailedAddressProxy(cleanedAddress); // Cập nhật từ dropdown
+          const hoChiMinhIndex = cleanedAddress.indexOf("Hồ Chí Minh");
+          if (hoChiMinhIndex !== -1) {
+            cleanedAddress = cleanedAddress
+              .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+              .trim();
+          }
+          setDetailedAddressProxy(cleanedAddress);
+          setIsAddressFromPlacesProxy(true); // Đặt trạng thái khi chọn từ Places
           const deliverAddress = cleanedAddress.trim();
           if (selectedDistrictId && selectedWard) {
             const selectedDistrict = districts.find(
@@ -232,8 +247,14 @@ const Checkout = () => {
   };
 
   const handleAddressBlurUser = () => {
-    if (detailedAddress.trim()) {
-      const deliverAddress = detailedAddress.trim();
+    if (detailedAddress.trim() && !isAddressFromPlacesUser) {
+      let deliverAddress = detailedAddress.trim();
+      const hoChiMinhIndex = deliverAddress.indexOf("Hồ Chí Minh");
+      if (hoChiMinhIndex !== -1) {
+        deliverAddress = deliverAddress
+          .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+          .trim();
+      }
       calculateShipping(
         { deliver_address: deliverAddress },
         {
@@ -260,8 +281,14 @@ const Checkout = () => {
   };
 
   const handleAddressBlurProxy = () => {
-    if (detailedAddressProxy.trim()) {
-      const deliverAddress = detailedAddressProxy.trim();
+    if (detailedAddressProxy.trim() && !isAddressFromPlacesProxy) {
+      let deliverAddress = detailedAddressProxy.trim();
+      const hoChiMinhIndex = deliverAddress.indexOf("Hồ Chí Minh");
+      if (hoChiMinhIndex !== -1) {
+        deliverAddress = deliverAddress
+          .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+          .trim();
+      }
       if (selectedDistrictId && selectedWard) {
         const selectedDistrict = districts.find(
           (district) => district.districtId === selectedDistrictId
@@ -581,8 +608,11 @@ const Checkout = () => {
                           fontFamily: "'Montserrat', sans-serif",
                         }}
                         value={detailedAddress}
-                        onChange={(e) => setDetailedAddress(e.target.value)}
-                        onBlur={handleAddressBlurUser} // Gọi khi blur để lấy giá trị nhập tay
+                        onChange={(e) => {
+                          setDetailedAddress(e.target.value);
+                          setIsAddressFromPlacesUser(false); // Reset khi nhập tay
+                        }}
+                        onBlur={handleAddressBlurUser}
                       />
                     </StandaloneSearchBox>
                   ) : (
@@ -593,7 +623,10 @@ const Checkout = () => {
                         fontFamily: "'Montserrat', sans-serif",
                       }}
                       value={detailedAddress}
-                      onChange={(e) => setDetailedAddress(e.target.value)}
+                      onChange={(e) => {
+                        setDetailedAddress(e.target.value);
+                        setIsAddressFromPlacesUser(false); // Reset khi nhập tay
+                      }}
                       disabled
                     />
                   )}
@@ -694,10 +727,11 @@ const Checkout = () => {
                           fontFamily: "'Montserrat', sans-serif",
                         }}
                         value={detailedAddressProxy}
-                        onChange={(e) =>
-                          setDetailedAddressProxy(e.target.value)
-                        }
-                        onBlur={handleAddressBlurProxy} // Gọi khi blur để lấy giá trị nhập tay
+                        onChange={(e) => {
+                          setDetailedAddressProxy(e.target.value);
+                          setIsAddressFromPlacesProxy(false); // Reset khi nhập tay
+                        }}
+                        onBlur={handleAddressBlurProxy}
                       />
                     </StandaloneSearchBox>
                   ) : (
@@ -708,7 +742,10 @@ const Checkout = () => {
                         fontFamily: "'Montserrat', sans-serif",
                       }}
                       value={detailedAddressProxy}
-                      onChange={(e) => setDetailedAddressProxy(e.target.value)}
+                      onChange={(e) => {
+                        setDetailedAddressProxy(e.target.value);
+                        setIsAddressFromPlacesProxy(false); // Reset khi nhập tay
+                      }}
                       disabled
                     />
                   )}
