@@ -2,9 +2,9 @@ import { Tabs } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { APP_COLOR } from "@/utils/constant";
-import { StyleSheet, View, Platform } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { FONTS } from "@/theme/typography";
-import Entypo from "@expo/vector-icons/Entypo";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 const TabLayout = () => {
   const getIcons = (routeName: string, focused: boolean, size: number) => {
@@ -45,7 +45,6 @@ const TabLayout = () => {
         />
       );
     }
-
     if (routeName === "ai") {
       return (
         <View style={styles.qrIcon}>
@@ -58,14 +57,13 @@ const TabLayout = () => {
       );
     }
 
-    if (routeName === "chat") {
+    if (routeName === "notification") {
       return focused ? (
-        <Entypo name="chat" size={24} color={APP_COLOR.ORANGE} />
+        <Ionicons name="notifications" size={24} color={APP_COLOR.ORANGE} />
       ) : (
-        <Entypo name="chat" size={24} color={APP_COLOR.BROWN} />
+        <Ionicons name="notifications" size={24} color={APP_COLOR.BROWN} />
       );
     }
-
     if (routeName === "account") {
       return focused ? (
         <MaterialCommunityIcons
@@ -82,11 +80,10 @@ const TabLayout = () => {
       );
     }
   };
-
   return (
     <Tabs
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, size }) => {
+      screenOptions={({ route }: { route: { name: string } }) => ({
+        tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) => {
           return getIcons(route.name, focused, size);
         },
         headerShown: false,
@@ -108,8 +105,8 @@ const TabLayout = () => {
             ? "Đơn hàng"
             : route.name === "index"
             ? "Trang chủ"
-            : route.name === "chat"
-            ? "Nhắn tin"
+            : route.name === "notification"
+            ? "Thông báo"
             : "Tôi",
       })}
     >
@@ -132,9 +129,9 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="notification"
         options={{
-          title: "Nhắn tin",
+          title: "Thông báo",
         }}
       />
       <Tabs.Screen

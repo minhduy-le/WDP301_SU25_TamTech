@@ -74,22 +74,12 @@ interface IOrderDetails {
 }
 
 import { useCurrentApp } from "@/context/app.context";
+import { formatDateToDDMMYYYY } from "@/utils/function";
 
 const OrderDetailsPage = () => {
   const { id } = useLocalSearchParams();
   const { appState } = useCurrentApp();
   const [orderDetails, setOrderDetails] = useState<IOrderDetails | null>(null);
-
-  function formatDateToDDMMYYYY(isoDate: string): string {
-    const date = new Date(isoDate);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${hours}:${minutes} ${day}/${month}/${year}`;
-  }
-
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {

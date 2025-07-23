@@ -58,7 +58,12 @@ const FeedbackSuccess = () => {
       if (timer) clearInterval(timer);
     };
   }, [countdown]);
-  if (countdown == 0) router.replace("/(tabs)");
+
+  useEffect(() => {
+    if (countdown === 0) {
+      router.replace("/(tabs)");
+    }
+  }, [countdown]);
   return (
     <>
       <SafeAreaView style={styles.safeArea}>

@@ -6,6 +6,7 @@ import {
   FlatList,
   Pressable,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import { API_URL, APP_COLOR, BASE_URL } from "@/utils/constant";
 import { useEffect, useState, createContext, useContext } from "react";
@@ -15,6 +16,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useCurrentApp } from "@/context/app.context";
 import { currencyFormatter } from "@/utils/api";
+import { getItemQuantity as getItemQuantityUtil } from "@/utils/cart";
 import React from "react";
 import Animated, { FadeIn, SlideInDown } from "react-native-reanimated";
 import { FONTS } from "@/theme/typography";
@@ -143,10 +145,8 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     setCart(newCart);
   };
 
-  const getItemQuantity = (itemId: string) => {
-    if (!restaurant?._id) return 0;
-    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
-  };
+  const getItemQuantity = (itemId: string) =>
+    getItemQuantityUtil(cart, restaurant?._id, itemId);
 
   useEffect(() => {
     const fetchTypeProducts = async () => {
@@ -172,130 +172,75 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
             onPress={hideProductModal}
           />
           <Animated.View entering={SlideInDown} style={styles.modalContent}>
-            <AntDesign
-              name="close"
-              size={24}
-              color={APP_COLOR.WHITE}
-              onPress={hideProductModal}
-              style={styles.modalCloseIcon}
-            />
-            <Image
-              source={{ uri: selectedItem?.image }}
-              style={styles.modalImage}
-              resizeMode="cover"
-            />
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 10,
-                paddingBottom: 1,
+            <ScrollView
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{
+                paddingBottom: 20,
               }}
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.modalProductName}>
-                {selectedItem?.description}{" "}
-                <Text style={styles.modalProductPrice}>
-                  {" "}
-                  {currencyFormatter(selectedItem?.price || 0)}
-                </Text>
-              </Text>
-
-              <View
-                style={[
-                  styles.quantityContainer,
-                  { marginHorizontal: 10, marginVertical: 10 },
-                ]}
-              >
-                <Pressable
-                  onPress={() => handleQuantityChange(selectedItem!, "MINUS")}
-                  style={({ pressed }) => ({
-                    opacity:
-                      getItemQuantity(selectedItem!.productId) > 0
-                        ? pressed
-                          ? 0.5
-                          : 1
-                        : 0.3,
-                  })}
-                  disabled={getItemQuantity(selectedItem!.productId) === 0}
-                >
-                  <AntDesign
-                    name="minuscircle"
-                    size={24}
-                    color={
-                      getItemQuantity(selectedItem!.productId) > 0
-                        ? APP_COLOR.BUTTON_YELLOW
-                        : APP_COLOR.BROWN
-                    }
-                  />
-                </Pressable>
-                <Text style={styles.quantityText}>
-                  {getItemQuantity(selectedItem!.productId)}
-                </Text>
-                <Pressable
-                  onPress={() => handleQuantityChange(selectedItem!, "PLUS")}
-                  style={({ pressed }) => ({
-                    opacity: pressed ? 0.5 : 1,
-                  })}
-                >
-                  <AntDesign
-                    name="pluscircle"
-                    size={24}
-                    color={APP_COLOR.BUTTON_YELLOW}
-                  />
-                </Pressable>
-              </View>
-            </View>
-            {typeProducts.map((item: IPropsProduct, index) => (
+              <AntDesign
+                name="close"
+                size={24}
+                color={APP_COLOR.WHITE}
+                onPress={hideProductModal}
+                style={styles.modalCloseIcon}
+              />
+              <Image
+                source={{ uri: selectedItem?.image }}
+                style={styles.modalImage}
+                resizeMode="cover"
+              />
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  marginHorizontal: 10,
                   justifyContent: "space-between",
-                  paddingBottom: 1,
                   marginBottom: 10,
-                  borderBottomColor: APP_COLOR.GREY,
-                  borderBottomWidth: 0.2,
+                  paddingBottom: 1,
                 }}
-                key={item.productId}
               >
-                <Text style={[styles.itemName]}>
-                  {item.name}{" "}
-                  <Text style={{ color: APP_COLOR.GREY, fontSize: 12 }}>
-                    +{currencyFormatter(item.price)}
+                <Text style={styles.modalProductName}>
+                  {selectedItem?.description}{" "}
+                  <Text style={styles.modalProductPrice}>
+                    {" "}
+                    {currencyFormatter(selectedItem?.price || 0)}
                   </Text>
                 </Text>
+
                 <View
-                  style={[styles.quantityContainer, { marginHorizontal: 0 }]}
+                  style={[
+                    styles.quantityContainer,
+                    { marginHorizontal: 10, marginVertical: 10 },
+                  ]}
                 >
                   <Pressable
-                    onPress={() => handleQuantityChange(item, "MINUS")}
+                    onPress={() => handleQuantityChange(selectedItem!, "MINUS")}
                     style={({ pressed }) => ({
                       opacity:
-                        getItemQuantity(item.productId) > 0
+                        getItemQuantity(selectedItem!.productId) > 0
                           ? pressed
                             ? 0.5
                             : 1
                           : 0.3,
                     })}
-                    disabled={getItemQuantity(item.productId) === 0}
+                    disabled={getItemQuantity(selectedItem!.productId) === 0}
                   >
                     <AntDesign
                       name="minuscircle"
                       size={24}
                       color={
-                        getItemQuantity(item.productId) > 0
+                        getItemQuantity(selectedItem!.productId) > 0
                           ? APP_COLOR.BUTTON_YELLOW
                           : APP_COLOR.BROWN
                       }
                     />
                   </Pressable>
                   <Text style={styles.quantityText}>
-                    {getItemQuantity(item.productId)}
+                    {getItemQuantity(selectedItem!.productId)}
                   </Text>
                   <Pressable
-                    onPress={() => handleQuantityChange(item, "PLUS")}
+                    onPress={() => handleQuantityChange(selectedItem!, "PLUS")}
                     style={({ pressed }) => ({
                       opacity: pressed ? 0.5 : 1,
                     })}
@@ -308,15 +253,78 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
                   </Pressable>
                 </View>
               </View>
-            ))}
-            <View>
-              <Text style={[styles.headerText, { alignSelf: "center" }]}>
-                Tổng giá tiền:{" "}
-                <Text style={{ fontFamily: FONTS.bold }}>
-                  {currencyFormatter(cart?.mock_restaurant_1?.sum) || 0}
+              {typeProducts.map((item: IPropsProduct, index) => (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginHorizontal: 10,
+                    justifyContent: "space-between",
+                    paddingBottom: 1,
+                    marginBottom: 10,
+                    borderBottomColor: APP_COLOR.GREY,
+                    borderBottomWidth: 0.2,
+                  }}
+                  key={item.productId}
+                >
+                  <Text style={[styles.itemName]}>
+                    {item.name}{" "}
+                    <Text style={{ color: APP_COLOR.GREY, fontSize: 12 }}>
+                      +{currencyFormatter(item.price)}
+                    </Text>
+                  </Text>
+                  <View
+                    style={[styles.quantityContainer, { marginHorizontal: 0 }]}
+                  >
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "MINUS")}
+                      style={({ pressed }) => ({
+                        opacity:
+                          getItemQuantity(item.productId) > 0
+                            ? pressed
+                              ? 0.5
+                              : 1
+                            : 0.3,
+                      })}
+                      disabled={getItemQuantity(item.productId) === 0}
+                    >
+                      <AntDesign
+                        name="minuscircle"
+                        size={24}
+                        color={
+                          getItemQuantity(item.productId) > 0
+                            ? APP_COLOR.BUTTON_YELLOW
+                            : APP_COLOR.BROWN
+                        }
+                      />
+                    </Pressable>
+                    <Text style={styles.quantityText}>
+                      {getItemQuantity(item.productId)}
+                    </Text>
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "PLUS")}
+                      style={({ pressed }) => ({
+                        opacity: pressed ? 0.5 : 1,
+                      })}
+                    >
+                      <AntDesign
+                        name="pluscircle"
+                        size={24}
+                        color={APP_COLOR.BUTTON_YELLOW}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+              <View>
+                <Text style={[styles.headerText, { alignSelf: "center" }]}>
+                  Tổng giá tiền:{" "}
+                  <Text style={{ fontFamily: FONTS.bold }}>
+                    {currencyFormatter(cart?.mock_restaurant_1?.sum) || 0}
+                  </Text>
                 </Text>
-              </Text>
-            </View>
+              </View>
+            </ScrollView>
           </Animated.View>
         </Animated.View>
       )}
@@ -361,10 +369,8 @@ const CollectionHome = (props: IProps) => {
     showProductModal(item);
   };
 
-  const getItemQuantity = (itemId: string) => {
-    if (!restaurant?._id) return 0;
-    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
-  };
+  const getItemQuantity = (itemId: string) =>
+    getItemQuantityUtil(cart, restaurant?._id, itemId);
 
   return (
     <>

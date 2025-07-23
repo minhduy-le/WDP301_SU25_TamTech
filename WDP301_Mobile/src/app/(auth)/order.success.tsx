@@ -35,7 +35,7 @@ const OrderSuccess = () => {
           <ShareButton
             title="Về Trang Chủ"
             onPress={() => {
-              setCart(0), router.replace("/(tabs)");
+              setCart(0), router.navigate("/(tabs)");
             }}
             btnStyle={{ backgroundColor: APP_COLOR.BROWN }}
             textStyle={styles.btnText}

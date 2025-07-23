@@ -3,13 +3,13 @@ import CollectionHome from "@/components/home/collection.home";
 import HeaderHome from "@/components/home/header.home";
 import SearchHome from "@/components/home/search.home";
 import TopListHome from "@/components/home/top.list.home";
-
 import { useCurrentApp } from "@/context/app.context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Pressable, Text, View, ScrollView } from "react-native";
 import { APP_COLOR } from "@/utils/constant";
 import { currencyFormatter, getTypeProductAPI } from "@/utils/api";
+import { calculateTotalPrice, calculateTotalQuantity } from "@/utils/cart";
 import Animated, {
   FadeIn,
   SlideInDown,
@@ -19,7 +19,8 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-root-toast";
 import { FONTS } from "@/theme/typography";
-import ItemQuantity from "@/components/restaurant/order/item.quantity";
+import ItemQuantity from "@/components/order/item.quantity";
+
 interface ITem {
   name: string;
   productTypeId: number;
@@ -78,58 +79,8 @@ const HomeTab = () => {
       setShowPriceUpdate(false);
     }, 2000);
   };
-  const calculateTotalPrice = () => {
-    try {
-      if (!restaurant?._id) {
-        return 0;
-      }
-      const restaurantCart = cart[restaurant._id];
-      if (!restaurantCart || !restaurantCart.items) {
-        return 0;
-      }
-      const items = restaurantCart.items;
-      let total = 0;
-
-      Object.values(items).forEach((item: any) => {
-        const price = Number(
-          item?.data?.price ||
-            item?.data?.basePrice ||
-            item?.data?.productPrice ||
-            0
-        );
-        const quantity = Number(item?.quantity || 0);
-        total += price * quantity;
-      });
-      return total;
-    } catch (error) {
-      console.error("Lỗi tính tổng giá:", error);
-      return 0;
-    }
-  };
-
-  const calculateTotalQuantity = () => {
-    try {
-      if (!restaurant?._id) return 0;
-
-      const restaurantCart = cart[restaurant._id];
-      if (!restaurantCart || !restaurantCart.items) return 0;
-
-      const items = restaurantCart.items;
-      let total = 0;
-
-      Object.values(items).forEach((item: any) => {
-        const quantity = Number(item?.quantity || 0);
-        total += quantity;
-      });
-      return total;
-    } catch (error) {
-      console.error("Lỗi tính tổng số lượng:", error);
-      return 0;
-    }
-  };
-
-  const totalPrice = calculateTotalPrice();
-  const totalQuantity = calculateTotalQuantity();
+  const totalPrice = calculateTotalPrice(cart, restaurant?._id);
+  const totalQuantity = calculateTotalQuantity(cart, restaurant?._id);
 
   const cartItems = restaurant?._id
     ? Object.values(cart[restaurant._id]?.items || {})

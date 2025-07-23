@@ -41,7 +41,6 @@ const WelcomePage = () => {
       setLoading(true);
       const res = await customerLoginAPI(email, password);
       setLoading(false);
-      console.log(res.data.token);
       if (res.data) {
         await AsyncStorage.setItem("access_token", res.data.token);
         setAppState(res.data);

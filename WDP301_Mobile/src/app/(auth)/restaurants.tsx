@@ -16,6 +16,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import debounce from "debounce";
 import { currencyFormatter } from "@/utils/api";
+import {
+  calculateTotalPrice,
+  calculateTotalQuantity,
+  getItemQuantity as getItemQuantityUtil,
+} from "@/utils/cart";
 import { useCurrentApp } from "@/context/app.context";
 import axios from "axios";
 import { FONTS } from "@/theme/typography";
@@ -124,65 +129,10 @@ const RestaurantsPage = () => {
     setCart(newCart);
   };
 
-  const getItemQuantity = (itemId: string) => {
-    if (!restaurant?._id) return 0;
-    return cart[restaurant._id]?.items[itemId]?.quantity || 0;
-  };
-
-  const calculateTotalPrice = () => {
-    try {
-      if (!restaurant?._id) {
-        return 0;
-      }
-
-      const restaurantCart = cart[restaurant._id];
-      if (!restaurantCart || !restaurantCart.items) {
-        return 0;
-      }
-
-      const items = restaurantCart.items;
-      let total = 0;
-
-      Object.values(items).forEach((item: any) => {
-        const price = Number(
-          item?.data?.price ||
-            item?.data?.basePrice ||
-            item?.data?.productPrice ||
-            0
-        );
-        const quantity = Number(item?.quantity || 0);
-        total += price * quantity;
-      });
-
-      return total;
-    } catch (error) {
-      console.error("Lỗi tính tổng giá:", error);
-      return 0;
-    }
-  };
-  const calculateTotalQuantity = () => {
-    try {
-      if (!restaurant?._id) return 0;
-
-      const restaurantCart = cart[restaurant._id];
-      if (!restaurantCart || !restaurantCart.items) return 0;
-
-      const items = restaurantCart.items;
-      let total = 0;
-
-      Object.values(items).forEach((item: any) => {
-        const quantity = Number(item?.quantity || 0);
-        total += quantity;
-      });
-      return total;
-    } catch (error) {
-      console.error("Lỗi tính tổng số lượng:", error);
-      return 0;
-    }
-  };
-
-  const totalPrice = calculateTotalPrice();
-  const totalQuantity = calculateTotalQuantity();
+  const totalPrice = calculateTotalPrice(cart, restaurant?._id);
+  const totalQuantity = calculateTotalQuantity(cart, restaurant?._id);
+  const getItemQuantity = (itemId: string) =>
+    getItemQuantityUtil(cart, restaurant?._id, itemId);
   const cartItems = restaurant?._id
     ? Object.values(cart[restaurant._id]?.items || {})
     : [];
@@ -225,9 +175,7 @@ const RestaurantsPage = () => {
           >
             <AntDesign name="shoppingcart" size={30} color={APP_COLOR.BROWN} />
             <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>
-                {calculateTotalQuantity()}
-              </Text>
+              <Text style={styles.cartBadgeText}>{totalQuantity}</Text>
             </View>
           </Pressable>
         ) : (

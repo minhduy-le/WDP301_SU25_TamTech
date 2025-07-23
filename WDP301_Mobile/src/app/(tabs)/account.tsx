@@ -1,5 +1,5 @@
 import { useCurrentApp } from "@/context/app.context";
-import { APP_COLOR } from "@/utils/constant";
+import { API_URL, APP_COLOR } from "@/utils/constant";
 import {
   View,
   Text,
@@ -12,16 +12,17 @@ import {
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Feather from "@expo/vector-icons/Feather";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { FONTS, typography } from "@/theme/typography";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
 import icon from "@/assets/icons/loi-chuc.png";
 import CusInfoText from "@/components/account/user.info.text";
-import Toast from "react-native-root-toast";
+import { formatDateOnlyToDDMMYYYY } from "@/utils/function";
+import axios from "axios";
 
 const getCurrentDateTime = (): string => {
   const now = new Date();
@@ -41,26 +42,46 @@ const AccountPage = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
   const { appState, setAppState } = useCurrentApp();
   const [time, setTime] = useState("");
+  const decodeAndSetToken = async () => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      if (token) {
+        const decoded = jwtDecode(token);
+        setDecodeToken(decoded);
+
+        if (decoded && decoded.id) {
+          try {
+            const res = await axios.get(
+              `${API_URL}/api/profiles/${decoded.id}`
+            );
+            console.log(res.data.user);
+
+            setDecodeToken(res.data.user);
+          } catch (apiError) {
+            console.error("Error fetching fresh user data:", apiError);
+          }
+        }
+      } else {
+        setDecodeToken("");
+      }
+    } catch (error) {
+      console.error("Error retrieving or decoding access token:", error);
+      setDecodeToken("");
+    }
+  };
+
   useEffect(() => {
     setTime(getCurrentDateTime());
   }, []);
 
   useEffect(() => {
-    const getAccessToken = async () => {
-      try {
-        const token = await AsyncStorage.getItem("access_token");
-        if (token) {
-          const decoded = jwtDecode(token);
-          setDecodeToken(decoded);
-        } else {
-          console.log("No access token found.");
-        }
-      } catch (error) {
-        console.error("Error retrieving access token:", error);
-      }
-    };
-    getAccessToken();
-  }, []);
+    decodeAndSetToken();
+  }, [appState]);
+  useFocusEffect(
+    useCallback(() => {
+      decodeAndSetToken();
+    }, [])
+  );
 
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn chắc chắn đăng xuất người dùng ?", [
@@ -81,7 +102,10 @@ const AccountPage = () => {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: APP_COLOR.BACKGROUND_ORANGE }}
+      style={{
+        flex: 1,
+        backgroundColor: APP_COLOR.BACKGROUND_ORANGE,
+      }}
     >
       <View style={styles.headerContainer}>
         <View>
@@ -93,18 +117,20 @@ const AccountPage = () => {
           >
             {time}
           </Text>
-          <Text
-            style={[
-              styles.text,
-              {
-                fontFamily: FONTS.bold,
-                color: APP_COLOR.ORANGE,
-                textAlign: "center",
-              },
-            ]}
-          >
-            {decodeToken.fullName}
-          </Text>
+          {appState && (
+            <Text
+              style={[
+                styles.text,
+                {
+                  fontFamily: FONTS.bold,
+                  color: APP_COLOR.ORANGE,
+                  textAlign: "center",
+                },
+              ]}
+            >
+              {decodeToken.fullName}
+            </Text>
+          )}
         </View>
         <Image source={logo} style={styles.img} />
       </View>
@@ -204,14 +230,17 @@ const AccountPage = () => {
             </Text>
             <View style={{ marginHorizontal: 5 }}>
               <CusInfoText title="Họ và tên" info={decodeToken.fullName} />
-              <CusInfoText title="Ngày sinh" info={decodeToken.date_of_birth} />
+              <CusInfoText
+                title="Ngày sinh"
+                info={formatDateOnlyToDDMMYYYY(decodeToken.date_of_birth)}
+              />
               <CusInfoText title="SĐT" info={decodeToken.phone_number} />
               <CusInfoText title="Email" info={decodeToken.email} />
             </View>
           </View>
         )}
         <Pressable
-          onPress={() => router.navigate("/(user)/account/info")}
+          onPress={() => router.replace("/(user)/account/info")}
           style={{
             paddingVertical: 15,
             paddingHorizontal: 10,
@@ -296,36 +325,8 @@ const AccountPage = () => {
           />
         </Pressable>
         <Pressable
-          onPress={() => Toast.show("Notification")}
-          style={{
-            paddingVertical: 15,
-            paddingHorizontal: 10,
-            borderBottomColor: "#eee",
-            borderBottomWidth: 1,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
-            <Feather name="bell" size={24} color={APP_COLOR.BROWN} />
-            <Text style={styles.btnText}>Thông báo</Text>
-          </View>
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={APP_COLOR.BROWN}
-          />
-        </Pressable>
-        <Pressable
           onPress={() =>
-            Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 1.0.2")
+            Alert.alert("App Tấm Tắc", "Ứng dụng Cơm Tấm Tắc ver 1.0.6")
           }
           style={{
             paddingVertical: 15,
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
   },
   loginBtn: {
-    width: 150,
+    width: ScreenWidth * 0.35,
     justifyContent: "center",
     borderRadius: 10,
     paddingVertical: 10,

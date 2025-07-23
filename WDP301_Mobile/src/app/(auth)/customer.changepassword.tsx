@@ -162,7 +162,7 @@ const CustomerChangePassword = () => {
               >
                 Chưa có tài khoản?
               </Text>
-              <Link href={"/(auth)/signup"}>
+              <Link href={"/(auth)/customer.signup"}>
                 <Text
                   style={{
                     color: APP_COLOR.ORANGE,

@@ -7,7 +7,7 @@ import { useCurrentApp } from "@/context/app.context";
 import { useEffect, useState } from "react";
 import { currencyFormatter } from "@/utils/api";
 import Feather from "@expo/vector-icons/Feather";
-import ItemSingle from "@/components/restaurant/order/item.single";
+import ItemSingle from "@/components/order/item.single";
 
 const CreateModalPage = () => {
   const { restaurant, cart, setCart } = useCurrentApp();
@@ -50,7 +50,6 @@ const CreateModalPage = () => {
       const keyOption = `${option.title}-${option.description}`;
 
       if (!cart[restaurant?._id]) {
-        //chưa tồn tại cửa hàng => khởi tạo cửa hàng
         cart[restaurant._id] = {
           sum: 0,
           quantity: 0,
@@ -58,13 +57,11 @@ const CreateModalPage = () => {
         };
       }
 
-      //xử lý sản phẩm
       cart[restaurant._id].sum =
         cart[restaurant._id].sum +
         total * (item.basePrice + option.additionalPrice);
       cart[restaurant._id].quantity = cart[restaurant._id].quantity + total;
 
-      //check sản phẩm đã từng thêm vào chưa
       if (!cart[restaurant._id].items[item._id]) {
         cart[restaurant._id].items[item._id] = {
           data: menuItem,
@@ -75,7 +72,6 @@ const CreateModalPage = () => {
         };
       }
 
-      //check options đã từng thêm vào chưa
       if (cart[restaurant._id].items[item._id]) {
         const extra = cart[restaurant._id].items[item._id].extra;
         if (extra && !extra[keyOption]) {

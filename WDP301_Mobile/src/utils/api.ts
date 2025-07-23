@@ -71,8 +71,8 @@ export const getTopRestaurant = (ref: string) => {
 export const getURLBaseBackend = () => {
   const backend =
     Platform.OS === "android"
-      ? process.env.EXPO_PUBLIC_ANDROID_API_URL
-      : process.env.EXPO_PUBLIC_IOS_API_URL;
+      ? globalThis.process?.env.EXPO_PUBLIC_ANDROID_API_URL
+      : globalThis.process?.env.EXPO_PUBLIC_IOS_API_URL;
 
   return backend;
 };
