@@ -103,7 +103,7 @@ const Checkout = () => {
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyDKVRe6WPuIsGQVmZ2uiUZE3BYhvc5DGFk",
+    googleMapsApiKey: "AIzaSyAwSwTDdF00hbh21k7LsX-4Htuwqm9MlPg",
     libraries: ["places"],
   });
 
