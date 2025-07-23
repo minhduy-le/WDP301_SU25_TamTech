@@ -1,18 +1,63 @@
 import { FONTS } from "@/theme/typography";
-import { APP_COLOR } from "@/utils/constant";
+import { APP_COLOR, API_URL } from "@/utils/constant";
 import { useLocalSearchParams } from "expo-router";
-import { Image, StyleSheet, Text, View } from "react-native";
-import poster from "@/assets/icons/com-tam.png";
-import Entypo from "@expo/vector-icons/Entypo";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  ScrollView,
+  Dimensions,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useEffect, useState } from "react";
+
 const VoucherDetailsPage = () => {
   const { id } = useLocalSearchParams();
+  const [voucher, setVoucher] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const screenWidth = Dimensions.get("window").width;
+  useEffect(() => {
+    const fetchVoucher = async () => {
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        const res = await axios.get(`${API_URL}/api/promotions/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            accept: "*/*",
+          },
+        });
+        setVoucher(res.data);
+      } catch (e) {
+        setVoucher(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchVoucher();
+  }, [id]);
+
+  if (loading)
+    return (
+      <ActivityIndicator
+        style={{ flex: 1 }}
+        size="large"
+        color={APP_COLOR.ORANGE}
+      />
+    );
+  if (!voucher)
+    return (
+      <Text
+        style={{ color: APP_COLOR.CANCEL, textAlign: "center", marginTop: 40 }}
+      >
+        Không tìm thấy thông tin voucher
+      </Text>
+    );
+
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: APP_COLOR.WHITE,
-      }}
-    >
+    <ScrollView style={{ flex: 1, backgroundColor: APP_COLOR.WHITE }}>
       <View
         style={{
           justifyContent: "center",
@@ -21,7 +66,13 @@ const VoucherDetailsPage = () => {
           flex: 0.4,
         }}
       >
-        <Image source={poster} style={{ height: 200, width: 200 }} />
+        {voucher.barcode ? (
+          <Image
+            source={{ uri: voucher.barcode }}
+            style={{ height: 200, width: screenWidth }}
+            resizeMode="contain"
+          />
+        ) : null}
       </View>
       <View
         style={{
@@ -60,32 +111,50 @@ const VoucherDetailsPage = () => {
               fontSize: 13,
             }}
           >
-            {id}
+            {voucher.code}
           </Text>
         </View>
-        <Text style={{ fontFamily: FONTS.medium, textAlign: "center" }}>
-          Thành viên mới - Mua cơm tặng kèm nước ngọt.
+        <Text
+          style={{
+            fontFamily: FONTS.bold,
+            textAlign: "center",
+            fontSize: 20,
+            marginBottom: 5,
+          }}
+        >
+          {voucher.name}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text
-            style={{
-              fontFamily: FONTS.regular,
-              color: APP_COLOR.BROWN,
-              fontSize: 13,
-            }}
-          >
-            HSD: <Text style={{ fontSize: 12 }}> 01/06/2023</Text>
-          </Text>
-          <Entypo name="dot-single" size={24} color={APP_COLOR.BROWN} />
-          <Text
-            style={{
-              color: APP_COLOR.DONE + "90",
-              fontStyle: "italic",
-            }}
-          >
-            Còn hạn
-          </Text>
-        </View>
+        <Text
+          style={{
+            fontFamily: FONTS.medium,
+            textAlign: "center",
+            marginBottom: 5,
+          }}
+        >
+          {voucher.description}
+        </Text>
+        <Text
+          style={{
+            fontFamily: FONTS.regular,
+            color: APP_COLOR.BROWN,
+            fontSize: 15,
+            marginBottom: 5,
+          }}
+        >
+          Giảm: {voucher.discountAmount?.toLocaleString()}đ
+        </Text>
+        <Text
+          style={{
+            fontFamily: FONTS.regular,
+            color: APP_COLOR.BROWN,
+            fontSize: 13,
+          }}
+        >
+          HSD:{" "}
+          {voucher.endDate
+            ? new Date(voucher.endDate).toLocaleDateString()
+            : ""}
+        </Text>
       </View>
       <View style={{ marginHorizontal: 10 }}>
         <Text
@@ -100,15 +169,18 @@ const VoucherDetailsPage = () => {
         </Text>
         <View style={{ marginTop: 10, marginHorizontal: 10 }}>
           <Text style={styles.text}>
-            + Tặng 1 coca khi mua hóa đon từ 50.000đ trở lên.
+            + Đơn tối thiểu: {voucher.minOrderAmount?.toLocaleString()}đ
           </Text>
           <Text style={styles.text}>
-            + Không áp dụng đồng thời với các chương trình khuyến mãi khác
+            + Số lần sử dụng: {voucher.NumberCurrentUses} /{" "}
+            {voucher.maxNumberOfUses}
           </Text>
-          <Text style={styles.text}>+ Không quy đổi ra tiền mặt.</Text>
+          <Text style={styles.text}>
+            + Trạng thái: {voucher.isActive ? "Còn hiệu lực" : "Hết hạn"}
+          </Text>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 const styles = StyleSheet.create({

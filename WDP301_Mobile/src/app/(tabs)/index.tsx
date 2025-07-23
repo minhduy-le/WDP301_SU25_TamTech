@@ -34,6 +34,7 @@ const HomeTab = () => {
   const [collectionData, setCollectionData] = useState([]);
   const { branchId, setBranchId } = useCurrentApp();
   const { access_token } = useLocalSearchParams();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
     const storeAccessToken = async () => {
       try {
@@ -46,6 +47,13 @@ const HomeTab = () => {
     };
     storeAccessToken();
   }, [access_token]);
+  useEffect(() => {
+    const checkLogin = async () => {
+      const token = await AsyncStorage.getItem("access_token");
+      setIsLoggedIn(!!token);
+    };
+    checkLogin();
+  }, []);
   const handleBranchSelect = (id: any) => {
     setBranchId(id);
   };
@@ -134,16 +142,19 @@ const HomeTab = () => {
       {totalQuantity > 0 && (
         <Pressable
           style={styles.cartButton}
-          onPress={() => {
-            access_token
-              ? setShowCart(true)
-              : Toast.show("Vui lòng đăng nhập để xem giỏ hàng", {
-                  duration: Toast.durations.LONG,
-                  textColor: "white",
-                  backgroundColor: APP_COLOR.CANCEL,
-                  opacity: 1,
-                  position: 30,
-                });
+          onPress={async () => {
+            const token = await AsyncStorage.getItem("access_token");
+            if (token) {
+              setShowCart(true);
+            } else {
+              Toast.show("Vui lòng đăng nhập để xem giỏ hàng", {
+                duration: Toast.durations.LONG,
+                textColor: "white",
+                backgroundColor: APP_COLOR.CANCEL,
+                opacity: 1,
+                position: 30,
+              });
+            }
           }}
         >
           <AntDesign

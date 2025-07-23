@@ -6,6 +6,7 @@ interface IVoucher {
   code: string;
   description: string;
   date: string;
+  promotionId?: number;
 }
 const VoucherComponent = (props: IVoucher) => {
   return (
@@ -80,12 +81,14 @@ const VoucherComponent = (props: IVoucher) => {
         }}
       >
         <Pressable
-          onPress={() =>
-            router.push({
-              pathname: "/(user)/voucher/[id]",
-              params: { id: props.code },
-            })
-          }
+          onPress={() => {
+            if (props.promotionId) {
+              router.push({
+                pathname: "/(user)/voucher/[id]",
+                params: { id: props.promotionId },
+              });
+            }
+          }}
         >
           <Text
             style={{
