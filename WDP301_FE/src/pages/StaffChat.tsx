@@ -15,20 +15,16 @@ import {
   useSocketListener,
   emitSocketEvent,
 } from "../hooks/useSocket";
-import "../style/StaffChat.css";
 
 const { Title } = Typography;
 
 dayjs.extend(customParseFormat);
 
-const BG_MAIN = "#fefce8"; // amber-25
-const BG_CARD = "#ffffff"; // white
-const COLOR_ACCENT_DARK = "#92400e"; // amber-800
-const COLOR_USER = "#d97706"; // amber-600
-const COLOR_ADMIN = "#fffbeb"; // amber-50
+const headerColor = "#A05A2C";
+const evenRowBgColor = "#FFFDF5";
+const cellTextColor = "#5D4037";
+const borderColor = "#F5EAD9";
 const COLOR_TEXT = "#333";
-const EVEN_ROW_BG_COLOR = "#fefce8"; // amber-25
-const BORDER_COLOR = "#fde68a"; // amber-200
 
 interface Chat {
   id: number;
@@ -48,16 +44,57 @@ const StaffChat = () => {
     fullName: string;
   } | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [chats, setChats] = useState<Chat[]>([]); // Dữ liệu hiện tại (cho Chat Details)
-  const [initialChats, setInitialChats] = useState<Chat[]>([]); // Dữ liệu ban đầu (cho Chat List)
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [initialChats, setInitialChats] = useState<Chat[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [tempMessageId, setTempMessageId] = useState<number | null>(null);
 
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore();
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const { isConnected } = useSocketConnection(token);
+
+  useSocketListener("message", (data: unknown) => {
+    const receivedMessage = data as Chat;
+    if (
+      selectedUser &&
+      receivedMessage.senderId !== authUser?.id &&
+      receivedMessage.receiverId === authUser?.id &&
+      receivedMessage.senderId === selectedUser.id
+    ) {
+      setChats((prev) => [
+        ...prev,
+        { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) },
+      ]);
+    }
+  });
+
+  useSocketListener("messageAck", (data: unknown) => {
+    const ackMessage = data as Chat;
+    if (tempMessageId) {
+      console.log("Received messageAck:", ackMessage);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === tempMessageId
+            ? { ...ackMessage, createdAt: new Date(ackMessage.createdAt) }
+            : chat
+        )
+      );
+      setInitialChats((prevInitialChats) =>
+        [
+          ...prevInitialChats,
+          { ...ackMessage, createdAt: new Date(ackMessage.createdAt) },
+        ].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+      setIsSending(false);
+      setTempMessageId(null);
+    }
+  });
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -79,15 +116,28 @@ const StaffChat = () => {
     }
 
     setIsSending(true);
+    const newTempMessageId = Date.now();
+    setTempMessageId(newTempMessageId);
+
     const messageData = {
       receiverId: selectedUser.id,
       content: messageInput.trim(),
     };
 
-    emitSocketEvent("sendMessage", messageData);
+    try {
+      emitSocketEvent("sendMessage", messageData);
+      console.log("Sent message with temp ID:", newTempMessageId);
+    } catch (error) {
+      console.error("Socket emit error:", error);
+      setIsSending(false);
+      setTempMessageId(null);
+      message.error("Lỗi kết nối. Vui lòng thử lại.");
+      return;
+    }
 
+    // Thêm tin nhắn tạm thời ngay lập tức
     const tempMessage: Chat = {
-      id: Date.now(),
+      id: newTempMessageId,
       senderId: authUser.id,
       receiverId: selectedUser.id,
       content: messageInput.trim(),
@@ -98,9 +148,10 @@ const StaffChat = () => {
 
     setMessageInput("");
     setTimeout(() => scrollToBottom(), 0);
+
+    setLastSendTime(Date.now());
   };
 
-  // Sử dụng hàm formatChatTime cho đoạn chat
   const formatChatTime = (createdAt: Date) => {
     const messageDate = dayjs(createdAt);
     const today = dayjs();
@@ -114,7 +165,6 @@ const StaffChat = () => {
     return messageDate.format("HH:mm DD/MM/YYYY");
   };
 
-  // Lấy tin nhắn cuối cùng cho một user, sử dụng initialChats
   const getLastMessage = (userId: number) => {
     const lastChat = initialChats
       .filter(
@@ -134,17 +184,20 @@ const StaffChat = () => {
 
     let timeText;
     if (messageDate.isSame(today, "day")) {
-      timeText = messageDate.format("HH:mm"); // Chỉ hiển thị HH:mm cho hôm nay
+      timeText = messageDate.format("HH:mm");
     } else if (
       messageDate.isSame(yesterday, "day") ||
       messageDate.year() === thisYear
     ) {
-      timeText = `${messageDate.format("DD")} th${messageDate.format("MM")}`; // Ví dụ: "26 th06"
+      timeText = `${messageDate.format("DD")} th${messageDate.format("MM")}`;
     } else {
       timeText = `${messageDate.format("DD")} th${messageDate.format(
         "MM"
-      )} ${messageDate.format("YYYY")}`; // Ví dụ: "15 th12 2024"
+      )} ${messageDate.format("YYYY")}`;
     }
+
+    const prefix = lastChat.senderId === authUser?.id ? "Bạn: " : "";
+
     return (
       <div
         style={{
@@ -161,6 +214,7 @@ const StaffChat = () => {
             whiteSpace: "nowrap",
           }}
         >
+          {prefix}
           {lastChat.content}
         </span>
         <span style={{ color: "#888", marginLeft: 8 }}>{timeText}</span>
@@ -168,23 +222,41 @@ const StaffChat = () => {
     );
   };
 
-  useSocketListener("message", (data: unknown) => {
-    const receivedMessage = data as Chat;
-    if (
-      selectedUser &&
-      ((receivedMessage.senderId === authUser?.id &&
-        receivedMessage.receiverId === selectedUser.id) ||
-        (receivedMessage.senderId === selectedUser.id &&
-          receivedMessage.receiverId === authUser?.id))
-    ) {
-      setChats((prev) => [
-        ...prev,
-        { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) },
-      ]);
-    }
-  });
+  const [lastSendTime, setLastSendTime] = useState<number | null>(null);
 
-  // Tải tất cả tin nhắn ban đầu khi trang load
+  // Effect để xử lý timeout độc lập
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isSending && lastSendTime) {
+      timeoutId = setTimeout(() => {
+        if (isSending && Date.now() - lastSendTime >= 1000) {
+          console.log(
+            "Timeout triggered, resetting isSending for temp ID:",
+            tempMessageId
+          );
+          setIsSending(false);
+          setTempMessageId(null);
+          if (tempMessageId) {
+            const tempMessage = chats.find((chat) => chat.id === tempMessageId);
+            if (tempMessage) {
+              setInitialChats((prevInitialChats) =>
+                [...prevInitialChats, tempMessage].sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
+              );
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isSending, lastSendTime, tempMessageId, chats]);
+
   useEffect(() => {
     if (!authUser) {
       setChats([]);
@@ -202,8 +274,8 @@ const StaffChat = () => {
           ...chat,
           createdAt: new Date(chat.createdAt),
         }));
-        setInitialChats(allChats); // Lưu dữ liệu ban đầu
-        setChats(allChats); // Ban đầu, chats bằng initialChats
+        setInitialChats(allChats);
+        setChats(allChats);
       } catch {
         message.error("Không thể tải tin nhắn.");
       } finally {
@@ -213,7 +285,6 @@ const StaffChat = () => {
     fetchInitialMessages();
   }, [authUser]);
 
-  // Cập nhật lại chats khi chọn user, chỉ cho Chat Details
   useEffect(() => {
     if (!authUser || !selectedUser) {
       setChats([]);
@@ -255,7 +326,6 @@ const StaffChat = () => {
     scrollToBottom();
   }, [chats]);
 
-  // Lọc danh sách accounts dựa trên chat đã có, nhưng cho phép tìm kiếm tất cả khi search
   const filteredAccounts =
     accounts
       ?.filter(
@@ -280,19 +350,16 @@ const StaffChat = () => {
       ) || [];
 
   return (
-    <div
-      className="chat-admin"
-      style={{ background: BG_MAIN, minHeight: "90vh", padding: 24 }}
-    >
+    <div style={{ background: "#FFF9F0", minHeight: "90vh", padding: 24 }}>
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        {/* <div
+        <div
           style={{
             position: "fixed",
             top: 80,
             right: 20,
             zIndex: 1000,
             padding: "5px 15px",
-            backgroundColor: isConnected ? "#4caf50" : "#f44336",
+            backgroundColor: isConnected ? "#D97B41" : "#8c8c8c",
             color: "white",
             borderRadius: "12px",
             fontSize: "12px",
@@ -300,7 +367,7 @@ const StaffChat = () => {
           }}
         >
           {isConnected ? `🟢 Đã kết nối` : `🔴 Mất kết nối`}
-        </div> */}
+        </div>
         <div style={{ display: "flex", gap: 24 }}>
           {/* Chat List */}
           <Card
@@ -310,7 +377,7 @@ const StaffChat = () => {
               boxShadow: "0 2px 12px #0001",
               display: "flex",
               flexDirection: "column",
-              background: BG_CARD,
+              background: "#fff",
               padding: 0,
             }}
             bodyStyle={{
@@ -323,15 +390,15 @@ const StaffChat = () => {
             <div style={{ padding: 24, paddingBottom: 12 }}>
               <Input
                 placeholder="Tìm người dùng..."
-                prefix={<SearchOutlined style={{ color: COLOR_ACCENT_DARK }} />}
+                prefix={<SearchOutlined style={{ color: headerColor }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{
                   marginBottom: 8,
                   borderRadius: 8,
                   background: "#FAFAFA",
-                  border: `2px solid ${BORDER_COLOR}`,
-                  color: COLOR_USER,
+                  border: `2px solid ${borderColor}`,
+                  color: cellTextColor,
                 }}
                 allowClear
               />
@@ -359,13 +426,13 @@ const StaffChat = () => {
                       cursor: "pointer",
                       background:
                         selectedUser?.id === account.id
-                          ? EVEN_ROW_BG_COLOR
+                          ? evenRowBgColor
                           : "inherit",
                       borderRadius: 8,
                       margin: "0 8px 8px 8px",
                       boxShadow:
                         selectedUser?.id === account.id
-                          ? `0 4px 12px ${COLOR_USER}33`
+                          ? `0 4px 12px ${headerColor}33`
                           : "none",
                       transition: "all 0.2s",
                       padding: "12px",
@@ -373,7 +440,7 @@ const StaffChat = () => {
                   >
                     <List.Item.Meta
                       avatar={
-                        <Avatar style={{ backgroundColor: "#d97706" }}>
+                        <Avatar style={{ backgroundColor: "#D97B41" }}>
                           {account.fullName[0]}
                         </Avatar>
                       }
@@ -381,10 +448,7 @@ const StaffChat = () => {
                         <span
                           style={{
                             fontWeight: "bold",
-                            // selectedUser?.id === account.id
-                            //   ? "bold"
-                            //   : "normal",
-                            color: COLOR_TEXT,
+                            color: cellTextColor,
                             marginLeft: 14,
                           }}
                         >
@@ -419,7 +483,7 @@ const StaffChat = () => {
               boxShadow: "0 2px 12px #0001",
               display: "flex",
               flexDirection: "column",
-              background: BG_CARD,
+              background: "#fff",
               padding: 0,
               height: "80vh",
             }}
@@ -482,12 +546,12 @@ const StaffChat = () => {
                           style={{
                             background:
                               chat.senderId === authUser?.id
-                                ? COLOR_USER
-                                : COLOR_ADMIN,
+                                ? "#D97B41"
+                                : "#F5EAD9",
                             color:
                               chat.senderId === authUser?.id
                                 ? "#fff"
-                                : COLOR_TEXT,
+                                : cellTextColor,
                             padding: "12px 20px",
                             borderRadius: 12,
                             boxShadow: "0 2px 8px #0001",
@@ -528,7 +592,7 @@ const StaffChat = () => {
                 <div
                   style={{
                     padding: 16,
-                    borderTop: `1px solid ${BORDER_COLOR}`,
+                    borderTop: `1px solid ${borderColor}`,
                     display: "flex",
                     gap: 8,
                   }}
@@ -544,7 +608,7 @@ const StaffChat = () => {
                       background: "#fff",
                       height: 47,
                       marginRight: 8,
-                      border: `2px solid ${BORDER_COLOR}`,
+                      border: `2px solid ${borderColor}`,
                     }}
                   />
                   <Button
@@ -570,8 +634,8 @@ const StaffChat = () => {
                     onClick={handleSendMessage}
                     disabled={!messageInput.trim() || !isConnected}
                     style={{
-                      background: COLOR_ACCENT_DARK,
-                      borderColor: COLOR_ACCENT_DARK,
+                      background: "#D97B41",
+                      borderColor: "#D97B41",
                       borderRadius: 8,
                       boxShadow: "0 2px 8px #4CAF5033",
                       height: 47,
@@ -590,8 +654,8 @@ const StaffChat = () => {
                   height: "100%",
                 }}
               >
-                <h5 style={{ color: "#B0B0B0", margin: 0 }}>
-                  Chọn một quản lý để bắt đầu chat.
+                <h5 style={{ color: "#888", margin: 0 }}>
+                  Chọn một nhân viên để bắt đầu chat.
                 </h5>
               </div>
             )}

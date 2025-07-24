@@ -21,13 +21,10 @@ const { Title } = Typography;
 dayjs.extend(customParseFormat);
 
 const headerColor = "#A05A2C";
-// const headerBgColor = "#F9E4B7";
 const evenRowBgColor = "#FFFDF5";
-// const oddRowBgColor = "#FFF7E6";
 const cellTextColor = "#5D4037";
 const borderColor = "#F5EAD9";
 const COLOR_TEXT = "#333";
-// const tableBorderColor = "#E9C97B";
 
 interface Chat {
   id: number;
@@ -47,16 +44,57 @@ const ManagerChat = () => {
     fullName: string;
   } | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [chats, setChats] = useState<Chat[]>([]); // Dữ liệu hiện tại (cho Chat Details)
-  const [initialChats, setInitialChats] = useState<Chat[]>([]); // Dữ liệu ban đầu (cho Chat List)
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [initialChats, setInitialChats] = useState<Chat[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [tempMessageId, setTempMessageId] = useState<number | null>(null);
 
   const { data: accounts, isLoading: isAccountsLoading } = useGetAccounts();
   const { user: authUser, token } = useAuthStore();
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const { isConnected } = useSocketConnection(token);
+
+  useSocketListener("message", (data: unknown) => {
+    const receivedMessage = data as Chat;
+    if (
+      selectedUser &&
+      receivedMessage.senderId !== authUser?.id &&
+      receivedMessage.receiverId === authUser?.id &&
+      receivedMessage.senderId === selectedUser.id
+    ) {
+      setChats((prev) => [
+        ...prev,
+        { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) },
+      ]);
+    }
+  });
+
+  useSocketListener("messageAck", (data: unknown) => {
+    const ackMessage = data as Chat;
+    if (tempMessageId) {
+      console.log("Received messageAck:", ackMessage);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === tempMessageId
+            ? { ...ackMessage, createdAt: new Date(ackMessage.createdAt) }
+            : chat
+        )
+      );
+      setInitialChats((prevInitialChats) =>
+        [
+          ...prevInitialChats,
+          { ...ackMessage, createdAt: new Date(ackMessage.createdAt) },
+        ].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+      setIsSending(false);
+      setTempMessageId(null);
+    }
+  });
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -78,15 +116,28 @@ const ManagerChat = () => {
     }
 
     setIsSending(true);
+    const newTempMessageId = Date.now();
+    setTempMessageId(newTempMessageId);
+
     const messageData = {
       receiverId: selectedUser.id,
       content: messageInput.trim(),
     };
 
-    emitSocketEvent("sendMessage", messageData);
+    try {
+      emitSocketEvent("sendMessage", messageData);
+      console.log("Sent message with temp ID:", newTempMessageId);
+    } catch (error) {
+      console.error("Socket emit error:", error);
+      setIsSending(false);
+      setTempMessageId(null);
+      message.error("Lỗi kết nối. Vui lòng thử lại.");
+      return;
+    }
 
+    // Thêm tin nhắn tạm thời ngay lập tức
     const tempMessage: Chat = {
-      id: Date.now(),
+      id: newTempMessageId,
       senderId: authUser.id,
       receiverId: selectedUser.id,
       content: messageInput.trim(),
@@ -97,9 +148,10 @@ const ManagerChat = () => {
 
     setMessageInput("");
     setTimeout(() => scrollToBottom(), 0);
+
+    setLastSendTime(Date.now());
   };
 
-  // Sử dụng hàm formatChatTime cho đoạn chat
   const formatChatTime = (createdAt: Date) => {
     const messageDate = dayjs(createdAt);
     const today = dayjs();
@@ -113,7 +165,6 @@ const ManagerChat = () => {
     return messageDate.format("HH:mm DD/MM/YYYY");
   };
 
-  // Lấy tin nhắn cuối cùng cho một user, sử dụng initialChats
   const getLastMessage = (userId: number) => {
     const lastChat = initialChats
       .filter(
@@ -133,17 +184,20 @@ const ManagerChat = () => {
 
     let timeText;
     if (messageDate.isSame(today, "day")) {
-      timeText = messageDate.format("HH:mm"); // Chỉ hiển thị HH:mm cho hôm nay
+      timeText = messageDate.format("HH:mm");
     } else if (
       messageDate.isSame(yesterday, "day") ||
       messageDate.year() === thisYear
     ) {
-      timeText = `${messageDate.format("DD")} th${messageDate.format("MM")}`; // Ví dụ: "26 th06"
+      timeText = `${messageDate.format("DD")} th${messageDate.format("MM")}`;
     } else {
       timeText = `${messageDate.format("DD")} th${messageDate.format(
         "MM"
-      )} ${messageDate.format("YYYY")}`; // Ví dụ: "15 th12 2024"
+      )} ${messageDate.format("YYYY")}`;
     }
+
+    const prefix = lastChat.senderId === authUser?.id ? "Bạn: " : "";
+
     return (
       <div
         style={{
@@ -160,6 +214,7 @@ const ManagerChat = () => {
             whiteSpace: "nowrap",
           }}
         >
+          {prefix}
           {lastChat.content}
         </span>
         <span style={{ color: "#888", marginLeft: 8 }}>{timeText}</span>
@@ -167,23 +222,41 @@ const ManagerChat = () => {
     );
   };
 
-  useSocketListener("message", (data: unknown) => {
-    const receivedMessage = data as Chat;
-    if (
-      selectedUser &&
-      ((receivedMessage.senderId === authUser?.id &&
-        receivedMessage.receiverId === selectedUser.id) ||
-        (receivedMessage.senderId === selectedUser.id &&
-          receivedMessage.receiverId === authUser?.id))
-    ) {
-      setChats((prev) => [
-        ...prev,
-        { ...receivedMessage, createdAt: new Date(receivedMessage.createdAt) },
-      ]);
-    }
-  });
+  const [lastSendTime, setLastSendTime] = useState<number | null>(null);
 
-  // Tải tất cả tin nhắn ban đầu khi trang load
+  // Effect để xử lý timeout độc lập
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isSending && lastSendTime) {
+      timeoutId = setTimeout(() => {
+        if (isSending && Date.now() - lastSendTime >= 1000) {
+          console.log(
+            "Timeout triggered, resetting isSending for temp ID:",
+            tempMessageId
+          );
+          setIsSending(false);
+          setTempMessageId(null);
+          if (tempMessageId) {
+            const tempMessage = chats.find((chat) => chat.id === tempMessageId);
+            if (tempMessage) {
+              setInitialChats((prevInitialChats) =>
+                [...prevInitialChats, tempMessage].sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
+              );
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isSending, lastSendTime, tempMessageId, chats]);
+
   useEffect(() => {
     if (!authUser) {
       setChats([]);
@@ -201,8 +274,8 @@ const ManagerChat = () => {
           ...chat,
           createdAt: new Date(chat.createdAt),
         }));
-        setInitialChats(allChats); // Lưu dữ liệu ban đầu
-        setChats(allChats); // Ban đầu, chats bằng initialChats
+        setInitialChats(allChats);
+        setChats(allChats);
       } catch {
         message.error("Không thể tải tin nhắn.");
       } finally {
@@ -212,7 +285,6 @@ const ManagerChat = () => {
     fetchInitialMessages();
   }, [authUser]);
 
-  // Cập nhật lại chats khi chọn user, chỉ cho Chat Details
   useEffect(() => {
     if (!authUser || !selectedUser) {
       setChats([]);
@@ -254,7 +326,6 @@ const ManagerChat = () => {
     scrollToBottom();
   }, [chats]);
 
-  // Lọc danh sách accounts dựa trên chat đã có, nhưng cho phép tìm kiếm tất cả khi search
   const filteredAccounts =
     accounts
       ?.filter(
