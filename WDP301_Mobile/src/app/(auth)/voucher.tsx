@@ -1,30 +1,42 @@
+import { useEffect, useState } from "react";
 import VoucherComponent from "@/components/account/user.voucher";
 import { FONTS } from "@/theme/typography";
-import { APP_COLOR } from "@/utils/constant";
+import { APP_COLOR, API_URL } from "@/utils/constant";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+
 const Voucher = () => {
-  const sampleData = [
-    {
-      id: 1,
-      code: "SUMMER25",
-      description: "Giảm giá 25%",
-      date: "01/06/2023",
-    },
-    {
-      id: 2,
-      code: "WINTER15",
-      description: "Giảm giá 15%",
-      date: "05/06/2023",
-    },
-    {
-      id: 3,
-      code: "SPRING10",
-      description: "Giảm giá 10%",
-      date: "10/06/2023",
-    },
-  ];
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        let userId = "";
+        if (token) {
+          const decoded: any = jwtDecode(token);
+          userId = decoded.id;
+        }
+        if (!userId) return setVouchers([]);
+        const res = await axios.get(
+          `${API_URL}/api/promotions/user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              accept: "*/*",
+            },
+          }
+        );
+        setVouchers(res.data);
+      } catch (e) {
+        setVouchers([]);
+      }
+    };
+    fetchVouchers();
+  }, []);
   return (
     <View style={styles.container}>
       <View
@@ -43,15 +55,18 @@ const Voucher = () => {
         <Text style={styles.text}>Mã ưu đãi của tôi</Text>
       </View>
       <FlatList
-        data={sampleData}
+        data={vouchers}
         renderItem={({ item }) => (
           <VoucherComponent
-            code={item.code}
-            description={item.description}
-            date={item.date}
+            code={item.name}
+            description={`Giảm ${item.discountAmount.toLocaleString()}đ`}
+            date={
+              item.endDate ? new Date(item.endDate).toLocaleDateString() : ""
+            }
+            promotionId={item.promotionId}
           />
         )}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.promotionId?.toString() || item.code}
       />
     </View>
   );

@@ -2,21 +2,29 @@ import axios from "axios";
 import { Platform } from "react-native";
 import { API_URL } from "./constant";
 
-export const customerRegisterAPI = (
+export const customerRegisterAPI = async (
   fullName: string,
   phone_number: string,
   email: string,
   password: string,
   date_of_birth: string
 ) => {
-  const url = `${API_URL}/api/auth/register`;
-  return axios.post(url, {
-    fullName,
-    email,
-    phone_number,
-    password,
-    date_of_birth,
-  });
+  return axios.post(
+    `${API_URL}/api/auth/register`,
+    {
+      fullName,
+      phone_number,
+      email,
+      password,
+      date_of_birth,
+    },
+    {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };
 export const verifyEmailCustomer = (email: string, otp: string) => {
   const url = `${API_URL}/api/auth/verify-otp`;

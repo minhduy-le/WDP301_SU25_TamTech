@@ -22,46 +22,48 @@ const styles = StyleSheet.create({
 });
 const handleSignUp = async (
   fullName: string,
-  phoneNumber: string,
+  phone_number: string,
   email: string,
   password: string,
   date_of_birth: string
 ) => {
+  console.log("handleSignUp called", {
+    fullName,
+    phone_number,
+    email,
+    password,
+    date_of_birth,
+  });
   try {
     const signUpResponse = await customerRegisterAPI(
       fullName,
-      phoneNumber,
+      phone_number,
       email,
       password,
       date_of_birth
     );
+    console.log(signUpResponse);
 
-    if (signUpResponse.config.data) {
-      Toast.show("Đăng ký thành công!", {
-        duration: Toast.durations.LONG,
-        position: Toast.positions.BOTTOM,
-        backgroundColor: APP_COLOR.ORANGE,
-      });
-      router.replace({
-        pathname: "/(auth)/verify",
-        params: { email: email },
-      });
-    } else {
-      throw new Error("Đăng ký thất bại. Vui lòng thử lại.");
-    }
+    Toast.show("Đăng ký thành công!", {
+      duration: Toast.durations.LONG,
+      backgroundColor: APP_COLOR.ORANGE,
+    });
+    router.replace({
+      pathname: "/(auth)/verify",
+      params: { email: email },
+    });
   } catch (error: any) {
-    console.log(
-      "Lỗi khi tạo mới người dùng:",
-      error.response?.data || error.message
-    );
-    Toast.show(
-      error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.",
-      {
-        duration: Toast.durations.LONG,
-        position: Toast.positions.BOTTOM,
-        backgroundColor: APP_COLOR.CANCEL,
-      }
-    );
+    let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (typeof error.response?.data === "string") {
+      errorMessage = error.response.data;
+    }
+    console.log("Sign up error:", errorMessage, error);
+    Toast.show(errorMessage, {
+      duration: Toast.durations.LONG,
+      backgroundColor: APP_COLOR.CANCEL,
+    });
   }
 };
 const CustomerSignUpPage = () => {
@@ -71,30 +73,15 @@ const CustomerSignUpPage = () => {
         validationSchema={CustomerSignUpSchema}
         initialValues={{
           fullName: "",
-          phoneNumber: "",
+          phone_number: "",
           email: "",
           date_of_birth: "",
           password: "",
           confirmPassword: "",
         }}
-        onSubmit={(values) => {
-          handleSignUp(
-            values.fullName,
-            values.phoneNumber,
-            values.email,
-            values.password,
-            values.date_of_birth
-          );
-        }}
+        onSubmit={() => {}}
       >
-        {({
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          values,
-          errors,
-          touched,
-        }) => (
+        {({ handleChange, handleBlur, values, errors, touched }) => (
           <View style={styles.container}>
             <View style={styles.itemContainer}>
               <Image
@@ -124,11 +111,11 @@ const CustomerSignUpPage = () => {
                 <ShareInput
                   placeholder="Số điện thoại"
                   placeholderTextColor={APP_COLOR.BROWN}
-                  onChangeText={handleChange("phoneNumber")}
-                  onBlur={handleBlur("phoneNumber")}
-                  value={values.phoneNumber}
-                  error={errors.phoneNumber}
-                  touched={touched.phoneNumber}
+                  onChangeText={handleChange("phone_number")}
+                  onBlur={handleBlur("phone_number")}
+                  value={values.phone_number}
+                  error={errors.phone_number}
+                  touched={touched.phone_number}
                 />
                 <ShareInput
                   placeholder="Email"
@@ -202,7 +189,15 @@ const CustomerSignUpPage = () => {
             </View>
             <ShareButton
               title="Đăng Ký với Khách"
-              onPress={handleSubmit}
+              onPress={() =>
+                handleSignUp(
+                  values.fullName,
+                  values.phone_number,
+                  values.email,
+                  values.password,
+                  values.date_of_birth
+                )
+              }
               textStyle={{
                 textTransform: "uppercase",
                 color: APP_COLOR.WHITE,
