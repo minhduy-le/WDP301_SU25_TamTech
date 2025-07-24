@@ -912,7 +912,7 @@ router.post("/", verifyToken, async (req, res) => {
  *     tags: [Products]
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: productId
  *         required: true
  *         schema:
  *           type: integer
@@ -1003,11 +1003,8 @@ router.post("/", verifyToken, async (req, res) => {
  *               type: string
  */
 router.get("/:id", async (req, res) => {
-  console.log("Full request params:", req.params);
-  console.log("Raw id from params:", req.params.id);
-  const productId = parseInt(req.params.id);
-  console.log("Parsed productId:", productId);
   try {
+    const productId = parseInt(req.params.id);
     const product = await productService.getProductById(productId);
     res.status(200).json({ product });
   } catch (error) {
