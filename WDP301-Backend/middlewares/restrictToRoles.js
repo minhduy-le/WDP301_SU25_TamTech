@@ -2,7 +2,7 @@ const restrictToRoles = (...allowedRoles) => {
   return (req, res, next) => {
     try {
       const userRole = req.userRole;
-      console.log("User role from token:", userRole); // Log the role for debugging
+      console.log("User role from token:", userRole);
 
       if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
@@ -13,7 +13,7 @@ const restrictToRoles = (...allowedRoles) => {
 
       next();
     } catch (error) {
-      console.error("Error in restrictToRoles:", error); // Log any errors
+      console.error("Error in restrictToRoles:", error);
       return res.status(500).json({
         message: "Internal server error",
         status: 500,

@@ -13,6 +13,10 @@ const ProductType = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   {
     tableName: "product_types",
