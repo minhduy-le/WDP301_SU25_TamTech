@@ -190,7 +190,7 @@ export const useBestSellerProducts = () => {
     queryKey: ["best-seller-products"],
     queryFn: async () => {
       const res = await axios.get(
-        "https://wdp301-su25.space/api/products/best-seller"
+        `${import.meta.env.VITE_API_URL}products/best-seller`
       );
       return res.data.products;
     },

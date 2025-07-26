@@ -97,7 +97,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(
-          `https://wdp301-su25.space/api/products/${productId}`
+          `${import.meta.env.VITE_API_URL}products/${productId}`
         );
         setProduct(res.data.product);
       } catch (err) {
@@ -110,7 +110,7 @@ const ProductDetail = () => {
     const fetchFeedbacks = async () => {
       try {
         const res = await axios.get(
-          `https://wdp301-su25.space/api/feedback/${productId}`
+          `${import.meta.env.VITE_API_URL}feedback/${productId}`
         );
         setFeedbacks(res.data.feedbacks);
       } catch (err) {
@@ -127,7 +127,7 @@ const ProductDetail = () => {
       if (!product) return;
       try {
         const res = await axios.get(
-          `https://wdp301-su25.space/api/products/type/${product.productTypeId}`
+          `${import.meta.env.VITE_API_URL}products/type/${product.productTypeId}`
         );
         // Exclude the current product
         setRelatedProducts(

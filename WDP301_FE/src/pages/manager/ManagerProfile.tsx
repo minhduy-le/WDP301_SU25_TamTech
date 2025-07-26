@@ -92,7 +92,7 @@ const ManagerProfile = () => {
       const token = localStorage.getItem("token");
       
       const response = await axios.post(
-        `https://wdp301-su25.space/api/auth/change-password`,
+        `${import.meta.env.VITE_API_URL}auth/change-password`,
         {
           oldPassword: values.currentPassword,
           newPassword: values.newPassword,
