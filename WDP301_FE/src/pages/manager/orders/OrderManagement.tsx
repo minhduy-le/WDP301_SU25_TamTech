@@ -71,7 +71,7 @@ const OrderManagement: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("https://wdp301-su25.space/api/orders", {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}orders`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

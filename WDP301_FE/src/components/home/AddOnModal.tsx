@@ -129,7 +129,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
       if (!categoryToFetch || !categoryToFetch.apiType) return;
       try {
         const response = await axios.get(
-          `https://wdp301-su25.space/api/products/type/${categoryToFetch.apiType}`,
+          `${import.meta.env.VITE_API_URL}products/type/${categoryToFetch.apiType}`,
         );
         const dataToUse = response.data.products as Product[];
         setModalAddonCategories((prev) => {

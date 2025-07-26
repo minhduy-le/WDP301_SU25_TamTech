@@ -53,22 +53,22 @@ const OurMenu: React.FC = () => {
           await Promise.all([
             mainType
               ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${mainType.productTypeId}`
+                  `${import.meta.env.VITE_API_URL}products/type/${mainType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             drinkType
               ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${drinkType.productTypeId}`
+                  `${import.meta.env.VITE_API_URL}products/type/${drinkType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             sideType
               ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${sideType.productTypeId}`
+                  `${import.meta.env.VITE_API_URL}products/type/${sideType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
             soupType
               ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${soupType.productTypeId}`
+                  `${import.meta.env.VITE_API_URL}products/type/${soupType.productTypeId}`
                 )
               : Promise.resolve({ data: { products: [] } }),
           ]);

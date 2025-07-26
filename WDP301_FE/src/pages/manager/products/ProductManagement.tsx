@@ -107,9 +107,9 @@ const ProductManagement: React.FC = () => {
     try {
       let response;
       if (typeId) {
-        response = await axios.get(`https://wdp301-su25.space/api/products/type/${typeId}`);
+        response = await axios.get(`${import.meta.env.VITE_API_URL}products/type/${typeId}`);
       } else {
-        response = await axios.get(`https://wdp301-su25.space/api/products?page=${page}`);
+        response = await axios.get(`${import.meta.env.VITE_API_URL}products?page=${page}`);
       }
       let productData: Product[] = [];
       let totalPagesFromApi = 1;
@@ -151,7 +151,7 @@ const ProductManagement: React.FC = () => {
       const response = await axios.get<
         | { data?: Material[]; materials?: Material[]; results?: Material[] }
         | Material[]
-      >("https://wdp301-su25.space/api/materials", {
+      >(`${import.meta.env.VITE_API_URL}materials`, {
         headers: {
           accept: "application/json",
           Authorization: token ? `Bearer ${token}` : "",
@@ -177,7 +177,7 @@ const ProductManagement: React.FC = () => {
   const createProductApiCall = async (payload: any) => {
     const token = localStorage.getItem("token");
     const response = await axios.post(
-      "https://wdp301-su25.space/api/products",
+      `${import.meta.env.VITE_API_URL}products`,
       payload,
       {
         headers: {
@@ -193,7 +193,7 @@ const ProductManagement: React.FC = () => {
   const updateProductApiCall = async (productId: number, payload: any) => {
     const token = localStorage.getItem("token");
     const response = await axios.put(
-      `https://wdp301-su25.space/api/products/${productId}`,
+      `${import.meta.env.VITE_API_URL}products/${productId}`,
       payload,
       {
         headers: {
@@ -209,7 +209,7 @@ const ProductManagement: React.FC = () => {
   const deleteProductApiCall = async (productId: number) => {
     const token = localStorage.getItem("token");
     const response = await axios.delete(
-      `https://wdp301-su25.space/api/products/${productId}`,
+      `${import.meta.env.VITE_API_URL}products/${productId}`,
       {
         headers: {
           accept: "application/json",
