@@ -10,13 +10,11 @@ import {
   BellOutlined,
   DownOutlined,
   TeamOutlined,
-  AuditOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./AdminSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
-import { MessageCircle } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -79,21 +77,6 @@ const AdminSidebar: React.FC = () => {
       key: "/admin/users",
       icon: <TeamOutlined />,
       label: "Quản lý người dùng",
-    },
-    {
-      key: "/admin/system-issues",
-      icon: <AuditOutlined />,
-      label: "Kiểm tra hệ thống",
-    },
-    {
-      key: "/admin/chat",
-      icon: <MessageCircle />,
-      label: "Chat",
-    },
-    {
-      key: "/admin/settings",
-      icon: <SettingOutlined />,
-      label: "Cài đặt",
     },
   ];
 
