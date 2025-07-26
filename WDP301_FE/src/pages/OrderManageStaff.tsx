@@ -20,7 +20,6 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-  // CarOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -160,23 +159,23 @@ const StaffOrderManagement = () => {
   ): { tagBg: string; tagText: string; iconColor?: string } => {
     switch (status) {
       case "Pending":
-        return { tagBg: "#fffbeb", tagText: "#92400e", iconColor: "#92400e" }; // amber-50, amber-800
+        return { tagBg: "#fffbeb", tagText: "#92400e", iconColor: "#92400e" };
       case "Paid":
-        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Approved":
-        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Preparing":
-        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Cooked":
-        return { tagBg: "#fcd34d", tagText: "#fff", iconColor: "#fff" }; // amber-300, white
+        return { tagBg: "#fcd34d", tagText: "#92400e", iconColor: "#92400e" };
       case "Delivering":
-        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" }; // amber-200, amber-800
+        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Delivered":
-        return { tagBg: "#fcd34d", tagText: "#fff", iconColor: "#fff" }; // amber-300, white
+        return { tagBg: "#fcd34d", tagText: "#92400e", iconColor: "#92400e" };
       case "Canceled":
-        return { tagBg: "#E57373", tagText: "#fff", iconColor: "#fff" }; // Giữ màu đỏ nhẹ cho hủy
+        return { tagBg: "#E57373", tagText: "#92400e", iconColor: "#92400e" };
       default:
-        return { tagBg: "#fffbeb", tagText: "#92400e" }; // amber-50, amber-800
+        return { tagBg: "#fffbeb", tagText: "#92400e" };
     }
   };
 
@@ -337,13 +336,13 @@ const StaffOrderManagement = () => {
                 setIsModalVisible(true);
               }}
               style={{
-                color: "#d97706", // amber-600
+                color: "#d97706",
                 fontWeight: 600,
                 padding: 0,
                 outline: "none",
                 boxShadow: "none",
                 border: "none",
-                background: "#fefce8", // amber-25
+                background: "#fefce8",
               }}
             />
           </Tooltip>
@@ -357,7 +356,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
                 }}
               >
                 <Button
@@ -365,7 +364,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
+                      style={{ fontSize: 16, color: "#d97706" }}
                     />
                   }
                   className="btn-action-status"
@@ -383,7 +382,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
                 }}
               >
                 <Button
@@ -391,7 +390,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <ClockCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
+                      style={{ fontSize: 16, color: "#d97706" }}
                     />
                   }
                   className="btn-action-status"
@@ -409,7 +408,7 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" }, // amber-300
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
                 }}
               >
                 <Button
@@ -417,7 +416,7 @@ const StaffOrderManagement = () => {
                   danger
                   icon={
                     <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }} // amber-600
+                      style={{ fontSize: 16, color: "#d97706" }}
                     />
                   }
                   className="btn-action-status"
@@ -451,7 +450,7 @@ const StaffOrderManagement = () => {
                   outline: "none",
                   boxShadow: "none",
                   border: "none",
-                  background: "#fefce8", // amber-25
+                  background: "#fefce8",
                 }}
               />
             </Tooltip>
@@ -478,7 +477,7 @@ const StaffOrderManagement = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "#fefce8", // amber-25
+        background: "#fefce8",
         padding: "20px 30px 30px 60px",
       }}
     >
@@ -489,11 +488,11 @@ const StaffOrderManagement = () => {
         }
         .order-table-staff .ant-table-thead > tr > th.ant-table-cell-fix-right,
         .order-table-staff .ant-table-thead > tr > th.ant-table-cell-fix-left {
-          background-color: #ffffff !important; // white
-          color: #92400e !important; // amber-800
+          background-color: #ffffff !important;
+          color: #92400e !important;
           font-weight: bold !important;
-          border-right: 1px solid #fde68a !important; // amber-200
-          border-bottom: 2px solid #fde68a !important; // amber-200
+          border-right: 1px solid #fde68a !important;
+          border-bottom: 2px solid #fde68a !important;
         }
         .order-table-staff .ant-table-thead > tr > th:last-child {
             border-right: none !important;
@@ -502,22 +501,22 @@ const StaffOrderManagement = () => {
            border-right: none !important;
         }
         .order-table-staff .ant-table-tbody > tr.even-row-order > td {
-          background-color: #ffffff; // white
-          color: #d97706; // amber-600
-          border-right: 1px solid #fde68a; // amber-200
-          border-bottom: 1px solid #fde68a; // amber-200
+          background-color: #ffffff;
+          color: #d97706;
+          border-right: 1px solid #fde68a;
+          border-bottom: 1px solid #fde68a;
         }
         .order-table-staff .ant-table-tbody > tr.odd-row-order > td {
-          background-color: #ffffff; // white
-          color: #d97706; // amber-600
-          border-right: 1px solid #fde68a; // amber-200
-          border-bottom: 1px solid #fde68a; // amber-200
+          background-color: #ffffff;
+          color: #d97706;
+          border-right: 1px solid #fde68a;
+          border-bottom: 1px solid #fde68a;
         }
         .order-table-staff .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) {
            border-right: none;
         }
         .order-table-staff .ant-table-tbody > tr:hover > td {
-          background-color: #fcd34d !important; // amber-300
+          background-color: #fcd34d !important;
         }
         .order-table-staff .ant-table-tbody > tr.even-row-order > td.ant-table-cell-fix-right,
         .order-table-staff .ant-table-tbody > tr.odd-row-order > td.ant-table-cell-fix-right,
@@ -525,13 +524,13 @@ const StaffOrderManagement = () => {
            background: inherit !important;
         }
         .order-table-staff .ant-table-column-sorters .ant-table-column-sorter {
-           color: #92400e !important; // amber-800
+           color: #92400e !important;
         }
         .order-table-staff .ant-table-filter-column .anticon-filter {
-           color: #92400e !important; // amber-800
+           color: #92400e !important;
         }
         .order-search .ant-input-outlined input::placeholder {
-           color: #d97706 !important; // amber-600
+           color: #d97706 !important;
         }
         .ant-descriptions-item-content .ant-table-small{
            border-radius: 8px;
@@ -543,7 +542,7 @@ const StaffOrderManagement = () => {
             outline: none;
             box-shadow: none;
             border: none;
-            background: #fefce8 !important; // amber-25
+            background: #fefce8 !important;
         }
         .modal-assign-shipper .ant-modal-body {
           background: none !important;
@@ -555,7 +554,7 @@ const StaffOrderManagement = () => {
         <h1
           style={{
             fontWeight: 800,
-            color: "#92400e", // amber-800
+            color: "#92400e",
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
@@ -565,11 +564,11 @@ const StaffOrderManagement = () => {
         </h1>
         <Card
           style={{
-            background: "#ffffff", // white
+            background: "#ffffff",
             borderRadius: 12,
-            boxShadow: "0 6px 16px rgba(146, 64, 14, 0.08)", // amber-800 với độ trong suốt
+            boxShadow: "0 6px 16px rgba(146, 64, 14, 0.08)",
             padding: "16px 24px",
-            border: `1px solid #fde68a`, // amber-200
+            border: `1px solid #fde68a`,
             marginBottom: 24,
           }}
         >
@@ -586,24 +585,24 @@ const StaffOrderManagement = () => {
             <Space wrap className="order-search">
               <Input
                 placeholder="Tìm theo ID, Tên khách..."
-                prefix={<SearchOutlined style={{ color: "#92400e" }} />} // amber-800
+                prefix={<SearchOutlined style={{ color: "#92400e" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{
                   width: 280,
                   borderRadius: 6,
-                  borderColor: "#fde68a", // amber-200
+                  borderColor: "#fde68a",
                   height: 32,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: "#fefce8", // amber-25
+                  background: "#fefce8",
                 }}
                 allowClear
               />
               <Select
                 value={statusFilter}
-                style={{ width: 200, borderRadius: 6, borderColor: "#fde68a" }} // amber-200
+                style={{ width: 200, borderRadius: 6, borderColor: "#fde68a" }}
                 onChange={(value) => setStatusFilter(value)}
               >
                 <Option value="all">Tất cả trạng thái</Option>
@@ -627,7 +626,7 @@ const StaffOrderManagement = () => {
             rowKey="id"
             style={{
               borderRadius: 8,
-              border: `1px solid #fde68a`, // amber-200
+              border: `1px solid #fde68a`,
               overflow: "hidden",
             }}
             rowClassName={(_, index) =>
@@ -641,7 +640,7 @@ const StaffOrderManagement = () => {
         <Modal
           title={
             <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
-              {" "}
+              Chi tiết đơn hàng
             </span>
           }
           open={isModalVisible}
@@ -650,12 +649,12 @@ const StaffOrderManagement = () => {
           width={1000}
           styles={{
             body: {
-              background: "#fefce8", // amber-25
+              background: "#fefce8",
               borderRadius: "0 0 12px 12px",
               padding: "24px",
             },
             header: {
-              borderBottom: `1px solid #fde68a`, // amber-200
+              borderBottom: `1px solid #fde68a`,
               paddingBottom: 16,
               marginBottom: 0,
             },
@@ -665,10 +664,10 @@ const StaffOrderManagement = () => {
           {selectedOrder && (
             <Card
               style={{
-                background: "#ffffff", // white
+                background: "#ffffff",
                 borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.08)", // amber-600 với độ trong suốt
-                border: `1px solid #fde68a`, // amber-200
+                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.08)",
+                border: `1px solid #fde68a`,
                 padding: 16,
               }}
             >
@@ -677,11 +676,11 @@ const StaffOrderManagement = () => {
                 column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}
                 size="default"
                 labelStyle={{
-                  color: "#92400e", // amber-800
+                  color: "#92400e",
                   fontWeight: 600,
-                  background: "#fefce8", // amber-25
+                  background: "#fefce8",
                 }}
-                contentStyle={{ color: "#d97706", background: "#ffffff" }} // amber-600, white
+                contentStyle={{ color: "#d97706", background: "#ffffff" }}
               >
                 <Descriptions.Item label="Mã đơn hàng">
                   {selectedOrder.orderId}
@@ -724,7 +723,7 @@ const StaffOrderManagement = () => {
                 <Descriptions.Item label="Tổng tiền">
                   <span
                     style={{
-                      color: "#d97706", // amber-600
+                      color: "#d97706",
                       fontWeight: "bold",
                       fontSize: "1.1em",
                     }}
@@ -740,44 +739,32 @@ const StaffOrderManagement = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Phí vận chuyển">
                   <span style={{ color: "#d97706" }}>
-                    {" "}
-                    // amber-600
                     {getFormattedPrice(selectedOrder.order_shipping_fee)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Giảm giá">
                   <span style={{ color: "#d97706" }}>
-                    {" "}
-                    // amber-600
                     {getFormattedPrice(selectedOrder.order_discount_value)}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Phương thức thanh toán">
                   <span style={{ color: "#d97706" }}>
-                    {" "}
-                    // amber-600
                     {selectedOrder.payment_method}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Địa chỉ giao hàng">
                   <span style={{ color: "#d97706" }}>
-                    {" "}
-                    // amber-600
                     {selectedOrder.order_address}
                   </span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Số điện thoại">
                   <span style={{ color: "#d97706" }}>
-                    {" "}
-                    // amber-600
                     {selectedOrder.phone_number}
                   </span>
                 </Descriptions.Item>
                 {selectedOrder.note && (
                   <Descriptions.Item label="Ghi chú" span={2}>
                     <span style={{ color: "#d97706" }}>
-                      {" "}
-                      // amber-600
                       {selectedOrder.note}
                     </span>
                   </Descriptions.Item>
@@ -792,11 +779,7 @@ const StaffOrderManagement = () => {
                         dataIndex: "name",
                         key: "name",
                         render: (text: string) => (
-                          <span style={{ color: "#d97706" }}>
-                            {" "}
-                            // amber-600
-                            {text}
-                          </span>
+                          <span style={{ color: "#d97706" }}>{text}</span>
                         ),
                       },
                       {
@@ -805,11 +788,7 @@ const StaffOrderManagement = () => {
                         key: "quantity",
                         align: "center" as const,
                         render: (text: number) => (
-                          <span style={{ color: "#d97706" }}>
-                            {" "}
-                            // amber-600
-                            {text}
-                          </span>
+                          <span style={{ color: "#d97706" }}>{text}</span>
                         ),
                       },
                       {
@@ -819,8 +798,6 @@ const StaffOrderManagement = () => {
                         align: "center" as const,
                         render: (price: number) => (
                           <span style={{ color: "#d97706" }}>
-                            {" "}
-                            // amber-600
                             {getFormattedPrice(price)}
                           </span>
                         ),
@@ -833,9 +810,7 @@ const StaffOrderManagement = () => {
                           _: any,
                           item: { quantity: number; price: number }
                         ) => (
-                          <span
-                            style={{ color: "#d97706", fontWeight: 500 }} // amber-600
-                          >
+                          <span style={{ color: "#d97706", fontWeight: 500 }}>
                             {(item.quantity * item.price).toLocaleString()}đ
                           </span>
                         ),
@@ -845,9 +820,9 @@ const StaffOrderManagement = () => {
                     rowKey="orderId"
                     size="small"
                     style={{
-                      background: "#ffffff", // white
+                      background: "#ffffff",
                       borderRadius: 8,
-                      border: `1px solid #fde68a`, // amber-200
+                      border: `1px solid #fde68a`,
                     }}
                   />
                 </Descriptions.Item>
@@ -859,8 +834,7 @@ const StaffOrderManagement = () => {
         <Modal
           title={
             <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
-              {" "}
-              // amber-600 Chọn Shipper Giao Hàng
+              Chọn Shipper Giao Hàng
             </span>
           }
           centered
@@ -872,8 +846,8 @@ const StaffOrderManagement = () => {
               onClick={() => setIsAssignModalVisible(false)}
               style={{
                 borderRadius: 6,
-                borderColor: "#fde68a", // amber-200
-                color: "#d97706", // amber-600
+                borderColor: "#fde68a",
+                color: "#d97706",
               }}
             >
               Hủy
@@ -888,8 +862,8 @@ const StaffOrderManagement = () => {
                 handleAssignShipper(currentOrderId, selectedShipperId)
               }
               style={{
-                background: "#fcd34d", // amber-300
-                borderColor: "#fcd34d", // amber-300
+                background: "#fcd34d",
+                borderColor: "#fcd34d",
                 borderRadius: 6,
               }}
             >
@@ -898,12 +872,12 @@ const StaffOrderManagement = () => {
           ]}
           styles={{
             body: {
-              background: "#fefce8", // amber-25
+              background: "#fefce8",
               borderRadius: "0 0 12px 12px",
               padding: "24px",
             },
             header: {
-              borderBottom: `1px solid #fde68a`, // amber-200
+              borderBottom: `1px solid #fde68a`,
               paddingBottom: 16,
               marginBottom: 0,
             },
@@ -915,8 +889,8 @@ const StaffOrderManagement = () => {
             placeholder="Chọn shipper"
             style={{
               width: "100%",
-              border: "#fde68a", // amber-200
-              background: "#ffffff", // white
+              border: "#fde68a",
+              background: "#ffffff",
             }}
             onChange={(value) => setSelectedShipperId(value)}
             loading={isShippersLoading}
