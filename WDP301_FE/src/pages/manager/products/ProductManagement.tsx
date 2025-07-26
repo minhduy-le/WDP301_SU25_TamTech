@@ -31,6 +31,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../config/firebase";
 import type { ColumnType } from "antd/es/table";
 import { useProductTypes } from "../../../hooks/productTypesApi";
+import ProductTypeManagement from "./ProductTypeManagement";
 const { Option } = Select;
 
 interface ProductType {
@@ -713,6 +714,7 @@ const ProductManagement: React.FC = () => {
             }}
           />
         </Card>
+        <ProductTypeManagement/>
         <Modal
           open={modalVisible}
           title={
