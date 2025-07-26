@@ -43,11 +43,17 @@ const ProductTypeManagement: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setProductTypes(res.data);
+  
+      const activeProductTypes = res.data.filter(
+        (item: ProductType & { isActive: boolean }) => item.isActive
+      );
+  
+      setProductTypes(activeProductTypes);
     } catch (error) {
       message.error("Không thể tải danh sách loại sản phẩm!");
     }
   };
+  
 
   const handleAdd = () => {
     setEditingType(null);
@@ -63,27 +69,42 @@ const ProductTypeManagement: React.FC = () => {
 
   const handleDelete = (record: ProductType) => {
     Modal.confirm({
-      title: `Bạn có chắc muốn xóa loại "${record.name}"?`,
-      content: "Hành động này không thể hoàn tác.",
+      title: `Xác nhận xóa loại "${record.name}"?`,
+      content: "Thao tác này sẽ ẩn loại sản phẩm khỏi hệ thống.",
       okText: "Xóa",
       okType: "danger",
       cancelText: "Hủy",
-      onOk: async () => {
+      async onOk() {
         try {
-          await axios.delete(`${API_URL}/${record.productTypeId}`, {
+          const response = await axios.delete(`${API_URL}/${record.productTypeId}`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           });
-          message.success(`Đã xóa loại sản phẩm "${record.name}"!`);
-          fetchProductTypes();
-        } catch (error) {
-          message.error("Không thể xóa loại sản phẩm.");
+  
+          if (response.status === 200) {
+            message.success(`Đã xóa loại sản phẩm "${record.name}"`);
+            fetchProductTypes(); 
+          }
+        } catch (error: any) {
+          if (axios.isAxiosError(error)) {
+            const status = error.response?.status;
+  
+            if (status === 400) {
+              message.error("Không thể xóa: Loại sản phẩm đang được sử dụng.");
+            } else if (status === 401) {
+              message.error("Bạn chưa đăng nhập. Vui lòng đăng nhập lại.");
+            } else {
+              message.error("Xóa thất bại. Vui lòng thử lại sau.");
+            }
+          } else {
+            message.error("Lỗi không xác định.");
+          }
         }
       },
     });
   };
-
+  
   const handleModalOk = async () => {
     setIsSubmitting(true);
     try {
@@ -113,15 +134,23 @@ const ProductTypeManagement: React.FC = () => {
         );
         message.success("Đã thêm loại sản phẩm mới!");
       }
+  
       fetchProductTypes();
       setIsModalVisible(false);
       form.resetFields();
-    } catch (error) {
-      message.error("Vui lòng nhập đầy đủ thông tin!");
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errMsg =
+          error.response.data?.message || "Lỗi không xác định từ máy chủ.";
+        message.error(errMsg);
+      } else {
+        message.error("Vui lòng nhập đầy đủ thông tin!");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   const productTypeMenu = (record: ProductType): MenuProps["items"] => [
     {
@@ -190,12 +219,13 @@ const ProductTypeManagement: React.FC = () => {
                 menu={{ items: productTypeMenu(type) }}
                 placement="bottomRight"
                 trigger={["click"]}
+                
               >
                 <Button
                   type="text"
                   icon={<MoreOutlined style={{ color: "#8D6E63" }} />}
                   size="small"
-                  style={{ position: "absolute", top: 8, right: 8 }}
+                  style={{ position: "absolute", top: 8, right: 8, outline: 'none', border: 'none' }}
                 />
               </Dropdown>
             </div>
