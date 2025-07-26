@@ -14,30 +14,25 @@ const getShippers = async () => {
 };
 
 const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
-  // Validate inputs
   if (!orderId || !shipperId || !orderDate) {
     throw new Error("Order ID, Shipper ID, and Order Date are required");
   }
 
-  // Validate date format
   const date = DateTime.fromFormat(orderDate, "MM-dd-yyyy");
   if (!date.isValid) {
     throw new Error("Invalid date format. Use MM-DD-YYYY");
   }
 
-  // Check if order exists
   const order = await Order.findByPk(orderId);
   if (!order) {
     throw new Error("Order not found");
   }
 
-  // Check if shipper exists and has role "Shipper"
   const shipper = await User.findByPk(shipperId);
   if (!shipper || shipper.role !== "Shipper") {
     throw new Error("Invalid shipper ID or user is not a shipper");
   }
 
-  // Check if shipper has a schedule for the specified order date
   const schedule = await Schedule.findOne({
     where: { dayOfWeek: date.toFormat("MM-dd-yyyy") },
     include: [
@@ -54,7 +49,6 @@ const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
     throw new Error(`Shipper has not registered a schedule for ${orderDate}`);
   }
 
-  // Update order with assignToShipperId
   order.assignToShipperId = shipperId;
   await order.save();
 
@@ -66,13 +60,11 @@ const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
 };
 
 const registerSchedule = async (shipperId, dayOfWeek) => {
-  // Validate user role
   const user = await User.findByPk(shipperId);
   if (!user || user.role !== "Shipper") {
     throw new Error("User is not a shipper");
   }
 
-  // Validate date format and ensure it's after today
   const date = DateTime.fromFormat(dayOfWeek, "MM-dd-yyyy");
   if (!date.isValid) {
     throw new Error("Invalid date format. Use MM-DD-YYYY");
@@ -82,10 +74,8 @@ const registerSchedule = async (shipperId, dayOfWeek) => {
     throw new Error("Date must be after today");
   }
 
-  // Create schedule
   const schedule = await Schedule.create({ dayOfWeek: date.toFormat("MM-dd-yyyy") });
 
-  // Associate schedule with shipper
   const scheduleShipper = await ScheduleShipper.create({
     scheduleId: schedule.scheduleId,
     shipperId,
@@ -100,19 +90,16 @@ const registerSchedule = async (shipperId, dayOfWeek) => {
 };
 
 const updateStartTime = async (shipperId, scheduleId) => {
-  // Validate user role
   const user = await User.findByPk(shipperId);
   if (!user || user.role !== "Shipper") {
     throw new Error("User is not a shipper");
   }
 
-  // Check if schedule exists
   const schedule = await Schedule.findByPk(scheduleId);
   if (!schedule) {
     throw new Error("Schedule not found");
   }
 
-  // Check if shipper is assigned to this schedule
   const scheduleShipper = await ScheduleShipper.findOne({
     where: { scheduleId, shipperId },
   });
@@ -120,7 +107,6 @@ const updateStartTime = async (shipperId, scheduleId) => {
     throw new Error("User is not assigned to this schedule");
   }
 
-  // Check if schedule already has start time or is completed
   if (schedule.startTime) {
     throw new Error("Start time is already set for this schedule");
   }
@@ -128,7 +114,6 @@ const updateStartTime = async (shipperId, scheduleId) => {
     throw new Error("Schedule already has an end time");
   }
 
-  // Set startTime to current time
   const currentTime = DateTime.now().toFormat("HH:mm");
   schedule.startTime = currentTime;
   await schedule.save();
@@ -141,19 +126,16 @@ const updateStartTime = async (shipperId, scheduleId) => {
 };
 
 const updateEndTime = async (shipperId, scheduleId) => {
-  // Validate user role
   const user = await User.findByPk(shipperId);
   if (!user || user.role !== "Shipper") {
     throw new Error("User is not a shipper");
   }
 
-  // Check if schedule exists
   const schedule = await Schedule.findByPk(scheduleId);
   if (!schedule) {
     throw new Error("Schedule not found");
   }
 
-  // Check if shipper is assigned to this schedule
   const scheduleShipper = await ScheduleShipper.findOne({
     where: { scheduleId, shipperId },
   });
@@ -161,7 +143,6 @@ const updateEndTime = async (shipperId, scheduleId) => {
     throw new Error("User is not assigned to this schedule");
   }
 
-  // Check if schedule already has end time or is completed
   if (schedule.endTime) {
     throw new Error("End time is already set for this schedule");
   }
@@ -169,7 +150,6 @@ const updateEndTime = async (shipperId, scheduleId) => {
     throw new Error("Start time must be set before end time");
   }
 
-  // Set endTime to current time
   const currentTime = DateTime.now().toFormat("HH:mm");
   schedule.endTime = currentTime;
   await schedule.save();
@@ -181,10 +161,39 @@ const updateEndTime = async (shipperId, scheduleId) => {
   };
 };
 
+const getShippersByDate = async () => {
+  const targetDate = DateTime.now().toFormat("MM-dd-yyyy");
+
+  const schedules = await Schedule.findAll({
+    where: { dayOfWeek: targetDate },
+    include: [
+      {
+        model: ScheduleShipper,
+        as: "ScheduleShippers",
+        include: [
+          {
+            model: User,
+            as: "Shipper",
+            where: { role: "Shipper" },
+            attributes: ["id", "fullName", "email", "phone_number"],
+          },
+        ],
+      },
+    ],
+  });
+
+  const shippers = schedules
+    .flatMap((schedule) => schedule.ScheduleShippers.map((ss) => ss.Shipper))
+    .filter((shipper) => shipper !== null);
+
+  return shippers;
+};
+
 module.exports = {
   getShippers,
   assignShipperToOrder,
   registerSchedule,
   updateStartTime,
   updateEndTime,
+  getShippersByDate,
 };

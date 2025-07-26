@@ -50,7 +50,7 @@ const AdminProfile: React.FC = () => {
         const id = user.id;
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `https://wdp301-su25.space/api/profiles/${id}`,
+          `${import.meta.env.VITE_API_URL}profiles/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const AdminProfile: React.FC = () => {
       const id = user.id;
       const token = localStorage.getItem("token");
       await axios.put(
-        `https://wdp301-su25.space/api/profiles/${id}`,
+        `${import.meta.env.VITE_API_URL}profiles/${id}`,
         newAdmin,
         {
           headers: {
@@ -118,7 +118,7 @@ const AdminProfile: React.FC = () => {
       const values = await passwordForm.validateFields();
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `https://wdp301-su25.space/api/auth/change-password`,
+        `${import.meta.env.VITE_API_URL}auth/change-password`,
         {
           oldPassword: values.oldPassword,
           newPassword: values.newPassword,

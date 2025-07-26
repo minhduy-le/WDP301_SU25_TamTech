@@ -37,7 +37,7 @@ const HeroSection = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `https://wdp301-su25.space/api/products/search?name=${encodeURIComponent(
+        `${import.meta.env.VITE_API_URL}products/search?name=${encodeURIComponent(
           value
         )}`
       );

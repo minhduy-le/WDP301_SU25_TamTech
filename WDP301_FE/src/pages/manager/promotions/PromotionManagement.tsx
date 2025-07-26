@@ -109,7 +109,7 @@ const PromotionManagement: React.FC = () => {
         return;
       }
       const response = await axios.get<ApiPromotion[]>(
-        "https://wdp301-su25.space/api/promotions",
+        `${import.meta.env.VITE_API_URL}promotions`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const mappedPromotions: Promotion[] = response.data.map((p) => {
@@ -143,7 +143,7 @@ const PromotionManagement: React.FC = () => {
   }, [fetchPromotions]);
   useEffect(() => {
     axios
-      .get("https://wdp301-su25.space/api/promotion-types", {
+      .get(`${import.meta.env.VITE_API_URL}promotion-types`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -157,7 +157,7 @@ const PromotionManagement: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `https://wdp301-su25.space/api/promotions/${promotionId}`,
+        `${import.meta.env.VITE_API_URL}promotions/${promotionId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       message.success("Đã ngừng hoạt động khuyến mãi thành công!");
@@ -229,13 +229,13 @@ const PromotionManagement: React.FC = () => {
     try {
       if (modalMode === "edit" && editingPromotion) {
         await axios.put(
-          `https://wdp301-su25.space/api/promotions/${editingPromotion.promotionId}`,
+          `${import.meta.env.VITE_API_URL}promotions/${editingPromotion.promotionId}`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         message.success("Cập nhật khuyến mãi thành công!");
       } else {
-        await axios.post("https://wdp301-su25.space/api/promotions", payload, {
+        await axios.post(`${import.meta.env.VITE_API_URL}promotions`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         message.success("Tạo khuyến mãi thành công!");

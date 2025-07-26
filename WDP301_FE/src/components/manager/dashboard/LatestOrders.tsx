@@ -18,7 +18,7 @@ const LatestOrders = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
-    axios.get('https://wdp301-su25.space/api/orders', {
+    axios.get(`${import.meta.env.VITE_API_URL}orders`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }

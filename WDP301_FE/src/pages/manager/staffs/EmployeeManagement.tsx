@@ -61,7 +61,7 @@ const fetchAccounts = async (): Promise<Account[]> => {
   if (!token) {
     throw new Error("No authentication token found");
   }
-  const res = await axios.get("https://wdp301-su25.space/api/accounts", {
+  const res = await axios.get(`${import.meta.env.VITE_API_URL}accounts`, {
     headers: {
       accept: "application/json",
       Authorization: `Bearer ${token}`,
@@ -91,7 +91,7 @@ const EmployeeManagement: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `https://wdp301-su25.space/api/accounts/${employeeId}`,
+        `${import.meta.env.VITE_API_URL}accounts/${employeeId}`,
         {
           headers: {
             accept: "application/json",

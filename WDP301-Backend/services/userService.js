@@ -12,7 +12,6 @@ const { auth, uploadFileToFirebase } = require("../config/firebase");
 const FcmToken = require("../models/fcmToken");
 const Promotion = require("../models/promotion");
 
-// Current date for date_of_birth validation
 const currentDate = new Date();
 
 const transporter = nodemailer.createTransport({
@@ -28,10 +27,9 @@ const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../template
 
 const userService = {
   async registerUser({ fullName, email, phone_number, password, date_of_birth }) {
-    // Combined validation for efficiency
     const errors = [];
-    if (!fullName || fullName.trim() === "" || fullName.length < 2 || fullName.length > 20) {
-      errors.push("Full name must be between 2 and 20 characters");
+    if (!fullName || fullName.trim() === "" || fullName.length < 2 || fullName.length > 30) {
+      errors.push("Full name must be between 2 and 30 characters");
     }
     if (!email || email.length > 100 || !validator.isEmail(email)) {
       errors.push("Email must be valid and not exceed 100 characters");
@@ -39,8 +37,8 @@ const userService = {
     if (!phone_number || phone_number.length > 12 || !/^\d{10,11}$/.test(phone_number.replace(/\D/g, ""))) {
       errors.push("Phone number must be 10 or 11 digits");
     }
-    if (!password || password.length < 6 || password.length > 250) {
-      errors.push("Password must be between 6 and 250 characters");
+    if (!password || password.length < 6 || password.length > 100) {
+      errors.push("Password must be between 6 and 100 characters");
     }
     if (date_of_birth) {
       const dob = new Date(date_of_birth);
@@ -52,7 +50,6 @@ const userService = {
       throw errors.join("; ");
     }
 
-    // Check for existing user
     const existingUser = await User.findOne({
       where: { [Op.or]: [{ email }, { phone_number }] },
       attributes: ["email", "phone_number"],
@@ -66,10 +63,9 @@ const userService = {
       }
     }
 
-    // Perform database operations in a transaction
     const transaction = await User.sequelize.transaction();
     let user;
-    let otp; // Declare otp here
+    let otp;
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
       user = await User.create(
@@ -78,10 +74,9 @@ const userService = {
       );
       await Information.create({ userId: user.id, address: null }, { transaction });
 
-      // Generate and store OTP
       otp = Math.floor(100000 + Math.random() * 900000).toString();
       const createdAt = new Date();
-      const expiredAt = new Date(createdAt.getTime() + 10 * 60 * 1000); // 10 minutes from now
+      const expiredAt = new Date(createdAt.getTime() + 10 * 60 * 1000);
       await VerifyOtp.create({ otp, createdAt, expiredAt, email }, { transaction });
 
       await transaction.commit();
@@ -91,7 +86,6 @@ const userService = {
       throw "Server error";
     }
 
-    // Handle email sending asynchronously
     const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
     const emailHtml = emailTemplate
       .replace("{fullName}", fullName)
@@ -101,7 +95,6 @@ const userService = {
         `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
       );
 
-    // Non-blocking email operation
     transporter
       .sendMail({
         from: `"Tấm Tech" <${process.env.EMAIL_USER}>`,
@@ -232,15 +225,6 @@ const userService = {
     if (!password) {
       throw "Password cannot be blank";
     }
-    if (!validator.isEmail(email)) {
-      throw "Email format is invalid";
-    }
-    if (password.length < 6) {
-      throw "Password must be at least 6 characters";
-    }
-    if (password.length > 250) {
-      throw "Password cannot exceed 250 characters";
-    }
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
@@ -256,7 +240,7 @@ const userService = {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw "Invalid credentials";
+      throw "Invalid password";
     }
 
     const token = jwt.sign(
@@ -266,7 +250,7 @@ const userService = {
         email: user.email,
         phone_number: user.phone_number,
         role: user.role || "user",
-        date_of_birth: user.date_of_birth, //them date_of_birth
+        date_of_birth: user.date_of_birth,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }

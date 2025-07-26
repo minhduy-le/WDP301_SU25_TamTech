@@ -174,7 +174,7 @@ export const useProductTypeSales = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://wdp301-su25.space/api/dashboard/product-type-sales', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}dashboard/product-type-sales`, {
           headers: {
             'accept': 'application/json',
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZnVsbE5hbWUiOiJUbyBWeSIsImVtYWlsIjoidnl0b3RyaWV1MTJhMTIxQGdtYWlsLmNvbSIsInBob25lX251bWJlciI6IjA3NzkwODQxMjciLCJyb2xlIjoiTWFuYWdlciIsImlhdCI6MTc1MDE3NDM2MCwiZXhwIjoxNzUwMTc3OTYwfQ.hsF1p3Z9qzfbZbsrGm9Kg5ovwXS-VRNprRs_g36_ae8'
