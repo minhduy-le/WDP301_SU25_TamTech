@@ -169,6 +169,47 @@ router.post("/register", verifyToken, async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/shippers/scheduled/currentDate:
+ *   get:
+ *     summary: Get list of shippers scheduled for today
+ *     description: Retrieve all shippers who have registered a schedule for the current date
+ *     tags: [Shippers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of scheduled shippers retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   fullName:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   phone_number:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/scheduled/currentDate", verifyToken, async (req, res, next) => {
+  try {
+    const shippers = await shipperService.getShippersByDate();
+    res.status(200).json(shippers);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/schedules/{scheduleId}/start-time:
  *   put:
  *     summary: Update start time for a schedule
