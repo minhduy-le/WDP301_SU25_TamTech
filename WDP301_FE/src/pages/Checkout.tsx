@@ -531,33 +531,8 @@ const Checkout = () => {
       </div>
       <Row gutter={16}>
         <Col span={12}>
-          <Card className="section-card">
+          <Card className="section-card" style={{ marginBottom: 0 }}>
             <Space direction="vertical" style={{ width: "100%" }}>
-              <div className="radio-group" style={{ display: "flex" }}>
-                <Title
-                  level={3}
-                  style={{
-                    margin: "0 25px 0 0",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                >
-                  Hình thức
-                </Title>
-                <Radio.Group defaultValue="delivery">
-                  <Radio
-                    value="delivery"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Giao hàng
-                  </Radio>
-                  <Radio
-                    value="pickup"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Dùng tại quán
-                  </Radio>
-                </Radio.Group>
-              </div>
               <Title
                 level={3}
                 style={{ fontFamily: "'Montserrat', sans-serif" }}

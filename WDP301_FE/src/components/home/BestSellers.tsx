@@ -75,11 +75,15 @@ const BestSellers: React.FC = () => {
           letterSpacing: "1px",
           marginTop: "0px",
           fontFamily: "'Montserrat', sans-serif",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
         }}
       >
         MÓN ĂN NỔI BẬT
         <svg
-          style={{ verticalAlign: "sub", marginLeft: "10px" }}
+          style={{ verticalAlign: "sub" }}
           xmlns="http://www.w3.org/2000/svg"
           width="65"
           height="65"
@@ -101,7 +105,7 @@ const BestSellers: React.FC = () => {
       </h2>
       <Row gutter={[32, 32]} justify="center">
         {products.map((product: any) => (
-          <Col key={product.id} xs={24} sm={12} md={8} lg={7}>
+          <Col key={product.productId} xs={24} sm={12} md={8} lg={7}>
             <Card
               style={{
                 borderRadius: 24,

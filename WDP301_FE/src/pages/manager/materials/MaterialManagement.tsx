@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Table,
   Space,
@@ -62,6 +62,17 @@ const MaterialManagement = () => {
     setIsDetailModalVisible(false);
     setSelectedMaterial(null);
   };
+
+  const filteredMaterials = useMemo(
+    () =>
+      materials?.filter((material) => {
+        const matchesSearch = material.name
+          .toLowerCase()
+          .includes(searchText.toLowerCase());
+        return matchesSearch;
+      }),
+    [materials, searchText]
+  );
 
   // --- HÀM XỬ LÝ MÃ VẠCH TỪ MÁY QUÉT ---
   const handleScan = useCallback(
@@ -330,7 +341,7 @@ const MaterialManagement = () => {
           <Table
             className="material-table"
             columns={columns}
-            dataSource={materials}
+            dataSource={filteredMaterials}
             loading={isMaterialLoading}
             rowKey="materialId"
             style={{
