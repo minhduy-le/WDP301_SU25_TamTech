@@ -8,6 +8,7 @@ const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middlewares/verifyToken");
 const materialService = require("../services/materialService");
+const restrictToRoles = require("../middlewares/restrictToRoles");
 
 /**
  * @swagger
@@ -72,7 +73,7 @@ const materialService = require("../services/materialService");
  *       500:
  *         description: Server error
  */
-router.post("/", verifyToken, async (req, res, next) => {
+router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res, next) => {
   try {
     const materialData = {
       name: req.body.name,
@@ -147,7 +148,7 @@ router.post("/", verifyToken, async (req, res, next) => {
  *       500:
  *         description: Server error
  */
-router.put("/:materialId/scan", verifyToken, async (req, res, next) => {
+router.put("/:materialId/scan", verifyToken, restrictToRoles("Manager"), async (req, res, next) => {
   try {
     const materialId = parseInt(req.params.materialId);
     const updatedMaterial = await materialService.increaseMaterialQuantity(materialId);
@@ -228,6 +229,166 @@ router.get("/", async (req, res, next) => {
     });
   } catch (error) {
     res.status(500).send("Internal server error");
+  }
+});
+
+/**
+ * @swagger
+ * /api/materials/{materialId}:
+ *   put:
+ *     summary: Update material name and/or quantity
+ *     tags: [Materials]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: materialId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Material name (optional)
+ *               quantity:
+ *                 type: integer
+ *                 description: Material quantity (optional)
+ *     responses:
+ *       200:
+ *         description: Material updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *                     storeId:
+ *                       type: integer
+ *                     barcode:
+ *                       type: string
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Quantity must be greater than 0 and less than 10000
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Material not found
+ *       500:
+ *         description: Server error
+ */
+router.put("/:materialId", verifyToken, restrictToRoles("Manager"), async (req, res, next) => {
+  try {
+    const materialId = parseInt(req.params.materialId);
+    const materialData = {
+      name: req.body.name,
+      quantity: req.body.quantity ? parseInt(req.body.quantity) : undefined,
+    };
+    console.log("Parsed material data:", materialData);
+    const updatedMaterial = await materialService.updateMaterial(materialId, materialData);
+    res.status(200).json({
+      status: 200,
+      message: "Material updated successfully",
+      data: updatedMaterial,
+    });
+  } catch (error) {
+    console.error("Caught error:", error, "Type:", typeof error, "Stack:", error.stack);
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else if (error.message && typeof error.message === "string") {
+      res.status(400).send(error.message);
+    } else {
+      res.status(500).send("Internal server error");
+    }
+  }
+});
+
+/**
+ * @swagger
+ * /api/materials/{materialId}:
+ *   delete:
+ *     summary: Deactivate a material (set isActive to false)
+ *     tags: [Materials]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: materialId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Material deactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                     isActive:
+ *                       type: boolean
+ *       400:
+ *         description: Invalid input or material referenced by active products
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Cannot delete material as it is referenced by active products
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Material not found
+ *       500:
+ *         description: Server error
+ */
+router.delete("/:materialId", verifyToken, restrictToRoles("Manager"), async (req, res, next) => {
+  try {
+    const materialId = parseInt(req.params.materialId);
+    const deletedMaterial = await materialService.deleteMaterial(materialId);
+    res.status(200).json({
+      status: 200,
+      message: "Material deactivated successfully",
+      data: deletedMaterial,
+    });
+  } catch (error) {
+    console.error("Caught error:", error, "Type:", typeof error, "Stack:", error.stack);
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else if (error.message && typeof error.message === "string") {
+      res.status(400).send(error.message);
+    } else {
+      res.status(500).send("Internal server error");
+    }
   }
 });
 

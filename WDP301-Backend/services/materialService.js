@@ -1,5 +1,7 @@
 const Material = require("../models/material");
+const Product = require("../models/product");
 const Store = require("../models/store");
+const ProductRecipe = require("../models/ProductRecipe");
 const { createCanvas } = require("canvas");
 const JsBarcode = require("jsbarcode");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -101,4 +103,76 @@ const increaseMaterialQuantity = async (materialId) => {
   }
 };
 
-module.exports = { createMaterial, getAllMaterials, increaseMaterialQuantity };
+const updateMaterial = async (materialId, materialData) => {
+  try {
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      throw "Material not found";
+    }
+
+    if (materialData.name && materialData.name.trim() === "") {
+      throw "Name cannot be blank";
+    }
+
+    if (materialData.quantity !== undefined) {
+      const quantity = parseInt(materialData.quantity);
+      if (isNaN(quantity) || quantity <= 0 || quantity >= 10000) {
+        throw "Quantity must be greater than 0 and less than 10000";
+      }
+      material.quantity = quantity;
+    }
+
+    if (materialData.name) {
+      material.name = materialData.name;
+    }
+
+    await material.save();
+    return {
+      materialId: material.materialId,
+      name: material.name,
+      quantity: material.quantity,
+      storeId: material.storeId,
+      barcode: material.barcode,
+    };
+  } catch (error) {
+    throw error.message || error;
+  }
+};
+
+const deleteMaterial = async (materialId) => {
+  try {
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      throw "Material not found";
+    }
+
+    const productRecipes = await ProductRecipe.findAll({
+      where: {
+        materialId: materialId,
+      },
+      include: [
+        {
+          model: Product,
+          as: "Product",
+          where: { isActive: true },
+          attributes: ["productId"],
+        },
+      ],
+    });
+
+    if (productRecipes.length > 0) {
+      throw "Cannot delete material as it is referenced by active product recipes";
+    }
+
+    material.isActive = false;
+    await material.save();
+    return {
+      materialId: material.materialId,
+      isActive: material.isActive,
+    };
+  } catch (error) {
+    throw error.message || error;
+  }
+};
+
+module.exports = { createMaterial, getAllMaterials, increaseMaterialQuantity, updateMaterial, deleteMaterial };

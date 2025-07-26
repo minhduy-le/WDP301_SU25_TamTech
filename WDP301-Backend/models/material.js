@@ -29,6 +29,11 @@ const Material = sequelize.define(
         key: "storeId",
       },
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     tableName: "materials",
