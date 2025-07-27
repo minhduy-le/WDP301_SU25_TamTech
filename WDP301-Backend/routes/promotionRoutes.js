@@ -1,11 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const promotionService = require("../services/promotionService");
-const PromotionType = require("../models/PromotionType");
 const { body, param, validationResult } = require("express-validator");
 const verifyToken = require("../middlewares/verifyToken");
-const restrictToRoles = require("../middlewares/restrictToRoles");
 
+// Validation middleware for create and update
 const promotionValidation = [
   body("name")
     .trim()
@@ -37,14 +36,7 @@ const promotionValidation = [
     .notEmpty()
     .withMessage("Promotion type ID is required")
     .isInt({ min: 1 })
-    .withMessage("Promotion type ID must be a positive integer")
-    .custom(async (value) => {
-      const promotionType = await PromotionType.findByPk(value);
-      if (!promotionType) {
-        throw new Error(`Promotion type with ID ${value} not found`);
-      }
-      return true;
-    }),
+    .withMessage("Promotion type ID must be a positive integer"),
   body("description")
     .optional()
     .trim()
@@ -93,6 +85,7 @@ const promotionValidation = [
     .withMessage("Maximum number of uses must be a positive integer"),
 ];
 
+// Middleware to handle validation errors
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -101,9 +94,11 @@ const validate = (req, res, next) => {
   next();
 };
 
+// Error handler middleware
 const handleError = (error, res) => {
   console.error("Error:", error);
 
+  // Validation errors
   if (
     error.message.includes("Promotion name is required") ||
     error.message.includes("Promotion code is required") ||
@@ -127,10 +122,12 @@ const handleError = (error, res) => {
     return res.status(400).send(error.message);
   }
 
+  // Not found errors
   if (error.message.includes("not found")) {
     return res.status(404).send(error.message);
   }
 
+  // Server errors
   return res.status(500).send(error.message);
 };
 
@@ -195,7 +192,7 @@ const handleError = (error, res) => {
  *       500:
  *         description: Server error
  */
-router.post("/", verifyToken, restrictToRoles("Manager"), promotionValidation, validate, async (req, res) => {
+router.post("/", verifyToken, promotionValidation, validate, async (req, res) => {
   try {
     const promotion = await promotionService.createPromotion({
       ...req.body,
@@ -394,7 +391,6 @@ router.get(
 router.put(
   "/:id",
   verifyToken,
-  restrictToRoles("Manager"),
   [param("id").isInt().withMessage("Invalid promotion ID"), ...promotionValidation],
   validate,
   async (req, res) => {
@@ -436,7 +432,6 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  restrictToRoles("Manager"),
   [param("id").isInt().withMessage("Invalid promotion ID")],
   validate,
   async (req, res) => {
