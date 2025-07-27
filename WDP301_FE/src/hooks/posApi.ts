@@ -132,6 +132,28 @@ export const usePOSApi = () => {
     },
     []
   )
+  
+  const getAllProducts = useCallback(async (): Promise<Product[]> => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No token found in localStorage')
+        return []
+      }
+
+      const response = await axios.get('/products', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          accept: 'application/json',
+        },
+      })
+
+      return response.data.products || []
+    } catch (error) {
+      console.error('Error fetching all products:', error)
+      return []
+    }
+  }, [])
 
   const createOrder = useCallback(
     async (orderData: Record<string, unknown>) => {
@@ -160,6 +182,7 @@ export const usePOSApi = () => {
     getLatestOrder,
     getProductTypes,
     getProductsByType,
+    getAllProducts,
     createOrder,
   }
 }
