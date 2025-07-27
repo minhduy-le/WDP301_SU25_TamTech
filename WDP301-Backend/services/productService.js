@@ -271,7 +271,7 @@ const getProductsByType = async (productTypeId) => {
       include: [
         [
           sequelize.literal(
-            `(SELECT CAST(IFNULL(AVG(rating)), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
           ),
           "averageRating",
         ],
