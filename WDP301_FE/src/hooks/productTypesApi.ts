@@ -4,11 +4,12 @@ import axiosInstance from "../config/axios";
 export interface ProductType {
   productTypeId: number;
   name: string;
+  isActive: boolean; 
 }
 
 const fetchProductTypes = async (): Promise<ProductType[]> => {
   const response = await axiosInstance.get<ProductType[]>("product-types");
-  return response.data;
+  return response.data.filter((type) => type.isActive);
 };
 
 export const useProductTypes = () => {
@@ -17,13 +18,3 @@ export const useProductTypes = () => {
     queryFn: fetchProductTypes,
   });
 };
-
-export const useCreateProductType = () => {
-  return useMutation({
-    mutationFn: async (newProduct: ProductType) => {
-      const response = await axiosInstance.post(`product-types`, newProduct);
-      return response.data;
-    },
-  });
-};
-
