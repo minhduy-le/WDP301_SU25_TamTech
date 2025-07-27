@@ -5,60 +5,79 @@ const Material = require("../models/material");
 const { Op } = require("sequelize");
 const ProductType = require("../models/productType");
 
-const validateProductData = (data) => {
+const validateProductData = async (data) => {
+  const errors = [];
   const { name, price, productTypeId, recipes, description, image } = data;
 
   if (!name || typeof name !== "string" || name.trim() === "") {
-    throw new Error("Name is required and must be a non-empty string");
+    errors.push("Name is required and must be a non-empty string");
   }
-  if (name.trim().length > 100) {
-    throw new Error("Name cannot exceed 100 characters");
+  if (name && name.trim().length > 100) {
+    errors.push("Name cannot exceed 100 characters");
   }
   if (description && (typeof description !== "string" || description.length > 1000)) {
-    throw new Error("Description must be a string and cannot exceed 1000 characters");
+    errors.push("Description must be a string and cannot exceed 1000 characters");
   }
-  if (typeof price !== "number" || price < 1000 || price > 100000) {
-    throw new Error("Price must be a number between 1000 and 1000000");
+  if (typeof price !== "number" || price < 1000 || price > 1000000) {
+    errors.push("Price must be a number between 1000 and 1000000");
   }
   if (!Number.isInteger(productTypeId) || productTypeId < 1) {
-    throw new Error("ProductTypeId must be a positive integer");
+    errors.push("ProductTypeId must be a positive integer");
+  } else {
+    const productType = await ProductType.findByPk(productTypeId);
+    if (!productType) {
+      errors.push(`ProductType with ID ${productTypeId} not found`);
+    }
   }
 
   if (image && typeof image === "string") {
     if (image.startsWith("http")) {
       const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
       if (!urlPattern.test(image)) {
-        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
+        errors.push("Image URL must have .jpg, .jpeg, or .png extension");
       }
     } else if (image.startsWith("data:image/")) {
       const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
       if (!base64Pattern.test(image)) {
-        throw new Error("Image must be in .jpg, .jpeg, or .png format");
+        errors.push("Image must be in .jpg, .jpeg, or .png format");
       }
     } else {
-      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+      errors.push("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
     }
   }
 
   if (recipes) {
     if (!Array.isArray(recipes)) {
-      throw new Error("Recipes must be an array");
-    }
-    for (const recipe of recipes) {
-      if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
-        throw new Error("Each recipe must have a valid materialId (positive integer)");
+      errors.push("Recipes must be an array");
+    } else {
+      for (const recipe of recipes) {
+        if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+          errors.push(`Each recipe must have a valid materialId (positive integer): ${recipe.materialId}`);
+        } else {
+          const material = await Material.findByPk(recipe.materialId);
+          if (!material) {
+            errors.push(`Material with ID ${recipe.materialId} not found`);
+          } else if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+            errors.push(`Each recipe must have a valid quantity (positive integer): ${recipe.quantity}`);
+          } else if (material.quantity < recipe.quantity) {
+            errors.push(
+              `Insufficient quantity for material ID ${recipe.materialId}: available ${material.quantity}, required ${recipe.quantity}`
+            );
+          }
+        }
       }
-      if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
-        throw new Error("Each recipe must have a valid quantity (positive integer)");
-      }
     }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("; "));
   }
 };
 
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
-  validateProductData({ name, price, productTypeId, recipes, description, image });
+  await validateProductData({ name, price, productTypeId, recipes, description, image });
 
   const transaction = await sequelize.transaction();
 
@@ -69,15 +88,6 @@ const createProduct = async (productData) => {
     });
     if (existingProduct) {
       throw new Error("Product name already exists");
-    }
-
-    if (recipes.length > 0) {
-      for (const recipe of recipes) {
-        const material = await Material.findByPk(recipe.materialId, { transaction });
-        if (!material) {
-          throw new Error(`Material with ID ${recipe.materialId} not found`);
-        }
-      }
     }
 
     const product = await Product.create(
@@ -196,69 +206,77 @@ const updateProduct = async (productId, updateData) => {
     throw new Error("ProductId must be a positive integer");
   }
 
-  const { name, description, price, image, productTypeId } = updateData;
-  if (name !== undefined && (typeof name !== "string" || name.trim() === "" || name.trim().length > 100)) {
-    throw new Error("Name must be a non-empty string and cannot exceed 100 characters");
-  }
-  if (description !== undefined && (typeof description !== "string" || description.length > 1000)) {
-    throw new Error("Description must be a string and cannot exceed 1000 characters");
-  }
-  if (price !== undefined && (typeof price !== "number" || price < 1000 || price > 1000000)) {
-    throw new Error("Price must be a number between 1,000 and 1,000,000");
-  }
-  if (productTypeId !== undefined && (!Number.isInteger(productTypeId) || productTypeId < 1)) {
-    throw new Error("ProductTypeId must be a positive integer");
-  }
+  const { name, description, price, image, productTypeId, recipes } = updateData;
 
-  if (image !== undefined && image && typeof image === "string") {
-    if (image.startsWith("http")) {
-      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-      if (!urlPattern.test(image)) {
-        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
-      }
-    } else if (image.startsWith("data:image/")) {
-      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-      if (!base64Pattern.test(image)) {
-        throw new Error("Image must be in .jpg, .jpeg, or .png format");
-      }
-    } else {
-      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+  // Validate dữ liệu đầu vào
+  await validateProductData({ name, description, price, image, productTypeId, recipes }, true);
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const product = await Product.findByPk(productId, { transaction });
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or inactive");
     }
-  }
 
-  const product = await Product.findByPk(productId);
-  if (!product || !product.isActive) {
-    throw new Error("Product not found or inactive");
-  }
+    // Kiểm tra trùng lặp tên nếu name được cung cấp
+    if (name !== undefined) {
+      const existingProduct = await Product.findOne({
+        where: {
+          name: name.trim(),
+          productId: { [Op.ne]: productId },
+          isActive: true,
+        },
+        transaction,
+      });
+      if (existingProduct) {
+        throw new Error("Product name already exists");
+      }
+    }
 
-  if (name !== undefined) {
-    const existingProduct = await Product.findOne({
-      where: {
-        name: name.trim(),
-        productId: { [Op.ne]: productId },
-        isActive: true,
+    // Cập nhật thông tin sản phẩm
+    await product.update(
+      {
+        name: name ? name.trim() : product.name,
+        description: description !== undefined ? (description ? description.trim() : null) : product.description,
+        price: price !== undefined ? price : product.price,
+        image: image !== undefined ? image : product.image,
+        productTypeId: productTypeId !== undefined ? productTypeId : product.productTypeId,
       },
-    });
-    if (existingProduct) {
-      throw new Error("Product name already exists");
+      { transaction }
+    );
+
+    // Cập nhật recipes nếu được cung cấp
+    if (recipes !== undefined && Array.isArray(recipes)) {
+      // Xóa các recipes hiện tại
+      await ProductRecipe.destroy({ where: { productId }, transaction });
+
+      // Thêm các recipes mới
+      for (const recipe of recipes) {
+        await ProductRecipe.create(
+          {
+            productId,
+            materialId: recipe.materialId,
+            quantity: recipe.quantity,
+          },
+          { transaction }
+        );
+      }
     }
+
+    await transaction.commit();
+
+    return await Product.findByPk(productId, {
+      include: [
+        { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+        { model: require("../models/productType"), as: "ProductType" },
+        { model: require("../models/store"), as: "Store" },
+      ],
+    });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  await product.update({
-    name: name ? name.trim() : product.name,
-    description: description !== undefined ? (description ? description.trim() : null) : product.description,
-    price: price !== undefined ? price : product.price,
-    image: image || product.image,
-    productTypeId: productTypeId || product.productTypeId,
-  });
-
-  return await Product.findByPk(productId, {
-    include: [
-      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-      { model: require("../models/productType"), as: "ProductType" },
-      { model: require("../models/store"), as: "Store" },
-    ],
-  });
 };
 
 const softDeleteProduct = async (productId) => {
