@@ -68,6 +68,7 @@ interface Promotion {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  minOrderAmount: number;
   promotionTypeId: number;
   maxNumberOfUses: number;
 }
@@ -126,6 +127,7 @@ const PromotionManagement: React.FC = () => {
           maxNumberOfUses: p.maxNumberOfUses,
           isActive: p.isActive,
           discountValue: p.discountAmount,
+          minOrderAmount: p.minOrderAmount,
           discountType: type ? type.name : "",
           promotionTypeId: p.promotionTypeId,
         };
@@ -246,16 +248,10 @@ const PromotionManagement: React.FC = () => {
       fetchPromotions();
     } catch (err: any) {
       console.error("Failed to submit form:", err);
-  
-      // Hiển thị lỗi chi tiết từ BE nếu có
       let errorMessage = "Đã xảy ra lỗi.";
-  
-      // Nếu có `message` là string đơn
       if (err?.response?.data?.message) {
         errorMessage = err.response.data.message;
       }
-  
-      // Nếu có mảng lỗi trong `errors`
       else if (Array.isArray(err?.response?.data?.errors)) {
         errorMessage = err.response.data.errors.join(", ");
       }
@@ -669,6 +665,9 @@ const PromotionManagement: React.FC = () => {
                 )}
                 <Descriptions.Item label="Giá trị giảm giá">
                   {selectedPromotion.discountValue.toLocaleString()}đ
+                </Descriptions.Item>
+                <Descriptions.Item label="Giá trị đơn hàng tối thiểu">
+                  {selectedPromotion.minOrderAmount.toLocaleString()}đ
                 </Descriptions.Item>
                 <Descriptions.Item label="Số lượt sử dụng tối đa">
                   {selectedPromotion.maxNumberOfUses}
