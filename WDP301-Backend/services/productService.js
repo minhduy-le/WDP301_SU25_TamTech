@@ -5,48 +5,68 @@ const Material = require("../models/material");
 const { Op } = require("sequelize");
 const ProductType = require("../models/productType");
 
-const validateProductData = async (data) => {
+const validateProductData = async (data, isUpdate = false) => {
   const errors = [];
   const { name, price, productTypeId, recipes, description, image } = data;
 
-  if (!name || typeof name !== "string" || name.trim() === "") {
-    errors.push("Name is required and must be a non-empty string");
+  if (name !== undefined) {
+    if (typeof name !== "string" || name.trim() === "") {
+      errors.push("Name must be a non-empty string");
+    } else if (name.trim().length > 1000) {
+      errors.push("Name cannot exceed product name length limit");
+    }
+  } else if (!isUpdate) {
+    errors.push("Name is required");
   }
-  if (name && name.trim().length > 100) {
-    errors.push("Name cannot exceed 100 characters");
-  }
-  if (description && (typeof description !== "string" || description.length > 1000)) {
-    errors.push("Description must be a string and cannot exceed 1000 characters");
-  }
-  if (typeof price !== "number" || price < 1000 || price > 1000000) {
-    errors.push("Price must be a number between 1000 and 1000000");
-  }
-  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
-    errors.push("ProductTypeId must be a positive integer");
-  } else {
-    const productType = await ProductType.findByPk(productTypeId);
-    if (!productType) {
-      errors.push(`ProductType with ID ${productTypeId} not found`);
+
+  if (description !== undefined) {
+    if (typeof description !== "string" || description.length > 1000) {
+      errors.push("Description must be a string and cannot exceed description length limit");
     }
   }
 
-  if (image && typeof image === "string") {
-    if (image.startsWith("http")) {
-      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-      if (!urlPattern.test(image)) {
-        errors.push("Image URL must have .jpg, .jpeg, or .png extension");
-      }
-    } else if (image.startsWith("data:image/")) {
-      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-      if (!base64Pattern.test(image)) {
-        errors.push("Image must be in .jpg, .jpeg, or .png format");
-      }
+  if (price !== undefined) {
+    if (typeof price !== "number" || price < 1000 || price > 1000000) {
+      errors.push("Price must be a number between 1000 and 1000000");
+    }
+  } else if (!isUpdate) {
+    errors.push("Price is required");
+  }
+
+  if (productTypeId !== undefined) {
+    if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+      errors.push("ProductTypeId must be a positive integer");
     } else {
-      errors.push("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+      const productType = await ProductType.findByPk(productTypeId);
+      if (!productType) {
+        errors.push(`ProductType with ID ${productTypeId} not found`);
+      }
+    }
+  } else if (!isUpdate) {
+    errors.push("ProductTypeId is required");
+  }
+
+  if (image !== undefined && image !== null) {
+    if (typeof image !== "string") {
+      errors.push("Image must be a string");
+    } else if (image) {
+      if (image.startsWith("http")) {
+        const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
+        if (!urlPattern.test(image)) {
+          errors.push("Image URL must have .jpg, .jpeg, or .png extension");
+        }
+      } else if (image.startsWith("data:image/")) {
+        const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
+        if (!base64Pattern.test(image)) {
+          errors.push("Image must be in .jpg, .jpeg, or .png format");
+        }
+      } else {
+        errors.push("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+      }
     }
   }
 
-  if (recipes) {
+  if (recipes !== undefined) {
     if (!Array.isArray(recipes)) {
       errors.push("Recipes must be an array");
     } else {
@@ -77,7 +97,7 @@ const validateProductData = async (data) => {
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
-  await validateProductData({ name, price, productTypeId, recipes, description, image });
+  await validateProductData({ name, description, price, image, productTypeId, recipes });
 
   const transaction = await sequelize.transaction();
 
@@ -100,20 +120,18 @@ const createProduct = async (productData) => {
         createBy,
         storeId,
       },
-      { transaction }
+      { transaction: transaction }
     );
 
-    if (recipes.length > 0) {
-      for (const recipe of recipes) {
-        await ProductRecipe.create(
-          {
-            productId: product.productId,
-            materialId: recipe.materialId,
-            quantity: recipe.quantity,
-          },
-          { transaction }
-        );
-      }
+    for (const recipe of recipes) {
+      await ProductRecipe.create(
+        {
+          productId: product.productId,
+          materialId: recipe.materialId,
+          quantity: recipe.quantity,
+        },
+        { transaction }
+      );
     }
 
     await transaction.commit();
@@ -130,77 +148,6 @@ const createProduct = async (productData) => {
   }
 };
 
-const getProducts = async ({ page, limit, offset }) => {
-  if (!Number.isInteger(page) || page < 1) {
-    throw new Error("Page must be a positive integer");
-  }
-  if (!Number.isInteger(limit) || limit < 1) {
-    throw new Error("Limit must be a positive integer");
-  }
-  if (!Number.isInteger(offset) || offset < 0) {
-    throw new Error("Offset must be a non-negative integer");
-  }
-
-  // Lấy tổng số sản phẩm đang hoạt động để tính toán phân trang
-  const totalCount = await Product.count({ where: { isActive: true } });
-
-  // Lấy danh sách sản phẩm đã phân trang
-  const products = await Product.findAll({
-    where: { isActive: true },
-    limit,
-    offset,
-    order: [["price", "DESC"]],
-    attributes: {
-      include: [
-        [
-          // Thay đổi DECIMAL(10, 2) thành DECIMAL(10, 1)
-          sequelize.literal(
-            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
-          ),
-          "averageRating",
-        ],
-      ],
-    },
-    include: [
-      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-      { model: require("../models/productType"), as: "ProductType" },
-      { model: require("../models/store"), as: "Store" },
-    ],
-  });
-
-  return {
-    products: products,
-    totalPages: Math.ceil(totalCount / limit),
-  };
-};
-
-const getProductsByType = async (productTypeId) => {
-  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
-    throw new Error("ProductTypeId must be a positive integer");
-  }
-
-  const products = await Product.findAll({
-    where: { productTypeId, isActive: true },
-    attributes: {
-      include: [
-        [
-          sequelize.literal(
-            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
-          ),
-          "averageRating",
-        ],
-      ],
-    },
-    include: [
-      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-      { model: require("../models/productType"), as: "ProductType" },
-      { model: require("../models/store"), as: "Store" },
-    ],
-  });
-
-  return products;
-};
-
 const updateProduct = async (productId, updateData) => {
   if (!Number.isInteger(productId) || productId < 1) {
     throw new Error("ProductId must be a positive integer");
@@ -208,7 +155,6 @@ const updateProduct = async (productId, updateData) => {
 
   const { name, description, price, image, productTypeId, recipes } = updateData;
 
-  // Validate dữ liệu đầu vào
   await validateProductData({ name, description, price, image, productTypeId, recipes }, true);
 
   const transaction = await sequelize.transaction();
@@ -219,7 +165,6 @@ const updateProduct = async (productId, updateData) => {
       throw new Error("Product not found or inactive");
     }
 
-    // Kiểm tra trùng lặp tên nếu name được cung cấp
     if (name !== undefined) {
       const existingProduct = await Product.findOne({
         where: {
@@ -234,7 +179,6 @@ const updateProduct = async (productId, updateData) => {
       }
     }
 
-    // Cập nhật thông tin sản phẩm
     await product.update(
       {
         name: name ? name.trim() : product.name,
@@ -246,12 +190,8 @@ const updateProduct = async (productId, updateData) => {
       { transaction }
     );
 
-    // Cập nhật recipes nếu được cung cấp
     if (recipes !== undefined && Array.isArray(recipes)) {
-      // Xóa các recipes hiện tại
       await ProductRecipe.destroy({ where: { productId }, transaction });
-
-      // Thêm các recipes mới
       for (const recipe of recipes) {
         await ProductRecipe.create(
           {
@@ -277,6 +217,74 @@ const updateProduct = async (productId, updateData) => {
     await transaction.rollback();
     throw error;
   }
+};
+
+const getProducts = async ({ page, limit, offset }) => {
+  if (!Number.isInteger(page) || page < 1) {
+    throw new Error("Page must be a positive integer");
+  }
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new Error("Limit must be a positive integer");
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error("Offset must be a non-negative integer");
+  }
+
+  const totalCount = await Product.count({ where: { isActive: true } });
+
+  const products = await Product.findAll({
+    where: { isActive: true },
+    limit,
+    offset,
+    order: [["price", "DESC"]],
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+  });
+
+  return {
+    products,
+    totalPages: Math.ceil(totalCount / limit),
+  };
+};
+
+const getProductsByType = async (productTypeId) => {
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const products = await Product.findAll({
+    where: { productTypeId, isActive: true },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating)), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+  });
+
+  return products;
 };
 
 const softDeleteProduct = async (productId) => {
@@ -334,7 +342,7 @@ const getBestSellerProducts = async () => {
       },
     ],
     attributes: ["productId", "name", "description", "price", "image"],
-    group: ["Product.productId"],
+    group: ["Product.productId", "ProductType.productTypeId"],
     order: [["productTypeId", "ASC"]],
   });
 

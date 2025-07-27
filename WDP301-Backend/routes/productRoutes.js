@@ -6,12 +6,44 @@ const { uploadImageToFirebase } = require("../config/firebase");
 const axios = require("axios");
 const restrictToRoles = require("../middlewares/restrictToRoles");
 
-// Define specific routes before generic :id route
+const validateImage = async (image) => {
+  if (!image.match(/^(https:\/\/|data:image\/)/)) {
+    throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
+  }
+  let imageBuffer;
+  const fileName = `product_${Date.now()}.jpg`;
+
+  if (image.startsWith("http")) {
+    const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
+    if (!urlPattern.test(image)) {
+      throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
+    }
+    const response = await axios.get(image, { responseType: "arraybuffer" });
+    if (response.status !== 200) {
+      throw new Error("Failed to fetch image from URL");
+    }
+    imageBuffer = Buffer.from(response.data, "binary");
+  } else if (image.startsWith("data:image/")) {
+    const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
+    if (!base64Pattern.test(image)) {
+      throw new Error("Image must be in .jpg, .jpeg, or .png format");
+    }
+    const base64Data = image.split(",")[1];
+    if (!base64Data) {
+      throw new Error("Invalid base64 image data");
+    }
+    imageBuffer = Buffer.from(base64Data, "base64");
+  }
+
+  return { imageBuffer, fileName };
+};
+
 /**
  * @swagger
  * /api/products/search-by-type-name:
  *   get:
  *     summary: Search products by exact product type name
+ *     description: Retrieves a list of active products matching the exact product type name provided.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -89,16 +121,25 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *       400:
  *         description: Invalid or mismatched product type name
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Product type name must match exactly or is required
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Product type name must match exactly or is required
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/search-by-type-name", async (req, res) => {
   try {
@@ -110,7 +151,7 @@ router.get("/search-by-type-name", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error searching products by type name:", error);
-    res.status(error.message.includes("Product type name") ? 400 : 500).send(error.message);
+    res.status(error.message.includes("Product type name") ? 400 : 500).json({ error: error.message });
   }
 });
 
@@ -119,6 +160,7 @@ router.get("/search-by-type-name", async (req, res) => {
  * /api/products/search-by-name-and-type:
  *   get:
  *     summary: Search products by partial name and product type ID
+ *     description: Retrieves a list of active products matching the partial product name and specified product type ID.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -192,18 +234,28 @@ router.get("/search-by-type-name", async (req, res) => {
  *       400:
  *         description: Invalid search term or product type ID
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *               examples:
- *                 invalidName: { value: "Search term must be a non-empty string" }
- *                 invalidTypeId: { value: "ProductTypeId must be a positive integer" }
+ *                 invalidName:
+ *                   value: { error: "Search term must be a non-empty string" }
+ *                 invalidTypeId:
+ *                   value: { error: "ProductTypeId must be a positive integer" }
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/search-by-name-and-type", async (req, res) => {
   try {
@@ -215,7 +267,7 @@ router.get("/search-by-name-and-type", async (req, res) => {
     console.error("Error searching products by name and type:", error);
     res
       .status(error.message.includes("Search term") || error.message.includes("ProductTypeId") ? 400 : 500)
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
@@ -224,6 +276,7 @@ router.get("/search-by-name-and-type", async (req, res) => {
  * /api/products/search-by-name-and-type-name:
  *   get:
  *     summary: Search products by partial product name and exact product type name
+ *     description: Retrieves a list of active products matching the partial product name and exact product type name.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -297,18 +350,28 @@ router.get("/search-by-name-and-type", async (req, res) => {
  *       400:
  *         description: Invalid search term or product type name
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *               examples:
- *                 invalidName: { value: "Search term must be a non-empty string" }
- *                 invalidTypeName: { value: "Product type name must match exactly or is required" }
+ *                 invalidName:
+ *                   value: { error: "Search term must be a non-empty string" }
+ *                 invalidTypeName:
+ *                   value: { error: "Product type name must match exactly or is required" }
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/search-by-name-and-type-name", async (req, res) => {
   try {
@@ -325,7 +388,7 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
     console.error("Error searching products by name and type name:", error);
     res
       .status(error.message.includes("Search term") || error.message.includes("Product type name") ? 400 : 500)
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
@@ -334,6 +397,7 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
  * /api/products/best-seller:
  *   get:
  *     summary: Get best seller products based on order items
+ *     description: Retrieves a list of best-selling active products based on order items, filtered by specific product types.
  *     tags: [Products]
  *     responses:
  *       200:
@@ -368,9 +432,14 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/best-seller", async (req, res) => {
   try {
@@ -378,7 +447,7 @@ router.get("/best-seller", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving best seller products:", error);
-    res.status(500).send(error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -387,6 +456,7 @@ router.get("/best-seller", async (req, res) => {
  * /api/products/search:
  *   get:
  *     summary: Search products by name (partial match)
+ *     description: Retrieves a list of active products whose names partially match the provided search term.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -453,16 +523,25 @@ router.get("/best-seller", async (req, res) => {
  *       400:
  *         description: Missing or invalid search term
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Search term must be a non-empty string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Search term must be a non-empty string
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/search", async (req, res) => {
   try {
@@ -471,7 +550,7 @@ router.get("/search", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error searching products:", error);
-    res.status(error.message.includes("Search term") ? 400 : 500).send(error.message);
+    res.status(error.message.includes("Search term") ? 400 : 500).json({ error: error.message });
   }
 });
 
@@ -480,6 +559,7 @@ router.get("/search", async (req, res) => {
  * /api/products/type/{productTypeId}:
  *   get:
  *     summary: Get all products by product type ID
+ *     description: Retrieves a list of active products belonging to the specified product type ID, including average ratings.
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -525,7 +605,7 @@ router.get("/search", async (req, res) => {
  *                         type: boolean
  *                       averageRating:
  *                         type: number
- *                         description: Xếp hạng trung bình của sản phẩm (0 nếu chưa có)
+ *                         description: Average rating of the product (0 if no ratings)
  *                         example: 4.5
  *                       ProductType:
  *                         type: object
@@ -561,16 +641,25 @@ router.get("/search", async (req, res) => {
  *       400:
  *         description: Invalid product type ID
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: ProductTypeId must be a positive integer
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: ProductTypeId must be a positive integer
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/type/:productTypeId", async (req, res) => {
   try {
@@ -579,7 +668,7 @@ router.get("/type/:productTypeId", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving products by type:", error);
-    res.status(error.message.includes("ProductTypeId") ? 400 : 500).send(error.message);
+    res.status(error.message.includes("ProductTypeId") ? 400 : 500).json({ error: error.message });
   }
 });
 
@@ -588,6 +677,7 @@ router.get("/type/:productTypeId", async (req, res) => {
  * /api/products:
  *   get:
  *     summary: Get products with pagination, sort by price descending, and include average rating
+ *     description: Retrieves a paginated list of active products, sorted by price in descending order, including average ratings.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -634,7 +724,7 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                       averageRating:
  *                         type: number
  *                         description: Average rating of the product (0 if no ratings)
- *                         example: 4.50
+ *                         example: 4.5
  *                       ProductType:
  *                         type: object
  *                         properties:
@@ -673,16 +763,25 @@ router.get("/type/:productTypeId", async (req, res) => {
  *       400:
  *         description: Invalid page number
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Page must be a positive integer
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Page must be a positive integer
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/", async (req, res) => {
   try {
@@ -700,7 +799,7 @@ router.get("/", async (req, res) => {
           ? 400
           : 500
       )
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
@@ -709,6 +808,7 @@ router.get("/", async (req, res) => {
  * /api/products:
  *   post:
  *     summary: Create a new product with optional recipes
+ *     description: Creates a new product with the provided details and optional recipes. Requires Manager role. Image can be a URL or base64 string.
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -728,25 +828,30 @@ router.get("/", async (req, res) => {
  *                 minLength: 1
  *                 maxLength: 100
  *                 example: string
+ *                 description: Product name
  *               description:
  *                 type: string
  *                 maxLength: 1000
  *                 example: string
+ *                 description: Product description (optional)
  *               price:
  *                 type: number
  *                 minimum: 1000
  *                 maximum: 1000000
- *                 example: 0
+ *                 example: 10000
+ *                 description: Product price in VND
  *               image:
  *                 type: string
  *                 example: string
- *                 description: Must be a valid URL ending with .jpg, .jpeg, or .png, or base64 string with supported format
+ *                 description: Image URL (.jpg, .jpeg, .png) or base64 string (optional)
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
+ *                 description: Product type ID
  *               recipes:
  *                 type: array
+ *                 description: List of recipes for the product (optional)
  *                 items:
  *                   type: object
  *                   required:
@@ -757,10 +862,12 @@ router.get("/", async (req, res) => {
  *                       type: integer
  *                       minimum: 1
  *                       example: 1
+ *                       description: Material ID
  *                     quantity:
  *                       type: integer
  *                       minimum: 1
  *                       example: 1
+ *                       description: Quantity of material required
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -825,29 +932,51 @@ router.get("/", async (req, res) => {
  *                               storeId:
  *                                 type: integer
  *       400:
- *         description: Invalid input
+ *         description: Invalid input data
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *               examples:
- *                 missingFields: { value: "Name is required and must be a non-empty string" }
- *                 invalidPrice: { value: "Price must be a number between 1,000 and 1,000,000" }
- *                 invalidImage: { value: "Image URL must have .jpg, .jpeg, or .png extension" }
- *                 invalidRecipes: { value: "Each recipe must have a valid materialId and quantity" }
- *                 materialNotFound: { value: "Material with ID 5 not found" }
+ *                 missingFields:
+ *                   value: { error: "Name is required and must be a non-empty string" }
+ *                 invalidPrice:
+ *                   value: { error: "Price must be a number between 1000 and 1000000" }
+ *                 invalidImage:
+ *                   value: { error: "Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format" }
+ *                 invalidProductType:
+ *                   value: { error: "ProductType with ID 10 not found" }
+ *                 invalidMaterial:
+ *                   value: { error: "Material with ID 5 not found" }
+ *                 insufficientQuantity:
+ *                   value: { error: "Insufficient quantity for material ID 1: available 5, required 10" }
+ *                 duplicateName:
+ *                   value: { error: "Product name already exists" }
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing or invalid token, or insufficient role)
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Unauthorized
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
   try {
@@ -856,19 +985,7 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
 
     let imageUrl = null;
     if (image) {
-      let imageBuffer;
-      const fileName = `product_${Date.now()}.jpg`;
-
-      if (image.startsWith("http")) {
-        const response = await axios.get(image, { responseType: "arraybuffer" });
-        if (response.status !== 200) {
-          throw new Error("Failed to fetch image from URL");
-        }
-        imageBuffer = Buffer.from(response.data, "binary");
-      } else {
-        imageBuffer = Buffer.from(image.split(",")[1], "base64");
-      }
-
+      const { imageBuffer, fileName } = await validateImage(image);
       imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
     }
 
@@ -902,7 +1019,7 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
           ? 400
           : 500
       )
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
@@ -911,10 +1028,11 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
  * /api/products/{id}:
  *   get:
  *     summary: Get a product by ID
+ *     description: Retrieves details of an active product by its ID, including associated recipes and product type.
  *     tags: [Products]
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: id
  *         required: true
  *         schema:
  *           type: integer
@@ -986,23 +1104,36 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
  *       400:
  *         description: Invalid product ID
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: ProductId must be a positive integer
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: ProductId must be a positive integer
  *       404:
- *         description: Product not found
+ *         description: Product not found or inactive
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Product not found or inactive
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Product not found or inactive
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -1013,7 +1144,7 @@ router.get("/:id", async (req, res) => {
     console.error("Error retrieving product:", error);
     res
       .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
@@ -1045,12 +1176,12 @@ router.get("/:id", async (req, res) => {
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 100
- *                 example: string
+ *                 example: Updated Chocolate Cake
  *                 description: Product name (optional)
  *               description:
  *                 type: string
  *                 maxLength: 1000
- *                 example: string
+ *                 example: Updated description
  *                 description: Product description (optional)
  *               price:
  *                 type: number
@@ -1060,7 +1191,7 @@ router.get("/:id", async (req, res) => {
  *                 description: Product price in VND (optional)
  *               image:
  *                 type: string
- *                 example: string
+ *                 example: https://example.com/updated-image.jpg
  *                 description: Image URL (.jpg, .jpeg, .png), base64 string, or null to remove image (optional)
  *               productTypeId:
  *                 type: integer
@@ -1216,34 +1347,7 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => 
 
     let imageUrl = null;
     if (image !== undefined && image !== null) {
-      if (!image.match(/^(https:\/\/|data:image\/)/)) {
-        throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
-      }
-      let imageBuffer;
-      const fileName = `product_${Date.now()}.jpg`;
-
-      if (image.startsWith("http")) {
-        const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-        if (!urlPattern.test(image)) {
-          throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
-        }
-        const response = await axios.get(image, { responseType: "arraybuffer" });
-        if (response.status !== 200) {
-          throw new Error("Failed to fetch image from URL");
-        }
-        imageBuffer = Buffer.from(response.data, "binary");
-      } else if (image.startsWith("data:image/")) {
-        const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-        if (!base64Pattern.test(image)) {
-          throw new Error("Image must be in .jpg, .jpeg, or .png format");
-        }
-        const base64Data = image.split(",")[1];
-        if (!base64Data) {
-          throw new Error("Invalid base64 image data");
-        }
-        imageBuffer = Buffer.from(base64Data, "base64");
-      }
-
+      const { imageBuffer, fileName } = await validateImage(image);
       imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
     }
 
@@ -1286,6 +1390,7 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => 
  * /api/products/{id}:
  *   delete:
  *     summary: Soft delete a product by setting isActive to false
+ *     description: Marks a product as inactive (soft delete) by setting isActive to false. Requires Manager role.
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -1311,40 +1416,58 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => 
  *       400:
  *         description: Invalid product ID
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: ProductId must be a positive integer
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: ProductId must be a positive integer
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized (missing or invalid token, or insufficient role)
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Unauthorized
  *       404:
- *         description: Product not found
+ *         description: Product not found or inactive
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Product not found or inactive
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Product not found or inactive
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *               example:
+ *                 error: Internal server error
  */
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     await productService.softDeleteProduct(productId);
     res.status(200).json({ message: "Product soft deleted successfully" });
   } catch (error) {
-    console.error("Error soft deleting product:", error);
+    console.error("Error deleting product:", error);
     res
       .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
-      .send(error.message);
+      .json({ error: error.message });
   }
 });
 
