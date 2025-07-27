@@ -18,6 +18,8 @@ import {
   EyeOutlined,
   PlusOutlined,
   FireOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
 import {
@@ -25,6 +27,9 @@ import {
   type MaterialDto,
   useCreateMaterials,
   useIncreaseMaterialQuantity,
+  useUpdateMaterial,
+  useDeleteMaterial,
+  type UpdateMaterialDto,
 } from "../../../hooks/materialsApi";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -34,14 +39,19 @@ const MaterialManagement = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
     null
   );
-  const [form] = Form.useForm();
+  const [addForm] = Form.useForm<MaterialDto>();
+  const [editForm] = Form.useForm<UpdateMaterialDto>();
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
   const queryClient = useQueryClient();
   const { mutate: createMaterial, isPending: isCreating } =
     useCreateMaterials();
+  const { mutate: updateMaterial, isPending: isUpdating } = useUpdateMaterial();
+  const { mutate: deleteMaterial, isPending: isDeleting } = useDeleteMaterial();
   const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
   // --- STYLING CONSTANTS ---
@@ -63,6 +73,62 @@ const MaterialManagement = () => {
     setSelectedMaterial(null);
   };
 
+  const handleOpenEditModal = (record: MaterialDto) => {
+    setSelectedMaterial(record);
+    editForm.setFieldsValue({
+      name: record.name,
+      quantity: record.quantity,
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalVisible(false);
+    editForm.resetFields();
+    setSelectedMaterial(null);
+  };
+
+  const handleOpenDeleteModal = (record: MaterialDto) => {
+    setSelectedMaterial(record);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalVisible(false);
+    setSelectedMaterial(null);
+  };
+
+  const handleEdit = (values: UpdateMaterialDto) => {
+    if (!selectedMaterial?.materialId) return;
+    updateMaterial(
+      { materialId: selectedMaterial.materialId, data: values },
+      {
+        onSuccess: () => {
+          message.success("Cập nhật nguyên liệu thành công!");
+          handleCloseEditModal();
+          queryClient.invalidateQueries({ queryKey: ["materials"] });
+        },
+        onError: (error) => {
+          message.error(error.message || "Cập nhật thất bại!");
+        },
+      }
+    );
+  };
+
+  const handleDelete = (materialId: number | undefined) => {
+    if (!materialId) return;
+    deleteMaterial(materialId, {
+      onSuccess: () => {
+        message.success("Xóa nguyên liệu thành công!");
+        handleCloseDeleteModal();
+        queryClient.invalidateQueries({ queryKey: ["materials"] });
+      },
+      onError: (error) => {
+        message.error(error.message || "Xóa thất bại!");
+      },
+    });
+  };
+
   const filteredMaterials = useMemo(
     () =>
       materials?.filter((material) => {
@@ -77,7 +143,6 @@ const MaterialManagement = () => {
   // --- HÀM XỬ LÝ MÃ VẠCH TỪ MÁY QUÉT ---
   const handleScan = useCallback(
     (scannedCode: string) => {
-      // Chỉ xử lý nếu có một nguyên liệu đang được chọn (modal đang mở)
       if (!selectedMaterial) {
         return;
       }
@@ -125,7 +190,6 @@ const MaterialManagement = () => {
           }
         );
       } else {
-        // Thông báo lỗi nếu quét sai mã
         message.error("Mã vạch không khớp với nguyên liệu đang xem!", 3);
       }
     },
@@ -134,7 +198,6 @@ const MaterialManagement = () => {
 
   // --- HOOK LẮNG NGHE SỰ KIỆN TỪ MÁY QUÉT (KEYBOARD) ---
   useEffect(() => {
-    // Chỉ lắng nghe khi modal chi tiết đang mở
     if (!isDetailModalVisible) {
       return;
     }
@@ -167,7 +230,6 @@ const MaterialManagement = () => {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    // Dọn dẹp listener khi component unmount hoặc modal đóng
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       if (timeoutId) {
@@ -215,12 +277,27 @@ const MaterialManagement = () => {
             <Button
               type="primary"
               ghost
-              icon={<EyeOutlined />}
+              icon={<EyeOutlined style={{ color: "#D97B41", fontSize: 17 }} />}
               onClick={() => handleOpenDetailModal(record)}
-              style={{ color: "#D97B41", borderColor: "#D97B41" }}
-            >
-              Chi tiết
-            </Button>
+              style={{ outline: "none", boxShadow: "none", border: "none" }}
+            />
+          </Tooltip>
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              type="text"
+              icon={<EditOutlined style={{ color: "#A05A2C", fontSize: 17 }} />}
+              onClick={() => handleOpenEditModal(record)}
+              style={{ outline: "none", boxShadow: "none", border: "none" }}
+            />
+          </Tooltip>
+          <Tooltip title="Xóa">
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined style={{ fontSize: 17 }} />}
+              onClick={() => handleOpenDeleteModal(record)}
+              style={{ outline: "none", boxShadow: "none", border: "none" }}
+            />
           </Tooltip>
         </Space>
       ),
@@ -228,18 +305,27 @@ const MaterialManagement = () => {
   ];
 
   const handleAddMaterial = () => {
-    form
+    addForm
       .validateFields()
       .then((values) => {
         createMaterial(values, {
           onSuccess: () => {
             message.success("Tạo nguyên liệu thành công!");
             setIsAddModalVisible(false);
-            form.resetFields();
+            addForm.resetFields();
             queryClient.invalidateQueries({ queryKey: ["materials"] });
           },
-          onError: (error: any) => {
-            message.error(error.message || "Tạo nguyên liệu thất bại!");
+          onError: (error) => {
+            const errorMessage = (error as unknown as { responseValue: string })
+              .responseValue;
+            if (
+              errorMessage ===
+              "Quantity must be greater than 0 and less than 10000"
+            ) {
+              message.error("Số lượng phải lớn hơn 0 và nhỏ hơn 10000");
+            } else {
+              message.error(errorMessage);
+            }
           },
         });
       })
@@ -257,7 +343,6 @@ const MaterialManagement = () => {
       }}
     >
       <style>{`
-        /* Your CSS styles remain the same */
         .ant-table-thead > tr > th { background-color: ${headerBgColor} !important; color: ${headerColor} !important; font-weight: bold !important; border-right: 1px solid ${borderColor} !important; border-bottom: 2px solid ${tableBorderColor} !important; }
         .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { border-right: none !important; }
         .promo-table .ant-table-tbody > tr.even-row-promo > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
@@ -417,7 +502,6 @@ const MaterialManagement = () => {
           )}
         </Modal>
 
-        {/* Add Material Modal */}
         <Modal
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
@@ -427,7 +511,7 @@ const MaterialManagement = () => {
           open={isAddModalVisible}
           onCancel={() => {
             setIsAddModalVisible(false);
-            form.resetFields();
+            addForm.resetFields();
           }}
           centered
           footer={[
@@ -435,7 +519,7 @@ const MaterialManagement = () => {
               key="cancel"
               onClick={() => {
                 setIsAddModalVisible(false);
-                form.resetFields();
+                addForm.resetFields();
               }}
             >
               Hủy
@@ -453,7 +537,7 @@ const MaterialManagement = () => {
           width={500}
         >
           <Form
-            form={form}
+            form={addForm}
             name="addMaterialForm"
             layout="vertical"
             onFinish={handleAddMaterial}
@@ -474,10 +558,10 @@ const MaterialManagement = () => {
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
                   validator: (_, value) =>
-                    value >= 0
+                    value > 0 && value < 10000
                       ? Promise.resolve()
                       : Promise.reject(
-                          new Error("Số lượng phải lớn hơn hoặc bằng 0!")
+                          new Error("Số lượng phải lớn hơn 0 và nhỏ hơn 10000")
                         ),
                 },
               ]}
@@ -485,6 +569,102 @@ const MaterialManagement = () => {
               <Input type="number" placeholder="Nhập số lượng" />
             </Form.Item>
           </Form>
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Chỉnh sửa nguyên liệu
+            </span>
+          }
+          open={isEditModalVisible}
+          onCancel={handleCloseEditModal}
+          centered
+          footer={[
+            <Button key="cancel" onClick={handleCloseEditModal}>
+              Hủy
+            </Button>,
+            <Button
+              key="save"
+              type="primary"
+              onClick={() => editForm.submit()}
+              loading={isUpdating}
+              style={{ background: "#D97B41", borderColor: "#D97B41" }}
+            >
+              Lưu
+            </Button>,
+          ]}
+          width={500}
+        >
+          <Form<UpdateMaterialDto>
+            form={editForm}
+            name="editMaterialForm"
+            layout="vertical"
+            onFinish={handleEdit}
+            initialValues={
+              selectedMaterial
+                ? {
+                    name: selectedMaterial.name,
+                    quantity: selectedMaterial.quantity,
+                  }
+                : undefined
+            }
+          >
+            <Form.Item
+              name="name"
+              label="Tên nguyên liệu"
+              rules={[
+                { required: true, message: "Vui lòng nhập tên nguyên liệu!" },
+              ]}
+            >
+              <Input placeholder="Nhập tên nguyên liệu" />
+            </Form.Item>
+            <Form.Item
+              name="quantity"
+              label="Số lượng"
+              rules={[
+                { required: true, message: "Vui lòng nhập số lượng!" },
+                {
+                  validator: (_, value) =>
+                    value > 0 && value < 10000
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error("Số lượng phải lớn hơn 0 và nhỏ hơn 10000")
+                        ),
+                },
+              ]}
+            >
+              <Input type="number" placeholder="Nhập số lượng" />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Xác nhận xóa
+            </span>
+          }
+          open={isDeleteModalVisible}
+          onCancel={handleCloseDeleteModal}
+          centered
+          footer={[
+            <Button key="cancel" onClick={handleCloseDeleteModal}>
+              Hủy
+            </Button>,
+            <Button
+              key="delete"
+              type="primary"
+              danger
+              onClick={() => handleDelete(selectedMaterial?.materialId)}
+              loading={isDeleting}
+            >
+              Xóa
+            </Button>,
+          ]}
+          width={400}
+        >
+          <p>Bạn có chắc chắn muốn xóa nguyên liệu này không?</p>
         </Modal>
       </div>
     </div>
