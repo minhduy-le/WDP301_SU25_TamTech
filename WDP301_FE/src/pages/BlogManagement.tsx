@@ -535,9 +535,9 @@ const BlogManagement = () => {
             <Form.Item
               name="image"
               label="Hình ảnh URL"
-              rules={[
-                { required: true, message: "Vui lòng nhập URL hình ảnh!" },
-              ]}
+              // rules={[
+              //   { required: true, message: "Vui lòng nhập URL hình ảnh!" },
+              // ]}
             >
               <Input
                 placeholder="Nhập URL hình ảnh"
@@ -613,9 +613,9 @@ const BlogManagement = () => {
             <Form.Item
               name="image"
               label="Hình ảnh URL"
-              rules={[
-                { required: true, message: "Vui lòng nhập URL hình ảnh!" },
-              ]}
+              // rules={[
+              //   { required: true, message: "Vui lòng nhập URL hình ảnh!" },
+              // ]}
             >
               <Input
                 placeholder="Nhập URL hình ảnh"
