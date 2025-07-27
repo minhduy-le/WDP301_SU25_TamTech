@@ -17,7 +17,7 @@ import POSSuccess from '../components/pos/POSSuccess'
 import type { Promotion } from '../hooks/promotionApi'
 
 export const POSPage: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<string>('1') // default to first productTypeId as string
+  const [activeCategory, setActiveCategory] = useState<string>('all') 
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([])
   const [orderNumber, setOrderNumber] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,7 +36,7 @@ export const POSPage: React.FC = () => {
   const [promotionCode, setPromotionCode] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
-  const { getProductsByType } = usePOSApi()
+  const { getProductsByType, getAllProducts } = usePOSApi()
   const [showSuccess, setShowSuccess] = useState(false)
   const [successOrderId, setSuccessOrderId] = useState<string | undefined>(
     undefined
@@ -44,11 +44,16 @@ export const POSPage: React.FC = () => {
 
   const fetchProducts = useCallback(async () => {
     if (!activeCategory) return
-
+  
     setLoading(true)
     try {
       console.log('Fetching products for category:', activeCategory)
-      const data = await getProductsByType(activeCategory)
+  
+      const data =
+        activeCategory === 'all'
+          ? await getAllProducts()
+          : await getProductsByType(activeCategory)
+  
       console.log('Products fetched:', data)
       setProducts(data)
     } catch (error) {
@@ -57,7 +62,7 @@ export const POSPage: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [activeCategory, getProductsByType])
+  }, [activeCategory, getProductsByType, getAllProducts])
 
   useEffect(() => {
     console.log('useEffect triggered - activeCategory:', activeCategory)
@@ -169,7 +174,6 @@ export const POSPage: React.FC = () => {
     setShowFilters(false)
   }
 
-  // Lọc sản phẩm theo search và price filter
   const filteredItems = products.filter((item) => {
     // Search filter
     const matchesSearch =
@@ -220,7 +224,6 @@ export const POSPage: React.FC = () => {
         onCreateNewOrder={() => {
           setShowSuccess(false)
           setCurrentOrder([])
-          // Có thể reset thêm các state khác nếu cần
         }}
       />
     )
@@ -243,9 +246,7 @@ export const POSPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-amber-25 flex">
-      {/* Main Menu Section */}
       <div className="flex-1 flex flex-col">
-        {/* Category Tabs */}
         <div className="bg-white border-b border-amber-200 px-6 py-4 space-y-4">
           <SearchAndFilters
             searchTerm={searchTerm}
