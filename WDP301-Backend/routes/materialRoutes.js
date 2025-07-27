@@ -34,6 +34,10 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *               quantity:
  *                 type: integer
  *                 description: Material quantity
+ *               expireDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Expiry date of the material (optional)
  *     responses:
  *       201:
  *         description: Material created successfully
@@ -61,6 +65,13 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *                     barcode:
  *                       type: string
  *                       description: URL of the generated barcode image
+ *                     expireDate:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Expiry date of the material
+ *                     isExpired:
+ *                       type: boolean
+ *                       description: Whether the material is expired
  *       400:
  *         description: Invalid input
  *         content:
@@ -78,10 +89,10 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res, next)
     const materialData = {
       name: req.body.name,
       quantity: parseInt(req.body.quantity),
+      expireDate: req.body.expireDate,
     };
 
-    console.log("Parsed quantity:", materialData.quantity);
-    console.log("Material data:", materialData);
+    console.log("Parsed material data:", materialData);
 
     const newMaterial = await materialService.createMaterial(materialData);
     res.status(201).json({
@@ -205,6 +216,13 @@ router.put("/:materialId/scan", verifyToken, restrictToRoles("Manager"), async (
  *                       barcode:
  *                         type: string
  *                         description: URL of the generated barcode image
+ *                       expireDate:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Expiry date of the material
+ *                       isExpired:
+ *                         type: boolean
+ *                         description: Whether the material is expired
  *                       Store:
  *                         type: object
  *                         properties:
@@ -236,7 +254,7 @@ router.get("/", async (req, res, next) => {
  * @swagger
  * /api/materials/{materialId}:
  *   put:
- *     summary: Update material name and/or quantity
+ *     summary: Update material name, quantity, and/or expireDate
  *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
@@ -259,6 +277,10 @@ router.get("/", async (req, res, next) => {
  *               quantity:
  *                 type: integer
  *                 description: Material quantity (optional)
+ *               expireDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Expiry date of the material (optional)
  *     responses:
  *       200:
  *         description: Material updated successfully
@@ -284,6 +306,13 @@ router.get("/", async (req, res, next) => {
  *                       type: integer
  *                     barcode:
  *                       type: string
+ *                     expireDate:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Expiry date of the material
+ *                     isExpired:
+ *                       type: boolean
+ *                       description: Whether the material is expired
  *       400:
  *         description: Invalid input
  *         content:
@@ -304,6 +333,7 @@ router.put("/:materialId", verifyToken, restrictToRoles("Manager"), async (req, 
     const materialData = {
       name: req.body.name,
       quantity: req.body.quantity ? parseInt(req.body.quantity) : undefined,
+      expireDate: req.body.expireDate,
     };
     console.log("Parsed material data:", materialData);
     const updatedMaterial = await materialService.updateMaterial(materialId, materialData);
@@ -389,6 +419,77 @@ router.delete("/:materialId", verifyToken, restrictToRoles("Manager"), async (re
     } else {
       res.status(500).send("Internal server error");
     }
+  }
+});
+
+/**
+ * @swagger
+ * /api/materials/expired:
+ *   get:
+ *     summary: Get all expired materials
+ *     tags: [Materials]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of expired materials with their associated stores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       materialId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       quantity:
+ *                         type: integer
+ *                       storeId:
+ *                         type: integer
+ *                       barcode:
+ *                         type: string
+ *                         description: URL of the generated barcode image
+ *                       expireDate:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Expiry date of the material
+ *                       isExpired:
+ *                         type: boolean
+ *                         description: Whether the material is expired
+ *                       Store:
+ *                         type: object
+ *                         properties:
+ *                           storeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           address:
+ *                             type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/expired", verifyToken, restrictToRoles("Manager"), async (req, res, next) => {
+  try {
+    const materials = await materialService.getExpiredMaterials();
+    res.status(200).json({
+      status: 200,
+      message: "Expired materials retrieved successfully",
+      data: materials,
+    });
+  } catch (error) {
+    console.error("Caught error:", error, "Type:", typeof error, "Stack:", error.stack);
+    res.status(500).send("Internal server error");
   }
 });
 

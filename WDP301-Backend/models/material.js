@@ -34,6 +34,20 @@ const Material = sequelize.define(
       allowNull: false,
       defaultValue: true,
     },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
+    expireDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    isExpired: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     tableName: "materials",
