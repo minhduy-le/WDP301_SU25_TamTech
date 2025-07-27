@@ -1,4 +1,5 @@
 const PromotionType = require("../models/promotionType");
+const Promotion = require("../models/promotion");
 const sequelize = require("../config/database");
 
 if (!PromotionType || typeof PromotionType.findAll !== "function") {
@@ -46,7 +47,6 @@ const createPromotionType = async (req, res) => {
   } catch (error) {
     console.error("Error in createPromotionType:", error.message, error.stack);
     await transaction.rollback();
-    // Handle unique constraint violation from database
     if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(400).send("Promotion type name must be unique");
     }
@@ -110,7 +110,6 @@ const updatePromotionType = async (req, res) => {
   } catch (error) {
     console.error("Error in updatePromotionType:", error.message, error.stack);
     await transaction.rollback();
-    // Handle unique constraint violation from database
     if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(400).send("Promotion type name must be unique");
     }
@@ -123,7 +122,7 @@ const getPromotionTypes = async (req, res) => {
 
   try {
     const promotionTypes = await PromotionType.findAll({
-      attributes: ["promotionTypeId", "name"],
+      attributes: ["promotionTypeId", "name", "isActive"],
     });
 
     console.log("Fetched promotion types:", promotionTypes.length);
@@ -134,8 +133,62 @@ const getPromotionTypes = async (req, res) => {
   }
 };
 
+const deletePromotionType = async (req, res) => {
+  console.log("deletePromotionType called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+
+  const { promotionTypeId } = req.params;
+  const parsedPromotionTypeId = parseInt(promotionTypeId, 10);
+
+  if (isNaN(parsedPromotionTypeId)) {
+    console.log("Invalid promotionTypeId format:", promotionTypeId);
+    return res.status(400).send("Invalid promotion type ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const promotionType = await PromotionType.findOne({
+      where: { promotionTypeId: parsedPromotionTypeId },
+      transaction,
+    });
+
+    if (!promotionType) {
+      console.log("Promotion type not found for promotionTypeId:", parsedPromotionTypeId);
+      await transaction.rollback();
+      return res.status(404).send("Promotion type not found");
+    }
+
+    const promotionCount = await Promotion.count({
+      where: { promotionTypeId: parsedPromotionTypeId },
+      transaction,
+    });
+
+    if (promotionCount > 0) {
+      console.log("Promotion type is used in existing promotions:", parsedPromotionTypeId);
+      await transaction.rollback();
+      return res.status(409).send("Cannot deactivate promotion type because it is used in existing promotions");
+    }
+
+    promotionType.isActive = false;
+    await promotionType.save({ transaction });
+
+    await transaction.commit();
+    console.log("Promotion type deactivated for promotionTypeId:", parsedPromotionTypeId);
+
+    res.status(200).json({
+      message: "Promotion type deactivated successfully",
+      promotionTypeId: promotionType.promotionTypeId,
+    });
+  } catch (error) {
+    console.error("Error in deletePromotionType:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to deactivate promotion type");
+  }
+};
+
 module.exports = {
   createPromotionType,
   updatePromotionType,
   getPromotionTypes,
+  deletePromotionType,
 };

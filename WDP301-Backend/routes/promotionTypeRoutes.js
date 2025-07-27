@@ -1,7 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { createPromotionType, updatePromotionType, getPromotionTypes } = require("../services/promotionTypeService");
+const {
+  createPromotionType,
+  updatePromotionType,
+  getPromotionTypes,
+  deletePromotionType,
+} = require("../services/promotionTypeService");
 const verifyToken = require("../middlewares/verifyToken");
+const restrictToRoles = require("../middlewares/restrictToRoles");
 
 /**
  * @swagger
@@ -64,7 +70,7 @@ const verifyToken = require("../middlewares/verifyToken");
  *               type: string
  *               example: "Failed to create promotion type"
  */
-router.post("/", verifyToken, createPromotionType);
+router.post("/", verifyToken, restrictToRoles("Manager"), createPromotionType);
 
 /**
  * @swagger
@@ -141,7 +147,7 @@ router.post("/", verifyToken, createPromotionType);
  *               type: string
  *               example: "Failed to update promotion type"
  */
-router.put("/:promotionTypeId", verifyToken, updatePromotionType);
+router.put("/:promotionTypeId", verifyToken, restrictToRoles("Manager"), updatePromotionType);
 
 /**
  * @swagger
@@ -185,5 +191,74 @@ router.put("/:promotionTypeId", verifyToken, updatePromotionType);
  *               example: "Failed to retrieve promotion types"
  */
 router.get("/", verifyToken, getPromotionTypes);
+
+/**
+ * @swagger
+ * /api/promotion-types/{promotionTypeId}:
+ *   delete:
+ *     summary: Deactivate a promotion type
+ *     tags: [PromotionTypes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: promotionTypeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the promotion type to deactivate
+ *     responses:
+ *       200:
+ *         description: Promotion type deactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 promotionTypeId:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Invalid promotion type ID"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       404:
+ *         description: Promotion type not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Promotion type not found"
+ *       409:
+ *         description: Promotion type is in use
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Cannot deactivate promotion type because it is used in existing promotions"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Failed to deactivate promotion type"
+ */
+router.delete("/:promotionTypeId", verifyToken, restrictToRoles("Manager"), deletePromotionType);
 
 module.exports = router;

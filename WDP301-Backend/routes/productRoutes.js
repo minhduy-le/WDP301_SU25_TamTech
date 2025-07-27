@@ -3,39 +3,37 @@ const router = express.Router();
 const productService = require("../services/productService");
 const verifyToken = require("../middlewares/verifyToken");
 const { uploadImageToFirebase } = require("../config/firebase");
-const axios = require("axios");
 const restrictToRoles = require("../middlewares/restrictToRoles");
+const multer = require("multer");
 
-const validateImage = async (image) => {
-  if (!image.match(/^(https:\/\/|data:image\/)/)) {
-    throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
-  }
-  let imageBuffer;
-  const fileName = `product_${Date.now()}.jpg`;
+// Configure Multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(file.originalname.toLowerCase().split(".").pop());
+    const mimetype = filetypes.test(file.mimetype);
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error("Image must be a .jpg, .jpeg, or .png file"));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, 
+}).single("image");
 
-  if (image.startsWith("http")) {
-    const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-    if (!urlPattern.test(image)) {
-      throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
-    }
-    const response = await axios.get(image, { responseType: "arraybuffer" });
-    if (response.status !== 200) {
-      throw new Error("Failed to fetch image from URL");
-    }
-    imageBuffer = Buffer.from(response.data, "binary");
-  } else if (image.startsWith("data:image/")) {
-    const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-    if (!base64Pattern.test(image)) {
-      throw new Error("Image must be in .jpg, .jpeg, or .png format");
-    }
-    const base64Data = image.split(",")[1];
-    if (!base64Data) {
-      throw new Error("Invalid base64 image data");
-    }
-    imageBuffer = Buffer.from(base64Data, "base64");
-  }
-
-  return { imageBuffer, fileName };
+const handleMulterError = (handler) => {
+  return (req, res, next) => {
+    handler(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+      } else if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      next();
+    });
+  };
 };
 
 /**
@@ -808,31 +806,32 @@ router.get("/", async (req, res) => {
  * /api/products:
  *   post:
  *     summary: Create a new product with optional recipes
- *     description: Creates a new product with the provided details and optional recipes. Requires Manager role. Image can be a URL or base64 string.
+ *     description: Creates a new product with the provided details and optional recipes. Requires Manager role. Image file is required (.jpg, .jpeg, .png).
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
  *               - name
  *               - price
  *               - productTypeId
+ *               - image
  *             properties:
  *               name:
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 100
- *                 example: string
+ *                 example: Chocolate Cake
  *                 description: Product name
  *               description:
  *                 type: string
  *                 maxLength: 1000
- *                 example: string
+ *                 example: A delicious chocolate cake
  *                 description: Product description (optional)
  *               price:
  *                 type: number
@@ -842,32 +841,17 @@ router.get("/", async (req, res) => {
  *                 description: Product price in VND
  *               image:
  *                 type: string
- *                 example: string
- *                 description: Image URL (.jpg, .jpeg, .png) or base64 string (optional)
+ *                 format: binary
+ *                 description: Image file (.jpg, .jpeg, .png, required)
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
  *                 description: Product type ID
  *               recipes:
- *                 type: array
- *                 description: List of recipes for the product (optional)
- *                 items:
- *                   type: object
- *                   required:
- *                     - materialId
- *                     - quantity
- *                   properties:
- *                     materialId:
- *                       type: integer
- *                       minimum: 1
- *                       example: 1
- *                       description: Material ID
- *                     quantity:
- *                       type: integer
- *                       minimum: 1
- *                       example: 1
- *                       description: Quantity of material required
+ *                 type: string
+ *                 description: JSON string of recipes for the product (optional)
+ *                 example: '[{"materialId": 1, "quantity": 2}, {"materialId": 2, "quantity": 1}]'
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -946,7 +930,9 @@ router.get("/", async (req, res) => {
  *                 invalidPrice:
  *                   value: { error: "Price must be a number between 1000 and 1000000" }
  *                 invalidImage:
- *                   value: { error: "Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format" }
+ *                   value: { error: "Image must be a .jpg, .jpeg, or .png file" }
+ *                 missingImage:
+ *                   value: { error: "Image is required" }
  *                 invalidProductType:
  *                   value: { error: "ProductType with ID 10 not found" }
  *                 invalidMaterial:
@@ -978,26 +964,27 @@ router.get("/", async (req, res) => {
  *               example:
  *                 error: Internal server error
  */
-router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
+router.post("/", verifyToken, restrictToRoles("Manager"), handleMulterError(upload), async (req, res) => {
   try {
-    const { name, description, price, image, productTypeId, recipes } = req.body;
+    const { name, description, price, productTypeId, recipes } = req.body;
     const userId = req.userId;
 
-    let imageUrl = null;
-    if (image) {
-      const { imageBuffer, fileName } = await validateImage(image);
-      imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
     }
+
+    const fileName = `product_${Date.now()}.${req.file.originalname.split(".").pop()}`;
+    const imageUrl = await uploadImageToFirebase(req.file.buffer, fileName);
 
     const productData = {
       name,
       description,
-      price,
-      image: imageUrl || image,
-      productTypeId,
+      price: parseFloat(price),
+      image: imageUrl,
+      productTypeId: parseInt(productTypeId),
       createBy: userId,
       storeId: 1,
-      recipes: recipes || [],
+      recipes: recipes ? JSON.parse(recipes) : [],
     };
 
     const product = await productService.createProduct(productData);
@@ -1014,8 +1001,7 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res) => {
           error.message.includes("materialId") ||
           error.message.includes("quantity") ||
           error.message.includes("Description") ||
-          error.message.includes("Image") ||
-          error.message.includes("Material")
+          error.message.includes("Image")
           ? 400
           : 500
       )
@@ -1153,7 +1139,7 @@ router.get("/:id", async (req, res) => {
  * /api/products/{id}:
  *   put:
  *     summary: Update an existing product
- *     description: Updates a product's details, including optional recipes and image. Only provided fields are updated. Requires Manager role.
+ *     description: Updates a product's details, including optional recipes and required image. Only provided fields are updated. Requires Manager role. Image file is required (.jpg, .jpeg, .png).
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -1168,9 +1154,11 @@ router.get("/:id", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - image
  *             properties:
  *               name:
  *                 type: string
@@ -1191,32 +1179,17 @@ router.get("/:id", async (req, res) => {
  *                 description: Product price in VND (optional)
  *               image:
  *                 type: string
- *                 example: https://example.com/updated-image.jpg
- *                 description: Image URL (.jpg, .jpeg, .png), base64 string, or null to remove image (optional)
+ *                 format: binary
+ *                 description: Image file (.jpg, .jpeg, .png, required)
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
  *                 description: Product type ID (optional)
  *               recipes:
- *                 type: array
- *                 description: List of recipes to update (replaces existing recipes, optional)
- *                 items:
- *                   type: object
- *                   required:
- *                     - materialId
- *                     - quantity
- *                   properties:
- *                     materialId:
- *                       type: integer
- *                       minimum: 1
- *                       example: 1
- *                       description: Material ID
- *                     quantity:
- *                       type: integer
- *                       minimum: 1
- *                       example: 2
- *                       description: Quantity of material required
+ *                 type: string
+ *                 description: JSON string of recipes to update (replaces existing recipes, optional)
+ *                 example: '[{"materialId": 1, "quantity": 2}, {"materialId": 2, "quantity": 1}]'
  *     responses:
  *       200:
  *         description: Product updated successfully
@@ -1299,7 +1272,9 @@ router.get("/:id", async (req, res) => {
  *                 invalidProductType:
  *                   value: { error: "ProductType with ID 10 not found" }
  *                 invalidImage:
- *                   value: { error: "Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format" }
+ *                   value: { error: "Image must be a .jpg, .jpeg, or .png file" }
+ *                 missingImage:
+ *                   value: { error: "Image is required" }
  *                 invalidMaterial:
  *                   value: { error: "Material with ID 5 not found" }
  *                 insufficientQuantity:
@@ -1340,24 +1315,25 @@ router.get("/:id", async (req, res) => {
  *               example:
  *                 error: Internal server error
  */
-router.put("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => {
+router.put("/:id", verifyToken, restrictToRoles("Manager"), handleMulterError(upload), async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    const { name, description, price, image, productTypeId, recipes } = req.body;
+    const { name, description, price, productTypeId, recipes } = req.body;
 
-    let imageUrl = null;
-    if (image !== undefined && image !== null) {
-      const { imageBuffer, fileName } = await validateImage(image);
-      imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
     }
+
+    const fileName = `product_${Date.now()}.${req.file.originalname.split(".").pop()}`;
+    const imageUrl = await uploadImageToFirebase(req.file.buffer, fileName);
 
     const updateData = {
       name,
       description,
-      price,
-      image: imageUrl !== null ? imageUrl : image,
-      productTypeId,
-      recipes,
+      price: price ? parseFloat(price) : undefined,
+      image: imageUrl,
+      productTypeId: productTypeId ? parseInt(productTypeId) : undefined,
+      recipes: recipes ? JSON.parse(recipes) : undefined,
     };
 
     const updatedProduct = await productService.updateProduct(productId, updateData);
@@ -1374,8 +1350,7 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => 
           error.message.includes("materialId") ||
           error.message.includes("quantity") ||
           error.message.includes("Description") ||
-          error.message.includes("Image") ||
-          error.message.includes("Material")
+          error.message.includes("Image")
           ? 400
           : error.message.includes("not found")
           ? 404

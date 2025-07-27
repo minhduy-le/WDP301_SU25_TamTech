@@ -46,24 +46,12 @@ const validateProductData = async (data, isUpdate = false) => {
     errors.push("ProductTypeId is required");
   }
 
-  if (image !== undefined && image !== null) {
-    if (typeof image !== "string") {
-      errors.push("Image must be a string");
-    } else if (image) {
-      if (image.startsWith("http")) {
-        const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-        if (!urlPattern.test(image)) {
-          errors.push("Image URL must have .jpg, .jpeg, or .png extension");
-        }
-      } else if (image.startsWith("data:image/")) {
-        const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-        if (!base64Pattern.test(image)) {
-          errors.push("Image must be in .jpg, .jpeg, or .png format");
-        }
-      } else {
-        errors.push("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
-      }
+  if (image !== undefined) {
+    if (typeof image !== "string" || image.trim() === "") {
+      errors.push("Image must be a non-empty string");
     }
+  } else if (!isUpdate) {
+    errors.push("Image is required");
   }
 
   if (recipes !== undefined) {
@@ -94,6 +82,7 @@ const validateProductData = async (data, isUpdate = false) => {
   }
 };
 
+// Rest of the file remains unchanged...
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
