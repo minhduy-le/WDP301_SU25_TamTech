@@ -3,12 +3,10 @@ const httpErrors = require("http-errors");
 const bcrypt = require("bcrypt");
 const { Op, Sequelize } = require("sequelize");
 
-// Current date for date_of_birth validation
-const currentDate = new Date("2025-05-26T10:28:00+07:00");
+const currentDate = new Date();
 
 const createUser = async (userData) => {
   try {
-    // Validate each required field individually
     if (!userData.fullName || userData.fullName.trim() === "") {
       throw "Full name cannot be blank";
     }
@@ -19,13 +17,11 @@ const createUser = async (userData) => {
       throw "Password cannot be blank";
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userData.email)) {
       throw "Invalid email format";
     }
 
-    // Validate role if provided
     if (userData.role) {
       if (userData.role.trim() === "") {
         throw "Role cannot be blank";
@@ -36,21 +32,18 @@ const createUser = async (userData) => {
       }
     }
 
-    // Check if email already exists
     const existingUserByEmail = await User.findOne({ where: { email: userData.email } });
     if (existingUserByEmail) {
       throw "Email already exists";
     }
 
-    // Validate phone_number
     if (userData.phone_number) {
-      const phoneStr = userData.phone_number.toString().replace(/\D/g, ""); // Remove non-digits
+      const phoneStr = userData.phone_number.toString().replace(/\D/g, "");
       if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
         throw "Phone number must be 10 or 11 digits";
       }
     }
 
-    // Validate date_of_birth
     if (userData.date_of_birth) {
       const dob = new Date(userData.date_of_birth);
       if (isNaN(dob) || dob > currentDate) {
@@ -58,7 +51,6 @@ const createUser = async (userData) => {
       }
     }
 
-    // Check if phone number already exists
     if (userData.phone_number) {
       const existingUserByPhone = await User.findOne({ where: { phone_number: userData.phone_number } });
       if (existingUserByPhone) {
@@ -66,19 +58,16 @@ const createUser = async (userData) => {
       }
     }
 
-    // Hash password
     userData.password = await bcrypt.hash(userData.password, 10);
 
-    // Set default values for fields not provided by frontend
     userData.isActive = true;
     userData.isBan = false;
     userData.member_point = 0;
     userData.member_rank = 0;
     if (!userData.role) {
-      userData.role = "User"; // Default role if not provided
+      userData.role = "User";
     }
 
-    // Create user in database
     const user = await User.create(userData);
     return user;
   } catch (error) {
@@ -92,7 +81,7 @@ const getAllUsers = async (loggedInUserId) => {
     const users = await User.findAll({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
       where: {
-        id: { [Op.ne]: loggedInUserId }, // Exclude the logged-in user
+        id: { [Op.ne]: loggedInUserId },
       },
     });
     return users;
@@ -104,36 +93,31 @@ const getAllUsers = async (loggedInUserId) => {
 
 const getUserByPhoneNumber = async (phoneNumber) => {
   try {
-    // Log input
     console.log(`[DEBUG] getUserByPhoneNumber: Received phoneNumber: ${phoneNumber}`);
 
-    // Validate phone number input
     if (!phoneNumber || typeof phoneNumber !== "string") {
       console.log(`[DEBUG] getUserByPhoneNumber: Invalid input - phoneNumber is ${phoneNumber}`);
       throw "Phone number is required and must be a string";
     }
 
-    // Validate phone number format
-    const phoneStr = phoneNumber.replace(/\D/g, ""); // Remove non-digits
+    const phoneStr = phoneNumber.replace(/\D/g, "");
     console.log(`[DEBUG] getUserByPhoneNumber: Sanitized phone number: ${phoneStr}`);
     if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
       console.log(`[DEBUG] getUserByPhoneNumber: Invalid phone number format - length: ${phoneStr.length}`);
       throw "Invalid phone number format (must be 10 or 11 digits)";
     }
 
-    // Check user without role filter for debugging
     const userWithoutRoleFilter = await User.findOne({
       attributes: ["id", "fullName", "email", "phone_number", "role"],
       where: { phone_number: phoneNumber },
     });
     console.log(`[DEBUG] getUserByPhoneNumber: User without role filter: ${JSON.stringify(userWithoutRoleFilter)}`);
 
-    // Query with role filter
     const user = await User.findOne({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
       where: {
         phone_number: phoneNumber,
-        role: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("role")), { [Op.ne]: "user" }), // Case-insensitive
+        role: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("role")), { [Op.ne]: "user" }),
       },
     });
 
@@ -164,7 +148,7 @@ const getUserById = async (userId) => {
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
       where: {
         role: {
-          [Op.ne]: "Admin", // Exclude users with Admin role
+          [Op.ne]: "Admin",
         },
       },
     });
@@ -191,7 +175,6 @@ const updateUser = async (userId, userData) => {
       throw "User not found";
     }
 
-    // Validate email format if provided
     if (userData.email) {
       if (userData.email.trim() === "") {
         throw "Email cannot be blank";
@@ -208,9 +191,8 @@ const updateUser = async (userId, userData) => {
       }
     }
 
-    // Validate phone_number if provided
     if (userData.phone_number) {
-      const phoneStr = userData.phone_number.toString().replace(/\D/g, ""); // Remove non-digits
+      const phoneStr = userData.phone_number.toString().replace(/\D/g, "");
       if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
         throw "Phone number must be 10 or 11 digits";
       }
@@ -222,7 +204,6 @@ const updateUser = async (userId, userData) => {
       }
     }
 
-    // Validate date_of_birth if provided
     if (userData.date_of_birth) {
       const dob = new Date(userData.date_of_birth);
       if (isNaN(dob) || dob > currentDate) {
@@ -230,7 +211,6 @@ const updateUser = async (userId, userData) => {
       }
     }
 
-    // Hash password if provided
     if (userData.password) {
       if (userData.password.trim() === "") {
         throw "Password cannot be blank";
@@ -238,7 +218,6 @@ const updateUser = async (userId, userData) => {
       userData.password = await bcrypt.hash(userData.password, 10);
     }
 
-    // Update user
     await user.update(userData);
     return user;
   } catch (error) {
