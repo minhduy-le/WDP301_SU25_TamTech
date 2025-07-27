@@ -449,13 +449,13 @@ const UserManagement: React.FC = () => {
       const formValues = await form.validateFields();
       setIsLoading(true);
       const token = getAuthToken();
-
+  
       const statusIsActive = formValues.status === "active";
       const apiIsActive = statusIsActive;
       const apiIsBan = !statusIsActive;
-
+  
       let payloadForApi: Partial<ApiAccount> & { password?: string };
-
+  
       if (editingUser) {
         payloadForApi = {
           fullName: formValues.fullName,
@@ -471,10 +471,11 @@ const UserManagement: React.FC = () => {
           member_point: editingUser._apiMemberPoint || 0,
           member_rank: editingUser._apiMemberRank || 0,
         };
+  
         if (formValues.password) {
           payloadForApi.password = formValues.password;
         }
-
+  
         await axios.put(
           `${API_BASE_URL}/accounts/${editingUser.id}`,
           payloadForApi,
@@ -499,67 +500,65 @@ const UserManagement: React.FC = () => {
           member_point: 0,
           member_rank: 0,
         };
+  
         await axios.post(`${API_BASE_URL}/accounts`, payloadForApi, {
           headers: { Authorization: `Bearer ${token}` },
         });
         message.success("Thêm người dùng thành công!");
       }
+  
       setIsModalVisible(false);
       form.resetFields();
       fetchUserList();
     } catch (error) {
       const axiosError = error as AxiosError;
-      if ((error as any).errorFields && (error as any).errorFields.length > 0) {
-        console.log("Form validation failed:", (error as any).errorFields);
+  
+      if ((error as any).errorFields) {
         message.error("Vui lòng kiểm tra lại các trường đã nhập.");
-      } else if (axiosError.isAxiosError && axiosError.response?.data) {
-        const apiErrors = axiosError.response.data as any;
-        let errorMessage = "Error: ";
-
+        console.warn("Form validation failed:", (error as any).errorFields);
+      }
+  
+      else if (axiosError.isAxiosError && axiosError.response?.data) {
+        const apiErrors = axiosError.response?.data as any;        
+        let errorMessage = "Lỗi: ";
+  
         if (typeof apiErrors === "string") {
-          errorMessage += ` ${apiErrors}`;
+          errorMessage += apiErrors;
         } else if (typeof apiErrors.message === "string") {
-          errorMessage += ` ${apiErrors.message}`;
-        } else if (typeof apiErrors.message === "object") {
-          const fieldErrors = Object.entries(apiErrors.message)
-            .map(
-              ([field, msg]) =>
-                `${field}: ${Array.isArray(msg) ? msg.join(", ") : msg}`
-            )
-            .join("; ");
-          errorMessage += ` ${fieldErrors}`;
+          errorMessage += apiErrors.message;
         } else if (Array.isArray(apiErrors.message)) {
-          errorMessage += ` ${apiErrors.message.join(", ")}`;
-        } else if (typeof apiErrors === "object" && !apiErrors.message) {
-          const fieldErrors = Object.entries(apiErrors)
-            .map(([field, messages]) => {
-              if (Array.isArray(messages) && messages.length > 0) {
-                return `${field}: ${messages.join(", ")}`;
-              }
-              return `${field}: ${messages}`;
-            })
+          errorMessage += apiErrors.message.join(", ");
+        } else if (typeof apiErrors.message === "object") {
+          const msg = Object.entries(apiErrors.message)
+            .map(([field, val]) => `${field}: ${Array.isArray(val) ? val.join(", ") : val}`)
             .join("; ");
-          errorMessage += ` ${fieldErrors || "Lỗi không xác định từ API."}`;
+          errorMessage += msg;
+        } else if (typeof apiErrors === "object" && !apiErrors.message) {
+          const msg = Object.entries(apiErrors)
+            .map(([field, val]) => `${field}: ${Array.isArray(val) ? val.join(", ") : val}`)
+            .join("; ");
+          errorMessage += msg || "Không rõ lỗi từ API.";
         } else {
-          errorMessage += ` ${axiosError.message || "Lỗi không xác định"}`;
+          errorMessage += axiosError.message || "Lỗi không xác định.";
         }
+  
         message.error(errorMessage);
-        console.error(
-          "API Error:",
-          axiosError.response?.data || axiosError.message
-        );
-      } else {
-        console.log("Submit Failed or Other error:", error);
+        console.error("API Error Detail:", apiErrors);
+      }
+  
+      else {
         message.error(
           `Thao tác thất bại: ${
-            (error as Error).message || "Lỗi không xác định"
+            (error as Error).message || "Lỗi không xác định."
           }`
         );
+        console.error("Unhandled Error:", error);
       }
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const displayedUserList = userList.filter((user) => {
     const searchTextLower = searchText.toLowerCase();
