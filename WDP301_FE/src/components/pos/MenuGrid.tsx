@@ -1,14 +1,14 @@
-import React from 'react'
-import { Search, Plus, Loader2 } from 'lucide-react'
-import type { MenuItem } from '../../typings/pos.types'
+import React from "react";
+import { Search, Plus, Loader2 } from "lucide-react";
+import type { MenuItem } from "../../typings/pos.types";
 
 interface MenuGridProps {
-  filteredItems: MenuItem[]
-  searchTerm: string
-  priceFilter: string
-  onItemClick: (item: MenuItem) => void
-  onClearFilters: () => void
-  loading?: boolean
+  filteredItems: MenuItem[];
+  searchTerm: string;
+  priceFilter: string;
+  onItemClick: (item: MenuItem) => void;
+  onClearFilters: () => void;
+  loading?: boolean;
 }
 
 export const MenuGrid: React.FC<MenuGridProps> = ({
@@ -27,21 +27,20 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           <p className="text-amber-600 font-medium">Đang tải sản phẩm...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex-1 p-6">
-      {/* Results Info */}
       <div className="mb-6 flex items-center justify-between">
         <div className="text-amber-700">
-          {searchTerm || priceFilter !== 'all' ? (
+          {searchTerm || priceFilter !== "all" ? (
             <span className="font-medium">
-              Tìm thấy <span className="font-bold">{filteredItems.length}</span>{' '}
+              Tìm thấy <span className="font-bold">{filteredItems.length}</span>{" "}
               món ăn
               {searchTerm && (
                 <span>
-                  {' '}
+                  {" "}
                   cho "<span className="text-amber-600">{searchTerm}</span>"
                 </span>
               )}
@@ -54,7 +53,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           )}
         </div>
 
-        {(searchTerm || priceFilter !== 'all') && (
+        {(searchTerm || priceFilter !== "all") && (
           <button
             onClick={onClearFilters}
             className="text-amber-600 hover:text-amber-700 font-medium px-3 py-1 rounded hover:bg-amber-50 transition-colors border border-amber-200"
@@ -64,7 +63,6 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
         )}
       </div>
 
-      {/* No Results */}
       {filteredItems.length === 0 && (
         <div className="text-center py-16">
           <div className="bg-amber-100 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
@@ -76,7 +74,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           <p className="text-amber-600 mb-6">
             {searchTerm
               ? `Không có món nào phù hợp với "${searchTerm}"`
-              : 'Thử thay đổi bộ lọc để xem thêm món ăn'}
+              : "Thử thay đổi bộ lọc để xem thêm món ăn"}
           </p>
           <button
             onClick={onClearFilters}
@@ -87,7 +85,6 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
         </div>
       )}
 
-      {/* Menu Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredItems.map((item) => (
           <div
@@ -104,22 +101,39 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
             </div>
 
             <div className="p-4 flex flex-col flex-1">
-              <h3 className="font-bold text-amber-800 mb-2">{item.name}</h3>
+              <h3 className="font-bold text-amber-800 mb-2">
+                {item.name.toUpperCase()}
+              </h3>
               <p
                 className="text-amber-600 text-sm mb-3 line-clamp-2"
                 style={{
                   minHeight: 40,
                   maxHeight: 40,
-                  overflow: 'hidden',
-                  display: '-webkit-box',
+                  overflow: "hidden",
+                  display: "-webkit-box",
                   WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
+                  WebkitBoxOrient: "vertical",
                 }}
                 title={item.description}
               >
-                {item.description}
+                {item.description.length > 120
+                  ? item.description.slice(0, 117) + "..."
+                  : item.description}
               </p>
-
+              {/* {item.ProductRecipes && item.ProductRecipes.length > 0 && (
+                <div className="text-xs text-gray-600 mb-2">
+                  <div className="font-medium text-amber-600 mb-1">
+                    Nguyên liệu:
+                  </div>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {item.product.ProductRecipes.map((recipe) => (
+                      <li key={recipe.productRecipeId}>
+                        {recipe.Material?.name} – {recipe.quantity}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )} */}
               <div className="flex items-center justify-between mt-auto pt-2">
                 <span className="font-bold text-amber-700">
                   {item.price.toLocaleString()}đ
@@ -133,5 +147,5 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
