@@ -1,3 +1,20 @@
+export interface Material {
+  materialId: number
+  name: string
+  quantity: number
+  barcode: string
+  storeId: number
+  isActive: boolean
+}
+
+export interface ProductRecipe {
+  productRecipeId: number
+  productId: number
+  materialId: number
+  quantity: number
+  Material: Material
+}
+
 export interface MenuItem {
   id: string
   name: string
@@ -5,6 +22,7 @@ export interface MenuItem {
   description: string
   category: string
   image: string
+  ProductRecipes?: ProductRecipe[] 
 }
 
 export interface OrderItem {
