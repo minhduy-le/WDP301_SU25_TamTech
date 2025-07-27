@@ -260,7 +260,7 @@ const MaterialManagement = () => {
       ),
     },
     {
-      title: "Số lượng",
+      title: "Số lượng(g)",
       dataIndex: "quantity",
       key: "quantity",
       width: 120,
@@ -395,7 +395,7 @@ const MaterialManagement = () => {
           >
             <Space wrap className="order-search">
               <Input
-                placeholder="Tìm theo mã, tên..."
+                placeholder="Tìm theo tên..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
