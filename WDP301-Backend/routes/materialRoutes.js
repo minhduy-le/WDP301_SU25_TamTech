@@ -38,6 +38,9 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *                 type: string
  *                 format: date-time
  *                 description: Expiry date of the material (optional)
+ *               timeExpired:
+ *                 type: string
+ *                 description: Time of expiry in hh:mm:ss format (e.g., 14:30:00, optional)
  *     responses:
  *       201:
  *         description: Material created successfully
@@ -69,6 +72,9 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *                       type: string
  *                       format: date-time
  *                       description: Expiry date of the material
+ *                     timeExpired:
+ *                       type: string
+ *                       description: Time of expiry in hh:mm:ss format
  *                     isExpired:
  *                       type: boolean
  *                       description: Whether the material is expired
@@ -78,7 +84,7 @@ const restrictToRoles = require("../middlewares/restrictToRoles");
  *           text/plain:
  *             schema:
  *               type: string
- *               example: Quantity must be greater than 0 and less than 10000
+ *               example: timeExpired must be in hh:mm:ss format (e.g., 14:30:00)
  *       401:
  *         description: Unauthorized
  *       500:
@@ -90,6 +96,7 @@ router.post("/", verifyToken, restrictToRoles("Manager"), async (req, res, next)
       name: req.body.name,
       quantity: parseInt(req.body.quantity),
       expireDate: req.body.expireDate,
+      timeExpired: req.body.timeExpired,
     };
 
     console.log("Parsed material data:", materialData);
@@ -220,6 +227,9 @@ router.put("/:materialId/scan", verifyToken, restrictToRoles("Manager"), async (
  *                         type: string
  *                         format: date-time
  *                         description: Expiry date of the material
+ *                       timeExpired:
+ *                         type: string
+ *                         description: Time of expiry in hh:mm:ss format
  *                       isExpired:
  *                         type: boolean
  *                         description: Whether the material is expired
@@ -254,7 +264,7 @@ router.get("/", async (req, res, next) => {
  * @swagger
  * /api/materials/{materialId}:
  *   put:
- *     summary: Update material name, quantity, and/or expireDate
+ *     summary: Update material name, quantity, expireDate, and/or timeExpired
  *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
@@ -281,6 +291,9 @@ router.get("/", async (req, res, next) => {
  *                 type: string
  *                 format: date-time
  *                 description: Expiry date of the material (optional)
+ *               timeExpired:
+ *                 type: string
+ *                 description: Time of expiry in hh:mm:ss format (e.g., 14:30:00, optional)
  *     responses:
  *       200:
  *         description: Material updated successfully
@@ -310,6 +323,9 @@ router.get("/", async (req, res, next) => {
  *                       type: string
  *                       format: date-time
  *                       description: Expiry date of the material
+ *                     timeExpired:
+ *                       type: string
+ *                       description: Time of expiry in hh:mm:ss format
  *                     isExpired:
  *                       type: boolean
  *                       description: Whether the material is expired
@@ -319,7 +335,7 @@ router.get("/", async (req, res, next) => {
  *           text/plain:
  *             schema:
  *               type: string
- *               example: Quantity must be greater than 0 and less than 10000
+ *               example: timeExpired must be in hh:mm:ss format (e.g., 14:30:00)
  *       401:
  *         description: Unauthorized
  *       404:
@@ -334,6 +350,7 @@ router.put("/:materialId", verifyToken, restrictToRoles("Manager"), async (req, 
       name: req.body.name,
       quantity: req.body.quantity ? parseInt(req.body.quantity) : undefined,
       expireDate: req.body.expireDate,
+      timeExpired: req.body.timeExpired,
     };
     console.log("Parsed material data:", materialData);
     const updatedMaterial = await materialService.updateMaterial(materialId, materialData);
@@ -462,6 +479,9 @@ router.delete("/:materialId", verifyToken, restrictToRoles("Manager"), async (re
  *                         type: string
  *                         format: date-time
  *                         description: Expiry date of the material
+ *                       timeExpired:
+ *                         type: string
+ *                         description: Time of expiry in hh:mm:ss format
  *                       isExpired:
  *                         type: boolean
  *                         description: Whether the material is expired

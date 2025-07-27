@@ -43,6 +43,10 @@ const Material = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    timeExpired: {
+      type: DataTypes.TIME,
+      allowNull: true,
+    },
     isExpired: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

@@ -107,27 +107,16 @@ const getUserByPhoneNumber = async (phoneNumber) => {
       throw "Invalid phone number format (must be 10 or 11 digits)";
     }
 
-    const userWithoutRoleFilter = await User.findOne({
-      attributes: ["id", "fullName", "email", "phone_number", "role"],
-      where: { phone_number: phoneNumber },
-    });
-    console.log(`[DEBUG] getUserByPhoneNumber: User without role filter: ${JSON.stringify(userWithoutRoleFilter)}`);
-
     const user = await User.findOne({
       attributes: ["id", "fullName", "email", "phone_number", "date_of_birth", "note", "role", "isActive"],
-      where: {
-        phone_number: phoneNumber,
-        role: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("role")), { [Op.ne]: "user" }),
-      },
+      where: { phone_number: phoneNumber },
     });
 
-    console.log(`[DEBUG] getUserByPhoneNumber: User with role filter: ${JSON.stringify(user)}`);
+    console.log(`[DEBUG] getUserByPhoneNumber: User: ${JSON.stringify(user)}`);
 
     if (!user) {
-      console.log(
-        `[DEBUG] getUserByPhoneNumber: No user found or user has 'User' role for phoneNumber: ${phoneNumber}`
-      );
-      throw "User not found or has User role";
+      console.log(`[DEBUG] getUserByPhoneNumber: No user found`);
+      throw httpErrors(404, "User not found");
     }
 
     console.log(`[DEBUG] getUserByPhoneNumber: Returning user with role: ${user.role}`);

@@ -193,7 +193,7 @@ router.get("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts/phone/{phoneNumber}:
  *   get:
- *     summary: Get a user by phone number (non-User role only)
+ *     summary: Get a user by phone number
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
@@ -234,8 +234,8 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     role:
  *                       type: string
- *                       enum: [Admin, Staff, Shipper, Manager]
- *                       description: Role of the user (excludes User role)
+ *                       enum: [Admin, User, Staff, Shipper, Manager]
+ *                       description: Role of the user
  *                     isActive:
  *                       type: boolean
  *                       description: Indicates whether the user account is active
@@ -246,22 +246,8 @@ router.get("/", verifyToken, async (req, res, next) => {
  *             schema:
  *               type: string
  *               example: Invalid phone number format
- *       403:
- *         description: Forbidden - Users with 'User' role are not allowed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: integer
- *                 message:
- *                   type: string
- *             example:
- *               status: 403
- *               message: "Access denied: Users with 'User' role are not allowed to access this endpoint"
  *       404:
- *         description: User not found or has User role
+ *         description: User not found
  *       401:
  *         description: Unauthorized
  *       500:
