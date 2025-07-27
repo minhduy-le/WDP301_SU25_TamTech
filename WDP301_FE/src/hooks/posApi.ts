@@ -5,6 +5,24 @@ import { useCallback } from 'react'
 export interface ProductType {
   productTypeId: number
   name: string
+  isActive: boolean
+}
+
+export interface Material {
+  materialId: number
+  name: string
+  quantity: number
+  barcode: string
+  storeId: number
+  isActive: boolean
+}
+
+export interface ProductRecipe {
+  productRecipeId: number
+  productId: number
+  materialId: number
+  quantity: number
+  Material: Material
 }
 
 export interface Product {
@@ -15,7 +33,9 @@ export interface Product {
   image: string
   productTypeId: number
   isActive: boolean
+  ProductRecipes?: ProductRecipe[] 
 }
+
 
 export interface OrderItem {
   productId: number

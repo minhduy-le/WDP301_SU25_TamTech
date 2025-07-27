@@ -68,6 +68,7 @@ interface Promotion {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  minOrderAmount: number;
   promotionTypeId: number;
   maxNumberOfUses: number;
 }
@@ -126,6 +127,7 @@ const PromotionManagement: React.FC = () => {
           maxNumberOfUses: p.maxNumberOfUses,
           isActive: p.isActive,
           discountValue: p.discountAmount,
+          minOrderAmount: p.minOrderAmount,
           discountType: type ? type.name : "",
           promotionTypeId: p.promotionTypeId,
         };
@@ -213,7 +215,7 @@ const PromotionManagement: React.FC = () => {
     setIsLoading(true);
     const token = localStorage.getItem("token");
     const [startDate, endDate] = values.dateRange;
-
+  
     const payload = {
       name: values.name,
       code: values.code,
@@ -225,7 +227,7 @@ const PromotionManagement: React.FC = () => {
       discountAmount: values.discountAmount,
       maxNumberOfUses: values.maxNumberOfUses || 0,
     };
-
+  
     try {
       if (modalMode === "edit" && editingPromotion) {
         await axios.put(
@@ -240,20 +242,30 @@ const PromotionManagement: React.FC = () => {
         });
         message.success("Tạo khuyến mãi thành công!");
       }
+  
       setModalVisible(false);
       form.resetFields();
       fetchPromotions();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to submit form:", err);
+      let errorMessage = "Đã xảy ra lỗi.";
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      else if (Array.isArray(err?.response?.data?.errors)) {
+        errorMessage = err.response.data.errors.join(", ");
+      }
+  
       message.error(
         modalMode === "edit"
-          ? "Cập nhật khuyến mãi thất bại!"
-          : "Tạo khuyến mãi thất bại!"
+          ? `Cập nhật khuyến mãi thất bại: ${errorMessage}`
+          : `Tạo khuyến mãi thất bại: ${errorMessage}`
       );
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const filteredPromotions = useMemo(() => {
     return promotions.filter(
@@ -654,6 +666,9 @@ const PromotionManagement: React.FC = () => {
                 <Descriptions.Item label="Giá trị giảm giá">
                   {selectedPromotion.discountValue.toLocaleString()}đ
                 </Descriptions.Item>
+                <Descriptions.Item label="Giá trị đơn hàng tối thiểu">
+                  {selectedPromotion.minOrderAmount.toLocaleString()}đ
+                </Descriptions.Item>
                 <Descriptions.Item label="Số lượt sử dụng tối đa">
                   {selectedPromotion.maxNumberOfUses}
                 </Descriptions.Item>
@@ -702,20 +717,21 @@ const PromotionManagement: React.FC = () => {
               initialValues={{ isActive: true, discountType: "percentage" }}
             >
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="name"
                 label={<span style={{ color: "#A05A2C" }}>Tên khuyến mãi</span>}
                 rules={[
                   { required: true, message: "Vui lòng nhập tên khuyến mãi!" },
                 ]}
+
               >
                 <Input
                   placeholder="Ví dụ: Giảm giá khai trương"
-                  style={{ borderRadius: 6, marginBottom: 16 }}
+                  style={{ borderRadius: 6 }}
                 />
               </Form.Item>
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="description"
                 label={<span style={{ color: "#A05A2C" }}>Mô tả</span>}
                 rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
@@ -723,28 +739,28 @@ const PromotionManagement: React.FC = () => {
                 <Input.TextArea
                   rows={3}
                   placeholder="Mô tả chi tiết về chương trình khuyến mãi"
-                  style={{ borderRadius: 6, marginBottom: 16 }}
+                  style={{ borderRadius: 6 }}
                 />
               </Form.Item>
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="code"
                 label={<span style={{ color: "#A05A2C" }}>Mã khuyến mãi</span>}
                 rules={[
                   { required: true, message: "Vui lòng nhập mã khuyến mãi!" },
                   {
-                    max: 10,
-                    message: "Mã khuyến mãi không được vượt quá 10 ký tự!",
+                    max: 50,
+                    message: "Mã khuyến mãi không được vượt quá 50 ký tự!",
                   },
                 ]}
               >
                 <Input
                   placeholder="Ví dụ: SALE2025"
-                  style={{ borderRadius: 6, marginBottom: 16 }}
+                  style={{ borderRadius: 6}}
                 />
               </Form.Item>
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="promotionTypeId"
                 label={
                   <span style={{ color: "#A05A2C" }}>Loại khuyến mãi</span>
@@ -755,7 +771,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <Select
                   placeholder="Chọn loại khuyến mãi"
-                  style={{ borderRadius: 6, marginBottom: 16 }}
+                  style={{ borderRadius: 6 }}
                 >
                   {promotionTypes.map((type: any) => (
                     <Option
@@ -768,7 +784,7 @@ const PromotionManagement: React.FC = () => {
                 </Select>
               </Form.Item>
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="isActive"
                 label={<span style={{ color: "#A05A2C" }}>Trạng thái</span>}
                 rules={[
@@ -777,7 +793,7 @@ const PromotionManagement: React.FC = () => {
               >
                 <Select
                   placeholder="Chọn trạng thái"
-                  style={{ borderRadius: 6, marginBottom: 16 }}
+                  style={{ borderRadius: 6 }}
                 >
                   <Option value={true}>Đang hoạt động</Option>
                   <Option value={false}>Không hoạt động</Option>
@@ -786,8 +802,8 @@ const PromotionManagement: React.FC = () => {
               <Row gutter={[16, 16]}>
                 <Col span={12}>
                   <Form.Item
-                    style={{ marginBottom: 0 }}
-                    name="discountAmount"
+                style={{ marginBottom: 10 }}
+                name="discountAmount"
                     label={
                       <span style={{ color: "#A05A2C" }}>Giá trị giảm</span>
                     }
@@ -803,9 +819,8 @@ const PromotionManagement: React.FC = () => {
                       style={{
                         width: "100%",
                         borderRadius: 6,
-                        marginBottom: 16,
                       }}
-                      min={1000}
+                      min={2000}
                       placeholder="Nhập số lớn hơn 1000"
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -816,8 +831,8 @@ const PromotionManagement: React.FC = () => {
                 </Col>
                 <Col span={12}>
                   <Form.Item
-                    style={{ marginBottom: 0 }}
-                    name="maxNumberOfUses"
+                style={{ marginBottom: 10 }}
+                name="maxNumberOfUses"
                     label={
                       <span style={{ color: "#A05A2C" }}>
                         Số lượt sử dụng tối đa
@@ -835,9 +850,8 @@ const PromotionManagement: React.FC = () => {
                       style={{
                         width: "100%",
                         borderRadius: 6,
-                        marginBottom: 16,
                       }}
-                      min={0}
+                      min={1}
                       placeholder="Nhập số lượt tối đa"
                     />
                   </Form.Item>
@@ -846,8 +860,8 @@ const PromotionManagement: React.FC = () => {
               <Row gutter={[16, 16]}>
                 <Col span={12}>
                   <Form.Item
-                    style={{ marginBottom: 0 }}
-                    name="minOrderAmount"
+                style={{ marginBottom: 10 }}
+                name="minOrderAmount"
                     label={
                       <span style={{ color: "#A05A2C" }}>
                         Giá trị đơn hàng tối thiểu
@@ -865,7 +879,6 @@ const PromotionManagement: React.FC = () => {
                       style={{
                         width: "100%",
                         borderRadius: 6,
-                        marginBottom: 16,
                       }}
                       min={0}
                       placeholder="Nhập giá trị tối thiểu (VND)"
@@ -878,11 +891,16 @@ const PromotionManagement: React.FC = () => {
                 </Col>
               </Row>
               <Form.Item
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 10 }}
                 name="dateRange"
                 label="Thời gian áp dụng"
                 rules={[
-                  { required: true, message: "Chọn thời gian!" },
+                  { required: true, message: (
+                    <>
+                      Ngày bắt đầu phải sau thời điểm hiện tại!<br />
+                      Ngày kết thúc phải sau ngày bắt đầu!
+                    </>
+                  ) },
                   {
                     validator: (_, value) => {
                       if (!value || value.length !== 2)
@@ -906,7 +924,7 @@ const PromotionManagement: React.FC = () => {
                 <RangePicker
                   showTime
                   format="YYYY-MM-DD HH:mm:ss"
-                  style={{ width: "100%", marginBottom: 16 }}
+                  style={{ width: "100%"}}
                 />
               </Form.Item>
             </Form>

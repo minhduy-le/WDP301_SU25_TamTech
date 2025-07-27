@@ -50,10 +50,8 @@ const BlogManagement = () => {
   const { mutate: updateBlog, isPending: isUpdating } = useUpdateBlogs();
   const { mutate: deleteBlog } = useDeleteBlogs();
 
-  // State để lưu URL hình ảnh tạm thời cho cả Add và Edit
   const [previewImageUrl, setPreviewImageUrl] = useState<string>("");
 
-  // --- STYLING CONSTANTS ---
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
@@ -62,7 +60,6 @@ const BlogManagement = () => {
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
 
-  // Sử dụng useGetBlogById để lấy chi tiết blog khi mở modal
   const {
     data: detailedBlog,
     isLoading: isDetailLoading,
@@ -86,7 +83,7 @@ const BlogManagement = () => {
       content: record.content,
       image: record.image,
     });
-    setPreviewImageUrl(record.image || ""); // Thiết lập URL hình ảnh hiện tại khi mở modal edit
+    setPreviewImageUrl(record.image || "");
     setIsEditModalVisible(true);
   };
 
@@ -94,7 +91,7 @@ const BlogManagement = () => {
     setIsEditModalVisible(false);
     setSelectedBlog(null);
     form.resetFields();
-    setPreviewImageUrl(""); // Reset preview khi đóng modal
+    setPreviewImageUrl("");
   };
 
   const handleAddBlog = () => {
@@ -219,7 +216,7 @@ const BlogManagement = () => {
       width: 85,
       render: (img: string, record: BlogDto) => (
         <Image
-          src={img || "https://via.placeholder.com/60x60?text=N/A"}
+          src={img}
           alt={record.title}
           width={60}
           height={60}
@@ -229,7 +226,6 @@ const BlogManagement = () => {
             border: "1px solid #f0f0f0",
           }}
           preview={{ mask: <EyeOutlined style={{ fontSize: 14 }} /> }}
-          fallback="https://via.placeholder.com/60x60?text=Lỗi"
         />
       ),
     },
