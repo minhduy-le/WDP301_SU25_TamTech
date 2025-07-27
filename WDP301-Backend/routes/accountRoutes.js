@@ -269,20 +269,6 @@ router.get("/", verifyToken, async (req, res, next) => {
  */
 router.get("/phone/:phoneNumber", verifyToken, async (req, res, next) => {
   try {
-    // Check if the requesting user has 'User' role
-    if (req.userRole && req.userRole.toLowerCase() === "user") {
-      console.log(
-        `[DEBUG] GET /api/accounts/phone/:phoneNumber: Access denied for userId: ${req.userId} with role: ${req.userRole}`
-      );
-      return res.status(403).json({
-        status: 403,
-        message: "Access denied: Users with 'User' role are not allowed to access this endpoint",
-      });
-    }
-
-    console.log(
-      `[DEBUG] GET /api/accounts/phone/:phoneNumber: Processing for phoneNumber: ${req.params.phoneNumber}, userId: ${req.userId}, userRole: ${req.userRole}`
-    );
     const phoneNumber = req.params.phoneNumber;
     const user = await accountService.getUserByPhoneNumber(phoneNumber);
     res.status(200).json({

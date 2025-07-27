@@ -5,6 +5,7 @@ const ProductRecipe = require("../models/ProductRecipe");
 const { createCanvas } = require("canvas");
 const JsBarcode = require("jsbarcode");
 const { uploadFileToFirebase } = require("../config/firebase");
+const cron = require("node-cron");
 
 const createMaterial = async (materialData) => {
   try {
@@ -19,6 +20,17 @@ const createMaterial = async (materialData) => {
     const quantity = parseInt(materialData.quantity);
     if (isNaN(quantity) || quantity <= 0 || quantity >= 10000) {
       throw "Quantity must be greater than 0 and less than 10000";
+    }
+
+    let expireDate = null;
+    if (materialData.expireDate) {
+      expireDate = new Date(materialData.expireDate);
+      if (isNaN(expireDate.getTime())) {
+        throw "Invalid expireDate format";
+      }
+      if (expireDate <= new Date()) {
+        throw "expireDate must be in the future";
+      }
     }
 
     const storeId = 1;
@@ -52,6 +64,7 @@ const createMaterial = async (materialData) => {
       quantity: quantity,
       storeId: storeId,
       barcode: barcodeUrl,
+      expireDate: expireDate,
     };
 
     const material = await Material.create(finalMaterialData);
@@ -85,13 +98,11 @@ const increaseMaterialQuantity = async (materialId) => {
       throw "Material not found";
     }
 
-    // Increase quantity by 100
     const newQuantity = material.quantity + 100;
     if (newQuantity >= 10000) {
       throw "Quantity cannot exceed 10000";
     }
 
-    // Update quantity
     material.quantity = newQuantity;
     await material.save();
     return {
@@ -126,6 +137,17 @@ const updateMaterial = async (materialId, materialData) => {
       material.name = materialData.name;
     }
 
+    if (materialData.expireDate) {
+      const expireDate = new Date(materialData.expireDate);
+      if (isNaN(expireDate.getTime())) {
+        throw "Invalid expireDate format";
+      }
+      if (expireDate <= new Date()) {
+        throw "expireDate must be in the future";
+      }
+      material.expireDate = expireDate;
+    }
+
     await material.save();
     return {
       materialId: material.materialId,
@@ -133,6 +155,8 @@ const updateMaterial = async (materialId, materialData) => {
       quantity: material.quantity,
       storeId: material.storeId,
       barcode: material.barcode,
+      expireDate: material.expireDate,
+      isExpired: material.isExpired,
     };
   } catch (error) {
     throw error.message || error;
@@ -175,4 +199,57 @@ const deleteMaterial = async (materialId) => {
   }
 };
 
-module.exports = { createMaterial, getAllMaterials, increaseMaterialQuantity, updateMaterial, deleteMaterial };
+const updateExpiredStatus = async () => {
+  try {
+    const materials = await Material.findAll({
+      where: {
+        expireDate: {
+          [Op.not]: null,
+        },
+        isExpired: false,
+      },
+    });
+
+    const currentDate = new Date();
+    for (const material of materials) {
+      if (material.expireDate && material.expireDate <= currentDate) {
+        material.isExpired = true;
+        await material.save();
+      }
+    }
+  } catch (error) {
+    console.error("Error updating expired status:", error);
+  }
+};
+
+const getExpiredMaterials = async () => {
+  try {
+    const materials = await Material.findAll({
+      where: {
+        isExpired: true,
+      },
+      include: [
+        {
+          model: Store,
+          as: "Store",
+          attributes: ["storeId", "name", "address"],
+        },
+      ],
+    });
+    return materials;
+  } catch (error) {
+    throw "Internal server error";
+  }
+};
+
+cron.schedule("0 0 * * *", updateExpiredStatus);
+
+module.exports = {
+  createMaterial,
+  getAllMaterials,
+  increaseMaterialQuantity,
+  updateMaterial,
+  deleteMaterial,
+  updateExpiredStatus,
+  getExpiredMaterials,
+};
