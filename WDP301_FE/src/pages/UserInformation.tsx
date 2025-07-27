@@ -119,7 +119,7 @@ const UserInfomation = () => {
         name: userProfile?.user.fullName || "Truong Quang Hieu Trung",
         phone: userProfile?.user.phone_number || "0888777888",
         address,
-        isDefault: index === 0, // Đặt địa chỉ đầu tiên là mặc định
+        isDefault: index === 0,
       }));
       setContacts(updatedContacts);
     }

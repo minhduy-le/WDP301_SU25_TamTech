@@ -72,7 +72,7 @@ const Login = () => {
         message.error("Tài khoản chưa được kích hoạt");
       } else if (errorMessage === "Account is banned") {
         message.error("Tài khoản đã bị cấm");
-      } else if (errorMessage === "Invalid credentials") {
+      } else if (errorMessage === "Invalid password") {
         message.error("Sai mật khẩu");
       } else if (errorMessage === "Password must be at least 6 characters") {
         message.error("Mật khẩu phải có ít nhất 6 ký tự");

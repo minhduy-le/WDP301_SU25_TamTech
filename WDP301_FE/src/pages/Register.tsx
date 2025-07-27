@@ -51,9 +51,9 @@ const Register = () => {
             ) {
               message.error("Số điện thoại phải có 10 hoặc 11 chữ số");
             } else if (
-              errorMessage === "Password must be between 6 and 250 characters"
+              errorMessage === "Password must be between 6 and 100 characters"
             ) {
-              message.error("Mật khẩu phải từ 6 đến 250 ký tự");
+              message.error("Mật khẩu phải từ 6 đến 100 ký tự");
             } else if (
               errorMessage ===
               "Date of birth must be valid and not in the future"

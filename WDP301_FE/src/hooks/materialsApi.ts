@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import axios from "axios";
 
 interface GenericApiResponse<T> {
   status: number;
@@ -25,12 +27,21 @@ export interface MaterialDto {
 
 interface MutationVariables {
   materialId: number;
-  data?: Partial<MaterialDto>; // Optional data for flexibility
+  data?: Partial<UpdateMaterialDto>;
+}
+
+export interface UpdateMaterialDto {
+  name?: string;
+  quantity?: number;
 }
 
 const fetchMaterials = async (): Promise<MaterialDto[]> => {
   const response = await axiosInstance.get("materials");
-  const { status, message: responseMessage, data } = response.data as GenericApiResponse<MaterialDto[]>;
+  const {
+    status,
+    message: responseMessage,
+    data,
+  } = response.data as GenericApiResponse<MaterialDto[]>;
   if (status >= 200 && status < 300 && data) {
     return Array.isArray(data) ? data : [];
   }
@@ -47,8 +58,20 @@ export const useMaterials = () => {
 export const useCreateMaterials = () => {
   return useMutation({
     mutationFn: async (newMaterial: MaterialDto) => {
-      const response = await axiosInstance.post(`materials`, newMaterial);
-      return response.data;
+      try {
+        const response = await axiosInstance.post(`materials`, newMaterial);
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          const errorMessage = error.response.data;
+          const customError = new Error("API Error");
+          (customError as any).responseValue = errorMessage;
+          throw customError;
+        } else {
+          const errorMessage = (error as Error).message;
+          throw new Error(errorMessage);
+        }
+      }
     },
   });
 };
@@ -73,7 +96,10 @@ export const useUpdateMaterial = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, MutationVariables>({
-    mutationFn: async ({ materialId, data }: MutationVariables): Promise<void> => {
+    mutationFn: async ({
+      materialId,
+      data,
+    }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`materials/${materialId}`, data);
     },
     onSuccess: () => {
@@ -86,8 +112,25 @@ export const useIncreaseMaterialQuantity = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { materialId: number }>({
-    mutationFn: async ({ materialId }: { materialId: number }): Promise<void> => {
+    mutationFn: async ({
+      materialId,
+    }: {
+      materialId: number;
+    }): Promise<void> => {
       await axiosInstance.put(`materials/${materialId}/scan`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+    },
+  });
+};
+
+export const useDeleteMaterial = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, number>({
+    mutationFn: async (materialId: number): Promise<void> => {
+      await axiosInstance.delete(`materials/${materialId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
