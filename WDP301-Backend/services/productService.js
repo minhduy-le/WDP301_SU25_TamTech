@@ -5,88 +5,44 @@ const Material = require("../models/material");
 const { Op } = require("sequelize");
 const ProductType = require("../models/productType");
 
-const validateProductData = async (data, isUpdate = false) => {
-  const errors = [];
-  const { name, price, productTypeId, recipes, description, image } = data;
+const validateProductData = (data) => {
+  const { name, price, productTypeId, recipes, description } = data;
 
-  if (name !== undefined) {
-    if (typeof name !== "string" || name.trim() === "") {
-      errors.push("Name must be a non-empty string");
-    } else if (name.trim().length > 1000) {
-      errors.push("Name cannot exceed product name length limit");
-    }
-  } else if (!isUpdate) {
-    errors.push("Name is required");
+  if (!name || typeof name !== "string" || name.trim() === "") {
+    throw new Error("Name is required and must be a non-empty string");
+  }
+  if (name.trim().length > 100) {
+    throw new Error("Name cannot exceed 100 characters");
+  }
+  if (description && (typeof description !== "string" || description.length > 1000)) {
+    throw new Error("Description must be a string and cannot exceed 1000 characters");
+  }
+  if (typeof price !== "number" || price < 1000 || price > 1000000) {
+    throw new Error("Price must be a number between 1000 and 1000000");
+  }
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
   }
 
-  if (description !== undefined) {
-    if (typeof description !== "string" || description.length > 1000) {
-      errors.push("Description must be a string and cannot exceed description length limit");
-    }
-  }
-
-  if (price !== undefined) {
-    if (typeof price !== "number" || price < 1000 || price > 1000000) {
-      errors.push("Price must be a number between 1000 and 1000000");
-    }
-  } else if (!isUpdate) {
-    errors.push("Price is required");
-  }
-
-  if (productTypeId !== undefined) {
-    if (!Number.isInteger(productTypeId) || productTypeId < 1) {
-      errors.push("ProductTypeId must be a positive integer");
-    } else {
-      const productType = await ProductType.findByPk(productTypeId);
-      if (!productType) {
-        errors.push(`ProductType with ID ${productTypeId} not found`);
-      }
-    }
-  } else if (!isUpdate) {
-    errors.push("ProductTypeId is required");
-  }
-
-  if (image !== undefined) {
-    if (typeof image !== "string" || image.trim() === "") {
-      errors.push("Image must be a non-empty string");
-    }
-  } else if (!isUpdate) {
-    errors.push("Image is required");
-  }
-
-  if (recipes !== undefined) {
+  if (recipes) {
     if (!Array.isArray(recipes)) {
-      errors.push("Recipes must be an array");
-    } else {
-      for (const recipe of recipes) {
-        if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
-          errors.push(`Each recipe must have a valid materialId (positive integer): ${recipe.materialId}`);
-        } else {
-          const material = await Material.findByPk(recipe.materialId);
-          if (!material) {
-            errors.push(`Material with ID ${recipe.materialId} not found`);
-          } else if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
-            errors.push(`Each recipe must have a valid quantity (positive integer): ${recipe.quantity}`);
-          } else if (material.quantity < recipe.quantity) {
-            errors.push(
-              `Insufficient quantity for material ID ${recipe.materialId}: available ${material.quantity}, required ${recipe.quantity}`
-            );
-          }
-        }
+      throw new Error("Recipes must be an array");
+    }
+    for (const recipe of recipes) {
+      if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+        throw new Error("Each recipe must have a valid materialId (positive integer)");
+      }
+      if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+        throw new Error("Each recipe must have a valid quantity (positive integer)");
       }
     }
-  }
-
-  if (errors.length > 0) {
-    throw new Error(errors.join("; "));
   }
 };
 
-// Rest of the file remains unchanged...
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
-  await validateProductData({ name, description, price, image, productTypeId, recipes });
+  validateProductData({ name, price, productTypeId, recipes, description });
 
   const transaction = await sequelize.transaction();
 
@@ -99,6 +55,15 @@ const createProduct = async (productData) => {
       throw new Error("Product name already exists");
     }
 
+    if (recipes.length > 0) {
+      for (const recipe of recipes) {
+        const material = await Material.findByPk(recipe.materialId, { transaction });
+        if (!material) {
+          throw new Error(`Material with ID ${recipe.materialId} not found`);
+        }
+      }
+    }
+
     const product = await Product.create(
       {
         name: name.trim(),
@@ -109,82 +74,14 @@ const createProduct = async (productData) => {
         createBy,
         storeId,
       },
-      { transaction: transaction }
-    );
-
-    for (const recipe of recipes) {
-      await ProductRecipe.create(
-        {
-          productId: product.productId,
-          materialId: recipe.materialId,
-          quantity: recipe.quantity,
-        },
-        { transaction }
-      );
-    }
-
-    await transaction.commit();
-
-    return await Product.findByPk(product.productId, {
-      include: [
-        { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-        { model: require("../models/productType"), as: "ProductType" },
-      ],
-    });
-  } catch (error) {
-    await transaction.rollback();
-    throw error;
-  }
-};
-
-const updateProduct = async (productId, updateData) => {
-  if (!Number.isInteger(productId) || productId < 1) {
-    throw new Error("ProductId must be a positive integer");
-  }
-
-  const { name, description, price, image, productTypeId, recipes } = updateData;
-
-  await validateProductData({ name, description, price, image, productTypeId, recipes }, true);
-
-  const transaction = await sequelize.transaction();
-
-  try {
-    const product = await Product.findByPk(productId, { transaction });
-    if (!product || !product.isActive) {
-      throw new Error("Product not found or inactive");
-    }
-
-    if (name !== undefined) {
-      const existingProduct = await Product.findOne({
-        where: {
-          name: name.trim(),
-          productId: { [Op.ne]: productId },
-          isActive: true,
-        },
-        transaction,
-      });
-      if (existingProduct) {
-        throw new Error("Product name already exists");
-      }
-    }
-
-    await product.update(
-      {
-        name: name ? name.trim() : product.name,
-        description: description !== undefined ? (description ? description.trim() : null) : product.description,
-        price: price !== undefined ? price : product.price,
-        image: image !== undefined ? image : product.image,
-        productTypeId: productTypeId !== undefined ? productTypeId : product.productTypeId,
-      },
       { transaction }
     );
 
-    if (recipes !== undefined && Array.isArray(recipes)) {
-      await ProductRecipe.destroy({ where: { productId }, transaction });
+    if (recipes.length > 0) {
       for (const recipe of recipes) {
         await ProductRecipe.create(
           {
-            productId,
+            productId: product.productId,
             materialId: recipe.materialId,
             quantity: recipe.quantity,
           },
@@ -195,11 +92,10 @@ const updateProduct = async (productId, updateData) => {
 
     await transaction.commit();
 
-    return await Product.findByPk(productId, {
+    return await Product.findByPk(product.productId, {
       include: [
         { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
         { model: require("../models/productType"), as: "ProductType" },
-        { model: require("../models/store"), as: "Store" },
       ],
     });
   } catch (error) {
@@ -230,7 +126,7 @@ const getProducts = async ({ page, limit, offset }) => {
       include: [
         [
           sequelize.literal(
-            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
           ),
           "averageRating",
         ],
@@ -244,7 +140,7 @@ const getProducts = async ({ page, limit, offset }) => {
   });
 
   return {
-    products,
+    products: products,
     totalPages: Math.ceil(totalCount / limit),
   };
 };
@@ -260,7 +156,7 @@ const getProductsByType = async (productTypeId) => {
       include: [
         [
           sequelize.literal(
-            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10,1)) FROM feedback WHERE feedback.productId = Product.productId)`
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
           ),
           "averageRating",
         ],
@@ -274,6 +170,60 @@ const getProductsByType = async (productTypeId) => {
   });
 
   return products;
+};
+
+const updateProduct = async (productId, updateData) => {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
+  }
+
+  const { name, description, price, image, productTypeId } = updateData;
+  if (name !== undefined && (typeof name !== "string" || name.trim() === "" || name.trim().length > 100)) {
+    throw new Error("Name must be a non-empty string and cannot exceed 100 characters");
+  }
+  if (description !== undefined && (typeof description !== "string" || description.length > 1000)) {
+    throw new Error("Description must be a string and cannot exceed 1000 characters");
+  }
+  if (price !== undefined && (typeof price !== "number" || price < 1000 || price > 1000000)) {
+    throw new Error("Price must be a number between 1,000 and 1,000,000");
+  }
+  if (productTypeId !== undefined && (!Number.isInteger(productTypeId) || productTypeId < 1)) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const product = await Product.findByPk(productId);
+  if (!product || !product.isActive) {
+    throw new Error("Product not found or inactive");
+  }
+
+  if (name !== undefined) {
+    const existingProduct = await Product.findOne({
+      where: {
+        name: name.trim(),
+        productId: { [Op.ne]: productId },
+        isActive: true,
+      },
+    });
+    if (existingProduct) {
+      throw new Error("Product name already exists");
+    }
+  }
+
+  await product.update({
+    name: name ? name.trim() : product.name,
+    description: description !== undefined ? (description ? description.trim() : null) : product.description,
+    price: price !== undefined ? price : product.price,
+    image: image !== undefined ? image : product.image,
+    productTypeId: productTypeId || product.productTypeId,
+  });
+
+  return await Product.findByPk(productId, {
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+  });
 };
 
 const softDeleteProduct = async (productId) => {
@@ -331,7 +281,7 @@ const getBestSellerProducts = async () => {
       },
     ],
     attributes: ["productId", "name", "description", "price", "image"],
-    group: ["Product.productId", "ProductType.productTypeId"],
+    group: ["Product.productId"],
     order: [["productTypeId", "ASC"]],
   });
 

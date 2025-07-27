@@ -3,45 +3,14 @@ const router = express.Router();
 const productService = require("../services/productService");
 const verifyToken = require("../middlewares/verifyToken");
 const { uploadImageToFirebase } = require("../config/firebase");
-const restrictToRoles = require("../middlewares/restrictToRoles");
-const multer = require("multer");
+const axios = require("axios");
 
-// Configure Multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(file.originalname.toLowerCase().split(".").pop());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      cb(null, true);
-    } else {
-      cb(new Error("Image must be a .jpg, .jpeg, or .png file"));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, 
-}).single("image");
-
-const handleMulterError = (handler) => {
-  return (req, res, next) => {
-    handler(req, res, (err) => {
-      if (err instanceof multer.MulterError) {
-        return res.status(400).json({ error: err.message });
-      } else if (err) {
-        return res.status(400).json({ error: err.message });
-      }
-      next();
-    });
-  };
-};
-
+// Define specific routes before generic :id route
 /**
  * @swagger
  * /api/products/search-by-type-name:
  *   get:
  *     summary: Search products by exact product type name
- *     description: Retrieves a list of active products matching the exact product type name provided.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -119,25 +88,16 @@ const handleMulterError = (handler) => {
  *       400:
  *         description: Invalid or mismatched product type name
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Product type name must match exactly or is required
+ *               type: string
+ *               example: Product type name must match exactly or is required
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/search-by-type-name", async (req, res) => {
   try {
@@ -149,7 +109,7 @@ router.get("/search-by-type-name", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error searching products by type name:", error);
-    res.status(error.message.includes("Product type name") ? 400 : 500).json({ error: error.message });
+    res.status(error.message.includes("Product type name") ? 400 : 500).send(error.message);
   }
 });
 
@@ -158,7 +118,6 @@ router.get("/search-by-type-name", async (req, res) => {
  * /api/products/search-by-name-and-type:
  *   get:
  *     summary: Search products by partial name and product type ID
- *     description: Retrieves a list of active products matching the partial product name and specified product type ID.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -232,28 +191,18 @@ router.get("/search-by-type-name", async (req, res) => {
  *       400:
  *         description: Invalid search term or product type ID
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
+ *               type: string
  *               examples:
- *                 invalidName:
- *                   value: { error: "Search term must be a non-empty string" }
- *                 invalidTypeId:
- *                   value: { error: "ProductTypeId must be a positive integer" }
+ *                 invalidName: { value: "Search term must be a non-empty string" }
+ *                 invalidTypeId: { value: "ProductTypeId must be a positive integer" }
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/search-by-name-and-type", async (req, res) => {
   try {
@@ -265,7 +214,7 @@ router.get("/search-by-name-and-type", async (req, res) => {
     console.error("Error searching products by name and type:", error);
     res
       .status(error.message.includes("Search term") || error.message.includes("ProductTypeId") ? 400 : 500)
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -274,7 +223,6 @@ router.get("/search-by-name-and-type", async (req, res) => {
  * /api/products/search-by-name-and-type-name:
  *   get:
  *     summary: Search products by partial product name and exact product type name
- *     description: Retrieves a list of active products matching the partial product name and exact product type name.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -348,28 +296,18 @@ router.get("/search-by-name-and-type", async (req, res) => {
  *       400:
  *         description: Invalid search term or product type name
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
+ *               type: string
  *               examples:
- *                 invalidName:
- *                   value: { error: "Search term must be a non-empty string" }
- *                 invalidTypeName:
- *                   value: { error: "Product type name must match exactly or is required" }
+ *                 invalidName: { value: "Search term must be a non-empty string" }
+ *                 invalidTypeName: { value: "Product type name must match exactly or is required" }
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/search-by-name-and-type-name", async (req, res) => {
   try {
@@ -386,7 +324,7 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
     console.error("Error searching products by name and type name:", error);
     res
       .status(error.message.includes("Search term") || error.message.includes("Product type name") ? 400 : 500)
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -395,7 +333,6 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
  * /api/products/best-seller:
  *   get:
  *     summary: Get best seller products based on order items
- *     description: Retrieves a list of best-selling active products based on order items, filtered by specific product types.
  *     tags: [Products]
  *     responses:
  *       200:
@@ -430,14 +367,9 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/best-seller", async (req, res) => {
   try {
@@ -445,7 +377,7 @@ router.get("/best-seller", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving best seller products:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).send(error.message);
   }
 });
 
@@ -454,7 +386,6 @@ router.get("/best-seller", async (req, res) => {
  * /api/products/search:
  *   get:
  *     summary: Search products by name (partial match)
- *     description: Retrieves a list of active products whose names partially match the provided search term.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -521,25 +452,16 @@ router.get("/best-seller", async (req, res) => {
  *       400:
  *         description: Missing or invalid search term
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Search term must be a non-empty string
+ *               type: string
+ *               example: Search term must be a non-empty string
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/search", async (req, res) => {
   try {
@@ -548,7 +470,7 @@ router.get("/search", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error searching products:", error);
-    res.status(error.message.includes("Search term") ? 400 : 500).json({ error: error.message });
+    res.status(error.message.includes("Search term") ? 400 : 500).send(error.message);
   }
 });
 
@@ -557,7 +479,6 @@ router.get("/search", async (req, res) => {
  * /api/products/type/{productTypeId}:
  *   get:
  *     summary: Get all products by product type ID
- *     description: Retrieves a list of active products belonging to the specified product type ID, including average ratings.
  *     tags: [Products]
  *     parameters:
  *       - in: path
@@ -603,7 +524,7 @@ router.get("/search", async (req, res) => {
  *                         type: boolean
  *                       averageRating:
  *                         type: number
- *                         description: Average rating of the product (0 if no ratings)
+ *                         description: Xếp hạng trung bình của sản phẩm (0 nếu chưa có)
  *                         example: 4.5
  *                       ProductType:
  *                         type: object
@@ -639,25 +560,16 @@ router.get("/search", async (req, res) => {
  *       400:
  *         description: Invalid product type ID
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: ProductTypeId must be a positive integer
+ *               type: string
+ *               example: ProductTypeId must be a positive integer
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/type/:productTypeId", async (req, res) => {
   try {
@@ -666,7 +578,7 @@ router.get("/type/:productTypeId", async (req, res) => {
     res.status(200).json({ products });
   } catch (error) {
     console.error("Error retrieving products by type:", error);
-    res.status(error.message.includes("ProductTypeId") ? 400 : 500).json({ error: error.message });
+    res.status(error.message.includes("ProductTypeId") ? 400 : 500).send(error.message);
   }
 });
 
@@ -675,7 +587,6 @@ router.get("/type/:productTypeId", async (req, res) => {
  * /api/products:
  *   get:
  *     summary: Get products with pagination, sort by price descending, and include average rating
- *     description: Retrieves a paginated list of active products, sorted by price in descending order, including average ratings.
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -722,7 +633,7 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                       averageRating:
  *                         type: number
  *                         description: Average rating of the product (0 if no ratings)
- *                         example: 4.5
+ *                         example: 4.50
  *                       ProductType:
  *                         type: object
  *                         properties:
@@ -761,25 +672,16 @@ router.get("/type/:productTypeId", async (req, res) => {
  *       400:
  *         description: Invalid page number
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Page must be a positive integer
+ *               type: string
+ *               example: Page must be a positive integer
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/", async (req, res) => {
   try {
@@ -797,7 +699,7 @@ router.get("/", async (req, res) => {
           ? 400
           : 500
       )
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -806,52 +708,58 @@ router.get("/", async (req, res) => {
  * /api/products:
  *   post:
  *     summary: Create a new product with optional recipes
- *     description: Creates a new product with the provided details and optional recipes. Requires Manager role. Image file is required (.jpg, .jpeg, .png).
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - name
  *               - price
  *               - productTypeId
- *               - image
  *             properties:
  *               name:
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 100
- *                 example: Chocolate Cake
- *                 description: Product name
+ *                 example: string
  *               description:
  *                 type: string
  *                 maxLength: 1000
- *                 example: A delicious chocolate cake
- *                 description: Product description (optional)
+ *                 example: string
  *               price:
  *                 type: number
  *                 minimum: 1000
  *                 maximum: 1000000
- *                 example: 10000
- *                 description: Product price in VND
+ *                 example: 0
  *               image:
  *                 type: string
- *                 format: binary
- *                 description: Image file (.jpg, .jpeg, .png, required)
+ *                 example: string
+ *                 description: Any string value to be stored as the image
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
- *                 description: Product type ID
  *               recipes:
- *                 type: string
- *                 description: JSON string of recipes for the product (optional)
- *                 example: '[{"materialId": 1, "quantity": 2}, {"materialId": 2, "quantity": 1}]'
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - materialId
+ *                     - quantity
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 1
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -916,75 +824,43 @@ router.get("/", async (req, res) => {
  *                               storeId:
  *                                 type: integer
  *       400:
- *         description: Invalid input data
+ *         description: Invalid input
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
+ *               type: string
  *               examples:
- *                 missingFields:
- *                   value: { error: "Name is required and must be a non-empty string" }
- *                 invalidPrice:
- *                   value: { error: "Price must be a number between 1000 and 1000000" }
- *                 invalidImage:
- *                   value: { error: "Image must be a .jpg, .jpeg, or .png file" }
- *                 missingImage:
- *                   value: { error: "Image is required" }
- *                 invalidProductType:
- *                   value: { error: "ProductType with ID 10 not found" }
- *                 invalidMaterial:
- *                   value: { error: "Material with ID 5 not found" }
- *                 insufficientQuantity:
- *                   value: { error: "Insufficient quantity for material ID 1: available 5, required 10" }
- *                 duplicateName:
- *                   value: { error: "Product name already exists" }
+ *                 missingFields: { value: "Name is required and must be a non-empty string" }
+ *                 invalidPrice: { value: "Price must be a number between 1,000 and 1,000,000" }
+ *                 invalidRecipes: { value: "Each recipe must have a valid materialId and quantity" }
+ *                 materialNotFound: { value: "Material with ID 5 not found" }
  *       401:
- *         description: Unauthorized (missing or invalid token, or insufficient role)
+ *         description: Unauthorized
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Unauthorized
+ *               type: string
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
-router.post("/", verifyToken, restrictToRoles("Manager"), handleMulterError(upload), async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   try {
-    const { name, description, price, productTypeId, recipes } = req.body;
+    const { name, description, price, image, productTypeId, recipes } = req.body;
     const userId = req.userId;
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Image is required" });
-    }
-
-    const fileName = `product_${Date.now()}.${req.file.originalname.split(".").pop()}`;
-    const imageUrl = await uploadImageToFirebase(req.file.buffer, fileName);
 
     const productData = {
       name,
       description,
-      price: parseFloat(price),
-      image: imageUrl,
-      productTypeId: parseInt(productTypeId),
+      price,
+      image, // Store the image as provided
+      productTypeId,
       createBy: userId,
-      storeId: 1,
-      recipes: recipes ? JSON.parse(recipes) : [],
+      storeId: 1, // Adjust if dynamic storeId is needed
+      recipes: recipes || [], // Default to empty array if recipes not provided
     };
 
     const product = await productService.createProduct(productData);
@@ -997,15 +873,14 @@ router.post("/", verifyToken, restrictToRoles("Manager"), handleMulterError(uplo
         error.message.includes("Name") ||
           error.message.includes("Price") ||
           error.message.includes("ProductTypeId") ||
-          error.message.includes("ProductType") ||
           error.message.includes("materialId") ||
           error.message.includes("quantity") ||
           error.message.includes("Description") ||
-          error.message.includes("Image")
+          error.message.includes("Material")
           ? 400
           : 500
       )
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -1014,11 +889,10 @@ router.post("/", verifyToken, restrictToRoles("Manager"), handleMulterError(uplo
  * /api/products/{id}:
  *   get:
  *     summary: Get a product by ID
- *     description: Retrieves details of an active product by its ID, including associated recipes and product type.
  *     tags: [Products]
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: productId
  *         required: true
  *         schema:
  *           type: integer
@@ -1090,36 +964,23 @@ router.post("/", verifyToken, restrictToRoles("Manager"), handleMulterError(uplo
  *       400:
  *         description: Invalid product ID
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: ProductId must be a positive integer
+ *               type: string
+ *               example: ProductId must be a positive integer
  *       404:
- *         description: Product not found or inactive
+ *         description: Product not found
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Product not found or inactive
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -1130,7 +991,7 @@ router.get("/:id", async (req, res) => {
     console.error("Error retrieving product:", error);
     res
       .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -1138,8 +999,7 @@ router.get("/:id", async (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   put:
- *     summary: Update an existing product
- *     description: Updates a product's details, including optional recipes and required image. Only provided fields are updated. Requires Manager role. Image file is required (.jpg, .jpeg, .png).
+ *     summary: Update a product
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -1154,42 +1014,31 @@ router.get("/:id", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - image
  *             properties:
  *               name:
  *                 type: string
  *                 minLength: 1
  *                 maxLength: 100
  *                 example: Updated Chocolate Cake
- *                 description: Product name (optional)
  *               description:
  *                 type: string
  *                 maxLength: 1000
  *                 example: Updated description
- *                 description: Product description (optional)
  *               price:
  *                 type: number
- *                 minimum: 1000
- *                 maximum: 1000000
- *                 example: 15000
- *                 description: Product price in VND (optional)
+ *                 minimum: 0.01
+ *                 maximum: 999999.99
+ *                 example: 39.99
  *               image:
  *                 type: string
- *                 format: binary
- *                 description: Image file (.jpg, .jpeg, .png, required)
+ *                 example: https://example.com/updated-image.jpg
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
- *                 description: Product type ID (optional)
- *               recipes:
- *                 type: string
- *                 description: JSON string of recipes to update (replaces existing recipes, optional)
- *                 example: '[{"materialId": 1, "quantity": 2}, {"materialId": 2, "quantity": 1}]'
  *     responses:
  *       200:
  *         description: Product updated successfully
@@ -1254,86 +1103,46 @@ router.get("/:id", async (req, res) => {
  *                               storeId:
  *                                 type: integer
  *       400:
- *         description: Invalid input data
+ *         description: Invalid input
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
+ *               type: string
  *               examples:
- *                 invalidId:
- *                   value: { error: "ProductId must be a positive integer" }
- *                 invalidName:
- *                   value: { error: "Name must be a non-empty string" }
- *                 invalidPrice:
- *                   value: { error: "Price must be a number between 1000 and 1000000" }
- *                 invalidProductType:
- *                   value: { error: "ProductType with ID 10 not found" }
- *                 invalidImage:
- *                   value: { error: "Image must be a .jpg, .jpeg, or .png file" }
- *                 missingImage:
- *                   value: { error: "Image is required" }
- *                 invalidMaterial:
- *                   value: { error: "Material with ID 5 not found" }
- *                 insufficientQuantity:
- *                   value: { error: "Insufficient quantity for material ID 1: available 5, required 10" }
- *                 duplicateName:
- *                   value: { error: "Product name already exists" }
+ *                 invalidId: { value: "ProductId must be a positive integer" }
+ *                 invalidName: { value: "Name must be a non-empty string and cannot exceed 100 characters" }
+ *                 invalidPrice: { value: "Price must be a number greater than 0 and less than 1,000,000" }
  *       401:
- *         description: Unauthorized (missing or invalid token, or insufficient role)
+ *         description: Unauthorized
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Unauthorized
+ *               type: string
  *       404:
- *         description: Product not found or inactive
+ *         description: Product not found
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Product not found or inactive
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
-router.put("/:id", verifyToken, restrictToRoles("Manager"), handleMulterError(upload), async (req, res) => {
+router.put("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    const { name, description, price, productTypeId, recipes } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Image is required" });
-    }
-
-    const fileName = `product_${Date.now()}.${req.file.originalname.split(".").pop()}`;
-    const imageUrl = await uploadImageToFirebase(req.file.buffer, fileName);
+    const { name, description, price, image, productTypeId } = req.body;
 
     const updateData = {
       name,
       description,
-      price: price ? parseFloat(price) : undefined,
-      image: imageUrl,
-      productTypeId: productTypeId ? parseInt(productTypeId) : undefined,
-      recipes: recipes ? JSON.parse(recipes) : undefined,
+      price,
+      image, // Store the image as provided
+      productTypeId,
     };
 
     const updatedProduct = await productService.updateProduct(productId, updateData);
@@ -1346,17 +1155,13 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), handleMulterError(up
           error.message.includes("Name") ||
           error.message.includes("Price") ||
           error.message.includes("ProductTypeId") ||
-          error.message.includes("ProductType") ||
-          error.message.includes("materialId") ||
-          error.message.includes("quantity") ||
-          error.message.includes("Description") ||
-          error.message.includes("Image")
+          error.message.includes("Description")
           ? 400
           : error.message.includes("not found")
           ? 404
           : 500
       )
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
@@ -1365,7 +1170,6 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), handleMulterError(up
  * /api/products/{id}:
  *   delete:
  *     summary: Soft delete a product by setting isActive to false
- *     description: Marks a product as inactive (soft delete) by setting isActive to false. Requires Manager role.
  *     tags: [Products]
  *     security:
  *       - bearerAuth: []
@@ -1391,58 +1195,40 @@ router.put("/:id", verifyToken, restrictToRoles("Manager"), handleMulterError(up
  *       400:
  *         description: Invalid product ID
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: ProductId must be a positive integer
+ *               type: string
+ *               example: ProductId must be a positive integer
  *       401:
- *         description: Unauthorized (missing or invalid token, or insufficient role)
+ *         description: Unauthorized
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Unauthorized
+ *               type: string
  *       404:
- *         description: Product not found or inactive
+ *         description: Product not found
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Product not found or inactive
+ *               type: string
+ *               example: Product not found or inactive
  *       500:
  *         description: Server error
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               example:
- *                 error: Internal server error
+ *               type: string
  */
-router.delete("/:id", verifyToken, restrictToRoles("Manager"), async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     await productService.softDeleteProduct(productId);
     res.status(200).json({ message: "Product soft deleted successfully" });
   } catch (error) {
-    console.error("Error deleting product:", error);
+    console.error("Error soft deleting product:", error);
     res
       .status(error.message.includes("ProductId") ? 400 : error.message.includes("not found") ? 404 : 500)
-      .json({ error: error.message });
+      .send(error.message);
   }
 });
 
