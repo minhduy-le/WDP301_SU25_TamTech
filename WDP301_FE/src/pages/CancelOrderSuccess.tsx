@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import TomatoError from "./Tomato Error.json";
 import { useCancelOrderPayment } from "../hooks/ordersApi";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const CancelOrderSuccess = () => {
   const location = useLocation();
@@ -13,6 +13,7 @@ const CancelOrderSuccess = () => {
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
   const { mutate: cancelOrder } = useCancelOrderPayment();
+  const [isCancelled, setIsCancelled] = useState(false);
 
   useEffect(() => {
     if (orderId !== "N/A") {
@@ -20,7 +21,9 @@ const CancelOrderSuccess = () => {
       cancelOrder(
         { orderId: parsedOrderId },
         {
-          onSuccess: () => {},
+          onSuccess: () => {
+            setIsCancelled(true);
+          },
           onError: (error: any) => {
             message.error(
               "Có lỗi xảy ra khi hủy đơn hàng: " +
@@ -32,7 +35,7 @@ const CancelOrderSuccess = () => {
     } else {
       message.error("Không tìm thấy mã đơn hàng.");
     }
-  }, [cancelOrder, orderId]);
+  }, [cancelOrder, orderId, isCancelled]);
 
   const handleBackToOrders = () => {
     navigate("/user-information", {
