@@ -240,6 +240,81 @@ router.get("/payment-success", handlePaymentSuccess);
 
 /**
  * @swagger
+ * /api/order/payment-cancel:
+ *   get:
+ *     summary: Handle payment cancellation
+ *     description: Process the cancellation of an order payment and return the status.
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the order to cancel
+ *     responses:
+ *       200:
+ *         description: Payment cancellation processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Payment cancelled"
+ *       400:
+ *         description: Missing orderId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Order ID is required"
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Order not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to process cancellation"
+ */
+router.get("/payment-cancel", async (req, res) => {
+  const { orderId } = req.query;
+  if (!orderId) {
+    console.log("Missing orderId in payment-cancel callback");
+    return res.status(400).json({ message: "Order ID is required" });
+  }
+  try {
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      console.log("Order not found for orderId:", orderId);
+      return res.status(404).json({ message: "Order not found" });
+    }
+    console.log("Payment cancelled for orderId:", orderId);
+    res.status(200).json({ message: "Payment cancelled" });
+  } catch (error) {
+    console.log("Error in payment-cancel callback:", error.message);
+    res.status(500).json({ message: "Failed to process cancellation", error: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/orders/user:
  *   get:
  *     summary: Retrieve orders for the authenticated user

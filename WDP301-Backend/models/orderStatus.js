@@ -10,7 +10,17 @@ const OrderStatus = sequelize.define(
       autoIncrement: true,
     },
     status: {
-      type: DataTypes.ENUM("Pending", "Paid", "Delivering", "Delivered", "Canceled", "Preparing", "Cooked", "Approved"),
+      type: DataTypes.ENUM(
+        "Pending",
+        "Paid",
+        "Delivering",
+        "Delivered",
+        "Canceled",
+        "Preparing",
+        "Cooked",
+        "Approved",
+        "Failed"
+      ),
       allowNull: false,
     },
   },

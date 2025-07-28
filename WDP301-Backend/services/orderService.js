@@ -342,7 +342,7 @@ const createOrder = async (req, res) => {
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
       returnUrl: `${YOUR_DOMAIN}/api/orders/success?orderId=${order.orderId}`,
-      cancelUrl: `${YOUR_DOMAIN}/api/orders/cancel?orderId=${order.orderId}`,
+      cancelUrl: `${YOUR_DOMAIN}/payment-cancel?orderId=${order.orderId}`,
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
 
@@ -1144,7 +1144,7 @@ const setOrderToCanceledWhenUserCancel = async (orderId, userId) => {
       return { status: 400, message: "Only pending orders can be canceled" };
     }
 
-    await Order.update({ status_id: 5 }, { where: { orderId }, transaction });
+    await Order.update({ status_id: 9 }, { where: { orderId }, transaction });
 
     await transaction.commit();
     return { status: 200, message: "Order canceled successfully" };
