@@ -1144,7 +1144,7 @@ const setOrderToCanceledWhenUserCancel = async (orderId, userId) => {
       return { status: 400, message: "Only pending orders can be canceled" };
     }
 
-    await Order.update({ status_id: 9 }, { where: { orderId }, transaction });
+    await Order.update({ status_id: 5 }, { where: { orderId }, transaction });
 
     await transaction.commit();
     return { status: 200, message: "Order canceled successfully" };
