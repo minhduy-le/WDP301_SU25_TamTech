@@ -284,72 +284,30 @@ const OrderManagement: React.FC = () => {
       }}
     >
              <style>{`
-         /* Table styles */
-         .ant-table-thead > tr > th { 
-           background-color: ${headerBgColor} !important; 
-           color: ${headerColor} !important; 
-           font-weight: bold !important; 
-           border-right: 1px solid ${borderColor} !important; 
-           border-bottom: 2px solid ${tableBorderColor} !important; 
-         }
-         .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { 
-           border-right: none !important; 
-         }
-         .order-table .ant-table-tbody > tr.even-row-order > td { 
-           background-color: ${evenRowBgColor}; 
-           color: ${cellTextColor}; 
-           border-right: 1px solid ${borderColor}; 
-           border-bottom: 1px solid ${borderColor}; 
-         }
-         .order-table .ant-table-tbody > tr.odd-row-order > td { 
-           background-color: ${oddRowBgColor}; 
-           color: ${cellTextColor}; 
-           border-right: 1px solid ${borderColor}; 
-           border-bottom: 1px solid ${borderColor}; 
-         }
-         .order-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { 
-           border-right: none; 
-         }
-         .order-table .ant-table-tbody > tr:hover > td { 
-           background-color: #EFF6FF !important; 
-         }
-         .order-table .ant-table-cell-fix-right { 
-           background: inherit !important; 
-         }
-         .order-table .ant-table-thead > tr > th.ant-table-cell-fix-right { 
-           background-color: ${headerBgColor} !important; 
-         }
-         
-         /* Input and Select styles */
-         .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
-         .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
-         .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
-         .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
-           border-color: #3B82F6 !important; 
-           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-         }
-         
-         /* Pagination styles */
-         .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { 
-           border-color: #3B82F6 !important; 
-           color: #3B82F6 !important; 
-         }
-         
-         /* Select styles */
-         .ant-select-selector { 
-           border-color: #D1D5DB !important; 
-         }
-         .ant-select-selector:hover { 
-           border-color: #3B82F6 !important; 
-         }
-         
-         /* Table sorter styles */
-         .ant-table-column-sorter-up.active svg,
-         .ant-table-column-sorter-down.active svg {
-           color: #3B82F6 !important;
-           fill: #3B82F6 !important;
-         }
-       `}</style>
+        /* Your CSS styles remain the same */
+        .ant-table-thead > tr > th { background-color: ${headerBgColor} !important; color: ${headerColor} !important; font-weight: bold !important; border-right: 1px solid ${borderColor} !important; border-bottom: 2px solid ${tableBorderColor} !important; }
+        .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { border-right: none !important; }
+        .promo-table .ant-table-tbody > tr.even-row-promo > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr.odd-row-promo > td { background-color: ${oddRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
+        .promo-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { border-right: none; }
+        .promo-table .ant-table-tbody > tr:hover > td { background-color: #FDEBC8 !important; }
+        .promo-table .ant-table-cell-fix-right { background: inherit !important; }
+        .promo-table .ant-table-thead > tr > th.ant-table-cell-fix-right { background-color: ${headerBgColor} !important; }
+        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
+        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
+        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
+        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
+          border-color: #D97B41 !important; box-shadow: none !important;
+        }
+        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
+        .ant-select-selector { border-color: #E9C97B !important; }
+        .ant-select-selector:hover { border-color: #D97B41 !important; }
+        .ant-table-column-sorter-up.active svg,
+        .ant-table-column-sorter-down.active svg {
+          color: #D97B41 !important;
+          fill: #D97B41 !important;
+        }
+      `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
         <h1
@@ -431,64 +389,63 @@ const OrderManagement: React.FC = () => {
           />
         </Card>
 
-                 <Modal
-           title={
-             <span style={{ color: "#1F2937", fontWeight: 700, fontSize: 22 }}>
-               Chi tiết đơn hàng
-             </span>
-           }
-           open={isModalVisible}
-           onCancel={() => setIsModalVisible(false)}
-           footer={[
-             <Button
-               key="back"
-               onClick={() => setIsModalVisible(false)}
-               style={{
-                 borderRadius: 8,
-                 borderColor: "#6B7280",
-                 color: "#6B7280",
-                 background: "#F9FAFB",
-               }}
-             >
-               Đóng
-             </Button>,
-           ]}
-           width={800}
-           styles={{
-             body: {
-               background: "#F8FAFC",
-               borderRadius: "0 0 16px 16px",
-               padding: "24px",
-             },
-             header: {
-               borderBottom: `1px solid ${borderColor}`,
-               paddingTop: 16,
-               paddingBottom: 16,
-             },
-           }}
-           style={{ borderRadius: 16, top: 20 }}
-         >
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Chi tiết đơn hàng
+            </span>
+          }
+          open={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => setIsModalVisible(false)}
+              style={{
+                borderRadius: 6,
+                borderColor: "#D97B41",
+                color: "#D97B41",
+              }}
+            >
+              Đóng
+            </Button>,
+          ]}
+          width={800}
+          styles={{
+            body: {
+              background: "#FFF9F0",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid ${tableBorderColor}`,
+              paddingTop: 16,
+              paddingBottom: 16,
+            },
+          }}
+          style={{ borderRadius: 12, top: 20 }}
+        >
           {selectedOrder && (
-                         <Card
-               style={{
-                 background: "#fff",
-                 borderRadius: 12,
-                 boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-                 border: `1px solid ${borderColor}`,
-                 padding: 20,
-               }}
-             >
+            <Card
+              style={{
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 8px rgba(217, 123, 65, 0.08)",
+                border: `1px solid ${tableBorderColor}`,
+                padding: 16,
+              }}
+            >
               <Descriptions
                 bordered
                 column={{ xxl: 2, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
                 size="default"
-                                 labelStyle={{
-                   color: "#374151",
-                   fontWeight: 600,
-                   background: "#F9FAFB",
-                   width: "160px",
-                 }}
-                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
+                labelStyle={{
+                  color: "#A05A2C",
+                  fontWeight: 600,
+                  background: "#FFF9F0",
+                  width: "160px",
+                }}
+                contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
                 <Descriptions.Item label="Mã đơn hàng">
                   {selectedOrder.orderId}
@@ -521,23 +478,23 @@ const OrderManagement: React.FC = () => {
                           gap: "6px",
                         }}
                       >
-                        {selectedOrder.status.charAt(0).toUpperCase() +
-                          selectedOrder.status.slice(1)}
+                        {statusMap[selectedOrder.status] ||
+                          selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                       </Tag>
                     );
                   })()}
                 </Descriptions.Item>
-                                 <Descriptions.Item label="Tổng tiền" span={2}>
-                   <span
-                     style={{
-                       color: "#059669",
-                       fontWeight: "bold",
-                       fontSize: "1.1em",
-                     }}
-                   >
-                     {parseFloat(selectedOrder.order_amount).toLocaleString()}đ
-                   </span>
-                 </Descriptions.Item>
+                <Descriptions.Item label="Tổng tiền" span={2}>
+                  <span
+                    style={{
+                      color: "#D97B41",
+                      fontWeight: "bold",
+                      fontSize: "1.1em",
+                    }}
+                  >
+                    {parseFloat(selectedOrder.order_amount).toLocaleString()}đ
+                  </span>
+                </Descriptions.Item>
                 <Descriptions.Item label="Phí vận chuyển">
                   <span style={{ color: cellTextColor }}>
                     {parseFloat(
@@ -628,11 +585,11 @@ const OrderManagement: React.FC = () => {
                     pagination={false}
                     rowKey="productId"
                     size="small"
-                                         style={{
-                       background: "#F9FAFB",
-                       borderRadius: 8,
-                       border: `1px solid ${borderColor}`,
-                     }}
+                    style={{
+                      background: evenRowBgColor,
+                      borderRadius: 8,
+                      border: `1px solid ${borderColor}`,
+                    }}
                   />
                 </Descriptions.Item>
               </Descriptions>
