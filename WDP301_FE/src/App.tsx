@@ -81,10 +81,7 @@ function App() {
           <Route path="/forbidden" element={<Forbidden />} />
           <Route element={<LayoutWithNavFooter />}>
             <Route path="/" element={<HomePage />} />
-            <Route
-              path="/cancel-order-success"
-              element={<CancelOrderSuccess />}
-            />
+            <Route path="/api/orders/cancel" element={<CancelOrderSuccess />} />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />

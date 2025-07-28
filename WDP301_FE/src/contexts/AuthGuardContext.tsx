@@ -115,7 +115,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/checkout",
         "/payment-success",
         "/user-information",
-        "/cancel-order-success",
+        "/api/orders/cancel",
       ],
       Shipper: [],
       Manager: [
