@@ -398,6 +398,34 @@ const searchProductsByNameAndTypeName = async (searchTerm, typeName) => {
   return products;
 };
 
+const reactivateProduct = async (productId) => {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
+  }
+
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  if (product.isActive) {
+    throw new Error("Product is already active");
+  }
+
+  const productType = await ProductType.findByPk(product.productTypeId);
+  if (!productType || !productType.isActive) {
+    throw new Error("Cannot reactivate product because its product type is not found or inactive");
+  }
+
+  await product.update({ isActive: true });
+  return await Product.findByPk(productId, {
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+  });
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -410,4 +438,5 @@ module.exports = {
   searchProductsByTypeName,
   searchProductsByNameAndType,
   searchProductsByNameAndTypeName,
+  reactivateProduct,
 };

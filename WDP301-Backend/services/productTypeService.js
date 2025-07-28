@@ -83,6 +83,27 @@ const productTypeService = {
       throw error.message || "Failed to delete product type";
     }
   },
+
+  async reactivateProductType(productTypeId) {
+    try {
+      const productType = await ProductType.findByPk(productTypeId);
+      if (!productType) {
+        throw new Error("Product type not found");
+      }
+      if (productType.isActive) {
+        throw new Error("Product type is already active");
+      }
+      await productType.update({ isActive: true });
+      return {
+        productTypeId: productType.productTypeId,
+        name: productType.name,
+        isActive: productType.isActive,
+      };
+    } catch (error) {
+      console.error("Error reactivating ProductType:", error.message);
+      throw error.message || "Failed to reactivate product type";
+    }
+  },
 };
 
 module.exports = { productTypeService };
