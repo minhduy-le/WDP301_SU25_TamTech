@@ -10,7 +10,6 @@ class PromotionService {
     const canvas = createCanvas(300, 100);
     try {
       console.log(`Generating barcode for code: ${data.code}`);
-      // Generate barcode for the promotion code
       JsBarcode(canvas, data.code, {
         format: "CODE128",
         width: 2,
@@ -19,15 +18,12 @@ class PromotionService {
         fontSize: 14,
       });
 
-      // Convert canvas to buffer (use PNG as fallback if SVG fails)
       const svgBuffer = canvas.toBuffer("image/png");
       console.log(`Generated buffer: type=image/png, length=${svgBuffer.length}`);
 
-      // Upload PNG to Firebase
       const fileName = `barcodes/${data.code}_${Date.now()}.png`;
       const barcodeUrl = await uploadFileToFirebase(svgBuffer, fileName, "image/png");
 
-      // Create promotion with barcode URL
       const promotion = await Promotion.create({
         ...data,
         NumberCurrentUses: 0,
@@ -38,7 +34,6 @@ class PromotionService {
       return promotion;
     } catch (error) {
       console.error("Error generating or uploading barcode:", error.message, error.stack);
-      // Create promotion without barcode if generation/uploading fails
       const promotion = await Promotion.create({
         ...data,
         NumberCurrentUses: 0,
@@ -162,6 +157,25 @@ class PromotionService {
       throw new Error("No promotions found for this user");
     }
     return promotions;
+  }
+
+  async reactivatePromotion(id) {
+    const promotion = await Promotion.findByPk(id);
+    if (!promotion) {
+      throw new Error("Promotion not found");
+    }
+    if (promotion.isActive) {
+      throw new Error("Promotion is already active");
+    }
+    const now = new Date();
+    if (new Date(promotion.endDate) < now) {
+      throw new Error("Cannot reactivate an expired promotion");
+    }
+    if (promotion.NumberCurrentUses >= promotion.maxNumberOfUses) {
+      throw new Error("Cannot reactivate a promotion that has reached its maximum uses");
+    }
+    await promotion.update({ isActive: true });
+    return promotion;
   }
 }
 

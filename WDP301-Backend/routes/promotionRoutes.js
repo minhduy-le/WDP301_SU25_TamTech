@@ -4,7 +4,6 @@ const promotionService = require("../services/promotionService");
 const { body, param, validationResult } = require("express-validator");
 const verifyToken = require("../middlewares/verifyToken");
 
-// Validation middleware for create and update
 const promotionValidation = [
   body("name")
     .trim()
@@ -85,7 +84,6 @@ const promotionValidation = [
     .withMessage("Maximum number of uses must be a positive integer"),
 ];
 
-// Middleware to handle validation errors
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -94,11 +92,9 @@ const validate = (req, res, next) => {
   next();
 };
 
-// Error handler middleware
 const handleError = (error, res) => {
   console.error("Error:", error);
 
-  // Validation errors
   if (
     error.message.includes("Promotion name is required") ||
     error.message.includes("Promotion code is required") ||
@@ -122,12 +118,10 @@ const handleError = (error, res) => {
     return res.status(400).send(error.message);
   }
 
-  // Not found errors
   if (error.message.includes("not found")) {
     return res.status(404).send(error.message);
   }
 
-  // Server errors
   return res.status(500).send(error.message);
 };
 
@@ -396,6 +390,72 @@ router.put(
   async (req, res) => {
     try {
       const promotion = await promotionService.updatePromotion(req.params.id, req.body);
+      res.status(200).json(promotion);
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/promotions/{id}/activate:
+ *   put:
+ *     summary: Reactivate a promotion
+ *     tags: [Promotions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the promotion to reactivate
+ *     responses:
+ *       200:
+ *         description: Promotion reactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Promotion'
+ *       400:
+ *         description: Invalid ID or validation error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid promotion ID
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Unauthorized
+ *       404:
+ *         description: Promotion not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Promotion not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Server error
+ */
+router.put(
+  "/:id/activate",
+  verifyToken,
+  [param("id").isInt().withMessage("Invalid promotion ID")],
+  validate,
+  async (req, res) => {
+    try {
+      const promotion = await promotionService.reactivatePromotion(req.params.id);
       res.status(200).json(promotion);
     } catch (error) {
       handleError(error, res);
