@@ -276,7 +276,32 @@ const getExpiredMaterials = async () => {
   }
 };
 
-// Run every minute to check for expiration
+const markAsProcessedExpired = async (materialId) => {
+  try {
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      throw "Material not found";
+    }
+
+    if (!material.isExpired) {
+      throw "Material must be expired before marking as processed";
+    }
+
+    if (material.isProcessExpired) {
+      throw "Material already marked as processed expired";
+    }
+
+    material.isProcessExpired = true;
+    await material.save();
+    return {
+      materialId: material.materialId,
+      isProcessExpired: material.isProcessExpired,
+    };
+  } catch (error) {
+    throw error.message || error;
+  }
+};
+
 cron.schedule("* * * * *", updateExpiredStatus);
 
 module.exports = {
@@ -287,4 +312,5 @@ module.exports = {
   deleteMaterial,
   updateExpiredStatus,
   getExpiredMaterials,
+  markAsProcessedExpired,
 };

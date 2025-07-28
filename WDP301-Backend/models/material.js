@@ -52,6 +52,10 @@ const Material = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    isProcessExpired: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {
     tableName: "materials",
