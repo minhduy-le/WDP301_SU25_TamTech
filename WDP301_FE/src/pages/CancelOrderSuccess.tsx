@@ -32,7 +32,7 @@ const CancelOrderSuccess = () => {
           },
         }
       );
-    } else {
+    } else if (orderId === "N/A") {
       message.error("Không tìm thấy mã đơn hàng.");
     }
   }, [cancelOrder, orderId, hasCalled]);
