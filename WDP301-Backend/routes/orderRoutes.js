@@ -16,6 +16,7 @@ const {
   setOrderToCanceled,
   uploadRefundCertification,
   getLatestOrder,
+  setOrderToCanceledWhenUserCancel,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -417,6 +418,71 @@ router.get("/cancel", async (req, res) => {
     console.log("Error in cancel callback:", error.message);
     res.status(500).json({ message: "Failed to process cancellation", error: error.message });
   }
+});
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cancel:
+ *   put:
+ *     summary: Cancel an existing order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the order to cancel
+ *     responses:
+ *       200:
+ *         description: Order canceled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Order canceled successfully
+ *       400:
+ *         description: Order cannot be canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Only pending orders can be canceled
+ *       404:
+ *         description: Order not found or user lacks permission
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Order not found or you don't have permission
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.put("/:orderId/cancel", verifyToken, async (req, res) => {
+  const { orderId } = req.params;
+  const userId = req.userId;
+
+  const result = await setOrderToCanceledWhenUserCancel(parseInt(orderId), userId);
+  return res.status(result.status).json({ message: result.message });
 });
 
 /**

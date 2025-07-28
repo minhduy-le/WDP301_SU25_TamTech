@@ -1126,6 +1126,35 @@ const handlePaymentSuccess = async (req, res) => {
   }
 };
 
+const setOrderToCanceledWhenUserCancel = async (orderId, userId) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId, userId },
+      transaction,
+    });
+
+    if (!order) {
+      await transaction.rollback();
+      return { status: 404, message: "Order not found or you don't have permission" };
+    }
+
+    if (order.status_id !== 1) {
+      await transaction.rollback();
+      return { status: 400, message: "Only pending orders can be canceled" };
+    }
+
+    await Order.update({ status_id: 5 }, { where: { orderId }, transaction });
+
+    await transaction.commit();
+    return { status: 200, message: "Order canceled successfully" };
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Error in setOrderToCanceled:", error);
+    return { status: 500, message: "Internal server error" };
+  }
+};
+
 const getUserOrders = async (req, res) => {
   console.log("getUserOrders called at:", new Date().toISOString());
   console.log("User ID:", req.userId);
@@ -2079,4 +2108,5 @@ module.exports = {
   sendRefundEmail,
   uploadRefundCertification,
   getLatestOrder,
+  setOrderToCanceledWhenUserCancel,
 };
