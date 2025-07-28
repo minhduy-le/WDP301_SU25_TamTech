@@ -2,8 +2,6 @@ import React, { useState } from 'react'
 import {
   ArrowLeft,
   Phone,
-  CreditCard,
-  Banknote,
   Smartphone,
   CheckCircle,
   Receipt,
@@ -47,9 +45,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   promotionCode,
 }) => {
   const [customerPhone, setCustomerPhone] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<
-    'cash' | 'card' | 'transfer'
-  >('cash')
+  const [paymentMethod, setPaymentMethod] = useState<'transfer'>('transfer')
   const [isProcessing, setIsProcessing] = useState(false)
   const { createOrder } = usePOSApi()
   const navigate = useNavigate()
@@ -83,20 +79,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setIsProcessing(true)
     setMessage(null)
     try {
-      // Map payment method to API value
-      let payment_method_id = 1
-      if (paymentMethod === 'cash') payment_method_id = 1
-      else if (paymentMethod === 'transfer') payment_method_id = 2
-      else payment_method_id = 3 // card
+      let payment_method_id = 2 
 
-      // Map order items to API format
       const apiOrderItems = orderItems.map((item) => ({
         productId: Number(item.id),
         quantity: item.quantity,
         price: item.price,
       }))
 
-      // Call API
       const res = await createOrder({
         orderItems: apiOrderItems,
         order_discount_value: discountAmount,
@@ -109,20 +99,18 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         platform: 'web',
         ...(customerInfo?.id && { customerId: customerInfo.id }),
       })
-      if (paymentMethod === 'transfer' && res?.checkoutUrl) {
+      if (res?.checkoutUrl) {
         window.location.href = res.checkoutUrl
         return
       }
       setMessage('Tạo đơn hàng thành công!')
-      // Gọi callback hoàn tất đơn hàng
       const checkoutData: CheckoutData = {
         customerPhone,
-        paymentMethod,
+        paymentMethod: 'transfer',
         orderItems,
         totalAmount,
         orderNumber,
       }
-      // Redirect sang trang thành công với orderId
       if (res?.orderId) {
         navigate(`/staff/pos-success?orderId=${res.orderId}`)
         return
@@ -138,18 +126,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   }
 
   const paymentMethods = [
-    {
-      id: 'cash' as const,
-      name: 'Tiền mặt',
-      icon: Banknote,
-      description: 'Thanh toán bằng tiền mặt',
-    },
-    {
-      id: 'card' as const,
-      name: 'Thẻ ngân hàng',
-      icon: CreditCard,
-      description: 'Thanh toán bằng thẻ ATM/Visa',
-    },
     {
       id: 'transfer' as const,
       name: 'Chuyển khoản',
@@ -308,11 +284,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         name="paymentMethod"
                         value={method.id}
                         checked={paymentMethod === method.id}
-                        onChange={(e) =>
-                          setPaymentMethod(
-                            e.target.value as 'cash' | 'card' | 'transfer'
-                          )
-                        }
+                        onChange={() => setPaymentMethod('transfer')}
                         className="text-amber-600 focus:ring-amber-300"
                       />
                       <IconComponent className="h-5 w-5 text-amber-600" />

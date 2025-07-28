@@ -149,13 +149,9 @@ export const POSPage: React.FC = () => {
     alert(
       `Đơn hàng #${checkoutData.orderNumber} đã được hoàn thành!\n` +
         `Khách hàng: ${checkoutData.customerPhone}\n` +
-        `Phương thức: ${
-          checkoutData.paymentMethod === 'cash'
-            ? 'Tiền mặt'
-            : checkoutData.paymentMethod === 'card'
-            ? 'Thẻ ngân hàng'
-            : 'Chuyển khoản'
-        }\n` +
+        `Phương thức: ` +
+        'Chuyển khoản' +
+        `\n` +
         `Tổng tiền: ${checkoutData.totalAmount.toLocaleString()}đ`
     )
 
