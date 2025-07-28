@@ -42,27 +42,11 @@ const createBlog = async (blogData, userId) => {
     throw new Error("Content is required");
   }
 
-  let imageUrl = null;
-  if (image) {
-    // Validate image URL
-    if (!/\.(jpg|jpeg|png)$/i.test(image)) {
-      throw new Error("Image URL must end with .jpg, .jpeg, or .png");
-    }
-
-    // Download image from URL
-    const response = await axios.get(image, { responseType: "arraybuffer" });
-    const imageBuffer = Buffer.from(response.data);
-
-    // Generate unique filename
-    const fileName = `blog_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${image.split(".").pop()}`;
-    imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
-  }
-
   const blog = await Blog.create({
     title,
     content,
     authorId: userId,
-    image: imageUrl,
+    image,
     isActive: true,
   });
 
@@ -81,26 +65,10 @@ const updateBlog = async (blogId, updateData, userId) => {
     throw new Error("Title must be under 255 characters");
   }
 
-  let imageUrl = blog.image;
-  if (image) {
-    // Validate image URL
-    if (!/\.(jpg|jpeg|png)$/i.test(image)) {
-      throw new Error("Image URL must end with .jpg, .jpeg, or .png");
-    }
-
-    // Download image from URL
-    const response = await axios.get(image, { responseType: "arraybuffer" });
-    const imageBuffer = Buffer.from(response.data);
-
-    // Generate unique filename
-    const fileName = `blog_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${image.split(".").pop()}`;
-    imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
-  }
-
   await blog.update({
     title: title || blog.title,
     content: content || blog.content,
-    image: image !== undefined ? imageUrl : blog.image,
+    image: image !== undefined ? image : blog.image,
     isActive: isActive !== undefined ? isActive : blog.isActive,
   });
 
