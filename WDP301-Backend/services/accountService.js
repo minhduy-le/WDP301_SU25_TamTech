@@ -233,4 +233,35 @@ const deactivateUser = async (userId) => {
   }
 };
 
-module.exports = { createUser, getAllUsers, getUserById, updateUser, deactivateUser, getUserByPhoneNumber };
+const activateUser = async (userId) => {
+  try {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      throw "Invalid user ID";
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw "User not found";
+    }
+
+    if (user.isActive) {
+      throw "User is already active";
+    }
+
+    await user.update({ isActive: true });
+    return user;
+  } catch (error) {
+    console.error("Error in activateUser:", error);
+    throw error;
+  }
+};
+
+module.exports = {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deactivateUser,
+  getUserByPhoneNumber,
+  activateUser,
+};

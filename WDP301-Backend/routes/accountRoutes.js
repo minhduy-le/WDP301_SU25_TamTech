@@ -469,6 +469,78 @@ router.put("/:id", verifyToken, async (req, res, next) => {
 
 /**
  * @swagger
+ * /api/accounts/{id}/activate:
+ *   put:
+ *     summary: Activate a user by ID
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User activated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     isActive:
+ *                       type: boolean
+ *       400:
+ *         description: User is already active or invalid user ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: User is already active
+ *       404:
+ *         description: User not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.put("/:id/activate", verifyToken, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const updatedUser = await accountService.activateUser(userId);
+    res.status(200).json({
+      status: 200,
+      message: "User activated successfully",
+      data: {
+        id: updatedUser.id,
+        isActive: updatedUser.isActive,
+      },
+    });
+  } catch (error) {
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
+  }
+});
+
+/**
+ * @swagger
  * /api/accounts/{id}:
  *   delete:
  *     summary: Deactivate a user by ID
