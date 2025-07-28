@@ -108,15 +108,19 @@ const ProductManagement: React.FC = () => {
     try {
       let response;
       if (typeId) {
-        response = await axios.get(`${import.meta.env.VITE_API_URL}products/type/${typeId}`);
+        response = await axios.get(
+          `${import.meta.env.VITE_API_URL}products/type/${typeId}`
+        );
       } else {
-        response = await axios.get(`${import.meta.env.VITE_API_URL}products?page=${page}`);
+        response = await axios.get(
+          `${import.meta.env.VITE_API_URL}products?page=${page}`
+        );
       }
       let productData: Product[] = [];
       let totalPagesFromApi = 1;
       if (Array.isArray(response.data)) {
         productData = response.data;
-      } else if (response.data && typeof response.data === 'object') {
+      } else if (response.data && typeof response.data === "object") {
         if (Array.isArray(response.data.products)) {
           productData = response.data.products;
         } else if (Array.isArray(response.data.data)) {
@@ -124,7 +128,7 @@ const ProductManagement: React.FC = () => {
         } else if (Array.isArray(response.data.results)) {
           productData = response.data.results;
         }
-        if (typeof response.data.totalPages === 'number') {
+        if (typeof response.data.totalPages === "number") {
           totalPagesFromApi = response.data.totalPages;
         }
       }
@@ -345,7 +349,7 @@ const ProductManagement: React.FC = () => {
         message.success("Đã cập nhật sản phẩm!");
       }
 
-      await fetchProducts();
+      await fetchProducts(page);
       setModalVisible(false);
       form.resetFields();
       setFileList([]);
@@ -354,11 +358,15 @@ const ProductManagement: React.FC = () => {
     } catch (error: any) {
       console.error("Modal OK error:", error);
       let errorMessage = "Có lỗi xảy ra!";
-      if (error.errorFields) {
+
+      if (error?.errorFields) {
         errorMessage = "Vui lòng điền đầy đủ các trường bắt buộc.";
-      } else if (error?.response?.data?.message) {
+      } else if (typeof error?.response?.data === "string") {
+        errorMessage = error.response.data;
+      } else if (typeof error?.response?.data?.message === "string") {
         errorMessage = error.response.data.message;
       }
+
       message.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -369,9 +377,29 @@ const ProductManagement: React.FC = () => {
     fileList: newFileList,
   }) => {
     setFileList(newFileList);
+
     if (newFileList.length > 0) {
-      form.setFieldsValue({ image: newFileList });
       const file = newFileList[0];
+
+      const isValidImage =
+        (file.originFileObj &&
+          /\.(jpe?g|png)$/i.test(file.originFileObj.name)) || 
+        (file.url && /\.(jpe?g|png)$/i.test(file.url)) || 
+        (typeof file === "string" && /\.(jpe?g|png)$/i.test(file)) || 
+        (typeof file === "string" && (file as string).startsWith("data:image/"))
+
+      if (!isValidImage) {
+        message.error(
+          "Ảnh không hợp lệ. Chỉ chấp nhận định dạng .jpg, .jpeg hoặc .png"
+        );
+        setFileList([]);
+        form.setFieldsValue({ image: null });
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        return;
+      }
+
+      form.setFieldsValue({ image: newFileList });
       if (file.originFileObj) {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         const preview = URL.createObjectURL(file.originFileObj as File);
@@ -386,6 +414,7 @@ const ProductManagement: React.FC = () => {
       setPreviewUrl(null);
     }
   };
+
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
@@ -453,7 +482,7 @@ const ProductManagement: React.FC = () => {
       title: "Giá",
       dataIndex: "price",
       key: "price",
-      width: 120, // Tăng width
+      width: 120,
       align: "right" as const,
       sorter: (a: Product, b: Product) => a.price - b.price,
       render: (price: number) => (
@@ -591,7 +620,7 @@ const ProductManagement: React.FC = () => {
             fontSize: 36,
             marginBottom: 24,
             textAlign: "left",
-            paddingTop: 0,  
+            paddingTop: 0,
             marginTop: 0,
           }}
         >
@@ -643,7 +672,9 @@ const ProductManagement: React.FC = () => {
                 loading={isProductTypesLoading}
               >
                 {isProductTypesLoading ? (
-                  <Option value="" disabled>Đang tải...</Option>
+                  <Option value="" disabled>
+                    Đang tải...
+                  </Option>
                 ) : (
                   productTypes?.map((type) => (
                     <Option key={type.productTypeId} value={type.productTypeId}>
@@ -710,11 +741,14 @@ const ProductManagement: React.FC = () => {
               current: page,
               pageSize,
               total: totalPages * pageSize,
-              onChange: (p) => setPage(p),
+              onChange: (p) => {
+                setPage(p);
+                fetchProducts(p);
+              },
             }}
           />
         </Card>
-        <ProductTypeManagement/>
+        <ProductTypeManagement />
         <Modal
           open={modalVisible}
           title={
@@ -768,6 +802,7 @@ const ProductManagement: React.FC = () => {
                       background: "#D97B41",
                       borderColor: "#D97B41",
                       borderRadius: 6,
+                      outline: "none",
                     }}
                     loading={isSubmitting}
                   >
@@ -998,15 +1033,27 @@ const ProductManagement: React.FC = () => {
                 />
               </Form.Item>
               <Form.Item
+                label="Mô tả"
                 name="description"
-                label={<span style={{ color: "#A05A2C" }}>Mô tả</span>}
-                rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
+                rules={[
+                  { required: true, message: "Mô tả không được để trống." },
+                  {
+                    max: 1000,
+                    message: "Mô tả không được vượt quá 1000 ký tự.",
+                  },
+                  {
+                    validator: (_, value) => {
+                      if (value && value.trim().length === 0) {
+                        return Promise.reject(
+                          "Mô tả không được chỉ chứa khoảng trắng."
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
-                <Input.TextArea
-                  rows={3}
-                  placeholder="Mô tả chi tiết về sản phẩm"
-                  style={{ borderRadius: 6 }}
-                />
+                <Input.TextArea rows={4} placeholder="Nhập mô tả sản phẩm..." />
               </Form.Item>
               <Space
                 align="start"
