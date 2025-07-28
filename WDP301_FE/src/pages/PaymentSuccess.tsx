@@ -30,7 +30,7 @@ const PaymentSuccess = () => {
             <img src={SHIP} alt="Delivery Scooter" className="scooter-img" />
           </div>
           <p className="order-information">
-            Đơn hàng được tạo lúc 13:46, 27/01/2025
+            {/* Đơn hàng được tạo lúc 13:46, 27/01/2025 */}
             <br />
             Mã đơn hàng: {orderId}
           </p>
