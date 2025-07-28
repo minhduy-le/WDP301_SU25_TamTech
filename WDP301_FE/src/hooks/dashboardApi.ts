@@ -174,17 +174,18 @@ export const useProductTypeSales = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}dashboard/product-type-sales`, {
+              const token = localStorage.getItem("token");
+
+        const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL}dashboard/product-type-sales`, {
           headers: {
             'accept': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZnVsbE5hbWUiOiJUbyBWeSIsImVtYWlsIjoidnl0b3RyaWV1MTJhMTIxQGdtYWlsLmNvbSIsInBob25lX251bWJlciI6IjA3NzkwODQxMjciLCJyb2xlIjoiTWFuYWdlciIsImlhdCI6MTc1MDE3NDM2MCwiZXhwIjoxNzUwMTc3OTYwfQ.hsF1p3Z9qzfbZbsrGm9Kg5ovwXS-VRNprRs_g36_ae8'
+            'Authorization': `Bearer ${token}`
           }
         });
-        const result = await response.json();
-        if (result.status === 200) {
-          setData(result.stats);
+        if (response.status === 200) {
+          setData(response.data.stats);
         } else {
-          setError(result.message);
+          setError(response.data.message);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred' as any);
