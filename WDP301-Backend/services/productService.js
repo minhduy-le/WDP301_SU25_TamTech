@@ -118,7 +118,6 @@ const getProducts = async ({ page, limit, offset }) => {
   const totalCount = await Product.count({ where: { isActive: true } });
 
   const products = await Product.findAll({
-    where: { isActive: true },
     limit,
     offset,
     order: [["price", "DESC"]],
