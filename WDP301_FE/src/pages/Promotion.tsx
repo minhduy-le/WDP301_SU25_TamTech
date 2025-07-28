@@ -10,10 +10,8 @@ const Promotion = () => {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  // Sử dụng hook để lấy danh sách promotion của user
   const { data: userPromotions, isLoading } = useGetPromotionUser(userId ?? 0);
 
-  // Chuyển đổi dữ liệu từ API thành định dạng phù hợp với giao diện
   const vouchers = userPromotions
     ? userPromotions.map((promotion) => ({
         id: promotion.promotionId,

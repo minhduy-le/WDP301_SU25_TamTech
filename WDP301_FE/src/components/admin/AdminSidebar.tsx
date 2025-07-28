@@ -5,7 +5,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
-  SettingOutlined,
   LogoutOutlined,
   BellOutlined,
   DownOutlined,
@@ -88,11 +87,6 @@ const AdminSidebar: React.FC = () => {
       onClick: () => {
         navigate("/admin/profile");
       },
-    },
-    {
-      key: "settingsMenu",
-      label: "Cài đặt",
-      icon: <SettingOutlined />,
     },
     {
       type: "divider",

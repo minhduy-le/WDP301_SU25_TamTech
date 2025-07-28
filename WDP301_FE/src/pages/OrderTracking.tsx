@@ -11,13 +11,12 @@ import {
   message,
 } from "antd";
 import "../style/OrderTracking.css";
-import { useEffect, useState } from "react";
-import ReactDOMServer from "react-dom/server";
+import { useState } from "react";
 import {
-  ShoppingOutlined,
-  BookOutlined,
-  CarOutlined,
-  DeleteOutlined,
+  // ShoppingOutlined,
+  // BookOutlined,
+  // CarOutlined,
+  // DeleteOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -34,16 +33,25 @@ const { Option } = Select;
 
 const items = [
   {
+    title: "Chờ thanh toán",
+  },
+  {
     title: "Đặt hàng thành công",
+  },
+  {
+    title: "Xác nhận đơn hàng",
   },
   {
     title: "Đang chuẩn bị",
   },
   {
-    title: "Đang vận chuyển",
+    title: "Đang nấu",
   },
   {
-    title: "Hoàn thành",
+    title: "Đang giao",
+  },
+  {
+    title: "Hoàn thành giao hàng",
   },
   {
     title: "Đã hủy",
@@ -53,18 +61,21 @@ const items = [
 const getStepIndex = (status: string) => {
   switch (status) {
     case "Pending":
-      return 0;
-    case "Paid":
-    case "Preparing":
       return 1;
-    case "Cooked":
+    case "Paid":
       return 2;
-    case "Delivering":
+    case "Approved":
       return 3;
-    case "Delivered":
+    case "Preparing":
       return 4;
-    case "Canceled":
+    case "Cooked":
       return 5;
+    case "Delivering":
+      return 6;
+    case "Delivered":
+      return 7;
+    case "Canceled":
+      return 8;
     default:
       return 0;
   }
@@ -75,25 +86,25 @@ interface OrderTrackingProps {
   onBackClick?: () => void;
 }
 
-const statusMap: { [key: string]: string } & {
-  Pending: string;
-  Paid: string;
-  Approved: string;
-  Preparing: string;
-  Cooked: string;
-  Delivering: string;
-  Delivered: string;
-  Canceled: string;
-} = {
-  Pending: "Chờ thanh toán",
-  Paid: "Đã thanh toán",
-  Approved: "Xác nhận đơn",
-  Preparing: "Đang nấu ăn",
-  Cooked: "Đã nấu xong",
-  Delivering: "Đang giao",
-  Delivered: "Đã giao",
-  Canceled: "Đã hủy",
-};
+// const statusMap: { [key: string]: string } & {
+//   Pending: string;
+//   Paid: string;
+//   Approved: string;
+//   Preparing: string;
+//   Cooked: string;
+//   Delivering: string;
+//   Delivered: string;
+//   Canceled: string;
+// } = {
+//   Pending: "Chờ thanh toán",
+//   Paid: "Đã thanh toán",
+//   Approved: "Xác nhận đơn",
+//   Preparing: "Đang nấu ăn",
+//   Cooked: "Đã nấu xong",
+//   Delivering: "Đang giao",
+//   Delivered: "Đã giao",
+//   Canceled: "Đã hủy",
+// };
 
 const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
   const { data: order, isLoading } = useGetOrderById(orderId || 0);
@@ -116,30 +127,30 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
   const cancelOrderMutation = useCancelOrder();
   const sendEmailMutation = useCancelOrderSendEmail();
 
-  useEffect(() => {
-    const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
-    const icons = [
-      <ShoppingOutlined key="shop" />,
-      <BookOutlined key="prep" />,
-      <CarOutlined key="ship" />,
-      <BookOutlined key="done" />,
-      <DeleteOutlined key="cancel" />,
-    ];
+  // useEffect(() => {
+  //   const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
+  //   const icons = [
+  //     <ShoppingOutlined key="shop" />,
+  //     <BookOutlined key="prep" />,
+  //     <CarOutlined key="ship" />,
+  //     <BookOutlined key="done" />,
+  //     <DeleteOutlined key="cancel" />,
+  //   ];
 
-    stepIcons.forEach((icon, index) => {
-      if (!icon.parentElement?.querySelector(".menu-icon")) {
-        const menuIconDiv = document.createElement("div");
-        menuIconDiv.className = "menu-icon";
-        menuIconDiv.innerHTML = ReactDOMServer.renderToString(icons[index]);
-        icon.parentElement?.insertBefore(menuIconDiv, icon);
-      } else {
-        const existingIcon = icon.parentElement?.querySelector(".menu-icon");
-        if (existingIcon && !existingIcon.innerHTML) {
-          existingIcon.innerHTML = ReactDOMServer.renderToString(icons[index]);
-        }
-      }
-    });
-  }, []);
+  //   stepIcons.forEach((icon, index) => {
+  //     if (!icon.parentElement?.querySelector(".menu-icon")) {
+  //       const menuIconDiv = document.createElement("div");
+  //       menuIconDiv.className = "menu-icon";
+  //       menuIconDiv.innerHTML = ReactDOMServer.renderToString(icons[index]);
+  //       icon.parentElement?.insertBefore(menuIconDiv, icon);
+  //     } else {
+  //       const existingIcon = icon.parentElement?.querySelector(".menu-icon");
+  //       if (existingIcon && !existingIcon.innerHTML) {
+  //         existingIcon.innerHTML = ReactDOMServer.renderToString(icons[index]);
+  //       }
+  //     }
+  //   });
+  // }, []);
 
   if (isLoading) {
     return <div>Đang tải thông tin đơn hàng...</div>;
@@ -208,55 +219,74 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
               <br />
               Thời gian đặt hàng:{" "}
               {dayjs(order.order_create_at).format("HH:mm, DD/MM/YYYY")}
-            </p>
-            <div className="tracking-timeline">
-              <Steps
-                current={currentStep}
-                labelPlacement="vertical"
-                items={items}
-              />
-            </div>
-            <div className="ship-status">
-              Tình trạng đơn hàng:{" "}
-              <div
-                className="ship-status-bold"
-                style={{
-                  color:
-                    order.status === "Paid"
-                      ? "#78A243"
-                      : order.status === "Canceled"
-                      ? "#DA7339"
-                      : order.status === "Pending"
-                      ? "yellow"
-                      : "#2d1e1a",
-                }}
-              >
-                {statusMap[order.status] || order.status}
-              </div>
-            </div>
-            <p className="shipping-info">
-              <p className="item-title">Thông tin giao hàng</p>
-              <br />
-              <Row>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
+              {/* <div className="ship-status">
+                Tình trạng đơn hàng:{" "}
+                <div
+                  className="ship-status-bold"
+                  style={{
+                    color:
+                      order.status === "Paid"
+                        ? "#78A243"
+                        : order.status === "Canceled"
+                        ? "#DA7339"
+                        : order.status === "Pending"
+                        ? "yellow"
+                        : "#2d1e1a",
+                  }}
                 >
-                  Tên khách hàng: {order.fullName}
-                </Col>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
-                >
-                  Số điện thoại: {order.phone_number}
-                </Col>
-              </Row>
-              <Row
-                style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
-              >
-                Địa chỉ giao hàng: {order.order_address}
-              </Row>
+                  {statusMap[order.status] || order.status}
+                </div>
+              </div> */}
             </p>
+            <Row>
+              <Col span={12}>
+                <div className="tracking-timeline">
+                  <Steps
+                    current={currentStep}
+                    labelPlacement="vertical"
+                    direction="vertical"
+                    items={items}
+                  />
+                </div>
+              </Col>
+              <Col span={12}>
+                <p className="shipping-info">
+                  <p className="item-title">Thông tin giao hàng</p>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 15,
+                    }}
+                  >
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Tên khách hàng: {order.fullName}
+                    </Row>
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Số điện thoại: {order.phone_number}
+                    </Row>
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Địa chỉ giao hàng: {order.order_address}
+                    </Row>
+                  </div>
+                </p>
+              </Col>
+            </Row>
             <div className="order-items">
               <p className="item-title">Thông tin đơn hàng</p>
               {order.orderItems && order.orderItems.length > 0 ? (
@@ -313,7 +343,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
                 <span>Giảm giá</span>
                 <span>
                   <strong style={{ color: "#DA7339" }}>
-                    {order.order_discount_value.toLocaleString()}đ
+                    -{order.order_discount_value.toLocaleString()}đ
                   </strong>
                 </span>
               </div>

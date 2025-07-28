@@ -16,6 +16,9 @@ import {
   Typography,
   Tag,
   Popconfirm,
+  type UploadFile,
+  type UploadProps,
+  Upload,
 } from "antd";
 import {
   SearchOutlined,
@@ -34,8 +37,18 @@ import {
   type BlogDto,
 } from "../hooks/blogsApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../config/firebase";
 
 const { Text } = Typography;
+
+const uploadImageAndGetUrl = async (file: File) => {
+  const storageRef = ref(storage, `blogs/${Date.now()}_${file.name}`);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+  console.log("Uploaded URL:", url);
+  return url;
+};
 
 const BlogManagement = () => {
   const [selectedBlog, setSelectedBlog] = useState<BlogDto | null>(null);
@@ -49,8 +62,8 @@ const BlogManagement = () => {
   const { mutate: createBlog, isPending: isCreating } = useCreateBlogs();
   const { mutate: updateBlog, isPending: isUpdating } = useUpdateBlogs();
   const { mutate: deleteBlog } = useDeleteBlogs();
-
-  const [previewImageUrl, setPreviewImageUrl] = useState<string>("");
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // State để lưu URL sau upload
 
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
@@ -83,7 +96,8 @@ const BlogManagement = () => {
       content: record.content,
       image: record.image,
     });
-    setPreviewImageUrl(record.image || "");
+    setUploadedImageUrl(record.image || null);
+    setFileList([]);
     setIsEditModalVisible(true);
   };
 
@@ -91,39 +105,60 @@ const BlogManagement = () => {
     setIsEditModalVisible(false);
     setSelectedBlog(null);
     form.resetFields();
-    setPreviewImageUrl("");
+    setUploadedImageUrl(null);
+    setFileList([]);
   };
 
   const handleAddBlog = () => {
     form
       .validateFields()
-      .then((values) => {
-        createBlog(values, {
-          onSuccess: () => {
-            message.success("Tạo blog thành công!");
-            setIsAddModalVisible(false);
-            form.resetFields();
-            setPreviewImageUrl("");
-            queryClient.invalidateQueries({ queryKey: ["blogs"] });
-          },
-          onError: (error: any) => {
-            const errorMessage = error.response?.data?.message;
-            if (
-              errorMessage ===
-              "Title is required and must be under 255 characters"
-            ) {
-              message.error("Tiêu đề là bắt buộc và phải dưới 255 ký tự");
-            } else if (errorMessage === "Content is required") {
-              message.error("Nội dung là bắt buộc");
-            } else if (
-              errorMessage === "Image URL must end with .jpg, .jpeg, or .png"
-            ) {
-              message.error("Hình ảnh phải có định dạng .jpg, .jpeg hoặc .png");
-            } else {
-              message.error(errorMessage || "Tạo blog thất bại");
-            }
-          },
-        });
+      .then(async (values) => {
+        let imageUrl = uploadedImageUrl || values.image;
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          try {
+            imageUrl = await uploadImageAndGetUrl(
+              fileList[0].originFileObj as File
+            );
+            setUploadedImageUrl(imageUrl);
+          } catch (error) {
+            message.error(
+              "Lỗi khi upload hình ảnh: " + (error as Error).message
+            );
+            return;
+          }
+        }
+        createBlog(
+          { ...values, image: imageUrl },
+          {
+            onSuccess: () => {
+              message.success("Tạo blog thành công!");
+              setIsAddModalVisible(false);
+              form.resetFields();
+              setUploadedImageUrl(null);
+              setFileList([]);
+              queryClient.invalidateQueries({ queryKey: ["blogs"] });
+            },
+            onError: (error: any) => {
+              const errorMessage = error.response?.data?.message;
+              if (
+                errorMessage ===
+                "Title is required and must be under 255 characters"
+              ) {
+                message.error("Tiêu đề là bắt buộc và phải dưới 255 ký tự");
+              } else if (errorMessage === "Content is required") {
+                message.error("Nội dung là bắt buộc");
+              } else if (
+                errorMessage === "Image URL must end with .jpg, .jpeg, or .png"
+              ) {
+                message.error(
+                  "Hình ảnh phải có định dạng .jpg, .jpeg hoặc .png"
+                );
+              } else {
+                message.error(errorMessage || "Tạo blog thất bại");
+              }
+            },
+          }
+        );
       })
       .catch((info) => {
         console.log("Validate Failed:", info);
@@ -134,15 +169,33 @@ const BlogManagement = () => {
     if (!selectedBlog) return;
     form
       .validateFields()
-      .then((values) => {
+      .then(async (values) => {
+        let imageUrl = uploadedImageUrl || selectedBlog.image;
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          try {
+            imageUrl = await uploadImageAndGetUrl(
+              fileList[0].originFileObj as File
+            );
+            setUploadedImageUrl(imageUrl); // Cập nhật state với URL mới
+          } catch (error) {
+            message.error(
+              "Lỗi khi upload hình ảnh: " + (error as Error).message
+            );
+            return;
+          }
+        }
         updateBlog(
-          { id: selectedBlog.id, blog: { ...selectedBlog, ...values } },
+          {
+            id: selectedBlog.id,
+            blog: { ...selectedBlog, ...values, image: imageUrl },
+          },
           {
             onSuccess: () => {
               message.success("Cập nhật blog thành công!");
               setIsEditModalVisible(false);
               form.resetFields();
-              setPreviewImageUrl("");
+              setUploadedImageUrl(null);
+              setFileList([]);
               queryClient.invalidateQueries({ queryKey: ["blogs"] });
             },
             onError: (error: any) => {
@@ -300,6 +353,32 @@ const BlogManagement = () => {
     },
   ];
 
+  const onUploadChange: UploadProps["onChange"] = async ({
+    fileList: newFileList,
+    file,
+  }) => {
+    setFileList(newFileList);
+    if (
+      newFileList.length > 0 &&
+      file.status === "uploading" &&
+      file.originFileObj
+    ) {
+      try {
+        const imageUrl = await uploadImageAndGetUrl(file.originFileObj as File);
+        setUploadedImageUrl(imageUrl);
+        form.setFieldsValue({ image: imageUrl });
+        console.log("Upload successful, URL set to:", imageUrl);
+      } catch (error) {
+        message.error("Lỗi khi upload hình ảnh: " + (error as Error).message);
+        setFileList([]);
+        setUploadedImageUrl(null);
+      }
+    } else if (newFileList.length === 0) {
+      form.setFieldsValue({ image: null });
+      setUploadedImageUrl(null);
+    }
+  };
+
   return (
     <div
       style={{
@@ -408,7 +487,6 @@ const BlogManagement = () => {
           />
         </Card>
 
-        {/* Detail Modal */}
         <Modal
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
@@ -474,7 +552,6 @@ const BlogManagement = () => {
           )}
         </Modal>
 
-        {/* Add Blog Modal */}
         <Modal
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
@@ -485,7 +562,8 @@ const BlogManagement = () => {
           onCancel={() => {
             setIsAddModalVisible(false);
             form.resetFields();
-            setPreviewImageUrl("");
+            setUploadedImageUrl(null);
+            setFileList([]);
           }}
           centered
           footer={[
@@ -494,7 +572,8 @@ const BlogManagement = () => {
               onClick={() => {
                 setIsAddModalVisible(false);
                 form.resetFields();
-                setPreviewImageUrl("");
+                setUploadedImageUrl(null);
+                setFileList([]);
               }}
             >
               Hủy
@@ -534,28 +613,34 @@ const BlogManagement = () => {
             </Form.Item>
             <Form.Item
               name="image"
-              label="Hình ảnh URL"
-              // rules={[
-              //   { required: true, message: "Vui lòng nhập URL hình ảnh!" },
-              // ]}
+              label="Hình ảnh"
+              rules={[
+                { required: true, message: "Vui lòng tải lên hình ảnh!" },
+              ]}
             >
-              <Input
-                placeholder="Nhập URL hình ảnh"
-                onChange={(e) => setPreviewImageUrl(e.target.value)}
-                style={{ marginBottom: 10 }}
-              />
-              {previewImageUrl && (
+              <Upload
+                listType="picture-card"
+                fileList={fileList}
+                onChange={onUploadChange}
+                beforeUpload={() => false}
+                maxCount={1}
+                accept="image/*"
+              >
+                {fileList.length < 1 && (
+                  <div>
+                    <PlusOutlined />
+                    <div style={{ marginTop: 8 }}>Tải lên</div>
+                  </div>
+                )}
+              </Upload>
+              {uploadedImageUrl && (
                 <Image
-                  src={previewImageUrl}
+                  src={uploadedImageUrl}
                   alt="Preview"
                   style={{
                     display: "block",
                     maxWidth: "100%",
                     maxHeight: 200,
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/600x400/EFE6DB/2D1E1A?text=Invalid+Image";
                   }}
                 />
               )}
@@ -563,7 +648,6 @@ const BlogManagement = () => {
           </Form>
         </Modal>
 
-        {/* Edit Blog Modal */}
         <Modal
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
@@ -588,7 +672,7 @@ const BlogManagement = () => {
               Cập nhật
             </Button>,
           ]}
-          width={500}
+          width={600}
         >
           <Form
             form={form}
@@ -612,29 +696,34 @@ const BlogManagement = () => {
             </Form.Item>
             <Form.Item
               name="image"
-              label="Hình ảnh URL"
-              // rules={[
-              //   { required: true, message: "Vui lòng nhập URL hình ảnh!" },
-              // ]}
+              label="Hình ảnh"
+              rules={[
+                { required: true, message: "Vui lòng tải lên hình ảnh!" },
+              ]}
             >
-              <Input
-                placeholder="Nhập URL hình ảnh"
-                onChange={(e) => setPreviewImageUrl(e.target.value)}
-                defaultValue={selectedBlog?.image}
-                style={{ marginBottom: 10 }}
-              />
-              {previewImageUrl && (
+              <Upload
+                listType="picture-card"
+                fileList={fileList}
+                onChange={onUploadChange}
+                beforeUpload={() => false}
+                maxCount={1}
+                accept="image/*"
+              >
+                {fileList.length < 1 && (
+                  <div>
+                    <PlusOutlined />
+                    <div style={{ marginTop: 8 }}>Tải lên</div>
+                  </div>
+                )}
+              </Upload>
+              {uploadedImageUrl && (
                 <Image
-                  src={previewImageUrl}
+                  src={uploadedImageUrl}
                   alt="Preview"
                   style={{
                     display: "block",
                     maxWidth: "100%",
                     maxHeight: 200,
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/600x400/EFE6DB/2D1E1A?text=Invalid+Image";
                   }}
                 />
               )}

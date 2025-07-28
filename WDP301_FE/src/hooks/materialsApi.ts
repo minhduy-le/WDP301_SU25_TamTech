@@ -19,6 +19,12 @@ export interface MaterialDto {
   quantity: number;
   barcode: string;
   storeId: number;
+  isActive: boolean;
+  startDate: Date;
+  expireDate: Date;
+  timeExpired: string;
+  isExpired: boolean;
+  isProcessExpired: boolean;
   Store?: {
     name: string;
     address: string;
@@ -33,6 +39,15 @@ interface MutationVariables {
 export interface UpdateMaterialDto {
   name?: string;
   quantity?: number;
+  expireDate?: Date;
+  timeExpired?: string;
+}
+
+export interface CreateMaterialDto {
+  name?: string;
+  quantity?: number;
+  expireDate?: Date;
+  timeExpired?: string;
 }
 
 const fetchMaterials = async (): Promise<MaterialDto[]> => {
@@ -57,7 +72,7 @@ export const useMaterials = () => {
 
 export const useCreateMaterials = () => {
   return useMutation({
-    mutationFn: async (newMaterial: MaterialDto) => {
+    mutationFn: async (newMaterial: CreateMaterialDto) => {
       try {
         const response = await axiosInstance.post(`materials`, newMaterial);
         return response.data;
@@ -135,5 +150,40 @@ export const useDeleteMaterial = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
     },
+  });
+};
+
+export const useUpdateExpiredProcessMaterial = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, number>({
+    mutationFn: async (materialId: number): Promise<void> => {
+      await axiosInstance.put(`materials/${materialId}/process-expired`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+    },
+  });
+};
+
+const fetchMaterialProcess = async (): Promise<MaterialDto[]> => {
+  const response = await axiosInstance.get("materials/expired");
+  const {
+    status,
+    message: responseMessage,
+    data,
+  } = response.data as GenericApiResponse<MaterialDto[]>;
+  if (status >= 200 && status < 300 && data) {
+    return Array.isArray(data) ? data : [];
+  }
+  throw new Error(
+    responseMessage || "Không thể tải danh sách nguyên liệu đã xứ lý"
+  );
+};
+
+export const useMaterialProcess = () => {
+  return useQuery<MaterialDto[], Error>({
+    queryKey: ["materials"],
+    queryFn: fetchMaterialProcess,
   });
 };

@@ -11,6 +11,7 @@ import {
   Tooltip,
   message,
   Form,
+  DatePicker,
   Image,
 } from "antd";
 import {
@@ -30,8 +31,11 @@ import {
   useUpdateMaterial,
   useDeleteMaterial,
   type UpdateMaterialDto,
+  useUpdateExpiredProcessMaterial,
 } from "../../../hooks/materialsApi";
 import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { SquareX } from "lucide-react";
 
 // Không cần import BarcodeScanner nữa
 
@@ -45,6 +49,8 @@ const MaterialManagement = () => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isUpdateProcessModalVisible, setIsUpdateProcessModalVisible] =
+    useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: materials, isLoading: isMaterialLoading } = useMaterials();
   const queryClient = useQueryClient();
@@ -52,9 +58,12 @@ const MaterialManagement = () => {
     useCreateMaterials();
   const { mutate: updateMaterial, isPending: isUpdating } = useUpdateMaterial();
   const { mutate: deleteMaterial, isPending: isDeleting } = useDeleteMaterial();
+  const {
+    mutate: updateProcessMaterial,
+    isPending: isUpdatingProcessMaterial,
+  } = useUpdateExpiredProcessMaterial();
   const { mutate: increaseMaterialQuantity } = useIncreaseMaterialQuantity();
 
-  // --- STYLING CONSTANTS ---
   const headerColor = "#A05A2C";
   const headerBgColor = "#F9E4B7";
   const evenRowBgColor = "#FFFDF5";
@@ -78,6 +87,7 @@ const MaterialManagement = () => {
     editForm.setFieldsValue({
       name: record.name,
       quantity: record.quantity,
+      expireDate: record.expireDate ? dayjs(record.expireDate) : undefined,
     });
     setIsEditModalVisible(true);
   };
@@ -98,10 +108,27 @@ const MaterialManagement = () => {
     setSelectedMaterial(null);
   };
 
+  const handleOpenUpdateProcessModal = (record: MaterialDto) => {
+    setSelectedMaterial(record);
+    setIsUpdateProcessModalVisible(true);
+  };
+
+  const handleCloseUpdateProcessModal = () => {
+    setIsUpdateProcessModalVisible(false);
+    setSelectedMaterial(null);
+  };
+
   const handleEdit = (values: UpdateMaterialDto) => {
     if (!selectedMaterial?.materialId) return;
+    const updatedData = {
+      ...values,
+      expireDate: values.expireDate ? values.expireDate : undefined,
+      timeExpired: values.expireDate
+        ? dayjs(values.expireDate).format("HH:mm:ss")
+        : undefined,
+    };
     updateMaterial(
-      { materialId: selectedMaterial.materialId, data: values },
+      { materialId: selectedMaterial.materialId, data: updatedData },
       {
         onSuccess: () => {
           message.success("Cập nhật nguyên liệu thành công!");
@@ -129,12 +156,26 @@ const MaterialManagement = () => {
     });
   };
 
+  const handleUpdateProcess = (materialId: number | undefined) => {
+    if (!materialId) return;
+    updateProcessMaterial(materialId, {
+      onSuccess: () => {
+        message.success("Xử lý nguyên liệu hết hạn thành công!");
+        handleCloseUpdateProcessModal();
+        queryClient.invalidateQueries({ queryKey: ["materials"] });
+      },
+      onError: (error) => {
+        message.error(error.message || "Xử lý nguyên liệu hết hạn thất bại!");
+      },
+    });
+  };
+
   const filteredMaterials = useMemo(
     () =>
       materials?.filter((material) => {
-        const matchesSearch = material.name
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
+        const matchesSearch =
+          material.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          material.materialId?.toString().includes(searchText);
         return matchesSearch;
       }),
     [materials, searchText]
@@ -243,14 +284,14 @@ const MaterialManagement = () => {
       title: "Mã nguyên liệu",
       dataIndex: "materialId",
       key: "materialId",
-      width: 80,
+      width: 120,
       sorter: (a, b) => (a.materialId ?? 0) - (b.materialId ?? 0),
     },
     {
       title: "Tên nguyên liệu",
       dataIndex: "name",
       key: "name",
-      width: 250,
+      width: 150,
       ellipsis: true,
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name) => (
@@ -260,19 +301,37 @@ const MaterialManagement = () => {
       ),
     },
     {
-      title: "Số lượng(g)",
+      title: "Số ký(g)",
       dataIndex: "quantity",
       key: "quantity",
       width: 120,
       sorter: (a, b) => a.quantity - b.quantity,
     },
     {
+      title: "Hạn bắt đầu",
+      dataIndex: "startDate",
+      key: "startDate",
+      width: 140,
+      sorter: (a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)),
+      render: (startDate: Date) =>
+        dayjs(startDate).format("DD/MM/YYYY HH:mm:ss"),
+    },
+    {
+      title: "Hạn kết thúc",
+      dataIndex: "expireDate",
+      key: "expireDate",
+      width: 140,
+      sorter: (a, b) => dayjs(a.expireDate).diff(dayjs(b.expireDate)),
+      render: (expireDate: Date) =>
+        dayjs(expireDate).format("DD/MM/YYYY HH:mm:ss"),
+    },
+    {
       title: "Hành động",
       key: "actions",
-      width: 120,
+      width: 150,
       align: "center",
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="middle" style={{ columnGap: 10 }}>
           <Tooltip title="Xem chi tiết & Quét">
             <Button
               type="primary"
@@ -299,6 +358,17 @@ const MaterialManagement = () => {
               style={{ outline: "none", boxShadow: "none", border: "none" }}
             />
           </Tooltip>
+          {record.isExpired === true && record.isProcessExpired === false && (
+            <Tooltip title="Xử lý hết hạn">
+              <Button
+                type="text"
+                danger
+                icon={<SquareX style={{ fontSize: 17 }} />}
+                onClick={() => handleOpenUpdateProcessModal(record)}
+                style={{ outline: "none", boxShadow: "none", border: "none" }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -308,7 +378,14 @@ const MaterialManagement = () => {
     addForm
       .validateFields()
       .then((values) => {
-        createMaterial(values, {
+        const materialData = {
+          ...values,
+          expireDate: values.expireDate,
+          timeExpired: values.expireDate
+            ? dayjs(values.expireDate).format("HH:mm:ss")
+            : undefined,
+        };
+        createMaterial(materialData, {
           onSuccess: () => {
             message.success("Tạo nguyên liệu thành công!");
             setIsAddModalVisible(false);
@@ -360,6 +437,8 @@ const MaterialManagement = () => {
         .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
         .ant-select-selector { border-color: #E9C97B !important; }
         .ant-select-selector:hover { border-color: #D97B41 !important; }
+        .expired-row td { color: red !important; }
+        .expired-row td span { color: red !important; }
       `}</style>
       <div style={{ maxWidth: 1300 }}>
         <h1
@@ -395,7 +474,7 @@ const MaterialManagement = () => {
           >
             <Space wrap className="order-search">
               <Input
-                placeholder="Tìm theo tên..."
+                placeholder="Tìm theo mã, tên..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -434,15 +513,18 @@ const MaterialManagement = () => {
               border: `1px solid ${tableBorderColor}`,
               overflow: "hidden",
             }}
-            rowClassName={(_, index) =>
-              index % 2 === 0 ? "even-row-material" : "odd-row-material"
+            rowClassName={(record, index) =>
+              record.isExpired
+                ? "expired-row"
+                : index % 2 === 0
+                ? "even-row-material"
+                : "odd-row-material"
             }
             scroll={{ x: 980 }}
             sticky
           />
         </Card>
 
-        {/* Detail Modal */}
         <Modal
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
@@ -553,7 +635,7 @@ const MaterialManagement = () => {
             </Form.Item>
             <Form.Item
               name="quantity"
-              label="Số lượng"
+              label="Số ký(g)"
               rules={[
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
@@ -567,6 +649,22 @@ const MaterialManagement = () => {
               ]}
             >
               <Input type="number" placeholder="Nhập số lượng" />
+            </Form.Item>
+            <Form.Item
+              name="expireDate"
+              label="Ngày hết hạn"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày hết hạn!" },
+              ]}
+            >
+              <DatePicker
+                showTime
+                format="DD/MM/YYYY HH:mm:ss"
+                disabledDate={(current) =>
+                  current && current <= dayjs().endOf("day")
+                }
+                style={{ width: "100%" }}
+              />
             </Form.Item>
           </Form>
         </Modal>
@@ -606,6 +704,9 @@ const MaterialManagement = () => {
                 ? {
                     name: selectedMaterial.name,
                     quantity: selectedMaterial.quantity,
+                    expireDate: selectedMaterial.expireDate
+                      ? dayjs(selectedMaterial.expireDate)
+                      : null,
                   }
                 : undefined
             }
@@ -621,7 +722,7 @@ const MaterialManagement = () => {
             </Form.Item>
             <Form.Item
               name="quantity"
-              label="Số lượng"
+              label="Số ký(g)"
               rules={[
                 { required: true, message: "Vui lòng nhập số lượng!" },
                 {
@@ -635,6 +736,22 @@ const MaterialManagement = () => {
               ]}
             >
               <Input type="number" placeholder="Nhập số lượng" />
+            </Form.Item>
+            <Form.Item
+              name="expireDate"
+              label="Ngày hết hạn"
+              rules={[
+                { required: true, message: "Vui lòng chọn ngày hết hạn!" },
+              ]}
+            >
+              <DatePicker
+                showTime
+                format="DD/MM/YYYY HH:mm:ss"
+                disabledDate={(current) =>
+                  current && current <= dayjs().endOf("day")
+                }
+                style={{ width: "100%" }}
+              />
             </Form.Item>
           </Form>
         </Modal>
@@ -665,6 +782,34 @@ const MaterialManagement = () => {
           width={400}
         >
           <p>Bạn có chắc chắn muốn xóa nguyên liệu này không?</p>
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
+              Xác nhận xử lý nguyên liệu hết hạn
+            </span>
+          }
+          open={isUpdateProcessModalVisible}
+          onCancel={handleCloseUpdateProcessModal}
+          centered
+          footer={[
+            <Button key="cancel" onClick={handleCloseUpdateProcessModal}>
+              Hủy
+            </Button>,
+            <Button
+              key="delete"
+              type="primary"
+              danger
+              onClick={() => handleUpdateProcess(selectedMaterial?.materialId)}
+              loading={isUpdatingProcessMaterial}
+            >
+              Cập nhật
+            </Button>,
+          ]}
+          width={400}
+        >
+          <p>Bạn có chắc chắn muốn xứ lý nguyên liệu này không?</p>
         </Modal>
       </div>
     </div>

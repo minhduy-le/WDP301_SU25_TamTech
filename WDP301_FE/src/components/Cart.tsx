@@ -37,7 +37,7 @@ interface CartProps {
 }
 
 const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
-  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<CartItem[]>(cartItems);
   const { removeFromCart } = useCartStore();
 
   const handleCheckboxChange = (item: CartItem, checked: boolean) => {
