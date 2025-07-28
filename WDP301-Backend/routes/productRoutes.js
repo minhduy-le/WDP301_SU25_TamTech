@@ -1167,6 +1167,135 @@ router.put("/:id", verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /api/products/{id}/activate:
+ *   put:
+ *     summary: Reactivate a product
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: ID of the product to reactivate
+ *     responses:
+ *       200:
+ *         description: Product reactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     image:
+ *                       type: string
+ *                     createAt:
+ *                       type: string
+ *                       format: date-time
+ *                     productTypeId:
+ *                       type: integer
+ *                     createBy:
+ *                       type: string
+ *                     storeId:
+ *                       type: integer
+ *                     isActive:
+ *                       type: boolean
+ *                     ProductType:
+ *                       type: object
+ *                       properties:
+ *                         productTypeId:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                     ProductRecipes:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           productRecipeId:
+ *                             type: integer
+ *                           productId:
+ *                             type: integer
+ *                           materialId:
+ *                             type: integer
+ *                           quantity:
+ *                             type: integer
+ *                           Material:
+ *                             type: object
+ *                             properties:
+ *                               materialId:
+ *                                 type: integer
+ *                               name:
+ *                                 type: string
+ *                               quantity:
+ *                                 type: integer
+ *                               storeId:
+ *                                 type: integer
+ *       400:
+ *         description: Invalid ID or validation error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductId must be a positive integer
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Unauthorized
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Server error
+ */
+router.put("/:id/activate", verifyToken, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const product = await productService.reactivateProduct(productId);
+    res.status(200).json({ product });
+  } catch (error) {
+    console.error("Error reactivating product:", error);
+    res
+      .status(
+        error.message.includes("ProductId") ||
+          error.message.includes("Product is already active") ||
+          error.message.includes("product type")
+          ? 400
+          : error.message.includes("not found")
+          ? 404
+          : 500
+      )
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/products/{id}:
  *   delete:
  *     summary: Soft delete a product by setting isActive to false

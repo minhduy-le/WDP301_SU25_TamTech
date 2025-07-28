@@ -173,6 +173,113 @@ router.put("/:productTypeId", verifyToken, restrictToRoles("Manager"), async (re
 
 /**
  * @swagger
+ * /api/product-types/{productTypeId}/activate:
+ *   put:
+ *     summary: Reactivate a product type
+ *     tags: [ProductTypes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: productTypeId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the product type to reactivate
+ *     responses:
+ *       200:
+ *         description: Product type reactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 productTypeId:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 isActive:
+ *                   type: boolean
+ *       400:
+ *         description: Invalid input or product type already active
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product type is already active
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Forbidden
+ *       404:
+ *         description: Product type not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product type not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Server error
+ */
+router.put("/:productTypeId/activate", verifyToken, restrictToRoles("Manager"), async (req, res) => {
+  try {
+    const productTypeId = parseInt(req.params.productTypeId);
+    if (isNaN(productTypeId) || productTypeId < 1) {
+      return res.status(400).json({ message: "Invalid product type ID" });
+    }
+    const productType = await productTypeService.reactivateProductType(productTypeId);
+    res.status(200).json(productType);
+  } catch (error) {
+    console.error("Error in PUT /api/product-types/:productTypeId/activate:", error);
+    if (
+      error.message === "Product type not found" ||
+      error.message === "Product type is already active" ||
+      error.message === "Failed to reactivate product type"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === "Unauthorized") {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message === "Forbidden") {
+      return res.status(403).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message || "Server error" });
+  }
+});
+
+/**
+ * @swagger
  * /api/product-types/{productTypeId}:
  *   delete:
  *     summary: Deactivate a product type (set isActive to false)
