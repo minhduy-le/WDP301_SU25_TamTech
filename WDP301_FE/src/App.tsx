@@ -45,6 +45,7 @@ import { POSPage } from "./pages/POSPage";
 import POSSuccess from "./components/pos/POSSuccess";
 import ReportManagement from "./pages/admin/ReportManagement";
 import CancelOrderSuccess from "./pages/CancelOrderSuccess";
+import MaterialProcessManagement from "./pages/manager/materials/MaterialProcessManagement";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -80,7 +81,10 @@ function App() {
           <Route path="/forbidden" element={<Forbidden />} />
           <Route element={<LayoutWithNavFooter />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/cancel-order-success" element={<CancelOrderSuccess />} />
+            <Route
+              path="/cancel-order-success"
+              element={<CancelOrderSuccess />}
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />
@@ -99,6 +103,10 @@ function App() {
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/orders" element={<OrderManagement />} />
             <Route path="/manager/materials" element={<MaterialManagement />} />
+            <Route
+              path="/manager/materials-process"
+              element={<MaterialProcessManagement />}
+            />
             <Route path="/manager/products" element={<ProductManagement />} />
             <Route path="/manager/profile" element={<ManagerProfile />} />
             <Route

@@ -8,7 +8,7 @@ import {
   Modal,
   Descriptions,
   Tooltip,
-  Image,
+  Tag,
 } from "antd";
 import { SearchOutlined, EyeOutlined, FireOutlined } from "@ant-design/icons";
 import type { ColumnType } from "antd/es/table";
@@ -17,8 +17,6 @@ import {
   type MaterialDto,
 } from "../../../hooks/materialsApi";
 import dayjs from "dayjs";
-
-// Không cần import BarcodeScanner nữa
 
 const MaterialProcessManagement = () => {
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialDto | null>(
@@ -36,6 +34,14 @@ const MaterialProcessManagement = () => {
   const cellTextColor = "#5D4037";
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
+
+  const getStatusTagColor = (isExpired: boolean) => {
+    return isExpired ? "#FFCDD2" : "#C8E6C9";
+  };
+
+  const getStatusTagTextColor = (isExpired: boolean) => {
+    return isExpired ? "#C62828" : "#388E3C";
+  };
 
   const handleOpenDetailModal = (record: MaterialDto) => {
     setSelectedMaterial(record);
@@ -151,8 +157,6 @@ const MaterialProcessManagement = () => {
         .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
         .ant-select-selector { border-color: #E9C97B !important; }
         .ant-select-selector:hover { border-color: #D97B41 !important; }
-        .expired-row td { color: red !important; }
-        .expired-row td span { color: red !important; }
       `}</style>
       <div style={{ maxWidth: 1300 }}>
         <h1
@@ -164,7 +168,7 @@ const MaterialProcessManagement = () => {
             textAlign: "left",
           }}
         >
-          Quản lý Nguyên liệu đã xử lý
+          Quản lý nguyên liệu đã xử lý
           <FireOutlined />
         </h1>
         <Card
@@ -215,12 +219,8 @@ const MaterialProcessManagement = () => {
               border: `1px solid ${tableBorderColor}`,
               overflow: "hidden",
             }}
-            rowClassName={(record, index) =>
-              record.isExpired
-                ? "expired-row"
-                : index % 2 === 0
-                ? "even-row-material"
-                : "odd-row-material"
+            rowClassName={(_, index) =>
+              index % 2 === 0 ? "even-row-material" : "odd-row-material"
             }
             scroll={{ x: 980 }}
             sticky
@@ -260,16 +260,30 @@ const MaterialProcessManagement = () => {
                 <Descriptions.Item label="Số ký(g)">
                   {selectedMaterial.quantity}
                 </Descriptions.Item>
-                <Descriptions.Item label="Barcode">
-                  <Image
-                    src={selectedMaterial.barcode}
-                    alt={selectedMaterial.name}
+                <Descriptions.Item label="Hạn bắt đầu">
+                  {dayjs(selectedMaterial.startDate).format(
+                    "DD/MM/YYYY HH:mm:ss"
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Hạn kết thúc">
+                  {dayjs(selectedMaterial.expireDate).format(
+                    "DD/MM/YYYY HH:mm:ss"
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Hết hạn">
+                  <Tag
                     style={{
-                      display: "block",
-                      margin: "auto",
-                      maxWidth: "100%",
+                      background: getStatusTagColor(selectedMaterial.isExpired),
+                      color: getStatusTagTextColor(selectedMaterial.isExpired),
+                      fontWeight: "bold",
+                      borderRadius: 6,
+                      padding: "2px 10px",
                     }}
-                  />
+                  >
+                    {selectedMaterial.isExpired
+                      ? "Hết hạn sử dụng"
+                      : "Còn hạn sử dụng"}
+                  </Tag>
                 </Descriptions.Item>
               </Descriptions>
             </div>

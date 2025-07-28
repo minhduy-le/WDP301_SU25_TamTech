@@ -13,6 +13,7 @@ import {
   Form,
   DatePicker,
   Image,
+  Tag,
 } from "antd";
 import {
   SearchOutlined,
@@ -71,6 +72,14 @@ const MaterialManagement = () => {
   const cellTextColor = "#5D4037";
   const borderColor = "#F5EAD9";
   const tableBorderColor = "#E9C97B";
+
+  const getStatusTagColor = (isExpired: boolean) => {
+    return isExpired ? "#FFCDD2" : "#C8E6C9";
+  };
+
+  const getStatusTagTextColor = (isExpired: boolean) => {
+    return isExpired ? "#C62828" : "#388E3C";
+  };
 
   const handleOpenDetailModal = (record: MaterialDto) => {
     setSelectedMaterial(record);
@@ -568,6 +577,31 @@ const MaterialManagement = () => {
                       maxWidth: "100%",
                     }}
                   />
+                </Descriptions.Item>
+                <Descriptions.Item label="Hạn bắt đầu">
+                  {dayjs(selectedMaterial.startDate).format(
+                    "DD/MM/YYYY HH:mm:ss"
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Hạn kết thúc">
+                  {dayjs(selectedMaterial.expireDate).format(
+                    "DD/MM/YYYY HH:mm:ss"
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Hết hạn">
+                  <Tag
+                    style={{
+                      background: getStatusTagColor(selectedMaterial.isExpired),
+                      color: getStatusTagTextColor(selectedMaterial.isExpired),
+                      fontWeight: "bold",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                    }}
+                  >
+                    {selectedMaterial.isExpired
+                      ? "Hết hạn sử dụng"
+                      : "Còn hạn sử dụng"}
+                  </Tag>
                 </Descriptions.Item>
               </Descriptions>
               <div
