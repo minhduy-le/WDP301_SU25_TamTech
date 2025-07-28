@@ -111,7 +111,6 @@
 }
 
 .apply-promo {
-  margin-top: 10px;
   background-color: #ff8c00 !important;
   border-color: #ff8c00 !important;
   outline: none !important;
@@ -181,4 +180,31 @@
 
 .ant-radio-label {
   font-size: 15px;
+}
+
+.promotion-for-user .ant-card-body {
+  padding: 0;
+}
+
+.ant-modal-content:has(.promotion-for-user),
+.ant-modal-content:has(.promotion-for-user) .ant-modal-header {
+  background-color: #efe6db;
+}
+
+.ant-modal-content:has(.promotion-for-user) .ant-modal-title {
+  color: #2d1e1a;
+  font-family: "Montserrat", sans-serif;
+  font-size: 20px;
+  text-align: center;
+}
+
+.ant-modal-content .ant-modal-body:has(.promotion-for-user) .ant-typography {
+  color: #2d1e1a;
+  font-family: "Montserrat", sans-serif;
+}
+
+.ant-modal-content
+  .ant-modal-body:has(.promotion-for-user)
+  .ant-input::placeholder {
+  color: #2d1e1a;
 }

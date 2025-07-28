@@ -16,7 +16,6 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   ShoppingFilled,
-  SettingOutlined,
   LogoutOutlined,
   BellOutlined,
   DownOutlined,
@@ -99,11 +98,6 @@ const StaffSidebar = () => {
       onClick: () => {
         navigate("/staff/profile");
       },
-    },
-    {
-      key: "settingsMenu",
-      label: "Cài đặt",
-      icon: <SettingOutlined />,
     },
     {
       type: "divider",

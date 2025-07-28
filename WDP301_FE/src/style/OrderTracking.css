@@ -177,3 +177,7 @@
   width: 24px;
   height: 24px;
 }
+
+.ant-steps-item-container {
+  height: 60px;
+}

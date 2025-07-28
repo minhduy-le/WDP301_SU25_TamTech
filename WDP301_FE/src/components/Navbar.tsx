@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
 import { ShoppingCartOutlined, MenuOutlined } from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
-import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
 import { useState, useEffect, useRef } from "react";
 import Cart from "./Cart";
@@ -122,23 +121,13 @@ const Navbar = () => {
           <Menu.Item key="3">
             <Link to="/blog">Blog</Link>
           </Menu.Item>
-          <Menu.Item key="6">
-            <Link to="/cua-hang">Cửa Hàng</Link>
-          </Menu.Item>
         </Menu>
         <div className="header-media">
           <Link to="/">Về Tấm Tắc</Link>
           <Link to="/menu">Menu</Link>
           <Link to="/blog">Blog</Link>
-          <Link to="/cua-hang">Cửa Hàng</Link>
         </div>
         <div className="header-icon">
-          <Button
-            type="text"
-            icon={<BellIcon />}
-            className="icon-header"
-            style={{ color: "#d97706", marginRight: "10px" }}
-          />
           {user?.id ? (
             <Dropdown overlay={userMenu} trigger={["hover"]}>
               <Button

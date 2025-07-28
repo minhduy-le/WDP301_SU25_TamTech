@@ -9,39 +9,29 @@ import {
   Modal,
   Form,
   Space,
-  Tag,
-  message,
   Descriptions,
 } from "antd";
 import {
   SearchOutlined,
   EyeOutlined,
-  SendOutlined,
   CommentOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
-import {
-  useFeedbacks,
-  type FeedbackDto,
-  useResponseFeedback,
-} from "../../../hooks/feedbacksApi";
-import { useQueryClient } from "@tanstack/react-query";
+import { useFeedbacks, type FeedbackDto } from "../../../hooks/feedbacksApi";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
 const { Option } = Select;
-const { TextArea } = Input;
 
 const CustomerFeedbackManagement = () => {
   const { data: feedbacks, isLoading: isFeedbackLoading } = useFeedbacks();
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("Tất cả");
-  // const [filterType, setFilterType] = useState<string>("Tất cả");
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackDto | null>(
@@ -49,11 +39,11 @@ const CustomerFeedbackManagement = () => {
   );
 
   const [replyForm] = Form.useForm();
-  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  // const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { mutate: respondFeedback, isPending: isResponding } =
-    useResponseFeedback();
+  // const queryClient = useQueryClient();
+  // const { mutate: respondFeedback, isPending: isResponding } =
+  //   useResponseFeedback();
 
   const handleViewReply = (feedback: FeedbackDto) => {
     setSelectedFeedback(feedback);
@@ -63,65 +53,65 @@ const CustomerFeedbackManagement = () => {
     setModalVisible(true);
   };
 
-  const handleReplySubmit = async () => {
-    if (!selectedFeedback) return;
-    setIsSubmittingReply(true);
-    try {
-      const values = await replyForm.validateFields();
-      respondFeedback(
-        {
-          feedbackId: selectedFeedback.id,
-          responseFeedback: { content: values.replyContent },
-        },
-        {
-          onSuccess: (data) => {
-            // Đảm bảo dữ liệu trả về có FeedbackResponses và RepliedBy đầy đủ
-            const updatedFeedback: FeedbackDto = {
-              ...data,
-              FeedbackResponses: data.FeedbackResponses || [
-                {
-                  id: selectedFeedback.FeedbackResponses?.[0]?.id || 0,
-                  feedbackId: selectedFeedback.id,
-                  repliedBy:
-                    selectedFeedback.FeedbackResponses?.[0]?.repliedBy || 0,
-                  content: values.replyContent,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  RepliedBy: selectedFeedback.FeedbackResponses?.[0]
-                    ?.RepliedBy || {
-                    id: 0,
-                    fullName: "Admin",
-                  },
-                },
-              ],
-            };
-            setSelectedFeedback(updatedFeedback); // Cập nhật selectedFeedback với dữ liệu mới
-            message.success("Đã gửi trả lời và cập nhật trạng thái!");
-            setModalVisible(false);
-            replyForm.resetFields();
-            queryClient.refetchQueries({ queryKey: ["feedback"] }); // Làm mới dữ liệu bảng
-          },
-          onError: (error) => {
-            message.error("Lỗi khi gửi trả lời. Vui lòng thử lại.");
-            console.error("Reply submit error:", error);
-          },
-        }
-      );
-    } catch (error) {
-      message.error("Lỗi khi gửi trả lời. Vui lòng thử lại.");
-      console.error("Reply submit error:", error);
-    } finally {
-      setIsSubmittingReply(false);
-    }
-  };
+  // const handleReplySubmit = async () => {
+  //   if (!selectedFeedback) return;
+  //   setIsSubmittingReply(true);
+  //   try {
+  //     const values = await replyForm.validateFields();
+  //     respondFeedback(
+  //       {
+  //         feedbackId: selectedFeedback.id,
+  //         responseFeedback: { content: values.replyContent },
+  //       },
+  //       {
+  //         onSuccess: (data) => {
+  //           // Đảm bảo dữ liệu trả về có FeedbackResponses và RepliedBy đầy đủ
+  //           const updatedFeedback: FeedbackDto = {
+  //             ...data,
+  //             FeedbackResponses: data.FeedbackResponses || [
+  //               {
+  //                 id: selectedFeedback.FeedbackResponses?.[0]?.id || 0,
+  //                 feedbackId: selectedFeedback.id,
+  //                 repliedBy:
+  //                   selectedFeedback.FeedbackResponses?.[0]?.repliedBy || 0,
+  //                 content: values.replyContent,
+  //                 createdAt: new Date(),
+  //                 updatedAt: new Date(),
+  //                 RepliedBy: selectedFeedback.FeedbackResponses?.[0]
+  //                   ?.RepliedBy || {
+  //                   id: 0,
+  //                   fullName: "Admin",
+  //                 },
+  //               },
+  //             ],
+  //           };
+  //           setSelectedFeedback(updatedFeedback); // Cập nhật selectedFeedback với dữ liệu mới
+  //           message.success("Đã gửi trả lời và cập nhật trạng thái!");
+  //           setModalVisible(false);
+  //           replyForm.resetFields();
+  //           queryClient.refetchQueries({ queryKey: ["feedback"] }); // Làm mới dữ liệu bảng
+  //         },
+  //         onError: (error) => {
+  //           message.error("Lỗi khi gửi trả lời. Vui lòng thử lại.");
+  //           console.error("Reply submit error:", error);
+  //         },
+  //       }
+  //     );
+  //   } catch (error) {
+  //     message.error("Lỗi khi gửi trả lời. Vui lòng thử lại.");
+  //     console.error("Reply submit error:", error);
+  //   } finally {
+  //     setIsSubmittingReply(false);
+  //   }
+  // };
 
-  const getStatusTagColor = (isResponsed: boolean) => {
-    return isResponsed ? "#C8E6C9" : "#FFCDD2"; // Xanh nhạt cho Đã phản hồi, đỏ nhạt cho Chưa phản hồi
-  };
+  // const getStatusTagColor = (isResponsed: boolean) => {
+  //   return isResponsed ? "#C8E6C9" : "#FFCDD2"; // Xanh nhạt cho Đã phản hồi, đỏ nhạt cho Chưa phản hồi
+  // };
 
-  const getStatusTagTextColor = (isResponsed: boolean) => {
-    return isResponsed ? "#388E3C" : "#C62828"; // Xanh đậm cho Đã phản hồi, đỏ đậm cho Chưa phản hồi
-  };
+  // const getStatusTagTextColor = (isResponsed: boolean) => {
+  //   return isResponsed ? "#388E3C" : "#C62828"; // Xanh đậm cho Đã phản hồi, đỏ đậm cho Chưa phản hồi
+  // };
 
   const filteredFeedbackList = useMemo(() => {
     if (!feedbacks) return [];
@@ -178,6 +168,13 @@ const CustomerFeedbackManagement = () => {
         a.Product.name.toString().localeCompare(b.Product.name.toString()),
     },
     {
+      title: "Đánh giá",
+      dataIndex: "rating",
+      key: "rating",
+      width: 110,
+      sorter: (a: FeedbackDto, b: FeedbackDto) => a.rating - b.rating,
+    },
+    {
       title: "Comment",
       dataIndex: "comment",
       key: "comment",
@@ -193,26 +190,26 @@ const CustomerFeedbackManagement = () => {
       sorter: (a: FeedbackDto, b: FeedbackDto) =>
         dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
     },
-    {
-      title: "Trạng thái",
-      dataIndex: "isResponsed",
-      key: "isResponsed",
-      width: 150,
-      align: "center",
-      render: (isResponsed: boolean) => (
-        <Tag
-          style={{
-            background: getStatusTagColor(isResponsed),
-            color: getStatusTagTextColor(isResponsed),
-            fontWeight: "bold",
-            borderRadius: 6,
-            padding: "2px 10px",
-          }}
-        >
-          {isResponsed ? "Đã phản hồi" : "Chưa phản hồi"}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: "Trạng thái",
+    //   dataIndex: "isResponsed",
+    //   key: "isResponsed",
+    //   width: 150,
+    //   align: "center",
+    //   render: (isResponsed: boolean) => (
+    //     <Tag
+    //       style={{
+    //         background: getStatusTagColor(isResponsed),
+    //         color: getStatusTagTextColor(isResponsed),
+    //         fontWeight: "bold",
+    //         borderRadius: 6,
+    //         padding: "2px 10px",
+    //       }}
+    //     >
+    //       {isResponsed ? "Đã phản hồi" : "Chưa phản hồi"}
+    //     </Tag>
+    //   ),
+    // },
     {
       title: "Hành động",
       key: "actions",
@@ -233,7 +230,7 @@ const CustomerFeedbackManagement = () => {
             border: "none",
           }}
         >
-          Xem & Trả lời
+          Chi tiết
         </Button>
       ),
     },
@@ -306,7 +303,7 @@ const CustomerFeedbackManagement = () => {
             }}
           >
             <Input
-              placeholder="Tìm kiếm tên KH"
+              placeholder="Tìm kiếm tên KH, comment"
               prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -348,11 +345,6 @@ const CustomerFeedbackManagement = () => {
             dataSource={filteredFeedbackList}
             loading={isFeedbackLoading}
             rowKey="id"
-            pagination={{
-              pageSize: 5,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} phản hồi`,
-            }}
             style={{
               borderRadius: 8,
               border: `1px solid ${tableBorderColor}`,
@@ -370,7 +362,7 @@ const CustomerFeedbackManagement = () => {
           open={modalVisible}
           title={
             <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
-              Chi tiết & Trả lời Phản hồi
+              Chi tiết phản hồi
             </span>
           }
           onCancel={() => {
@@ -399,26 +391,26 @@ const CustomerFeedbackManagement = () => {
                 replyForm.resetFields();
               }}
               style={{ borderRadius: 6 }}
-              disabled={isSubmittingReply || isResponding}
+              // disabled={isSubmittingReply || isResponding}
             >
               Hủy
             </Button>,
-            !selectedFeedback?.FeedbackResponses?.[0]?.content && (
-              <Button
-                key="submitReply"
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleReplySubmit}
-                style={{
-                  background: "#D97B41",
-                  borderColor: "#D97B41",
-                  borderRadius: 6,
-                }}
-                loading={isSubmittingReply || isResponding}
-              >
-                Gửi trả lời & Cập nhật
-              </Button>
-            ),
+            // !selectedFeedback?.FeedbackResponses?.[0]?.content && (
+            //   <Button
+            //     key="submitReply"
+            //     type="primary"
+            //     icon={<SendOutlined />}
+            //     onClick={handleReplySubmit}
+            //     style={{
+            //       background: "#D97B41",
+            //       borderColor: "#D97B41",
+            //       borderRadius: 6,
+            //     }}
+            //     loading={isSubmittingReply || isResponding}
+            //   >
+            //     Gửi trả lời & Cập nhật
+            //   </Button>
+            // ),
           ].filter(Boolean)}
         >
           {selectedFeedback && (
@@ -449,6 +441,12 @@ const CustomerFeedbackManagement = () => {
                   <Descriptions.Item label="Khách hàng">
                     {selectedFeedback.User?.fullName || "Không xác định"}
                   </Descriptions.Item>
+                  <Descriptions.Item label="Sản phẩm">
+                    {selectedFeedback.Product?.name}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Số sao">
+                    {selectedFeedback.rating}
+                  </Descriptions.Item>
                   <Descriptions.Item label="Comment">
                     {selectedFeedback.comment}
                   </Descriptions.Item>
@@ -457,7 +455,7 @@ const CustomerFeedbackManagement = () => {
                       "DD/MM/YYYY HH:mm:ss"
                     )}
                   </Descriptions.Item>
-                  <Descriptions.Item
+                  {/* <Descriptions.Item
                     label="Nội dung phản hồi"
                     span={1}
                     contentStyle={{ whiteSpace: "pre-wrap" }}
@@ -482,8 +480,8 @@ const CustomerFeedbackManagement = () => {
                         ? "Đã phản hồi"
                         : "Chưa phản hồi"}
                     </Tag>
-                  </Descriptions.Item>
-                  {selectedFeedback.FeedbackResponses?.[0]?.content && (
+                  </Descriptions.Item> */}
+                  {/* {selectedFeedback.FeedbackResponses?.[0]?.content && (
                     <>
                       <Descriptions.Item
                         label="Nội dung đã trả lời"
@@ -505,10 +503,10 @@ const CustomerFeedbackManagement = () => {
                         ).format("DD/MM/YYYY HH:mm:ss")}
                       </Descriptions.Item>
                     </>
-                  )}
+                  )} */}
                 </Descriptions>
               </Card>
-              {!selectedFeedback.FeedbackResponses?.[0]?.content && (
+              {/* {!selectedFeedback.FeedbackResponses?.[0]?.content && (
                 <Card
                   title={
                     <span style={{ color: "#A05A2C" }}>Trả lời & Cập nhật</span>
@@ -538,7 +536,7 @@ const CustomerFeedbackManagement = () => {
                     </Form.Item>
                   </Form>
                 </Card>
-              )}
+              )} */}
             </Space>
           )}
         </Modal>

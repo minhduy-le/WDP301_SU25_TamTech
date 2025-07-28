@@ -260,3 +260,16 @@ export const useGetOrderById = (orderId: number) => {
     enabled: !!orderId,
   });
 };
+
+export const useCancelOrderPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`orders/${orderId}/cancel`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};

@@ -205,7 +205,7 @@ const Menu = () => {
 
   const showQuantityModal = (product: ProductDto) => {
     setSelectedQuantityProduct(product);
-    setQuantity(1); // Reset quantity khi mở modal
+    setQuantity(1);
     setIsQuantityModalVisible(true);
   };
 
@@ -299,9 +299,17 @@ const Menu = () => {
           ) : isProductsError ? (
             <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
-            <Row gutter={[24, 16]} className="menu-card-row">
+            <Row gutter={[16, 16]} className="menu-card-row">
               {mainProducts.slice(0, visibleProducts).map((product) => (
-                <Col span={8} className="menu-column" key={product.productId}>
+                <Col
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={8}
+                  xl={8}
+                  className="menu-column"
+                  key={product.productId}
+                >
                   <Card className="menu-card">
                     <div className="card-image-container">
                       <img
@@ -346,7 +354,7 @@ const Menu = () => {
                 </Col>
               ))}
               {visibleProducts < mainProducts.length && (
-                <Col className="button-show-more">
+                <Col span={24} className="button-show-more">
                   <Button className="custom-button" onClick={handleShowMore}>
                     Hiển Thị Thêm{" "}
                     {Math.min(9, mainProducts.length - visibleProducts)} Sản
