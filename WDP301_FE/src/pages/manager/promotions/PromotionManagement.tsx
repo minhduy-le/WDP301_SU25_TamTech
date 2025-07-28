@@ -399,26 +399,37 @@ const PromotionManagement: React.FC = () => {
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
-          <Tooltip title="Ngừng hoạt động">
-            <Popconfirm
-              title="Ngừng khuyến mãi"
-              description="Bạn có chắc muốn ngừng hoạt động khuyến mãi này?"
-              onConfirm={() => handleDelete(record.promotionId)}
-              okText="Xác nhận"
-              cancelText="Hủy"
-              okButtonProps={{
-                danger: true,
-                style: { background: "#D97B41", borderColor: "#D97B41" },
-              }}
-            >
-              <Button
-                type="text"
-                danger
-                icon={<CloseCircleOutlined style={{ fontSize: 16 }} />}
-                style={{ outline: "none", boxShadow: "none", border: "none" }}
-              />
-            </Popconfirm>
-          </Tooltip>
+          {record.isActive && (
+            <Tooltip title="Ngừng hoạt động">
+              <Popconfirm
+                title="Ngừng khuyến mãi"
+                description="Bạn có chắc muốn ngừng hoạt động khuyến mãi này?"
+                onConfirm={() => handleDelete(record.promotionId)}
+                okText="Xác nhận"
+                okType="danger"
+                okButtonProps={{
+                  style: {
+                    borderRadius: 6,
+                    outline: "none",
+                  },
+                }}
+                cancelText="Hủy"
+                cancelButtonProps={{
+                  style: {
+                    borderRadius: 6,
+                    outline: "none",
+                  },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={<CloseCircleOutlined style={{ fontSize: 16 }} />}
+                  style={{ outline: "none", boxShadow: "none", border: "none" }}
+                />
+              </Popconfirm>
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -568,7 +579,10 @@ const PromotionManagement: React.FC = () => {
             sticky
           />
         </Card>
-        <PromotionTypeManagement />
+        <PromotionTypeManagement 
+          promotionTypes={promotionTypes}
+          setPromotionTypes={setPromotionTypes}
+        />
         <Modal
           open={modalVisible}
           title={
@@ -590,7 +604,7 @@ const PromotionManagement: React.FC = () => {
                   <Button
                     key="close"
                     onClick={() => setModalVisible(false)}
-                    style={{ borderRadius: 6 }}
+                    style={{ borderRadius: 6, outline: "none" }}
                   >
                     Đóng
                   </Button>,
@@ -681,16 +695,6 @@ const PromotionManagement: React.FC = () => {
                   {dayjs(selectedPromotion.endDate).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái (Admin)">
-                  <Tag
-                    color={selectedPromotion.isActive ? "#81C784" : "#E57373"}
-                    style={{ color: "#fff" }}
-                  >
-                    {selectedPromotion.isActive
-                      ? "Đang hoạt động"
-                      : "Không hoạt động"}
-                  </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái thực tế">
                   <Tag
