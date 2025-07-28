@@ -21,11 +21,16 @@ import axios from "axios";
 interface ProductType {
   productTypeId: number;
   name: string;
+  isActive: boolean;
+}
+
+interface ProductTypeManagementProps {
+  onChanged?: () => void;
 }
 
 const API_URL = "https://wdp301-su25.space/api/product-types";
 
-const ProductTypeManagement: React.FC = () => {
+const ProductTypeManagement: React.FC<ProductTypeManagementProps> = ({ onChanged }) => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingType, setEditingType] = useState<ProductType | null>(null);
@@ -43,12 +48,7 @@ const ProductTypeManagement: React.FC = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-  
-      const activeProductTypes = res.data.filter(
-        (item: ProductType & { isActive: boolean }) => item.isActive
-      );
-  
-      setProductTypes(activeProductTypes);
+      setProductTypes(res.data);
     } catch (error) {
       message.error("Không thể tải danh sách loại sản phẩm!");
     }
@@ -84,7 +84,8 @@ const ProductTypeManagement: React.FC = () => {
   
           if (response.status === 200) {
             message.success(`Đã xóa loại sản phẩm "${record.name}"`);
-            fetchProductTypes(); 
+            fetchProductTypes();
+            if (onChanged) onChanged();
           }
         } catch (error: any) {
           if (axios.isAxiosError(error)) {
@@ -138,6 +139,7 @@ const ProductTypeManagement: React.FC = () => {
       fetchProductTypes();
       setIsModalVisible(false);
       form.resetFields();
+      if (onChanged) onChanged();
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
         const errMsg =
@@ -152,26 +154,32 @@ const ProductTypeManagement: React.FC = () => {
   };
   
 
-  const productTypeMenu = (record: ProductType): MenuProps["items"] => [
-    {
-      key: "edit",
-      icon: <EditOutlined />,
-      label: "Chỉnh sửa",
-      onClick: () => handleEdit(record),
-    },
-    {
-      key: "delete",
-      danger: true,
-      icon: <DeleteOutlined />,
-      label: "Xóa",
-      onClick: () => handleDelete(record),
-    },
-  ];
+  const productTypeMenu = (record: ProductType): MenuProps["items"] =>
+    ([
+      {
+        key: "edit",
+        icon: <EditOutlined />,
+        label: "Chỉnh sửa",
+        onClick: () => handleEdit(record),
+      },
+      record.isActive && {
+        key: "delete",
+        danger: true,
+        icon: <DeleteOutlined />,
+        label: "Xóa",
+        onClick: () => handleDelete(record),
+      },
+    ].filter(Boolean) as MenuProps["items"]);
+
+  // --- Styling ---
+  const headerColor = "#A05A2C";
+  const cardBgColor = "#FFFDF5";
+  const cardBorderColor = "#F5EAD9";
 
   return (
     <div style={{ maxWidth: 1300, margin: "40px auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ color: "#A05A2C", fontSize: 28, fontWeight: 700 }}>Loại Sản phẩm</h2>
+        <h2 style={{ color: headerColor, fontSize: 28, fontWeight: 700 }}>Loại Sản phẩm</h2>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -187,47 +195,100 @@ const ProductTypeManagement: React.FC = () => {
           Thêm loại mới
         </Button>
       </div>
-
       <Card
         style={{
           background: "#fff",
           borderRadius: 12,
-          padding: 24,
-          border: "1px solid #E9C97B",
           boxShadow: "0 6px 16px rgba(160, 90, 44, 0.08)",
+          padding: "24px",
+          border: `1px solid #E9C97B`,
         }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "24px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+            gap: "24px",
+          }}
+        >
           {productTypes.map((type) => (
             <div
               key={type.productTypeId}
               className="product-type-card"
               style={{
-                background: "#FFFDF5",
-                border: "1px solid #F5EAD9",
+                backgroundColor: type.isActive ? cardBgColor : "#f5f5f5",
+                border: `1px solid ${type.isActive ? cardBorderColor : "#ccc"}`,
+                color: type.isActive ? headerColor : "#aaa",
+                opacity: type.isActive ? 1 : 0.7,
+                position: "relative",
                 borderRadius: 12,
                 padding: "32px 16px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
                 textAlign: "center",
+                height: 100,
                 boxShadow: "0 4px 8px rgba(160, 90, 44, 0.06)",
-                position: "relative",
+                justifyContent: 'center',
               }}
             >
-              <div style={{ fontWeight: 600, color: "#A05A2C", fontSize: 18 }}>
+              <div style={{ fontWeight: 600, fontSize: 18, color: type.isActive ? headerColor : "#aaa" }}>
                 {type.name}
               </div>
-              <Dropdown
-                menu={{ items: productTypeMenu(type) }}
-                placement="bottomRight"
-                trigger={["click"]}
-                
-              >
+              {!type.isActive && (
+                <div style={{
+                  marginTop: 8,
+                  background: "#bbb",
+                  color: "#fff",
+                  borderRadius: 4,
+                  padding: "2px 8px",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  display: 'inline-block',
+                  textAlign: 'center',
+                }}>
+                  Đã vô hiệu hóa
+                </div>
+              )}
+              {type.isActive ? (
+                <Dropdown
+                  menu={{ items: productTypeMenu(type) }}
+                  placement="bottomRight"
+                  trigger={["click"]}
+                >
+                  <Button
+                    type="text"
+                    icon={<MoreOutlined style={{ color: "#8D6E63" }} />}
+                    size="small"
+                    style={{ position: 'absolute', top: 8, right: 8, outline: 'none', border: 'none' }}
+                  />
+                </Dropdown>
+              ) : (
                 <Button
                   type="text"
-                  icon={<MoreOutlined style={{ color: "#8D6E63" }} />}
+                  icon={<PlusOutlined style={{ color: "#388e3c", fontSize: 17 }} />}
                   size="small"
-                  style={{ position: "absolute", top: 8, right: 8, outline: 'none', border: 'none' }}
+                  style={{ position: 'absolute', top: 8, right: 8, outline: 'none', border: 'none' }}
+                  onClick={async () => {
+                    try {
+                      await axios.put(
+                        `${API_URL}/${type.productTypeId}/activate`,
+                        {},
+                        {
+                          headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`,
+                          },
+                        }
+                      );
+                      message.success("Đã mở lại loại sản phẩm!");
+                      fetchProductTypes();
+                      if (onChanged) onChanged();
+                    } catch (error) {
+                      message.error("Mở lại loại sản phẩm thất bại!");
+                    }
+                  }}
                 />
-              </Dropdown>
+              )}
             </div>
           ))}
         </div>
