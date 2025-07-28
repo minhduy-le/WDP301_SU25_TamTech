@@ -85,33 +85,59 @@ const OrderManagement: React.FC = () => {
     }
   };
 
+  const statusMap: { [key: string]: string } = {
+    Pending: "Chờ thanh toán",
+    Paid: "Đã thanh toán",
+    Approved: "Xác nhận đơn",
+    Preparing: "Đang nấu ăn",
+    Cooked: "Đã nấu xong",
+    Delivering: "Đang giao",
+    Delivered: "Đã giao",
+    Canceled: "Đã hủy",
+  };
+
   const getStatusTheme = (
     status: string
   ): { tagBg: string; tagText: string; iconColor?: string } => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return { tagBg: "#F9E4B7", tagText: "#A05A2C", iconColor: "#A05A2C" };
-      case "processing":
-        return { tagBg: "#FAD2A5", tagText: "#A05A2C", iconColor: "#A05A2C" };
-      case "paid":
-        return { tagBg: "#81C784", tagText: "#fff", iconColor: "#fff" };
-      case "cancelled":
-        return { tagBg: "#E57373", tagText: "#fff", iconColor: "#fff" };
+    switch (status) {
+      case "Pending":
+        return { tagBg: "#FEF3C7", tagText: "#92400E", iconColor: "#92400E" };
+      case "Paid":
+        return { tagBg: "#D1FAE5", tagText: "#065F46", iconColor: "#065F46" };
+      case "Approved":
+        return { tagBg: "#DBEAFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
+      case "Preparing":
+        return { tagBg: "#FEF3C7", tagText: "#92400E", iconColor: "#92400E" };
+      case "Cooked":
+        return { tagBg: "#FDE68A", tagText: "#92400E", iconColor: "#92400E" };
+      case "Delivering":
+        return { tagBg: "#E0E7FF", tagText: "#3730A3", iconColor: "#3730A3" };
+      case "Delivered":
+        return { tagBg: "#D1FAE5", tagText: "#065F46", iconColor: "#065F46" };
+      case "Canceled":
+        return { tagBg: "#FEE2E2", tagText: "#991B1B", iconColor: "#991B1B" };
       default:
-        return { tagBg: "#E9C97B", tagText: "#A05A2C" };
+        return { tagBg: "#F3F4F6", tagText: "#374151" };
     }
   };
-
   const getStatusIcon = (status: string) => {
     const theme = getStatusTheme(status);
-    switch (status.toLowerCase()) {
-      case "pending":
+    switch (status) {
+      case "Pending":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "processing":
-        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
-      case "paid":
+      case "Paid":
         return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "cancelled":
+      case "Approved":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Preparing":
+        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Cooked":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Delivering":
+        return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Delivered":
+        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+      case "Canceled":
         return <CloseCircleOutlined style={{ color: theme.iconColor }} />;
       default:
         return null;
@@ -180,14 +206,13 @@ const OrderManagement: React.FC = () => {
               borderColor: theme.tagBg,
               borderRadius: 12,
               padding: "2px 12px",
-              minWidth: "120px",
               textAlign: "center",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
             }}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {statusMap[status] ||
+              status.charAt(0).toUpperCase() + status.slice(1)}
           </Tag>
         );
       },
@@ -244,7 +269,7 @@ const OrderManagement: React.FC = () => {
           order.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
           order.orderId.toString().includes(searchText);
         const matchesStatus =
-          statusFilter === "all" || order.status.toLowerCase() === statusFilter;
+          statusFilter === "all" || order.status === statusFilter;
         return matchesSearch && matchesStatus;
       }),
     [orders, searchText, statusFilter]
@@ -258,31 +283,73 @@ const OrderManagement: React.FC = () => {
         padding: "20px 30px 30px 60px",
       }}
     >
-      <style>{`
-        /* Your CSS styles remain the same */
-        .ant-table-thead > tr > th { background-color: ${headerBgColor} !important; color: ${headerColor} !important; font-weight: bold !important; border-right: 1px solid ${borderColor} !important; border-bottom: 2px solid ${tableBorderColor} !important; }
-        .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { border-right: none !important; }
-        .promo-table .ant-table-tbody > tr.even-row-promo > td { background-color: ${evenRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
-        .promo-table .ant-table-tbody > tr.odd-row-promo > td { background-color: ${oddRowBgColor}; color: ${cellTextColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; }
-        .promo-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { border-right: none; }
-        .promo-table .ant-table-tbody > tr:hover > td { background-color: #FDEBC8 !important; }
-        .promo-table .ant-table-cell-fix-right { background: inherit !important; }
-        .promo-table .ant-table-thead > tr > th.ant-table-cell-fix-right { background-color: ${headerBgColor} !important; }
-        .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
-        .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
-        .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
-        .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
-          border-color: #D97B41 !important; box-shadow: none !important;
-        }
-        .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { border-color: #D97B41 !important; color: #D97B41 !important; }
-        .ant-select-selector { border-color: #E9C97B !important; }
-        .ant-select-selector:hover { border-color: #D97B41 !important; }
-        .ant-table-column-sorter-up.active svg,
-        .ant-table-column-sorter-down.active svg {
-          color: #D97B41 !important;
-          fill: #D97B41 !important;
-        }
-      `}</style>
+             <style>{`
+         /* Table styles */
+         .ant-table-thead > tr > th { 
+           background-color: ${headerBgColor} !important; 
+           color: ${headerColor} !important; 
+           font-weight: bold !important; 
+           border-right: 1px solid ${borderColor} !important; 
+           border-bottom: 2px solid ${tableBorderColor} !important; 
+         }
+         .ant-table-thead > tr > th.ant-table-cell-fix-right:last-child { 
+           border-right: none !important; 
+         }
+         .order-table .ant-table-tbody > tr.even-row-order > td { 
+           background-color: ${evenRowBgColor}; 
+           color: ${cellTextColor}; 
+           border-right: 1px solid ${borderColor}; 
+           border-bottom: 1px solid ${borderColor}; 
+         }
+         .order-table .ant-table-tbody > tr.odd-row-order > td { 
+           background-color: ${oddRowBgColor}; 
+           color: ${cellTextColor}; 
+           border-right: 1px solid ${borderColor}; 
+           border-bottom: 1px solid ${borderColor}; 
+         }
+         .order-table .ant-table-tbody > tr > td:last-child:not(.ant-table-selection-column) { 
+           border-right: none; 
+         }
+         .order-table .ant-table-tbody > tr:hover > td { 
+           background-color: #EFF6FF !important; 
+         }
+         .order-table .ant-table-cell-fix-right { 
+           background: inherit !important; 
+         }
+         .order-table .ant-table-thead > tr > th.ant-table-cell-fix-right { 
+           background-color: ${headerBgColor} !important; 
+         }
+         
+         /* Input and Select styles */
+         .ant-input-number:focus, .ant-input-number-focused, .ant-input-number:hover,
+         .ant-select-focused .ant-select-selector, .ant-select-selector:focus, .ant-select-selector:hover,
+         .ant-picker:focus, .ant-picker:hover, .ant-input:focus, .ant-input:hover,
+         .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus-within {
+           border-color: #3B82F6 !important; 
+           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+         }
+         
+         /* Pagination styles */
+         .ant-pagination .ant-pagination-item-active, .ant-pagination .ant-pagination-item-active a { 
+           border-color: #3B82F6 !important; 
+           color: #3B82F6 !important; 
+         }
+         
+         /* Select styles */
+         .ant-select-selector { 
+           border-color: #D1D5DB !important; 
+         }
+         .ant-select-selector:hover { 
+           border-color: #3B82F6 !important; 
+         }
+         
+         /* Table sorter styles */
+         .ant-table-column-sorter-up.active svg,
+         .ant-table-column-sorter-down.active svg {
+           color: #3B82F6 !important;
+           fill: #3B82F6 !important;
+         }
+       `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
         <h1
@@ -333,10 +400,14 @@ const OrderManagement: React.FC = () => {
               style={{ width: 180 }}
               options={[
                 { label: "Tất cả trạng thái", value: "all" },
-                { label: "Chờ xử lý", value: "pending" },
-                { label: "Đang xử lý", value: "processing" },
-                { label: "Đã thanh toán", value: "paid" },
-                { label: "Đã hủy", value: "cancelled" },
+                { label: "Chờ thanh toán", value: "Pending" },
+                { label: "Đã thanh toán", value: "Paid" },
+                { label: "Xác nhận đơn", value: "Approved" },
+                { label: "Đang nấu ăn", value: "Preparing" },
+                { label: "Đã nấu xong", value: "Cooked" },
+                { label: "Đang giao", value: "Delivering" },
+                { label: "Đã giao", value: "Delivered" },
+                { label: "Đã hủy", value: "Canceled" },
               ]}
             />
           </div>
@@ -360,63 +431,64 @@ const OrderManagement: React.FC = () => {
           />
         </Card>
 
-        <Modal
-          title={
-            <span style={{ color: "#D97B41", fontWeight: 700, fontSize: 22 }}>
-              Chi tiết đơn hàng
-            </span>
-          }
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={[
-            <Button
-              key="back"
-              onClick={() => setIsModalVisible(false)}
-              style={{
-                borderRadius: 6,
-                borderColor: "#D97B41",
-                color: "#D97B41",
-              }}
-            >
-              Đóng
-            </Button>,
-          ]}
-          width={800}
-          styles={{
-            body: {
-              background: "#FFF9F0",
-              borderRadius: "0 0 12px 12px",
-              padding: "24px",
-            },
-            header: {
-              borderBottom: `1px solid ${tableBorderColor}`,
-              paddingTop: 16,
-              paddingBottom: 16,
-            },
-          }}
-          style={{ borderRadius: 12, top: 20 }}
-        >
+                 <Modal
+           title={
+             <span style={{ color: "#1F2937", fontWeight: 700, fontSize: 22 }}>
+               Chi tiết đơn hàng
+             </span>
+           }
+           open={isModalVisible}
+           onCancel={() => setIsModalVisible(false)}
+           footer={[
+             <Button
+               key="back"
+               onClick={() => setIsModalVisible(false)}
+               style={{
+                 borderRadius: 8,
+                 borderColor: "#6B7280",
+                 color: "#6B7280",
+                 background: "#F9FAFB",
+               }}
+             >
+               Đóng
+             </Button>,
+           ]}
+           width={800}
+           styles={{
+             body: {
+               background: "#F8FAFC",
+               borderRadius: "0 0 16px 16px",
+               padding: "24px",
+             },
+             header: {
+               borderBottom: `1px solid ${borderColor}`,
+               paddingTop: 16,
+               paddingBottom: 16,
+             },
+           }}
+           style={{ borderRadius: 16, top: 20 }}
+         >
           {selectedOrder && (
-            <Card
-              style={{
-                background: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(217, 123, 65, 0.08)",
-                border: `1px solid ${tableBorderColor}`,
-                padding: 16,
-              }}
-            >
+                         <Card
+               style={{
+                 background: "#fff",
+                 borderRadius: 12,
+                 boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                 border: `1px solid ${borderColor}`,
+                 padding: 20,
+               }}
+             >
               <Descriptions
                 bordered
                 column={{ xxl: 2, xl: 1, lg: 1, md: 1, sm: 1, xs: 1 }}
                 size="default"
-                labelStyle={{
-                  color: "#A05A2C",
-                  fontWeight: 600,
-                  background: "#FFF9F0",
-                  width: "160px",
-                }}
-                contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
+                                 labelStyle={{
+                   color: "#374151",
+                   fontWeight: 600,
+                   background: "#F9FAFB",
+                   width: "160px",
+                 }}
+                 contentStyle={{ color: cellTextColor, background: "#FFFFFF" }}
               >
                 <Descriptions.Item label="Mã đơn hàng">
                   {selectedOrder.orderId}
@@ -455,17 +527,17 @@ const OrderManagement: React.FC = () => {
                     );
                   })()}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tổng tiền" span={2}>
-                  <span
-                    style={{
-                      color: "#D97B41",
-                      fontWeight: "bold",
-                      fontSize: "1.1em",
-                    }}
-                  >
-                    {parseFloat(selectedOrder.order_amount).toLocaleString()}đ
-                  </span>
-                </Descriptions.Item>
+                                 <Descriptions.Item label="Tổng tiền" span={2}>
+                   <span
+                     style={{
+                       color: "#059669",
+                       fontWeight: "bold",
+                       fontSize: "1.1em",
+                     }}
+                   >
+                     {parseFloat(selectedOrder.order_amount).toLocaleString()}đ
+                   </span>
+                 </Descriptions.Item>
                 <Descriptions.Item label="Phí vận chuyển">
                   <span style={{ color: cellTextColor }}>
                     {parseFloat(
@@ -556,11 +628,11 @@ const OrderManagement: React.FC = () => {
                     pagination={false}
                     rowKey="productId"
                     size="small"
-                    style={{
-                      background: evenRowBgColor,
-                      borderRadius: 8,
-                      border: `1px solid ${borderColor}`,
-                    }}
+                                         style={{
+                       background: "#F9FAFB",
+                       borderRadius: 8,
+                       border: `1px solid ${borderColor}`,
+                     }}
                   />
                 </Descriptions.Item>
               </Descriptions>
