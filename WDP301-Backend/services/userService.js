@@ -11,6 +11,8 @@ const path = require("path");
 const { auth, uploadFileToFirebase } = require("../config/firebase");
 const FcmToken = require("../models/fcmToken");
 const Promotion = require("../models/promotion");
+const { createCanvas } = require("canvas");
+const JsBarcode = require("jsbarcode");
 
 const currentDate = new Date();
 
@@ -145,37 +147,36 @@ const userService = {
       throw "Invalid or expired OTP";
     }
 
-    // Start a transaction for user activation and promotion creation
     const transaction = await User.sequelize.transaction();
     try {
-      // Activate the user
       await user.update({ isActive: true }, { transaction });
       console.log("User activated successfully:", user.id);
 
-      // Delete OTP record
       await otpRecord.destroy({ transaction });
       console.log("OTP record deleted successfully");
 
-      // Create promotion
       const promotionCode = `WELCOME_${user.id}`;
       const startDate = new Date();
       const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
 
-      // Generate barcode (text-based for simplicity)
-      const barcodeBuffer = Buffer.from(promotionCode, "utf-8");
-      const barcodeFileName = `barcode_${user.id}.txt`;
-
-      // Upload barcode to Firebase
+      const canvas = createCanvas(300, 100);
+      JsBarcode(canvas, promotionCode, {
+        format: "CODE128",
+        width: 2,
+        height: 80,
+        displayValue: true,
+        fontSize: 14,
+      });
+      const barcodeBuffer = canvas.toBuffer("image/png");
+      const barcodeFileName = `barcodes/${promotionCode}_${Date.now()}.png`;
       let barcodeUrl;
       try {
-        barcodeUrl = await uploadFileToFirebase(barcodeBuffer, barcodeFileName, "text/plain");
-        console.log("Barcode uploaded to Firebase:", barcodeUrl);
+        barcodeUrl = await uploadFileToFirebase(barcodeBuffer, barcodeFileName, "image/png");
       } catch (firebaseError) {
         console.error("Firebase upload error:", firebaseError.message, firebaseError.stack);
         throw new Error(`Failed to upload barcode to Firebase: ${firebaseError.message}`);
       }
 
-      // Create promotion with specified attributes
       try {
         await Promotion.create(
           {

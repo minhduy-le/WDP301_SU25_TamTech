@@ -312,12 +312,6 @@ router.get("/:id", async (req, res) => {
 router.post("/", verifyToken, async (req, res) => {
   try {
     const { title, content, image } = req.body;
-    if (image && !/\.(jpg|jpeg|png)$/i.test(image)) {
-      return res.status(400).json({
-        status: 400,
-        message: "Image URL must end with .jpg, .jpeg, or .png",
-      });
-    }
     const blog = await blogService.createBlog({ title, content, image }, req.userId);
     res.status(201).json({
       status: 201,
@@ -326,11 +320,7 @@ router.post("/", verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating blog:", error);
-    if (
-      error.message.includes("required") ||
-      error.message.includes("characters") ||
-      error.message.includes("Image URL")
-    ) {
+    if (error.message.includes("required") || error.message.includes("characters")) {
       return res.status(400).json({
         status: 400,
         message: error.message,
@@ -439,13 +429,6 @@ router.put("/:id", verifyToken, async (req, res) => {
     }
 
     const { title, content, image, isActive } = req.body;
-    if (image && !/\.(jpg|jpeg|png)$/i.test(image)) {
-      return res.status(400).json({
-        status: 400,
-        message: "Image URL must end with .jpg, .jpeg, or .png",
-      });
-    }
-
     const blog = await blogService.updateBlog(blogId, { title, content, image, isActive }, req.userId);
     res.status(200).json({
       status: 200,
@@ -466,7 +449,7 @@ router.put("/:id", verifyToken, async (req, res) => {
         message: error.message,
       });
     }
-    if (error.message.includes("characters") || error.message.includes("Image URL")) {
+    if (error.message.includes("characters")) {
       return res.status(400).json({
         status: 400,
         message: error.message,

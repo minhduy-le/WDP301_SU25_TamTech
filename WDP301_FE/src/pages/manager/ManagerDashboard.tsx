@@ -554,29 +554,40 @@ const ManagerDashboard: React.FC = () => {
                 Hiệu suất nhân viên
               </span>
             }
+            style={{
+              borderRadius: 16,
+              boxShadow: "0 6px 24px rgba(160,90,44,0.10)",
+            }}
           >
-            {staffProductivity.map((staff, index) => (
-              <div key={index} style={{ marginBottom: "16px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <span>{staff.fullName}</span>
-                  <span>{staff.totalRevenue.toLocaleString()}đ</span>
+                        {(() => {
+              // Tính hiệu suất tương đối - nhân viên cao nhất = 100%
+              const maxRevenue = Math.max(...staffProductivity.map(s => s.totalRevenue), 1);
+              
+              return staffProductivity.map((staff, index) => (
+                <div key={index} style={{ marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: "#A05A2C" }}>{staff.fullName}</span>
+                    <span style={{ fontWeight: 600, color: "#D97B41" }}>
+                      {staff.totalRevenue.toLocaleString()}đ
+                    </span>
+                  </div>
+                  <Progress
+                    percent={Math.min((staff.totalRevenue / maxRevenue) * 100, 100)}
+                    strokeColor={{
+                      "0%": "#F9E4B7",
+                      "100%": "#D97B41",
+                    }}
+                    showInfo={false}
+                  />
                 </div>
-                <Progress
-                  percent={Math.min((staff.totalRevenue / 10000000) * 100, 100)}
-                  strokeColor={{
-                    "0%": "#F9E4B7",
-                    "100%": "#D97B41",
-                  }}
-                  showInfo={false}
-                />
-              </div>
-            ))}
+              ));
+            })()}
           </Card>
         </Col>
       </Row>

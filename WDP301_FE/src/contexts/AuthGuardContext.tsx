@@ -111,7 +111,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/staff/pos",          
         "/staff/pos-success"    
       ],
-      User: ["/checkout", "/payment-success", "/user-information"],
+      User: ["/checkout", "/payment-success", "/user-information", "/cancel-order-success"],
       Shipper: [],
       Manager: [
         "/manager/dashboard",

@@ -44,6 +44,7 @@ import BlogManagement from "./pages/BlogManagement";
 import { POSPage } from "./pages/POSPage";
 import POSSuccess from "./components/pos/POSSuccess";
 import ReportManagement from "./pages/admin/ReportManagement";
+import CancelOrderSuccess from "./pages/CancelOrderSuccess";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -79,6 +80,7 @@ function App() {
           <Route path="/forbidden" element={<Forbidden />} />
           <Route element={<LayoutWithNavFooter />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/cancel-order-success" element={<CancelOrderSuccess />} />
             <Route path="/login" element={<Login />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verify-otp" element={<VerifyOTP />} />

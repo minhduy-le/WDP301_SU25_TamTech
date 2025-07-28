@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const Material = require("../models/material");
 const Product = require("../models/product");
 const Store = require("../models/store");
@@ -33,6 +34,15 @@ const createMaterial = async (materialData) => {
       }
     }
 
+    let timeExpired = null;
+    if (materialData.timeExpired) {
+      const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
+      if (!timeRegex.test(materialData.timeExpired)) {
+        throw "timeExpired must be in hh:mm:ss format (e.g., 14:30:00)";
+      }
+      timeExpired = materialData.timeExpired;
+    }
+
     const storeId = 1;
 
     const store = await Store.findByPk(storeId);
@@ -65,6 +75,7 @@ const createMaterial = async (materialData) => {
       storeId: storeId,
       barcode: barcodeUrl,
       expireDate: expireDate,
+      timeExpired: timeExpired,
     };
 
     const material = await Material.create(finalMaterialData);
@@ -148,6 +159,18 @@ const updateMaterial = async (materialId, materialData) => {
       material.expireDate = expireDate;
     }
 
+    if (materialData.timeExpired !== undefined) {
+      if (materialData.timeExpired) {
+        const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
+        if (!timeRegex.test(materialData.timeExpired)) {
+          throw "timeExpired must be in hh:mm:ss format (e.g., 14:30:00)";
+        }
+        material.timeExpired = materialData.timeExpired;
+      } else {
+        material.timeExpired = null;
+      }
+    }
+
     await material.save();
     return {
       materialId: material.materialId,
@@ -156,6 +179,7 @@ const updateMaterial = async (materialId, materialData) => {
       storeId: material.storeId,
       barcode: material.barcode,
       expireDate: material.expireDate,
+      timeExpired: material.timeExpired,
       isExpired: material.isExpired,
     };
   } catch (error) {
@@ -210,11 +234,21 @@ const updateExpiredStatus = async () => {
       },
     });
 
-    const currentDate = new Date();
+    const currentDateTime = new Date();
     for (const material of materials) {
-      if (material.expireDate && material.expireDate <= currentDate) {
-        material.isExpired = true;
-        await material.save();
+      if (material.expireDate) {
+        const expireDateTime = new Date(material.expireDate);
+        if (material.timeExpired) {
+          const [hours, minutes, seconds] = material.timeExpired.split(":").map(Number);
+          expireDateTime.setHours(hours, minutes, seconds, 0);
+        } else {
+          expireDateTime.setHours(23, 59, 59, 999);
+        }
+
+        if (expireDateTime <= currentDateTime) {
+          material.isExpired = true;
+          await material.save();
+        }
       }
     }
   } catch (error) {
@@ -242,7 +276,33 @@ const getExpiredMaterials = async () => {
   }
 };
 
-cron.schedule("0 0 * * *", updateExpiredStatus);
+const markAsProcessedExpired = async (materialId) => {
+  try {
+    const material = await Material.findByPk(materialId);
+    if (!material) {
+      throw "Material not found";
+    }
+
+    if (!material.isExpired) {
+      throw "Material must be expired before marking as processed";
+    }
+
+    if (material.isProcessExpired) {
+      throw "Material already marked as processed expired";
+    }
+
+    material.isProcessExpired = true;
+    await material.save();
+    return {
+      materialId: material.materialId,
+      isProcessExpired: material.isProcessExpired,
+    };
+  } catch (error) {
+    throw error.message || error;
+  }
+};
+
+cron.schedule("* * * * *", updateExpiredStatus);
 
 module.exports = {
   createMaterial,
@@ -252,4 +312,5 @@ module.exports = {
   deleteMaterial,
   updateExpiredStatus,
   getExpiredMaterials,
+  markAsProcessedExpired,
 };

@@ -7,7 +7,6 @@ import {
   UserOutlined,
   BarChartOutlined,
   LogoutOutlined,
-  BellOutlined,
   DownOutlined,
   ShoppingFilled,
   TagOutlined,
@@ -160,7 +159,7 @@ const ManagerSidebar: React.FC = () => {
               alt="logo"
               style={{
                 maxHeight: "100%",
-                maxWidth: collapsed ? "90%" : "70%",
+                maxWidth: "100%",
                 objectFit: "contain",
                 transition: "all 0.3s",
               }}
@@ -228,21 +227,6 @@ const ManagerSidebar: React.FC = () => {
               gap: 24,
             }}
           >
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              style={{
-                fontSize: "18px",
-                color: "#D97B41",
-                width: 40,
-                height: 40,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "transparent",
-              }}
-            />
-
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
