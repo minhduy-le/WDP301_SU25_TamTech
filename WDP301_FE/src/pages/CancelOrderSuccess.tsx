@@ -13,16 +13,16 @@ const CancelOrderSuccess = () => {
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
   const { mutate: cancelOrder } = useCancelOrderPayment();
-  const [isCancelled, setIsCancelled] = useState(false);
+  const [hasCalled, setHasCalled] = useState(false);
 
   useEffect(() => {
-    if (orderId !== "N/A") {
+    if (orderId !== "N/A" && !hasCalled) {
       const parsedOrderId = parseInt(orderId, 10);
       cancelOrder(
         { orderId: parsedOrderId },
         {
           onSuccess: () => {
-            setIsCancelled(true);
+            setHasCalled(true);
           },
           onError: (error: any) => {
             message.error(
@@ -35,7 +35,7 @@ const CancelOrderSuccess = () => {
     } else {
       message.error("Không tìm thấy mã đơn hàng.");
     }
-  }, [cancelOrder, orderId, isCancelled]);
+  }, [cancelOrder, orderId, hasCalled]);
 
   const handleBackToOrders = () => {
     navigate("/user-information", {
