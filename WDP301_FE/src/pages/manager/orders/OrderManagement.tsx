@@ -50,6 +50,7 @@ interface Order {
   order_shipping_fee: string;
   order_discount_value: string;
   order_amount: string;
+  order_subtotal: string;
   invoiceUrl: string;
   order_point_earn: number;
   note: string;
@@ -405,6 +406,7 @@ const OrderManagement: React.FC = () => {
                 borderRadius: 6,
                 borderColor: "#D97B41",
                 color: "#D97B41",
+                outline: "none",
               }}
             >
               Đóng
@@ -484,11 +486,10 @@ const OrderManagement: React.FC = () => {
                     );
                   })()}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tổng tiền" span={2}>
+                <Descriptions.Item label="Tổng tiền thực đơn" span={2}>
                   <span
                     style={{
-                      color: "#D97B41",
-                      fontWeight: "bold",
+                      color: cellTextColor,
                       fontSize: "1.1em",
                     }}
                   >
@@ -540,6 +541,7 @@ const OrderManagement: React.FC = () => {
                     columns={[
                       {
                         title: "Tên sản phẩm",
+                        width: 170,
                         dataIndex: "name",
                         key: "name",
                         render: (text: string) => (
@@ -591,6 +593,14 @@ const OrderManagement: React.FC = () => {
                       border: `1px solid ${borderColor}`,
                     }}
                   />
+                </Descriptions.Item>
+                <Descriptions.Item label="TỔNG TIỀN" span={2}>
+                  <span style={{ color: "#D97B41", fontWeight: "bold", fontSize: "1.2em" }}>
+                    {parseFloat(
+                      selectedOrder.order_subtotal
+                    ).toLocaleString()}
+                    đ
+                  </span>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
