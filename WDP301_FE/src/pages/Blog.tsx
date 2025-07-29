@@ -35,58 +35,50 @@ const Blog = () => {
         <div className="line-title"></div>
         <Text className="news-title">Tin Tức</Text>
       </div>
-      <Row gutter={[16, 16]} className="blog-grid">
+      <Row gutter={[48, 16]} className="blog-grid">
         {isLoadingBlogs ? (
           <Skeleton />
         ) : isErrorBlogs ? (
           <div>Lỗi loading loại sản phẩm. Vui lòng thử lại.</div>
         ) : blogs && blogs.length > 0 ? (
-          <div
-            style={{
-              display: "flex",
-              width: "-webkit-fill-available",
-              justifyContent: "space-between",
-            }}
-          >
-            {blogs.slice(0, visibleBlogs).map((post) => (
-              <Col
-                key={post.id}
-                xs={24}
-                sm={12}
-                md={7}
-                lg={7}
-                style={{ maxWidth: "-webkit-fill-available" }}
-              >
-                <Card className="blog-card">
-                  <div className="card-image-container">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="blog-card-image"
-                    />
+          blogs.slice(0, visibleBlogs).map((post) => (
+            <Col
+              key={post.id}
+              xs={24}
+              sm={12}
+              md={8}
+              lg={8}
+              style={{ maxWidth: "33.33%" }}
+            >
+              <Card className="blog-card">
+                <div className="card-image-container">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="blog-card-image"
+                  />
+                </div>
+                <div className="blog-card-content">
+                  <Text className="post-title">{post.title}</Text>
+                  {/* <Text className="post-date">{post.date}</Text> */}
+                  <div className="btn-right">
+                    <Link to={`/blog/${post.id}`}>
+                      <Button className="btn-read-more">Đọc tiếp</Button>
+                    </Link>
                   </div>
-                  <div className="blog-card-content">
-                    <Text className="post-title">{post.title}</Text>
-                    {/* <Text className="post-date">{post.date}</Text> */}
-                    <div className="btn-right">
-                      <Link to={`/blog/${post.id}`}>
-                        <Button className="btn-read-more">Đọc tiếp</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-            {visibleBlogs < blogs.length && (
-              <div className="see-more">
-                <Button className="see-more-button" onClick={handleShowMore}>
-                  Xem thêm
-                </Button>
-              </div>
-            )}
-          </div>
+                </div>
+              </Card>
+            </Col>
+          ))
         ) : (
           <div>Không có blog.</div>
+        )}
+        {visibleBlogs < (blogs?.length || 0) && (
+          <Col span={24} style={{ textAlign: "center", marginTop: "20px" }}>
+            <Button className="see-more-button" onClick={handleShowMore}>
+              Xem thêm
+            </Button>
+          </Col>
         )}
       </Row>
     </div>
