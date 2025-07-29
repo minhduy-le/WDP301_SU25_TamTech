@@ -93,8 +93,7 @@ const ProductManagement: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
-  const { data: productTypes, isLoading: isProductTypesLoading } =
-    useProductTypes();
+  const { data: productTypes, isLoading: isProductTypesLoading, refetch: refetchProductTypes } = useProductTypes();
   const [filterType, setFilterType] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<boolean | undefined>(
     undefined
@@ -211,19 +210,6 @@ const ProductManagement: React.FC = () => {
     return response.data;
   };
 
-  const deleteProductApiCall = async (productId: number) => {
-    const token = localStorage.getItem("token");
-    const response = await axios.delete(
-      `${import.meta.env.VITE_API_URL}products/${productId}`,
-      {
-        headers: {
-          accept: "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      }
-    );
-    return response.data;
-  };
 
   useEffect(() => {
     fetchProducts();
@@ -287,19 +273,19 @@ const ProductManagement: React.FC = () => {
 
   const handleDelete = (productId: number) => {
     Modal.confirm({
-      title: "Bạn có chắc chắn muốn xóa sản phẩm này?",
-      content: "Hành động này không thể hoàn tác.",
-      okText: "Xóa",
+      title: "Bạn có chắc chắn muốn ngừng bán sản phẩm này?",
+      content: "Sản phẩm sẽ chuyển sang trạng thái 'Ngừng bán' thay vì bị xóa khỏi hệ thống.",
+      okText: "Ngừng bán",
       okType: "danger",
       cancelText: "Hủy",
       onOk: async () => {
         try {
-          await deleteProductApiCall(productId);
-          message.success("Đã xóa sản phẩm!");
+          await updateProductApiCall(productId, { isActive: false });
+          message.success("Sản phẩm đã chuyển sang trạng thái 'Ngừng bán'!");
           await fetchProducts();
         } catch (error) {
-          console.error("Delete product error:", error);
-          message.error("Xóa sản phẩm thất bại!");
+          console.error("Cập nhật trạng thái sản phẩm thất bại:", error);
+          message.error("Cập nhật trạng thái thất bại!");
         }
       },
     });
@@ -570,15 +556,44 @@ const ProductManagement: React.FC = () => {
               style={{ outline: "none", boxShadow: "none", border: "none" }}
             />
           </Tooltip>
-          <Tooltip title="Xóa">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined style={{ fontSize: 17 }} />}
-              onClick={() => handleDelete(record.productId)}
-              style={{ outline: "none", boxShadow: "none", border: "none" }}
-            />
-          </Tooltip>
+          {record.isActive ? (
+            <Tooltip title="Ngừng bán">
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined style={{ fontSize: 17 }} />}
+                onClick={() => handleDelete(record.productId)}
+                style={{ outline: "none", boxShadow: "none", border: "none" }}
+              />
+            </Tooltip>
+          ) : (
+            <Tooltip title="Mở bán lại">
+              <Button
+                type="text"
+                icon={<PlusOutlined style={{ color: "#388e3c", fontSize: 17 }} />}
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem("token");
+                    await axios.put(
+                      `${import.meta.env.VITE_API_URL}products/${record.productId}/activate`,
+                      {},
+                      {
+                        headers: {
+                          accept: "application/json",
+                          Authorization: token ? `Bearer ${token}` : "",
+                        },
+                      }
+                    );
+                    message.success("Sản phẩm đã được mở bán lại!");
+                    await fetchProducts();
+                  } catch (error) {
+                    message.error("Mở bán lại thất bại!");
+                  }
+                }}
+                style={{ outline: "none", boxShadow: "none", border: "none" }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -664,13 +679,14 @@ const ProductManagement: React.FC = () => {
                 allowClear
               />
               <Select
-                allowClear
+                allowClear={false}
                 placeholder="Loại đồ ăn"
                 style={{ width: 140, borderRadius: 6 }}
-                value={filterType}
-                onChange={(v) => setFilterType(v)}
+                value={filterType === undefined ? 'all' : filterType}
+                onChange={(v) => setFilterType(v === 'all' ? undefined : Number(v))}
                 loading={isProductTypesLoading}
               >
+                <Option value="all">Tất cả loại</Option>
                 {isProductTypesLoading ? (
                   <Option value="" disabled>
                     Đang tải...
@@ -684,12 +700,18 @@ const ProductManagement: React.FC = () => {
                 )}
               </Select>
               <Select
-                allowClear
+                allowClear={false}
                 placeholder="Trạng thái"
-                style={{ width: 120, borderRadius: 6 }}
-                value={filterStatus}
-                onChange={(v) => setFilterStatus(v)}
+                style={{ width: 150, borderRadius: 6 }}
+                value={filterStatus === undefined ? 'all' : filterStatus}
+                onChange={(v) => {
+                  if (v === 'all') setFilterStatus(undefined);
+                  else if (v === true || v === false) setFilterStatus(v);
+                  else if (v === 'true') setFilterStatus(true);
+                  else if (v === 'false') setFilterStatus(false);
+                }}
               >
+                <Option value="all">Tất cả trạng thái</Option>
                 <Option value={true}>Đang bán</Option>
                 <Option value={false}>Ngừng bán</Option>
               </Select>
@@ -720,6 +742,7 @@ const ProductManagement: React.FC = () => {
               const matchType = filterType
                 ? product.ProductType?.productTypeId === filterType
                 : true;
+              // Chỉ lọc theo trạng thái nếu filterStatus được chọn, còn mặc định thì show hết
               const matchStatus =
                 filterStatus !== undefined
                   ? product.isActive === filterStatus
@@ -748,7 +771,7 @@ const ProductManagement: React.FC = () => {
             }}
           />
         </Card>
-        <ProductTypeManagement />
+        <ProductTypeManagement onChanged={refetchProductTypes} />
         <Modal
           open={modalVisible}
           title={

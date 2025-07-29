@@ -226,6 +226,10 @@ const deactivateUser = async (userId) => {
       throw "User not found";
     }
 
+    if (user.role === "Admin") {
+      throw "Cannot deactivate Admin users";
+    }
+
     await user.update({ isActive: false });
   } catch (error) {
     console.error("Error in deactivateUser:", error);

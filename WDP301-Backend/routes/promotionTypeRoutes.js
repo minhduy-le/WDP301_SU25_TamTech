@@ -5,6 +5,7 @@ const {
   updatePromotionType,
   getPromotionTypes,
   deletePromotionType,
+  reactivatePromotionType,
 } = require("../services/promotionTypeService");
 const verifyToken = require("../middlewares/verifyToken");
 const restrictToRoles = require("../middlewares/restrictToRoles");
@@ -148,6 +149,68 @@ router.post("/", verifyToken, restrictToRoles("Manager"), createPromotionType);
  *               example: "Failed to update promotion type"
  */
 router.put("/:promotionTypeId", verifyToken, restrictToRoles("Manager"), updatePromotionType);
+
+/**
+ * @swagger
+ * /api/promotion-types/{promotionTypeId}/reactivate:
+ *   put:
+ *     summary: Reactivate a promotion type
+ *     tags: [PromotionTypes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: promotionTypeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the promotion type to reactivate
+ *     responses:
+ *       200:
+ *         description: Promotion type reactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 promotionTypeId:
+ *                   type: integer
+ *       400:
+ *         description: Invalid input or promotion type already active
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Promotion type is already active"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       404:
+ *         description: Promotion type not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Promotion type not found"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Failed to reactivate promotion type"
+ */
+router.put("/:promotionTypeId/reactivate", verifyToken, restrictToRoles("Manager"), reactivatePromotionType);
 
 /**
  * @swagger
