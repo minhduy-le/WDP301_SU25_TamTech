@@ -13,6 +13,7 @@ const {
   ReasonCancel,
   FcmToken,
   Store,
+  BankUserInformation,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -1657,11 +1658,13 @@ const getAllOrders = async (req, res) => {
         "order_shipping_fee",
         "order_discount_value",
         "order_amount",
+        "order_subtotal",
         "invoiceUrl",
         "order_point_earn",
         "note",
         "payment_method_id",
         "isRefund",
+        "certificationOfDelivered",
       ],
       include: [
         {
@@ -1722,6 +1725,8 @@ const getAllOrders = async (req, res) => {
       order_shipping_fee: order.order_shipping_fee,
       order_discount_value: order.order_discount_value,
       order_amount: order.order_amount,
+      order_subtotal: order.order_subtotal,
+      certificationOfDelivered: order.certificationOfDelivered,
       invoiceUrl: order.invoiceUrl,
       order_point_earn: order.order_point_earn,
       note: order.note,
@@ -1834,23 +1839,85 @@ const getPaidOrders = async (req, res) => {
 const setOrderToCanceled = async (orderId, reason, userId, bankName, bankNumber) => {
   const transaction = await sequelize.transaction();
   try {
-    console.log(`Starting transaction for orderId: ${orderId}`);
-    const order = await Order.findOne({ where: { orderId }, transaction });
+    console.log(`Starting transaction to cancel orderId: ${orderId}`);
+    const order = await Order.findOne({
+      where: { orderId },
+      include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }], // Include status for better logging
+      transaction,
+    });
+
     if (!order) {
       console.log(`Order not found for orderId: ${orderId}`);
       throw Object.assign(new Error("Order not found"), { status: 404 });
     }
 
-    if (order.status_id === 5) {
-      console.log(`Order ${orderId} is already canceled`);
-      throw Object.assign(new Error("Order is already canceled"), { status: 400 });
+    if (order.status_id !== 2) {
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `ID ${order.status_id}`;
+      console.log(`Cancellation denied for orderId ${orderId}. Current status is '${currentStatus}', not 'Paid'.`);
+      throw Object.assign(
+        new Error(`Only orders with 'Paid' status can be canceled. Current status is '${currentStatus}'.`),
+        {
+          status: 400,
+        }
+      );
     }
+
     if (!reason || reason.trim() === "") {
       console.log(`Reason is missing or empty for orderId: ${orderId}`);
       throw Object.assign(new Error("Reason for cancellation is required"), { status: 400 });
     }
 
-    order.status_id = 5; // Canceled status
+    const orderCreationTime = new Date(order.order_create_at).getTime();
+    const currentTime = Date.now();
+    const timeDifferenceInMinutes = (currentTime - orderCreationTime) / (1000 * 60);
+
+    console.log(`[Cancel Check] OrderId: ${orderId}`, {
+      currentTime: new Date(currentTime).toISOString(),
+      orderCreationTime: new Date(orderCreationTime).toISOString(),
+      timeDifferenceInMinutes: timeDifferenceInMinutes.toFixed(2),
+    });
+
+    if (timeDifferenceInMinutes > 5) {
+      console.log(`Cancellation denied for orderId ${orderId}. Order is older than 5 minutes.`);
+      throw Object.assign(new Error("Order cannot be canceled as it was created more than 5 minutes ago."), {
+        status: 400,
+      });
+    }
+
+    if (bankName && bankNumber && order.userId) {
+      await BankUserInformation.findOrCreate({
+        where: { userId: order.userId, bankNumber },
+        defaults: {
+          userId: order.userId,
+          bankName,
+          bankNumber,
+        },
+        transaction,
+      });
+      console.log(`Bank information saved or updated for userId: ${order.userId}`);
+    }
+
+    const orderItems = await OrderItem.findAll({ where: { orderId }, transaction });
+
+    for (const item of orderItems) {
+      const recipes = await ProductRecipe.findAll({
+        where: { productId: item.productId },
+        transaction,
+      });
+
+      for (const recipe of recipes) {
+        const quantityToRestore = recipe.quantity * item.quantity;
+        await Material.update(
+          { quantity: sequelize.literal(`quantity + ${quantityToRestore}`) },
+          { where: { materialId: recipe.materialId }, transaction }
+        );
+        console.log(
+          `Restored ${quantityToRestore} to materialId: ${recipe.materialId} for canceled orderId: ${orderId}`
+        );
+      }
+    }
+
+    order.status_id = 5;
     await order.save({ transaction });
     console.log(`Order ${orderId} status updated to canceled`);
 
@@ -1861,16 +1928,16 @@ const setOrderToCanceled = async (orderId, reason, userId, bankName, bankNumber)
         reason,
         bankName: bankName || null,
         bankNumber: bankNumber || null,
-        certificationRefund: null, // Initially null, updated later
+        certificationRefund: null,
         createdAt: new Date(),
       },
       { transaction }
     );
-    console.log(`ReasonCancel created for orderId: ${orderId} with bankName: ${bankName}, bankNumber: ${bankNumber}`);
+    console.log(`ReasonCancel created for orderId: ${orderId}`);
 
     await transaction.commit();
     console.log(`Transaction committed for orderId: ${orderId}`);
-    return { success: true, message: "Order canceled successfully" };
+    return { success: true, message: "Order canceled successfully and materials have been restored." };
   } catch (error) {
     if (transaction.finished !== "rollback") {
       console.error(`Rolling back transaction for orderId: ${orderId} due to error: ${error.message}`);
