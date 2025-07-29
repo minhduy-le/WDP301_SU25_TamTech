@@ -1472,6 +1472,8 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                   invoiceUrl:
  *                     type: string
  *                     nullable: true
+ *                   assignToShipperId:
+ *                     type: integer
  *                   order_point_earn:
  *                     type: integer
  *                   note:

@@ -1665,6 +1665,7 @@ const getAllOrders = async (req, res) => {
         "payment_method_id",
         "isRefund",
         "certificationOfDelivered",
+        "assignToShipperId",
       ],
       include: [
         {
@@ -1731,6 +1732,7 @@ const getAllOrders = async (req, res) => {
       order_point_earn: order.order_point_earn,
       note: order.note,
       payment_method: order.PaymentMethod ? order.PaymentMethod.name : null,
+      assignToShipperId: order.assignToShipperId,
     }));
 
     console.log("Returning formatted orders:", formattedOrders.length);
