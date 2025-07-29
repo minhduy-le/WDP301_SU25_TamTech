@@ -138,6 +138,12 @@ const ProductManagement: React.FC = () => {
       }));
       setProducts(processedProducts);
       setTotalPages(totalPagesFromApi);
+      // Nếu dữ liệu trả về rỗng và page > 1, tự động chuyển về trang trước đó
+      if (processedProducts.length === 0 && page > 1) {
+        setPage(page - 1);
+        fetchProducts(page - 1, typeId);
+        return;
+      }
       console.log("số lượng sản phẩm", processedProducts.length);
     } catch (error) {
       message.error(
@@ -216,6 +222,7 @@ const ProductManagement: React.FC = () => {
     fetchMaterials();
   }, []);
 
+  // Chỉ setPage(1) khi filterType thay đổi
   useEffect(() => {
     setPage(1);
     fetchProducts(1, filterType);
@@ -274,15 +281,39 @@ const ProductManagement: React.FC = () => {
   const handleDelete = (productId: number) => {
     Modal.confirm({
       title: "Bạn có chắc chắn muốn ngừng bán sản phẩm này?",
-      content: "Sản phẩm sẽ chuyển sang trạng thái 'Ngừng bán' thay vì bị xóa khỏi hệ thống.",
+      content: "Sản phẩm đã ngừng bán!",
       okText: "Ngừng bán",
+      okButtonProps: {
+        style: {
+          outline: "none",
+        },
+      },
       okType: "danger",
       cancelText: "Hủy",
+      cancelButtonProps: {
+        style: {
+          outline: "none",
+        },
+      },
       onOk: async () => {
         try {
-          await updateProductApiCall(productId, { isActive: false });
+          const token = localStorage.getItem("token");
+          await axios.delete(
+            `${import.meta.env.VITE_API_URL}products/${productId}`,
+            {
+              headers: {
+                accept: "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+            }
+          );
           message.success("Sản phẩm đã chuyển sang trạng thái 'Ngừng bán'!");
-          await fetchProducts();
+          if (products.length === 1 && page > 1) {
+            setPage(page - 1);
+            await fetchProducts(page - 1);
+          } else {
+            await fetchProducts(page);
+          }
         } catch (error) {
           console.error("Cập nhật trạng thái sản phẩm thất bại:", error);
           message.error("Cập nhật trạng thái thất bại!");
@@ -585,7 +616,7 @@ const ProductManagement: React.FC = () => {
                       }
                     );
                     message.success("Sản phẩm đã được mở bán lại!");
-                    await fetchProducts();
+                    await fetchProducts(page);
                   } catch (error) {
                     message.error("Mở bán lại thất bại!");
                   }
