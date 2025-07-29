@@ -25,6 +25,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import type { ColumnType } from "antd/es/table";
 import axios from "axios";
+import { exportReceiptToExcel } from "../../../utils/exportReceiptExcel";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -246,7 +247,7 @@ const OrderManagement: React.FC = () => {
           <Button
             type="default"
             icon={<DownloadOutlined />}
-            onClick={() => window.open(record.invoiceUrl, "_blank")}
+            onClick={() => exportReceiptToExcel(record)}
             style={{
               color: "#D97B41",
               borderColor: "#D97B41",

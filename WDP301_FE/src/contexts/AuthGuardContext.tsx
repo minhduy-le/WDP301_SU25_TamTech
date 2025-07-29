@@ -95,7 +95,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       User: "/",
       Staff: "/staff/orders",
       Shipper: "/",
-      Admin: "/admin/dashboard",
+      Admin: "/admin/users",
       Manager: "/manager/dashboard",
     };
 
@@ -138,11 +138,8 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/materials-process",
       ],
       Admin: [
-        "/admin/dashboard",
         "/admin/users",
-        "/admin/system-issues",
         "/admin/profile",
-        "/admin/chat",
       ],
     };
 
