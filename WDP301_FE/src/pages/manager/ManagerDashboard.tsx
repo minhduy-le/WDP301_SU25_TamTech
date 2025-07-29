@@ -10,6 +10,7 @@ import {
   Select,
   Button,
   Progress,
+  message,
 } from "antd";
 import {
   DollarOutlined,
@@ -45,6 +46,7 @@ import {
   useProductTypeSales,
   useStaffProductivity,
 } from "../../hooks/dashboardApi";
+import * as XLSX from 'xlsx';
 
 const { Title, Text } = Typography;
 
@@ -150,6 +152,89 @@ const ManagerDashboard: React.FC = () => {
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
 
+  const handleExportReport = () => {
+    try {
+      // Tạo workbook mới
+      const workbook = XLSX.utils.book_new();
+      
+      // Sheet 1: Tổng quan
+      const overviewData = [
+        {
+          "Chỉ số": "Doanh thu tháng này",
+          "Giá trị": `${(currentMonthRevenueStats?.currentRevenue || 0).toLocaleString()} đ`,
+          "Thay đổi (%)": `${currentMonthRevenueStats?.percentageChange || 0}%`
+        },
+        {
+          "Chỉ số": "Đơn hàng tháng này", 
+          "Giá trị": currentMonthOrderStats?.currentOrders || 0,
+          "Thay đổi (%)": `${currentMonthOrderStats?.percentageChange || 0}%`
+        },
+        {
+          "Chỉ số": "Giá trị đơn trung bình",
+          "Giá trị": `${(currentMonthRevenueStats?.averageOrderValue || 0).toLocaleString()} đ`,
+          "Thay đổi (%)": "-"
+        },
+        {
+          "Chỉ số": "Sản phẩm bán ra",
+          "Giá trị": currentMonthProductStats?.currentQuantity || 0,
+          "Thay đổi (%)": `${currentMonthProductStats?.percentageChange || 0}%`
+        }
+      ];
+      
+      const overviewSheet = XLSX.utils.json_to_sheet(overviewData);
+      XLSX.utils.book_append_sheet(workbook, overviewSheet, "Tổng quan");
+      
+      // Sheet 2: Doanh thu theo tháng
+      const revenueData = monthlyRevenueData.map(item => ({
+        "Tháng": item.month,
+        "Doanh thu (VNĐ)": `${item.revenue.toLocaleString()} đ`
+      }));
+      
+      const revenueSheet = XLSX.utils.json_to_sheet(revenueData);
+      XLSX.utils.book_append_sheet(workbook, revenueSheet, "Doanh thu theo tháng");
+      
+      // Sheet 3: Sản phẩm bán chạy
+      const productData = topProducts.map((product, index) => ({
+        "Thứ hạng": index + 1,
+        "Tên sản phẩm": product.name,
+        "Số lượng bán": product.sold,
+        "Doanh thu (VNĐ)": `${product.revenue.toLocaleString()} đ`
+      }));
+      
+      const productSheet = XLSX.utils.json_to_sheet(productData);
+      XLSX.utils.book_append_sheet(workbook, productSheet, "Sản phẩm bán chạy");
+      
+      // Sheet 4: Hiệu suất nhân viên
+      const staffData = staffProductivity.map((staff, index) => ({
+        "Thứ hạng": index + 1,
+        "Tên nhân viên": staff.fullName,
+        "Doanh thu (VNĐ)": `${staff.totalRevenue.toLocaleString()} đ`
+      }));
+      
+      const staffSheet = XLSX.utils.json_to_sheet(staffData);
+      XLSX.utils.book_append_sheet(workbook, staffSheet, "Hiệu suất nhân viên");
+      
+      // Sheet 5: Loại sản phẩm bán chạy
+      const productTypeData = productTypeStats.map((item, index) => ({
+        "Thứ hạng": index + 1,
+        "Loại sản phẩm": item.productType,
+        "Số lượng bán": item.totalQuantity
+      }));
+      
+      const productTypeSheet = XLSX.utils.json_to_sheet(productTypeData);
+      XLSX.utils.book_append_sheet(workbook, productTypeSheet, "Loại sản phẩm");
+      
+      // Xuất file
+      const fileName = `Bao_cao_Dashboard_${selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      
+      message.success("Xuất báo cáo thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xuất báo cáo:", error);
+      message.error("Có lỗi xảy ra khi xuất báo cáo!");
+    }
+  };
+
   return (
     <div
       style={{
@@ -177,6 +262,7 @@ const ManagerDashboard: React.FC = () => {
           type="primary"
           icon={<DownloadOutlined />}
           style={{ background: "#D97B41", borderColor: "#D97B41" }}
+          onClick={handleExportReport}
         >
           Xuất báo cáo
         </Button>
