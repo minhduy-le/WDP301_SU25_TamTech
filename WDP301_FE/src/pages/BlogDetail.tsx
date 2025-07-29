@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Typography, Button, Skeleton, Card, Image } from "antd";
+import { Typography, Button, Skeleton, Card } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useGetBlogById } from "../hooks/blogsApi";
 import "../style/BlogDetail.css";
@@ -88,11 +88,11 @@ const BlogDetail = () => {
         </div>
       </div>
 
-      <Image
+      {/* <Image
         src={blog.image}
         alt={blog.title}
         style={{ marginBottom: 20, height: 200 }}
-      />
+      /> */}
       <Card className="blog-detail-content-card">
         <Paragraph className="blog-detail-summary">{blog.content}</Paragraph>
       </Card>

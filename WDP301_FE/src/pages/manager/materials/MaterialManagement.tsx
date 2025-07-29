@@ -81,6 +81,14 @@ const MaterialManagement = () => {
     return isExpired ? "#C62828" : "#388E3C";
   };
 
+  const getStatusTagColorActive = (isActive: boolean) => {
+    return isActive ? "#C8E6C9" : "#FFCDD2";
+  };
+
+  const getStatusTagTextColorActive = (isActive: boolean) => {
+    return isActive ? "#388E3C" : "#C62828";
+  };
+
   const handleOpenDetailModal = (record: MaterialDto) => {
     setSelectedMaterial(record);
     setIsDetailModalVisible(true);
@@ -317,7 +325,7 @@ const MaterialManagement = () => {
       sorter: (a, b) => a.quantity - b.quantity,
     },
     {
-      title: "Hạn bắt đầu",
+      title: "Ngày bắt đầu",
       dataIndex: "startDate",
       key: "startDate",
       width: 140,
@@ -326,13 +334,32 @@ const MaterialManagement = () => {
         dayjs(startDate).format("DD/MM/YYYY HH:mm:ss"),
     },
     {
-      title: "Hạn kết thúc",
+      title: "Ngày hết hạn",
       dataIndex: "expireDate",
       key: "expireDate",
       width: 140,
       sorter: (a, b) => dayjs(a.expireDate).diff(dayjs(b.expireDate)),
       render: (expireDate: Date) =>
         dayjs(expireDate).format("DD/MM/YYYY HH:mm:ss"),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isActive: boolean) => (
+        <Tag
+          style={{
+            background: getStatusTagColorActive(isActive),
+            color: getStatusTagTextColorActive(isActive),
+            fontWeight: "bold",
+            borderRadius: 6,
+            padding: "2px 10px",
+          }}
+        >
+          {isActive ? "Đang hoạt động" : "Không hoạt động"}
+        </Tag>
+      ),
     },
     {
       title: "Hành động",
@@ -578,12 +605,12 @@ const MaterialManagement = () => {
                     }}
                   />
                 </Descriptions.Item>
-                <Descriptions.Item label="Hạn bắt đầu">
+                <Descriptions.Item label="Ngày bắt đầu">
                   {dayjs(selectedMaterial.startDate).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label="Hạn kết thúc">
+                <Descriptions.Item label="Ngày hết hạn">
                   {dayjs(selectedMaterial.expireDate).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}

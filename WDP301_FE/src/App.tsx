@@ -15,7 +15,7 @@ import HomePage from "./pages/HomePage";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import UserInfomation from "./pages/UserInformation";
+import UserInformation from "./pages/UserInformation";
 import ManagerSidebar from "./components/manager/ManagerSidebar";
 import OrderManagement from "./pages/manager/orders/OrderManagement";
 import ProductManagement from "./pages/manager/products/ProductManagement";
@@ -46,6 +46,10 @@ import POSSuccess from "./components/pos/POSSuccess";
 import ReportManagement from "./pages/admin/ReportManagement";
 import CancelOrderSuccess from "./pages/CancelOrderSuccess";
 import MaterialProcessManagement from "./pages/manager/materials/MaterialProcessManagement";
+import UserLayout from "./components/UserLayout";
+import OrderTracking from "./pages/OrderTracking";
+import Promotion from "./pages/Promotion";
+import OrderHistorys from "./pages/OrderHistory";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -90,7 +94,16 @@ function App() {
             <Route path="/menu" element={<Menu />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/user-information" element={<UserInfomation />} />
+            {/* <Route path="/user-information" element={<UserInfomation />} /> */}
+            <Route path="/user" element={<UserLayout />}>
+              <Route path="information" element={<UserInformation />} />
+              <Route path="order-history" element={<OrderHistorys />} />
+              <Route
+                path="order-tracking/:orderId"
+                element={<OrderTracking />}
+              />
+              <Route path="promotion" element={<Promotion />} />
+            </Route>
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />

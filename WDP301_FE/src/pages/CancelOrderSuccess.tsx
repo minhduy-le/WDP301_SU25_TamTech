@@ -38,13 +38,7 @@ const CancelOrderSuccess = () => {
   }, [cancelOrder, orderId, hasCalled]);
 
   const handleBackToOrders = () => {
-    navigate("/user-information", {
-      state: {
-        activeTab: "3",
-        showOrderTracking: true,
-        orderId: orderId,
-      },
-    });
+    navigate(`/user/order-tracking/${orderId}`);
   };
 
   return (
