@@ -42,13 +42,9 @@
 }
 
 .blog-grid {
-  /* justify-content: center;
-  display: grid;
-  grid-template-columns: repeat(3, 3fr);
-  gap: 70px;
-  row-gap: 48px !important; */
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .blog-card {
@@ -62,11 +58,13 @@
   justify-content: space-between;
   position: relative;
   border: 1px solid;
+  width: 100%; /* Ensure card takes full width of its column */
 }
 
 .blog-card-image {
   width: 100%;
   height: 161px;
+  object-fit: cover; /* Ensure image scales properly */
 }
 
 .blog-card-content {
