@@ -9,16 +9,8 @@ const PaymentSuccess = () => {
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
 
-  console.log("orderId:", orderId); // Kiểm tra giá trị orderId
-
   const handleTrackOrder = () => {
-    navigate("/user-information", {
-      state: {
-        activeTab: "3",
-        showOrderTracking: true,
-        orderId: orderId,
-      },
-    });
+    navigate(`/user/order-tracking/${orderId}`);
   };
 
   return (
