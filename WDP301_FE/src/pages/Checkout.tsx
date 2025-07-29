@@ -542,6 +542,13 @@ const Checkout = () => {
           errorMessage === "Valid payment method ID is required (1-4)"
         ) {
           message.error("Vui lòng chọn phương thức thanh toán");
+        } else if (
+          errorMessage ===
+          "Order can only be placed during store operating hours"
+        ) {
+          message.error(
+            "Đơn hàng chỉ có thể được đặt trong giờ hoạt động của cửa hàng"
+          );
         } else {
           message.error(errorMessage);
         }
