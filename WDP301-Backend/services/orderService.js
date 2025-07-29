@@ -12,6 +12,7 @@ const {
   Promotion,
   ReasonCancel,
   FcmToken,
+  Store,
 } = require("../models/associations");
 const sequelize = require("../config/database");
 const { uploadFileToFirebase } = require("../config/firebase");
@@ -65,6 +66,37 @@ const createOrder = async (req, res) => {
   }
 
   const storeId = 1;
+
+  const store = await Store.findOne({ where: { storeId: storeId } });
+  if (!store) {
+    console.log("Store not found for storeId:", storeId);
+    return res.status(404).send("Store not found");
+  }
+
+  // Lấy thời gian hiện tại và điều chỉnh múi giờ +07:00
+  const currentTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+  const today = currentTime.toISOString().split("T")[0];
+  const startTime = new Date(`${today}T${store.startTime}+07:00`);
+  const endTime = new Date(`${today}T${store.endTime}+07:00`);
+
+  // Handle case where endTime is past midnight (e.g., 02:00:00 next day)
+  if (endTime < startTime) {
+    endTime.setDate(endTime.getDate() + 1);
+  }
+
+  // Chuyển đổi tất cả về cùng múi giờ để so sánh
+  const currentTimeISO = new Date(currentTime.toISOString());
+  const startTimeISO = new Date(startTime.toISOString());
+  const endTimeISO = new Date(endTime.toISOString());
+
+  if (currentTimeISO < startTimeISO || currentTimeISO > endTimeISO) {
+    console.log("Order creation attempted outside store operating hours", {
+      currentTime: currentTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+      startTime: startTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+      endTime: endTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+    });
+    return res.status(400).send("Order can only be placed during store operating hours");
+  }
 
   console.log("Destructured parameters:", {
     orderItems,

@@ -17,6 +17,12 @@ const Store = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    startTime: {
+      type: DataTypes.TIME,
+    },
+    endTime: {
+      type: DataTypes.TIME,
+    },
   },
   {
     tableName: "stores",
