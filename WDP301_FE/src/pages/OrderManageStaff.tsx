@@ -31,6 +31,7 @@ import {
   useApproveOrder,
   useCookOrder,
   usePrepareOrder,
+  useCancelOrderPayment,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
 import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
@@ -79,6 +80,7 @@ const StaffOrderManagement = () => {
   const approveOrderMutation = useApproveOrder();
   const prepareOrderMutation = usePrepareOrder();
   const cookOrderMutation = useCookOrder();
+  const cancelOrder = useCancelOrderPayment();
 
   const handleApproveOrder = (orderId: number) => {
     approveOrderMutation.mutate(
@@ -114,6 +116,19 @@ const StaffOrderManagement = () => {
         onError: (error: AxiosError) =>
           message.error(
             error.response?.data?.toString() || "Hoàn thành nấu thất bại!"
+          ),
+      }
+    );
+  };
+
+  const handleCancelOrder = (orderId: number) => {
+    cancelOrder.mutate(
+      { orderId },
+      {
+        onSuccess: () => message.success("Hủy đơn hàng thành công!"),
+        onError: (error: AxiosError) =>
+          message.error(
+            error.response?.data?.toString() || "Hủy đơn hàng thất bại!"
           ),
       }
     );
@@ -436,6 +451,32 @@ const StaffOrderManagement = () => {
                 icon={<DeliveryIcon />}
                 className="btn-action-status"
               />
+            </Tooltip>
+          )}
+          {record.status === "Paid" && (
+            <Tooltip title="Hủy đơn">
+              <Popconfirm
+                title="Xác nhận hủy đơn"
+                description="Bạn có chắc muốn hủy đơn hàng này hay không?"
+                onConfirm={() => handleCancelOrder(record.orderId)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{
+                  danger: true,
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={
+                    <CheckCircleOutlined
+                      style={{ fontSize: 16, color: "#d97706" }}
+                    />
+                  }
+                  className="btn-action-status"
+                />
+              </Popconfirm>
             </Tooltip>
           )}
           {record.status !== "Pending" &&
