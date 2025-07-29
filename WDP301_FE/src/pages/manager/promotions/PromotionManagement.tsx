@@ -305,7 +305,7 @@ const PromotionManagement: React.FC = () => {
       title: "Tên khuyến mãi",
       dataIndex: "name",
       key: "name",
-      width: 180,
+      width: 150,
       ellipsis: true,
       sorter: (a: Promotion, b: Promotion) => a.name.localeCompare(b.name),
       render: (name: string) => (
@@ -318,7 +318,7 @@ const PromotionManagement: React.FC = () => {
       title: "Mã",
       dataIndex: "code",
       key: "code",
-      width: 130,
+      width: 120,
       ellipsis: true,
       render: (code?: string) =>
         code ? (
@@ -333,7 +333,7 @@ const PromotionManagement: React.FC = () => {
       title: "Giảm giá",
       dataIndex: "discountValue",
       key: "discount",
-      width: 110,
+      width: 100,
       align: "right" as const,
       sorter: (a: Promotion, b: Promotion) => a.discountValue - b.discountValue,
       render: (_value: number, record: Promotion) => (
@@ -345,8 +345,7 @@ const PromotionManagement: React.FC = () => {
     {
       title: "Thời gian",
       key: "duration",
-      width: 200,
-      responsive: ['md'],
+      width: 180,
       sorter: (a: Promotion, b: Promotion) =>
         dayjs(a.startDate).diff(dayjs(b.startDate)),
       render: (_: any, record: Promotion) => (
@@ -363,7 +362,7 @@ const PromotionManagement: React.FC = () => {
     {
       title: "Trạng thái",
       key: "status",
-      width: 150,
+      width: 120,
       align: "center" as const,
       render: (_: any, record: Promotion) => {
         const status = getPromotionStatus(record);
@@ -393,7 +392,7 @@ const PromotionManagement: React.FC = () => {
       title: "Hành động",
       key: "actions",
       align: "center" as const,
-      width: 140,
+      width: 110,
       fixed: "right" as const,
       render: (_: any, record: Promotion) => (
         <Space size="small">
