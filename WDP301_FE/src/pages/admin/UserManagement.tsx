@@ -98,12 +98,51 @@ const ScopedModalStyles = () => (
     input[placeholder="Tìm kiếm ID, Email, Tên, ..."],
     input[placeholder="Tìm kiếm ID, Email, Tên,..."] {
       /* Đổi màu chữ placeholder sang xanh lá */
-      color: #4CAF50 !important;
+      color: #2e7d32 !important;
     }
     input[placeholder="Tìm kiếm ID, Email, Tên, ..."]::placeholder,
     input[placeholder="Tìm kiếm ID, Email, Tên,..."]::placeholder {
-      color: #4CAF50 !important;
+      color: #2e7d32 !important;
       opacity: 1;
+    }
+
+    /* --- 6. STYLE CHO SELECT DROPDOWN --- */
+    /* Border màu xanh lá cho Select */
+    .ant-select-selector {
+      border-color: #4CAF50 !important;
+      border-radius: 20px !important;
+    }
+    
+    .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+      border-color: #4CAF50 !important;
+    }
+    
+    .ant-select-focused .ant-select-selector {
+      border-color: #4CAF50 !important;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
+    }
+    
+    /* Bo tròn cho Select */
+    .ant-select-selector {
+      border-radius: 20px !important;
+    }
+    
+    /* Màu cho option được chọn */
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+      background-color: #E8F5E9 !important;
+      color: #2e7d32 !important;
+    }
+    
+    /* Màu cho option khi hover */
+    .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+      background-color: #F1F8E9 !important;
+      color: #2e7d32 !important;
+    }
+    
+    /* Màu cho dropdown arrow */
+    .ant-select-arrow {
+      color: #4CAF50 !important;
+
     }
   `}</style>
 );
@@ -147,6 +186,7 @@ const UserManagement: React.FC = () => {
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [filteredTableInfo, setFilteredTableInfo] = useState<
     Record<string, FilterValue | null>
   >({});
@@ -305,15 +345,6 @@ const UserManagement: React.FC = () => {
         }
         return <Tag color={color}>{displayText}</Tag>;
       },
-      filters: [
-        { text: "Admin", value: "admin" },
-        { text: "Manager", value: "manager" },
-        { text: "Staff", value: "staff" },
-        { text: "Shipper", value: "shipper" },
-        { text: "User", value: "user" },
-      ],
-      filteredValue: filteredTableInfo.role || null,
-      onFilter: (value, record) => record.role === value,
       ellipsis: true,
     },
     {
@@ -362,7 +393,7 @@ const UserManagement: React.FC = () => {
               outline: "none",
             }}
           />
-          {userRecord.status === "active" && (
+          {userRecord.status === "active" ? (
             <Popconfirm
               title={`Bạn có chắc chắn muốn khóa tài khoản ${userRecord.fullName}?`}
               onConfirm={() => deleteUserById(userRecord.id)}
@@ -386,6 +417,36 @@ const UserManagement: React.FC = () => {
                 style={{ borderRadius: "6px", outline: "none" }}
               >
                  Khóa 
+              </Button>
+            </Popconfirm>
+          ) : (
+            <Popconfirm
+              title={`Bạn có chắc chắn muốn mở khóa tài khoản ${userRecord.fullName}?`}
+              onConfirm={() => activateUserById(userRecord.id)}
+              okText="Có"
+              cancelText="Không"
+              okButtonProps={{
+                style: {
+                  outline: "none",
+                  background: "#4CAF50",
+                  borderColor: "#4CAF50",
+                  borderRadius: "6px",
+                },
+              }}
+              cancelButtonProps={{
+                style: { borderRadius: "6px", outline: "none" },
+              }}
+            >
+              <Button
+                type="primary"
+                style={{
+                  background: "#4CAF50",
+                  borderColor: "#4CAF50",
+                  borderRadius: "6px",
+                  outline: "none",
+                }}
+              >
+                 Mở khóa
               </Button>
             </Popconfirm>
           )}
@@ -434,6 +495,29 @@ const UserManagement: React.FC = () => {
       const axiosError = error as AxiosError;
       message.error(
         `Lỗi khi khóa người dùng: ${
+          (axiosError.response?.data as any)?.message ||
+          axiosError.message ||
+          "Lỗi không xác định"
+        }`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const activateUserById = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      const token = getAuthToken();
+      await axios.put(`${API_BASE_URL}/accounts/${userId}/activate`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      message.success("Đã mở khóa người dùng thành công!");
+      fetchUserList();
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      message.error(
+        `Lỗi khi mở khóa người dùng: ${
           (axiosError.response?.data as any)?.message ||
           axiosError.message ||
           "Lỗi không xác định"
@@ -561,6 +645,18 @@ const UserManagement: React.FC = () => {
   
 
   const displayedUserList = userList.filter((user) => {
+    // Loại bỏ admin khỏi danh sách
+    if (user.role === "Admin") {
+      return false;
+    }
+    
+    // Filter theo role
+    if (roleFilter !== "all") {
+      if (roleFilter !== user.role) {
+        return false;
+      }
+    }
+    
     const searchTextLower = searchText.toLowerCase();
     return (
       String(user.id).toLowerCase().includes(searchTextLower) ||
@@ -578,9 +674,10 @@ const UserManagement: React.FC = () => {
   const userStats = {
     totalUsers: userList.length,
     activeUsers: userList.filter((user) => user.status === "active").length,
-    managers: userList.filter((user) => user.role === "Manager").length,
-    staffCount: userList.filter((user) => user.role === "Staff").length,
-    shipperCount: userList.filter((user) => user.role === "Shipper").length,
+    users: userList.filter((user) => user.role === "User").length,
+    staffAndShippers: userList.filter((user) => 
+      user.role === "Staff" || user.role === "Shipper" || user.role === "Manager"
+    ).length,
   };
 
   const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b$/;
@@ -632,8 +729,8 @@ const UserManagement: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false}>
             <Statistic
-              title="Managers"
-              value={userStats.managers}
+              title="Users"
+              value={userStats.users}
               prefix={<TeamOutlined />}
             />
           </Card>
@@ -641,8 +738,8 @@ const UserManagement: React.FC = () => {
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false}>
             <Statistic
-              title="Staff & Shippers"
-              value={userStats.staffCount + userStats.shipperCount}
+              title="Staff, Shipper & Manager"
+              value={userStats.staffAndShippers}
               prefix={<TeamOutlined />}
             />
           </Card>
@@ -659,18 +756,33 @@ const UserManagement: React.FC = () => {
             gap: "16px",
           }}
         >
-          <Input
-            placeholder="Tìm kiếm ID, Email, Tên,..."
-            prefix={<SearchOutlined style={{ color: "#2E7D32" }} />}
-            style={{
-              width: "300px",
-              borderRadius: "20px",
-              borderColor: "#4CAF50",
-            }}
-            onChange={(e) => setSearchText(e.target.value)}
-            value={searchText}
-            allowClear
-          />
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <Input
+              placeholder="Tìm kiếm ID, Email, Tên,..."
+              prefix={<SearchOutlined style={{ color: "#2E7D32" }} />}
+              style={{
+                width: "300px",
+                borderRadius: "20px",
+                borderColor: "#4CAF50",
+              }}
+              onChange={(e) => setSearchText(e.target.value)}
+              value={searchText}
+              allowClear
+            />
+            <Select
+              placeholder="Lọc theo vai trò"
+              style={{ width: 150,  borderRadius: "20px", borderColor: "#4CAF50", outline: "none" }}
+              value={roleFilter}
+              onChange={setRoleFilter}
+              options={[
+                { value: "all", label: "Tất cả" },
+                { value: "User", label: "Khách hàng" },
+                { value: "Manager", label: "Manager" },
+                { value: "Staff", label: "Staff" },
+                { value: "Shipper", label: "Shipper" },
+              ]}
+            />
+          </div>
           <Button
             type="primary"
             icon={<UserAddOutlined />}

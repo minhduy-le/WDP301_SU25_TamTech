@@ -19,7 +19,6 @@ const OurMenu: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedProductForModal, setSelectedProductForModal] = useState<ProductDto | null>(null);
 
-  // Set default tab to first product type when loaded
   useEffect(() => {
     if (!isProductTypesLoading && productTypes && productTypes.length > 0 && activeTypeId === null) {
       setActiveTypeId(productTypes[0].productTypeId);
@@ -102,7 +101,6 @@ const OurMenu: React.FC = () => {
                 ? item.description
                 : "Hương vị tuyệt vời, lựa chọn hoàn hảo cho bữa ăn của bạn.";
 
-            // Xác định loại "Đồ ăn" để mở modal, còn lại thêm vào giỏ hàng trực tiếp
             const isMainDish =
               productTypes?.find((t) => t.productTypeId === activeTypeId)?.name === "Đồ ăn";
 
@@ -162,6 +160,30 @@ const OurMenu: React.FC = () => {
                           "https://via.placeholder.com/400x300/FDFCFB/CCC?text=Ảnh+món";
                       }}
                     />
+                    {typeof item.averageRating !== 'undefined' && item.averageRating !== null && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          background: 'rgba(255,255,255,0.95)',
+                          borderRadius: 16,
+                          padding: '2px 10px 2px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          fontWeight: 600,
+                          fontSize: 15,
+                          color: '#e67e22',
+                          zIndex: 2,
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 20 20" fill="#f7b731" style={{marginRight: 4}}>
+                          <path d="M10 15.27L16.18 19l-1.64-7.03L20 7.24l-7.19-.61L10 0 7.19 6.63 0 7.24l5.46 4.73L3.82 19z" />
+                        </svg>
+                        {parseFloat(String(item.averageRating)).toFixed(1)}
+                      </div>
+                    )}
                   </div>
 
                   <div
