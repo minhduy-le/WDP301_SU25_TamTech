@@ -289,6 +289,19 @@ const PromotionManagement: React.FC = () => {
 
   const columns = [
     {
+      title: "ID",
+      dataIndex: "promotionId",
+      key: "promotionId",
+      width: 70,
+      ellipsis: true,
+      sorter: (a: Promotion, b: Promotion) => a.promotionId.toString().localeCompare(b.promotionId.toString()),
+      render: (promotionId: number) => (
+        <Tooltip title={promotionId.toString()}>
+          <span style={{ fontWeight: 600, color: "#D97B41" }}>{promotionId}</span>
+        </Tooltip>
+      ),
+    },
+    {
       title: "Tên khuyến mãi",
       dataIndex: "name",
       key: "name",
@@ -333,6 +346,7 @@ const PromotionManagement: React.FC = () => {
       title: "Thời gian",
       key: "duration",
       width: 200,
+      responsive: ['md'],
       sorter: (a: Promotion, b: Promotion) =>
         dayjs(a.startDate).diff(dayjs(b.startDate)),
       render: (_: any, record: Promotion) => (
@@ -379,7 +393,7 @@ const PromotionManagement: React.FC = () => {
       title: "Hành động",
       key: "actions",
       align: "center" as const,
-      width: 130,
+      width: 140,
       fixed: "right" as const,
       render: (_: any, record: Promotion) => (
         <Space size="small">
@@ -825,7 +839,7 @@ const PromotionManagement: React.FC = () => {
                         borderRadius: 6,
                       }}
                       min={2000}
-                      placeholder="Nhập số lớn hơn 1000"
+                      placeholder="Nhập số từ 2000 đồng trở lên"
                       formatter={(value) =>
                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }

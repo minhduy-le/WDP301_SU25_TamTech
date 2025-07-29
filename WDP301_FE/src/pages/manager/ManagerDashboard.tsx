@@ -151,7 +151,14 @@ const ManagerDashboard: React.FC = () => {
   }));
 
   return (
-    <div style={{ paddingTop: 15, padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
+    <div
+      style={{
+        paddingTop: 15,
+        padding: 32,
+        background: "#FFF9F0",
+        minHeight: "100vh",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -218,11 +225,12 @@ const ManagerDashboard: React.FC = () => {
                 </span>
               }
               value={currentMonthRevenueStats?.currentRevenue || 0}
+              precision={0}
               valueStyle={{ color: "#D97B41", fontWeight: 700 }}
               prefix={<DollarOutlined />}
-              precision={0}
-              groupSeparator=","
+              formatter={(value) => `${Number(value).toLocaleString()} đ`}
             />
+
             {typeof currentMonthRevenueStats?.percentageChange === "number" ? (
               <Text
                 type={
@@ -439,15 +447,13 @@ const ManagerDashboard: React.FC = () => {
                 margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="month" 
+                <XAxis
+                  dataKey="month"
                   tick={{ fontSize: 13 }}
                   tickCount={12}
                   interval={0}
                 />
-                <YAxis 
-                  tickFormatter={(v) => v.toLocaleString()} 
-                />
+                <YAxis tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   formatter={(value: number) => `${value.toLocaleString()} đ`}
                 />
@@ -566,10 +572,13 @@ const ManagerDashboard: React.FC = () => {
               boxShadow: "0 6px 24px rgba(160,90,44,0.10)",
             }}
           >
-                        {(() => {
+            {(() => {
               // Tính hiệu suất tương đối - nhân viên cao nhất = 100%
-              const maxRevenue = Math.max(...staffProductivity.map(s => s.totalRevenue), 1);
-              
+              const maxRevenue = Math.max(
+                ...staffProductivity.map((s) => s.totalRevenue),
+                1
+              );
+
               return staffProductivity.map((staff, index) => (
                 <div key={index} style={{ marginBottom: "16px" }}>
                   <div
@@ -579,13 +588,18 @@ const ManagerDashboard: React.FC = () => {
                       marginBottom: "8px",
                     }}
                   >
-                    <span style={{ fontWeight: 600, color: "#A05A2C" }}>{staff.fullName}</span>
+                    <span style={{ fontWeight: 600, color: "#A05A2C" }}>
+                      {staff.fullName}
+                    </span>
                     <span style={{ fontWeight: 600, color: "#D97B41" }}>
                       {staff.totalRevenue.toLocaleString()}đ
                     </span>
                   </div>
                   <Progress
-                    percent={Math.min((staff.totalRevenue / maxRevenue) * 100, 100)}
+                    percent={Math.min(
+                      (staff.totalRevenue / maxRevenue) * 100,
+                      100
+                    )}
                     strokeColor={{
                       "0%": "#F9E4B7",
                       "100%": "#D97B41",
