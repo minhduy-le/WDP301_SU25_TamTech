@@ -63,6 +63,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     const matchDynamicRoute = (routePattern: string, path: string) => {
       const dynamicRoutePattern = routePattern
         .replace(/:productId/, "[0-9]+")
+        .replace(/:orderId/, "[0-9]+")
         .replace(/:id/, "[0-9]+");
       const regex = new RegExp(`^${dynamicRoutePattern}$`);
       return regex.test(path);
@@ -114,7 +115,10 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       User: [
         "/checkout",
         "/payment-success",
-        "/user-information",
+        "/user/information",
+        "/user/order-history",
+        "/user/order-tracking/:orderId",
+        "/user/promotion",
         "/payment-cancel",
       ],
       Shipper: [],

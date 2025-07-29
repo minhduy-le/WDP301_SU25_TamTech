@@ -62,7 +62,7 @@
   background-color: #ebd187;
   padding: 40px;
   border-radius: 10px;
-  min-height: 510px;
+  /* min-height: 510px; */
 }
 
 .content-header {
@@ -176,7 +176,7 @@
   font-family: "Montserrat", sans-serif;
 }
 
-.contact-card .edit-contact-icon {
+.contact-cards .edit-contact-icon {
   position: absolute;
   right: 20px;
   top: 14px;

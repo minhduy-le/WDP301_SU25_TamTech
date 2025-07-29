@@ -22,12 +22,9 @@ import { useQueries } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
 import { getFormattedPrice } from "../utils/formatPrice";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
-
-interface OrderHistoryProps {
-  onDetailClick?: (orderId: number) => void;
-}
 
 interface FeedbackItem {
   orderId: number;
@@ -59,7 +56,8 @@ const statusMap: { [key: string]: string } & {
   Canceled: "Đã hủy",
 };
 
-const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
+const OrderHistorys = () => {
+  const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{
     id: number;
@@ -95,7 +93,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const { data: orderHistory, isLoading: isOrderHistoryLoading } =
     useGetOrderHistory();
 
-  // Sử dụng useQueries để fetch feedback cho tất cả productIds trong order
   const feedbackQueries = useQueries({
     queries: selectedOrder
       ? selectedOrder.orderItems.map((item) => ({
@@ -128,7 +125,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const showModal = (order: OrderHistory) => {
     const actions = getActionsForStatus(order.status);
 
-    // Chuẩn bị feedbackItems ban đầu
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
       orderId: order.orderId,
       productId: item.productId,
@@ -151,7 +147,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       actions: actions,
       orderItems: feedbackItems,
     });
-    setFeedbacks(feedbackItems); // Đặt lại feedbacks với dữ liệu ban đầu
+    setFeedbacks(feedbackItems);
     setIsLoadingCreateFeedback(false);
     setIsModalVisible(true);
   };
@@ -206,7 +202,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       message.success(
         `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi thành công!`
       );
-      // Reset rating và comment sau khi gửi
       setFeedbacks((prev) =>
         prev.map((item) => ({
           ...item,
@@ -233,7 +228,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   };
 
   const handleRatingChange = (index: number, value: number) => {
-    console.log("Rating changed:", value, "at index:", index); // Debug
+    console.log("Rating changed:", value, "at index:", index);
     setFeedbacks((prev) => {
       const newFeedbacks = [...prev];
       newFeedbacks[index] = { ...newFeedbacks[index], rating: value };
@@ -246,7 +241,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = e.target.value;
-    console.log("Comment changed:", value, "at index:", index); // Debug
+    console.log("Comment changed:", value, "at index:", index);
     setFeedbacks((prev) => {
       const newFeedbacks = [...prev];
       newFeedbacks[index] = { ...newFeedbacks[index], comment: value };
@@ -257,14 +252,14 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const getActionsForStatus = (status: string) => {
     switch (status) {
       case "Delivered":
-        return ["Đánh giá", "Đặt lại"];
-      case "Canceled":
-        return ["Đặt lại"];
-      case "Preparing":
-      case "Delivering":
-        return ["Đặt tiếp"];
-      case "Paid":
         return ["Đánh giá"];
+      // case "Canceled":
+      //   return ["Đặt lại"];
+      // case "Preparing":
+      // case "Delivering":
+      //   return ["Đặt tiếp"];
+      // case "Paid":
+      //   return ["Đánh giá"];
       default:
         return [];
     }
@@ -281,7 +276,6 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     { text: "Đã hủy", value: "Canceled" },
   ];
 
-  // Cập nhật feedbackItems khi có dữ liệu từ feedbackQueries
   useEffect(() => {
     if (selectedOrder && feedbackQueries.length > 0) {
       const allFeedbacks = feedbackQueries
@@ -298,11 +292,10 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         };
       });
       setFeedbacks((prev) => {
-        // Chỉ cập nhật nếu chưa có thay đổi từ người dùng
         if (prev.length === 0 || !prev.some((f) => f.rating || f.comment)) {
           return updatedFeedbacks;
         }
-        return prev; // Giữ state hiện tại nếu người dùng đã nhập
+        return prev;
       });
     }
   }, [feedbackQueries, selectedOrder]);
@@ -389,7 +382,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                           <Button
                             className="gray-button"
                             onClick={() =>
-                              onDetailClick && onDetailClick(order.orderId)
+                              navigate(`/user/order-tracking/${order.orderId}`)
                             }
                           >
                             Chi tiết
@@ -467,9 +460,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                       sm={24}
                       md={24}
                       lg={24}
-                      style={{
-                        backgroundColor: "transparent",
-                      }}
+                      style={{ backgroundColor: "transparent" }}
                     >
                       <Card className="order-card">
                         <div className="order-content">
@@ -528,7 +519,9 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                               <Button
                                 className="gray-button"
                                 onClick={() =>
-                                  onDetailClick && onDetailClick(order.orderId)
+                                  navigate(
+                                    `/user/order-tracking/${order.orderId}`
+                                  )
                                 }
                               >
                                 Chi tiết
@@ -611,7 +604,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
             className="submt-button-feedback"
             onClick={handleOk}
             loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
-            disabled={false} // Tạm thời bỏ disabled để kiểm tra
+            disabled={false}
           >
             {isLoadingCreateFeedback && (
               <LoadingOutlined style={{ marginRight: 8, fontSize: 14 }} spin />
@@ -640,7 +633,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               price: item.price,
               rating: 0,
               comment: "",
-            }; // Đảm bảo có giá trị mặc định
+            };
             return (
               <div key={index} className="feedback-item">
                 <Row>
@@ -684,7 +677,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                       value={feedback.rating}
                       onChange={(value) => handleRatingChange(index, value)}
                       style={{ color: "#78A243" }}
-                      disabled={false} // Tạm thời bỏ disabled để kiểm tra
+                      disabled={false}
                     />
                   </Col>
                   <Col span={17}>
@@ -696,7 +689,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                         fontFamily: "Montserrat, sans-serif",
                         width: "100%",
                       }}
-                      disabled={false} // Tạm thời bỏ disabled để kiểm tra
+                      disabled={false}
                     />
                   </Col>
                 </Row>

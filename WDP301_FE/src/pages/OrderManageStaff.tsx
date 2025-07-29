@@ -33,7 +33,7 @@ import {
   usePrepareOrder,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
-import { useGetShippers, useAssignShipper } from "../hooks/shipperApi";
+import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
 import DeliveryIcon from "../components/icon/DeliveryIcon";
 import PrintIcon from "../components/icon/PrintIcon";
 import { getFormattedPrice } from "../utils/formatPrice";
@@ -72,7 +72,8 @@ const StaffOrderManagement = () => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
-  const { data: shippers, isLoading: isShippersLoading } = useGetShippers();
+  const { data: shippers, isLoading: isShippersLoading } =
+    useGetShipperScheduled();
   const assignShipperMutation = useAssignShipper();
 
   const approveOrderMutation = useApproveOrder();
@@ -126,7 +127,7 @@ const StaffOrderManagement = () => {
       {
         onSuccess: () => {
           message.success("Đã gán shipper thành công!");
-          setIsAssignModalVisible(false); // Đóng modal sau khi gán thành công
+          setIsAssignModalVisible(false);
         },
         onError: (error: AxiosError) => {
           {
@@ -437,24 +438,26 @@ const StaffOrderManagement = () => {
               />
             </Tooltip>
           )}
-          {record.status !== "Pending" && record.status !== "Approved" && (
-            <Tooltip title="In hóa đơn">
-              <Button
-                type="link"
-                icon={<PrintIcon />}
-                onClick={() => handlePrintInvoice(record.invoiceUrl)}
-                style={{
-                  color: "#d97706",
-                  fontWeight: 600,
-                  padding: 0,
-                  outline: "none",
-                  boxShadow: "none",
-                  border: "none",
-                  background: "#fefce8",
-                }}
-              />
-            </Tooltip>
-          )}
+          {record.status !== "Pending" &&
+            record.status !== "Approved" &&
+            record.status !== "Canceled" && (
+              <Tooltip title="In hóa đơn">
+                <Button
+                  type="link"
+                  icon={<PrintIcon />}
+                  onClick={() => handlePrintInvoice(record.invoiceUrl)}
+                  style={{
+                    color: "#d97706",
+                    fontWeight: 600,
+                    padding: 0,
+                    outline: "none",
+                    boxShadow: "none",
+                    border: "none",
+                    background: "#fefce8",
+                  }}
+                />
+              </Tooltip>
+            )}
         </Space>
       ),
     },

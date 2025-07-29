@@ -93,7 +93,7 @@ const MaterialProcessManagement = () => {
       sorter: (a, b) => a.quantity - b.quantity,
     },
     {
-      title: "Hạn bắt đầu",
+      title: "Ngày bắt đầu",
       dataIndex: "startDate",
       key: "startDate",
       width: 140,
@@ -102,13 +102,32 @@ const MaterialProcessManagement = () => {
         dayjs(startDate).format("DD/MM/YYYY HH:mm:ss"),
     },
     {
-      title: "Hạn kết thúc",
+      title: "Ngày kết thúc",
       dataIndex: "expireDate",
       key: "expireDate",
       width: 140,
       sorter: (a, b) => dayjs(a.expireDate).diff(dayjs(b.expireDate)),
       render: (expireDate: Date) =>
         dayjs(expireDate).format("DD/MM/YYYY HH:mm:ss"),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isExpired: boolean) => (
+        <Tag
+          style={{
+            background: getStatusTagColor(isExpired),
+            color: getStatusTagTextColor(isExpired),
+            fontWeight: "bold",
+            borderRadius: 6,
+            padding: "2px 10px",
+          }}
+        >
+          {isExpired ? "Hết hạn sử dụng" : "Còn hạn sử dụng"}
+        </Tag>
+      ),
     },
     {
       title: "Hành động",
@@ -260,12 +279,12 @@ const MaterialProcessManagement = () => {
                 <Descriptions.Item label="Số ký(g)">
                   {selectedMaterial.quantity}
                 </Descriptions.Item>
-                <Descriptions.Item label="Hạn bắt đầu">
+                <Descriptions.Item label="Ngày bắt đầu">
                   {dayjs(selectedMaterial.startDate).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label="Hạn kết thúc">
+                <Descriptions.Item label="Ngày hết hạn">
                   {dayjs(selectedMaterial.expireDate).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}

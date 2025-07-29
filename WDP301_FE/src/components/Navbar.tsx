@@ -22,7 +22,7 @@ const Navbar = () => {
 
   const userMenu = (
     <Menu>
-      <Menu.Item key="1" onClick={() => navigate("/user-information")}>
+      <Menu.Item key="1" onClick={() => navigate("/user/information")}>
         Tài khoản
       </Menu.Item>
       <Menu.Item

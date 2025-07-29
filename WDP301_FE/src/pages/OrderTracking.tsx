@@ -12,13 +12,7 @@ import {
 } from "antd";
 import "../style/OrderTracking.css";
 import { useState } from "react";
-import {
-  // ShoppingOutlined,
-  // BookOutlined,
-  // CarOutlined,
-  // DeleteOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getFormattedPrice } from "../utils/formatPrice";
 import {
@@ -28,6 +22,7 @@ import {
   useCancelOrderSendEmail,
 } from "../hooks/ordersApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom"; // Thêm useParams
 
 const { Option } = Select;
 
@@ -53,6 +48,12 @@ const items = [
   {
     title: "Hoàn thành giao hàng",
   },
+];
+
+const items2 = [
+  {
+    title: "Chờ thanh toán",
+  },
   {
     title: "Đã hủy",
   },
@@ -74,41 +75,28 @@ const getStepIndex = (status: string) => {
       return 6;
     case "Delivered":
       return 7;
-    case "Canceled":
-      return 8;
     default:
       return 0;
   }
 };
 
-interface OrderTrackingProps {
-  orderId?: number;
-  onBackClick?: () => void;
-}
+const getStepIndex2 = (status: string) => {
+  switch (status) {
+    case "Pending":
+      return 1;
+    case "Canceled":
+      return 2;
+    default:
+      return 0;
+  }
+};
 
-// const statusMap: { [key: string]: string } & {
-//   Pending: string;
-//   Paid: string;
-//   Approved: string;
-//   Preparing: string;
-//   Cooked: string;
-//   Delivering: string;
-//   Delivered: string;
-//   Canceled: string;
-// } = {
-//   Pending: "Chờ thanh toán",
-//   Paid: "Đã thanh toán",
-//   Approved: "Xác nhận đơn",
-//   Preparing: "Đang nấu ăn",
-//   Cooked: "Đã nấu xong",
-//   Delivering: "Đang giao",
-//   Delivered: "Đã giao",
-//   Canceled: "Đã hủy",
-// };
+const OrderTracking = () => {
+  const { orderId } = useParams<{ orderId?: string }>();
+  const parsedOrderId = orderId ? parseInt(orderId, 10) : undefined;
+  const { data: order, isLoading } = useGetOrderById(parsedOrderId || 0);
+  const navigate = useNavigate();
 
-const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
-  const { data: order, isLoading } = useGetOrderById(orderId || 0);
-  console.log("OrderTracking received order:", order);
   const originalPrice = order?.orderItems
     ? order.orderItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
@@ -116,41 +104,19 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
       )
     : 0;
 
-  const currentStep = order ? getStepIndex(order.status) : 0;
+  const currentStep = order
+    ? order.status === "Canceled"
+      ? getStepIndex2(order.status)
+      : getStepIndex(order.status)
+    : 0;
   const queryClient = useQueryClient();
 
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  // Hooks
   const { data: bankData } = useGetBank();
   const cancelOrderMutation = useCancelOrder();
   const sendEmailMutation = useCancelOrderSendEmail();
-
-  // useEffect(() => {
-  //   const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
-  //   const icons = [
-  //     <ShoppingOutlined key="shop" />,
-  //     <BookOutlined key="prep" />,
-  //     <CarOutlined key="ship" />,
-  //     <BookOutlined key="done" />,
-  //     <DeleteOutlined key="cancel" />,
-  //   ];
-
-  //   stepIcons.forEach((icon, index) => {
-  //     if (!icon.parentElement?.querySelector(".menu-icon")) {
-  //       const menuIconDiv = document.createElement("div");
-  //       menuIconDiv.className = "menu-icon";
-  //       menuIconDiv.innerHTML = ReactDOMServer.renderToString(icons[index]);
-  //       icon.parentElement?.insertBefore(menuIconDiv, icon);
-  //     } else {
-  //       const existingIcon = icon.parentElement?.querySelector(".menu-icon");
-  //       if (existingIcon && !existingIcon.innerHTML) {
-  //         existingIcon.innerHTML = ReactDOMServer.renderToString(icons[index]);
-  //       }
-  //     }
-  //   });
-  // }, []);
 
   if (isLoading) {
     return <div>Đang tải thông tin đơn hàng...</div>;
@@ -209,7 +175,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
         <Col span={24} className="content-col">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={onBackClick}
+            onClick={() => navigate("/user/order-history")}
             className="btn-back"
           />
           <div className="order-header">Tra cứu đơn hàng</div>
@@ -219,24 +185,6 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
               <br />
               Thời gian đặt hàng:{" "}
               {dayjs(order.order_create_at).format("HH:mm, DD/MM/YYYY")}
-              {/* <div className="ship-status">
-                Tình trạng đơn hàng:{" "}
-                <div
-                  className="ship-status-bold"
-                  style={{
-                    color:
-                      order.status === "Paid"
-                        ? "#78A243"
-                        : order.status === "Canceled"
-                        ? "#DA7339"
-                        : order.status === "Pending"
-                        ? "yellow"
-                        : "#2d1e1a",
-                  }}
-                >
-                  {statusMap[order.status] || order.status}
-                </div>
-              </div> */}
             </p>
             <Row>
               <Col span={12}>
@@ -245,7 +193,7 @@ const OrderTracking = ({ orderId, onBackClick }: OrderTrackingProps) => {
                     current={currentStep}
                     labelPlacement="vertical"
                     direction="vertical"
-                    items={items}
+                    items={order.status === "Canceled" ? items2 : items}
                   />
                 </div>
               </Col>

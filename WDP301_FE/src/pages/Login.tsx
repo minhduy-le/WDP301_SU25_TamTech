@@ -190,6 +190,11 @@ const Login = () => {
               <Link to="/register">Bạn là người mới của Tấm Tắc?</Link>
             </span>
           </div>
+          <div className="divider">
+            <span className="divider-text">
+              <Link to="/verify-email">Kích hoạt tài khoản</Link>
+            </span>
+          </div>
         </div>
       </div>
     </div>

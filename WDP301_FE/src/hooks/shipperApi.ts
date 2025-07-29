@@ -52,3 +52,17 @@ export const useAssignShipper = () => {
     },
   });
 };
+
+const fetchShipperScheduled = async (): Promise<Shipper[]> => {
+  const response = await axiosInstance.get<Shipper[]>(
+    "shippers/scheduled/currentDate"
+  );
+  return response.data;
+};
+
+export const useGetShipperScheduled = () => {
+  return useQuery<Shipper[], Error>({
+    queryKey: ["shippers"],
+    queryFn: fetchShipperScheduled,
+  });
+};
