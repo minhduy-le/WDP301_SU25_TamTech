@@ -13,13 +13,6 @@ const ReasonCancel = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    bankName: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    bankNumber: {
-      type: DataTypes.STRING(255),
-    },
     certificationRefund: {
       type: DataTypes.STRING(1000),
     },

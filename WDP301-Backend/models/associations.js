@@ -20,6 +20,7 @@ const ScheduleShipper = require("./ScheduleShipper");
 const Blog = require("./blog");
 const ReasonCancel = require("./reasonCancel");
 const FcmToken = require("./fcmToken");
+const BankUserInformation = require("./bankUser");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -45,6 +46,9 @@ Order.hasMany(ReasonCancel, { foreignKey: "orderId", as: "ReasonCancels" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "Orders" });
 User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+User.hasMany(BankUserInformation, { foreignKey: "userId", as: "BankUserInformations" });
+
+BankUserInformation.belongsTo(User, { foreignKey: "userId", as: "User" });
 
 OrderItem.belongsTo(Order, { foreignKey: "orderId", as: "Order" });
 OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
@@ -119,4 +123,5 @@ module.exports = {
   Blog,
   ReasonCancel,
   FcmToken,
+  BankUserInformation,
 };

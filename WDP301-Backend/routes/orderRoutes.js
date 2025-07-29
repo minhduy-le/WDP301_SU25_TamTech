@@ -1465,9 +1465,15 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                     type: number
  *                   order_amount:
  *                     type: number
+ *                   order_subtotal:
+ *                     type: number
+ *                   certificationOfDelivered:
+ *                     type: string
  *                   invoiceUrl:
  *                     type: string
  *                     nullable: true
+ *                   assignToShipperId:
+ *                     type: integer
  *                   order_point_earn:
  *                     type: integer
  *                   note:
@@ -1591,7 +1597,12 @@ router.get("/paid", verifyToken, getPaidOrders);
  * /api/orders/cancel/{orderId}:
  *   post:
  *     summary: Cancel an order by ID with a reason and optional bank details
- *     tags: [Orders]
+ *     description: >
+ *       Cancels an order if it was created within the last 5 minutes.
+ *       If bank details (bankName, bankNumber) are provided, they will be saved for the user who placed the order.
+ *       Upon successful cancellation, the materials used for the order will be restocked.
+ *     tags:
+ *       - Orders
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -1613,20 +1624,20 @@ router.get("/paid", verifyToken, getPaidOrders);
  *               reason:
  *                 type: string
  *                 description: The reason for canceling the order
- *                 example: "Customer changed mind"
+ *                 example: Customer changed mind
  *               bankName:
  *                 type: string
  *                 description: Name of the bank for refund (optional)
- *                 example: "VietinBank"
+ *                 example: VietinBank
  *                 nullable: true
  *               bankNumber:
  *                 type: string
  *                 description: Bank account number for refund (optional)
- *                 example: "1234567890"
+ *                 example: '1234567890'
  *                 nullable: true
  *     responses:
  *       200:
- *         description: Order canceled successfully
+ *         description: Order canceled successfully and materials have been restored
  *         content:
  *           application/json:
  *             schema:
@@ -1634,10 +1645,12 @@ router.get("/paid", verifyToken, getPaidOrders);
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: Order canceled successfully.
  *       400:
- *         description: Reason for cancellation is required, order not found, or already canceled
+ *         description: Bad request due to validation or order status
  *         content:
  *           application/json:
  *             schema:
@@ -1645,15 +1658,23 @@ router.get("/paid", verifyToken, getPaidOrders);
  *               properties:
  *                 message:
  *                   type: string
- *                 example:
- *                   message: "Reason for cancellation is required"
+ *                   example: Reason is required or Order not found / already canceled
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
  */
 router.post("/cancel/:orderId", verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason, bankName, bankNumber } = req.body;
+    // The userId from verifyToken is the staff/admin performing the action
     const result = await setOrderToCanceled(orderId, reason, req.userId, bankName, bankNumber);
     res.status(200).json(result);
   } catch (error) {

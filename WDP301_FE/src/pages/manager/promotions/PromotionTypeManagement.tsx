@@ -143,7 +143,7 @@ const PromotionTypeManagement: React.FC<PromotionTypeManagementProps> = ({ promo
       onOk: async () => {
         try {
           await axios.put(
-            `${API_URL}/${record.promotionTypeId}/activate`,
+            `${API_URL}/${record.promotionTypeId}/reactivate`,
             {},
             {
               headers: {
