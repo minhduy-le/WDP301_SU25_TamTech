@@ -1,14 +1,67 @@
 import  { useEffect, useState } from 'react';
-import { Table, Card, Button, Modal, Descriptions } from 'antd';
+import { Table, Card, Button, Modal, Descriptions, Tag } from 'antd';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { EyeOutlined } from '@ant-design/icons';
+import { EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
-const statusMap: Record<string, { bg: string; color: string; text: string }> = {
-  paid: { bg: '#F9E4B7', color: '#8D572A', text: 'Thành công' },
-  processing: { bg: '#FFE6B0', color: '#F6A700', text: 'Đang xử lý' },
-  pending: { bg: '#FFE6B0', color: '#F6A700', text: 'Đang xử lý' },
-  cancelled: { bg: '#FFE6B0', color: '#F6A700', text: 'Hủy' },
+const statusMap: { [key: string]: string } = {
+  Pending: "Chờ thanh toán",
+  Paid: "Đã thanh toán",
+  Approved: "Xác nhận đơn",
+  Preparing: "Đang nấu ăn",
+  Cooked: "Đã nấu xong",
+  Delivering: "Đang giao",
+  Delivered: "Đã giao",
+  Canceled: "Đã hủy",
+};
+
+const getStatusTheme = (
+  status: string
+): { tagBg: string; tagText: string; iconColor?: string } => {
+  switch (status) {
+    case "Pending":
+      return { tagBg: "#FEF3C7", tagText: "#92400E", iconColor: "#92400E" };
+    case "Paid":
+      return { tagBg: "#D1FAE5", tagText: "#065F46", iconColor: "#065F46" };
+    case "Approved":
+      return { tagBg: "#DBEAFE", tagText: "#1E40AF", iconColor: "#1E40AF" };
+    case "Preparing":
+      return { tagBg: "#FEF3C7", tagText: "#92400E", iconColor: "#92400E" };
+    case "Cooked":
+      return { tagBg: "#FDE68A", tagText: "#92400E", iconColor: "#92400E" };
+    case "Delivering":
+      return { tagBg: "#E0E7FF", tagText: "#3730A3", iconColor: "#3730A3" };
+    case "Delivered":
+      return { tagBg: "#D1FAE5", tagText: "#065F46", iconColor: "#065F46" };
+    case "Canceled":
+      return { tagBg: "#FEE2E2", tagText: "#991B1B", iconColor: "#991B1B" };
+    default:
+      return { tagBg: "#F3F4F6", tagText: "#374151" };
+  }
+};
+
+const getStatusIcon = (status: string) => {
+  const theme = getStatusTheme(status);
+  switch (status) {
+    case "Pending":
+      return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Paid":
+      return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Approved":
+      return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Preparing":
+      return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Cooked":
+      return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Delivering":
+      return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Delivered":
+      return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
+    case "Canceled":
+      return <CloseCircleOutlined style={{ color: theme.iconColor }} />;
+    default:
+      return null;
+  }
 };
 
 const LatestOrders = () => {
@@ -59,23 +112,24 @@ const LatestOrders = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const s = statusMap[status.toLowerCase()] || { bg: '#F9E4B7', color: '#8D572A', text: status };
+        const theme = getStatusTheme(status);
         return (
-          <span
+          <Tag
+            icon={getStatusIcon(status)}
             style={{
-              background: s.bg,
-              color: s.color,
+              color: theme.tagText,
               fontWeight: 600,
-              borderRadius: 6,
-              padding: '2px 16px',
-              display: 'inline-block',
-              minWidth: 80,
+              background: theme.tagBg,
+              borderColor: theme.tagBg,
+              borderRadius: 12,
+              padding: '2px 12px',
               textAlign: 'center',
-              border: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
             }}
           >
-            {s.text}
-          </span>
+            {statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1)}
+          </Tag>
         );
       },
     },
@@ -148,21 +202,29 @@ const LatestOrders = () => {
               <Descriptions.Item label="Khách hàng">{selectedOrder.fullName}</Descriptions.Item>
               <Descriptions.Item label="Ngày đặt">{dayjs(selectedOrder.order_create_at).format("DD/MM/YYYY HH:mm:ss")}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
-                <span
-                  style={{
-                    background: statusMap[selectedOrder.status.toLowerCase()]?.bg || '#F9E4B7',
-                    color: statusMap[selectedOrder.status.toLowerCase()]?.color || '#8D572A',
-                    fontWeight: 600,
-                    borderRadius: 6,
-                    padding: '2px 16px',
-                    display: 'inline-block',
-                    minWidth: 80,
-                    textAlign: 'center',
-                    border: 'none',
-                  }}
-                >
-                  {statusMap[selectedOrder.status.toLowerCase()]?.text || selectedOrder.status}
-                </span>
+                {(() => {
+                  const theme = getStatusTheme(selectedOrder.status);
+                  return (
+                    <Tag
+                      icon={getStatusIcon(selectedOrder.status)}
+                      style={{
+                        color: theme.tagText,
+                        fontWeight: 600,
+                        background: theme.tagBg,
+                        borderColor: theme.tagBg,
+                        borderRadius: 12,
+                        padding: '2px 12px',
+                        minWidth: '120px',
+                        textAlign: 'center',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {statusMap[selectedOrder.status] || selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </Tag>
+                  );
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label="Tổng tiền" span={2}>
                 <span style={{ color: "#D97B41", fontWeight: 'bold', fontSize: '1.1em' }}>{parseFloat(selectedOrder.order_amount).toLocaleString()}đ</span>

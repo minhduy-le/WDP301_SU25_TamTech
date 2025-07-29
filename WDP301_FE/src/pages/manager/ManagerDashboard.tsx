@@ -439,8 +439,15 @@ const ManagerDashboard: React.FC = () => {
                 margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 13 }} />
-                <YAxis tickFormatter={(v) => `${v / 1000000}tr`} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 13 }}
+                  tickCount={12}
+                  interval={0}
+                />
+                <YAxis 
+                  tickFormatter={(v) => v.toLocaleString()} 
+                />
                 <Tooltip
                   formatter={(value: number) => `${value.toLocaleString()} đ`}
                 />
