@@ -186,9 +186,58 @@ const deletePromotionType = async (req, res) => {
   }
 };
 
+const reactivatePromotionType = async (req, res) => {
+  console.log("reactivatePromotionType called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+
+  const { promotionTypeId } = req.params;
+  const parsedPromotionTypeId = parseInt(promotionTypeId, 10);
+
+  if (isNaN(parsedPromotionTypeId)) {
+    console.log("Invalid promotionTypeId format:", promotionTypeId);
+    return res.status(400).send("Invalid promotion type ID");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const promotionType = await PromotionType.findOne({
+      where: { promotionTypeId: parsedPromotionTypeId },
+      transaction,
+    });
+
+    if (!promotionType) {
+      console.log("Promotion type not found for promotionTypeId:", parsedPromotionTypeId);
+      await transaction.rollback();
+      return res.status(404).send("Promotion type not found");
+    }
+
+    if (promotionType.isActive) {
+      console.log("Promotion type already active:", parsedPromotionTypeId);
+      await transaction.rollback();
+      return res.status(400).send("Promotion type is already active");
+    }
+
+    promotionType.isActive = true;
+    await promotionType.save({ transaction });
+
+    await transaction.commit();
+    console.log("Promotion type reactivated for promotionTypeId:", parsedPromotionTypeId);
+
+    res.status(200).json({
+      message: "Promotion type reactivated successfully",
+      promotionTypeId: promotionType.promotionTypeId,
+    });
+  } catch (error) {
+    console.error("Error in reactivatePromotionType:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to reactivate promotion type");
+  }
+};
+
 module.exports = {
   createPromotionType,
   updatePromotionType,
   getPromotionTypes,
   deletePromotionType,
+  reactivatePromotionType,
 };
