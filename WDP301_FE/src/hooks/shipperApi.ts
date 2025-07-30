@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
 import axios from "axios";
 
@@ -28,6 +28,8 @@ export const useGetShippers = () => {
 };
 
 export const useAssignShipper = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({
       orderId,
@@ -41,6 +43,9 @@ export const useAssignShipper = () => {
         assignShipper
       );
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
     onError: (error: any) => {
       if (axios.isAxiosError(error) && error.response) {
