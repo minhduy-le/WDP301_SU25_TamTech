@@ -59,6 +59,7 @@ export interface OrderHistory {
   order_discount_value: number;
   order_amount: number;
   invoiceUrl: string;
+  certificationOfDelivered: string;
   order_point_earn: number;
   note: string;
   payment_method: string;
@@ -236,6 +237,39 @@ export const useCancelOrderSendEmail = () => {
         `orders/send-refunded-email/${orderId}`
       );
       return response.data;
+    },
+  });
+};
+
+export const useUploadRefundCertificate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await axiosInstance.post(
+        `orders/upload-refunded-certification/${orderId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage =
+          error.response.data?.message || error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };

@@ -13,13 +13,16 @@ import {
   Tooltip,
   Popconfirm,
   message,
+  Upload,
 } from "antd";
+import type { UploadFile, UploadChangeParam } from "antd/es/upload/interface";
 import {
   SearchOutlined,
   EyeOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -32,6 +35,7 @@ import {
   useCookOrder,
   usePrepareOrder,
   useCancelOrderPayment,
+  useUploadRefundCertificate,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
 import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
@@ -70,7 +74,10 @@ const StaffOrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
+  const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
   const { data: shippers, isLoading: isShippersLoading } =
     useGetShipperScheduled();
@@ -80,6 +87,7 @@ const StaffOrderManagement = () => {
   const prepareOrderMutation = usePrepareOrder();
   const cookOrderMutation = useCookOrder();
   const cancelOrder = useCancelOrderPayment();
+  const uploadRefundCertificateMutation = useUploadRefundCertificate();
 
   const handleApproveOrder = (orderId: number) => {
     approveOrderMutation.mutate(
@@ -144,20 +152,18 @@ const StaffOrderManagement = () => {
           setIsAssignModalVisible(false);
         },
         onError: (error: AxiosError) => {
-          {
-            const errorMessage =
-              error.response?.data?.toString() || "Gán shipper thất bại!";
-            if (
-              errorMessage.includes("Shipper has not registered a schedule for")
-            ) {
-              const extractedDate =
-                errorMessage.match(/(\d{2}-\d{2}-\d{4})/)?.[0] || orderDate;
-              message.error(
-                `Shipper chưa đăng ký lịch trình cho ngày ${extractedDate}`
-              );
-            } else {
-              message.error(errorMessage);
-            }
+          const errorMessage =
+            error.response?.data?.toString() || "Gán shipper thất bại!";
+          if (
+            errorMessage.includes("Shipper has not registered a schedule for")
+          ) {
+            const extractedDate =
+              errorMessage.match(/(\d{2}-\d{2}-\d{4})/)?.[0] || orderDate;
+            message.error(
+              `Shipper chưa đăng ký lịch trình cho ngày ${extractedDate}`
+            );
+          } else {
+            message.error(errorMessage);
           }
         },
       }
@@ -235,6 +241,52 @@ const StaffOrderManagement = () => {
       .catch((error) => message.error(`Lỗi mạng: ${error.message}`));
   };
 
+  const handleUploadRefundCertificate = (orderId: number) => {
+    const order = orders?.find((o) => o.orderId === orderId);
+    setSelectedOrder(order || null);
+    setCurrentOrderId(orderId);
+    setIsUploadModalVisible(true);
+  };
+
+  const handleFileChange = (info: UploadChangeParam) => {
+    if (info.file.status === "done") {
+      message.success(`${info.file.name} đã được tải lên thành công!`);
+    } else if (info.file.status === "error") {
+      message.error(`${info.file.name} tải lên thất bại!`);
+    }
+
+    setFileList(info.fileList);
+
+    if (info.fileList.length > 0 && info.fileList[0].originFileObj) {
+      setSelectedFile(info.fileList[0].originFileObj);
+    } else if (info.file.status === "removed") {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleUploadSubmit = () => {
+    if (!currentOrderId || !selectedFile) {
+      message.error("Vui lòng chọn một file ảnh và đơn hàng!");
+      return;
+    }
+
+    uploadRefundCertificateMutation.mutate(
+      { orderId: currentOrderId, file: selectedFile },
+      {
+        onSuccess: () => {
+          message.success("Chứng từ hoàn tiền đã được tải lên thành công!");
+          setIsUploadModalVisible(false);
+          setSelectedFile(null);
+          setFileList([]);
+        },
+        onError: (error) => {
+          console.error("Upload error:", error);
+          message.error(error.message || "Tải lên thất bại!");
+        },
+      }
+    );
+  };
+
   const columns = [
     {
       title: "Mã ĐH",
@@ -304,7 +356,7 @@ const StaffOrderManagement = () => {
         { text: "Chờ thanh toán", value: "Pending" },
         { text: "Đã thanh toán", value: "Paid" },
         { text: "Xác nhận đơn", value: "Approved" },
-        { text: "Đang nấu ăn", value: "Repairing" },
+        { text: "Đang nấu ăn", value: "Preparing" },
         { text: "Đã nấu xong", value: "Cooked" },
         { text: "Đang giao", value: "Delivering" },
         { text: "Đã giao", value: "Delivered" },
@@ -492,6 +544,24 @@ const StaffOrderManagement = () => {
               </Popconfirm>
             </Tooltip>
           )}
+          {record.status === "Canceled" && record.invoiceUrl !== null && (
+            <Tooltip title="Chụp ảnh hoàn tiền">
+              <Button
+                type="text"
+                icon={<UploadOutlined />}
+                onClick={() => handleUploadRefundCertificate(record.orderId)}
+                style={{
+                  color: "#d97706",
+                  fontWeight: 600,
+                  padding: 0,
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "none",
+                  background: "#fefce8",
+                }}
+              />
+            </Tooltip>
+          )}
           {record.status !== "Pending" && record.status !== "Canceled" && (
             <Tooltip title="In hóa đơn">
               <Button
@@ -653,21 +723,6 @@ const StaffOrderManagement = () => {
                 }}
                 allowClear
               />
-              {/* <Select
-                value={statusFilter}
-                style={{ width: 200, borderRadius: 6, borderColor: "#fde68a" }}
-                onChange={(value) => setStatusFilter(value)}
-              >
-                <Option value="all">Tất cả trạng thái</Option>
-                <Option value="Pending">Chờ thanh toán</Option>
-                <Option value="Paid">Đã thanh toán</Option>
-                <Option value="Approved">Xác nhận đơn</Option>
-                <Option value="Repairing">Đang nấu ăn</Option>
-                <Option value="Cooked">Đã nấu xong</Option>
-                <Option value="Delivering">Đang giao</Option>
-                <Option value="Delivered">Đã giao</Option>
-                <Option value="Canceled">Đã hủy</Option>
-              </Select> */}
             </Space>
           </div>
 
@@ -964,6 +1019,75 @@ const StaffOrderManagement = () => {
               </Option>
             ))}
           </Select>
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              Tải lên Chứng từ Hoàn tiền
+            </span>
+          }
+          centered
+          open={isUploadModalVisible}
+          onCancel={() => {
+            setIsUploadModalVisible(false);
+            setSelectedFile(null);
+            setFileList([]);
+          }}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => {
+                setIsUploadModalVisible(false);
+                setSelectedFile(null);
+                setFileList([]);
+              }}
+              style={{
+                borderRadius: 6,
+                borderColor: "#fde68a",
+                color: "#d97706",
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              disabled={!fileList.length || !currentOrderId}
+              onClick={handleUploadSubmit}
+              style={{
+                background: "#fcd34d",
+                borderColor: "#fcd34d",
+                borderRadius: 6,
+              }}
+            >
+              Tải lên
+            </Button>,
+          ]}
+          styles={{
+            body: {
+              background: "#fefce8",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid #fde68a`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          className="modal-upload-refund"
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          <Upload
+            beforeUpload={() => false}
+            onChange={handleFileChange}
+            fileList={fileList}
+            accept="image/*"
+            maxCount={1}
+          >
+            <Button icon={<UploadOutlined />}>Chọn file ảnh</Button>
+          </Upload>
         </Modal>
       </div>
     </div>
