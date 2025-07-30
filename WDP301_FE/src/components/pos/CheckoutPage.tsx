@@ -72,10 +72,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!customerPhone.trim()) {
-      alert('Vui lòng nhập số điện thoại khách hàng')
-      return
-    }
     setIsProcessing(true)
     setMessage(null)
     try {
@@ -231,7 +227,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             {/* Customer Phone */}
             <div>
               <label className="block text-amber-700 font-medium mb-2">
-                Số điện thoại khách hàng *
+                Số điện thoại khách hàng (tùy chọn)
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-400" />
@@ -241,7 +237,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="Nhập số điện thoại"
                   className="w-full pl-10 pr-4 py-3 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none bg-white text-amber-800 placeholder:text-amber-400 shadow-sm"
-                  required
                   onBlur={handlePhoneBlur}
                 />
               </div>
