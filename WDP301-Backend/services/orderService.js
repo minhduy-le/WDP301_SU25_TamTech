@@ -75,7 +75,7 @@ const createOrder = async (req, res) => {
   }
 
   // Lấy thời gian hiện tại và điều chỉnh múi giờ +07:00
-  const currentTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+  const currentTime = new Date();
   const today = currentTime.toISOString().split("T")[0];
   const startTime = new Date(`${today}T${store.startTime}+07:00`);
   const endTime = new Date(`${today}T${store.endTime}+07:00`);
