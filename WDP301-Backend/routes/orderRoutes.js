@@ -1434,17 +1434,25 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                     type: string
  *                   status:
  *                     type: string
- *                     description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
  *                   fullName:
  *                     type: string
- *                     description: User's full name
  *                   phone_number:
  *                     type: string
  *                     nullable: true
- *                   isRefund:
- *                     type: boolean
- *                   reason:
- *                     type: string
+ *                   bankAccounts:
+ *                     type: array
+ *                     description: List of user's bank accounts
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         bankName:
+ *                           type: string
+ *                         bankNumber:
+ *                           type: string
+ *                         isRefund:
+ *                           type: boolean
+ *                         reason:
+ *                           type: string
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -1454,34 +1462,32 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                           type: integer
  *                         name:
  *                           type: string
- *                           description: Product name
  *                         quantity:
  *                           type: integer
  *                         price:
  *                           type: number
- *                   order_shipping_fee:
- *                     type: number
- *                   order_discount_value:
- *                     type: number
- *                   order_amount:
- *                     type: number
- *                   order_subtotal:
- *                     type: number
- *                   certificationOfDelivered:
- *                     type: string
- *                   invoiceUrl:
- *                     type: string
- *                     nullable: true
- *                   assignToShipperId:
- *                     type: integer
- *                   order_point_earn:
- *                     type: integer
- *                   note:
- *                     type: string
- *                     nullable: true
- *                   payment_method:
- *                     type: string
- *                     description: Payment method name (e.g., Vnpay, PayOS)
+ *                         order_shipping_fee:
+ *                           type: number
+ *                         order_discount_value:
+ *                           type: number
+ *                         order_amount:
+ *                           type: number
+ *                         order_subtotal:
+ *                           type: number
+ *                         certificationOfDelivered:
+ *                           type: string
+ *                         invoiceUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         assignToShipperId:
+ *                           type: integer
+ *                         order_point_earn:
+ *                           type: integer
+ *                         note:
+ *                           type: string
+ *                           nullable: true
+ *                         payment_method:
+ *                           type: string
  *       401:
  *         description: Unauthorized
  *       500:
