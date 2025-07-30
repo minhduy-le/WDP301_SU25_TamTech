@@ -1182,6 +1182,32 @@ const setOrderToCanceledWhenUserCancel = async (orderId, userId) => {
       return { status: 400, message: "Only pending orders can be canceled" };
     }
 
+    const orderItems = await OrderItem.findAll({ where: { orderId }, transaction });
+
+    for (const item of orderItems) {
+      const recipes = await ProductRecipe.findAll({
+        where: { productId: item.productId },
+        transaction,
+      });
+
+      if (recipes && recipes.length > 0) {
+        for (const recipe of recipes) {
+          const quantityToRestore = recipe.quantity * item.quantity;
+          await Material.update(
+            { quantity: sequelize.literal(`quantity + ${quantityToRestore}`) },
+            { where: { materialId: recipe.materialId }, transaction }
+          );
+          console.log(
+            `Restored ${quantityToRestore} to materialId: ${recipe.materialId} for user-canceled orderId: ${orderId}`
+          );
+        }
+      } else {
+        console.log(
+          `No recipes found for productId: ${item.productId} in orderId: ${orderId}. Skipping material restoration.`
+        );
+      }
+    }
+
     await Order.update({ status_id: 5 }, { where: { orderId }, transaction });
 
     await transaction.commit();
