@@ -240,12 +240,24 @@ const softDeleteProduct = async (productId) => {
 };
 
 const getProductById = async (productId) => {
-  if (!Number.isInteger(productId) || productId < 1) {
-    throw new Error("ProductId must be a positive integer");
+  // Explicitly check for NaN and invalid integers
+  const parsedId = parseInt(productId);
+  if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId < 1) {
+    throw new Error("ProductId must be a valid positive integer");
   }
 
-  const product = await Product.findByPk(productId, {
+  const product = await Product.findByPk(parsedId, {
     where: { isActive: true },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
@@ -266,6 +278,16 @@ const getBestSellerProducts = async () => {
       productTypeId: [1, 3],
       isActive: true,
     },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       {
         model: require("../models/orderItem"),
@@ -279,8 +301,7 @@ const getBestSellerProducts = async () => {
         attributes: ["productTypeId", "name"],
       },
     ],
-    attributes: ["productId", "name", "description", "price", "image"],
-    group: ["Product.productId"],
+    group: ["Product.productId", "ProductType.productTypeId"],
     order: [["productTypeId", "ASC"]],
   });
 
