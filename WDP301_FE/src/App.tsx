@@ -45,6 +45,7 @@ import { POSPage } from "./pages/POSPage";
 import POSSuccess from "./components/pos/POSSuccess";
 import ReportManagement from "./pages/admin/ReportManagement";
 import CancelOrderSuccess from "./pages/CancelOrderSuccess";
+import PaymentCancel from "./pages/PaymentCancel"; 
 import MaterialProcessManagement from "./pages/manager/materials/MaterialProcessManagement";
 import UserLayout from "./components/UserLayout";
 import OrderTracking from "./pages/OrderTracking";
@@ -148,7 +149,8 @@ function App() {
             <Route path="/staff/chat" element={<StaffChat />} />
             <Route path="/staff/pos" element={<POSPage />} />
             <Route path="/staff/pos-success" element={<POSSuccess />} />
-          </Route>
+            
+          </Route><Route path="/staff/pos/payment-cancel" element={<PaymentCancel />} />
         </Routes>
       </AuthGuardProvider>
     </Router>

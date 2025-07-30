@@ -492,26 +492,24 @@ const StaffOrderManagement = () => {
               </Popconfirm>
             </Tooltip>
           )}
-          {record.status !== "Pending" &&
-            record.status !== "Approved" &&
-            record.status !== "Canceled" && (
-              <Tooltip title="In hóa đơn">
-                <Button
-                  type="link"
-                  icon={<PrintIcon />}
-                  onClick={() => handlePrintInvoice(record.invoiceUrl)}
-                  style={{
-                    color: "#d97706",
-                    fontWeight: 600,
-                    padding: 0,
-                    outline: "none",
-                    boxShadow: "none",
-                    border: "none",
-                    background: "#fefce8",
-                  }}
-                />
-              </Tooltip>
-            )}
+          {record.status !== "Pending" && record.status !== "Canceled" && (
+            <Tooltip title="In hóa đơn">
+              <Button
+                type="link"
+                icon={<PrintIcon />}
+                onClick={() => handlePrintInvoice(record.invoiceUrl)}
+                style={{
+                  color: "#d97706",
+                  fontWeight: 600,
+                  padding: 0,
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "none",
+                  background: "#fefce8",
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
