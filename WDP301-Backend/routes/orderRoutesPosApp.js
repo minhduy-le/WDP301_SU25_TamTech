@@ -6,6 +6,7 @@ const {
   setOrderToApproved,
   setOrderToPreparing,
   setOrderToCooked,
+  cancelOrderForPos,
 } = require("../services/orderServicePosApp");
 const verifyToken = require("../middlewares/verifyToken");
 require("dotenv").config();
@@ -251,6 +252,67 @@ router.get("/cancel", async (req, res) => {
     res.status(500).json({ message: "Failed to process cancellation", error: error.message });
   }
 });
+
+/**
+ * @swagger
+ * /api/pos-orders/{orderId}/cancel:
+ *   put:
+ *     summary: Cancel an order from the POS app (any status)
+ *     tags:
+ *       - POS Orders
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order to cancel
+ *     responses:
+ *       '200':
+ *         description: Order canceled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Order canceled successfully and materials have been restored.
+ *       '400':
+ *         description: Bad Request (e.g., order already canceled)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: This order has already been canceled.
+ *       '403':
+ *         description: Forbidden
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: You are not authorized to cancel this order.
+ *       '404':
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Order not found.
+ *       '500':
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Failed to cancel order due to a server error.
+ */
+router.put("/:orderId/cancel", verifyToken, cancelOrderForPos);
 
 /**
  * @swagger

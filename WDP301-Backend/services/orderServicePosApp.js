@@ -340,7 +340,7 @@ const createOrder = async (req, res) => {
       amount: Math.round(order_subtotal - (order_discount_value || 0)),
       description: `Order #${order.orderId}`,
       returnUrl: `${YOUR_DOMAIN}/api/pos-orders/success?orderId=${order.orderId}`,
-      cancelUrl: `${YOUR_DOMAIN}/api/pos-orders/cancel?orderId=${order.orderId}`,
+      cancelUrl: `${YOUR_DOMAIN}/staff/pos/payment-cancel?orderId=${order.orderId}`,
     };
     console.log("Creating PayOS payment link with:", JSON.stringify(paymentLinkData, null, 2));
 
@@ -489,6 +489,92 @@ const createOrder = async (req, res) => {
     await transaction.rollback();
     console.log("Transaction rolled back due to error");
     return res.status(500).send("Failed to create order");
+  }
+};
+
+const cancelOrderForPos = async (req, res) => {
+  console.log("cancelOrderForPos called at:", new Date().toISOString());
+  console.log("Request params:", req.params);
+  console.log("User ID:", req.userId, "User role:", req.userRole);
+
+  const { orderId } = req.params;
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  if (!["Staff", "Admin", "Manager"].includes(userRole)) {
+    console.log("Unauthorized cancellation attempt by userId:", userId, "with role:", userRole);
+    return res.status(403).send("Unauthorized: Only Staff or Admin can cancel orders.");
+  }
+
+  const parsedOrderId = parseInt(orderId, 10);
+  if (isNaN(parsedOrderId)) {
+    console.log("Invalid orderId format:", orderId);
+    return res.status(400).send("Invalid order ID.");
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId: parsedOrderId },
+      include: [{ model: OrderStatus, as: "OrderStatus" }],
+      transaction,
+    });
+
+    if (!order) {
+      await transaction.rollback();
+      return res.status(404).send("Order not found.");
+    }
+
+    if (order.status_id === 5) {
+      await transaction.rollback();
+      return res.status(400).send("This order has already been canceled.");
+    }
+
+    const orderItems = await OrderItem.findAll({ where: { orderId: parsedOrderId }, transaction });
+    for (const item of orderItems) {
+      const recipes = await ProductRecipe.findAll({
+        where: { productId: item.productId },
+        transaction,
+      });
+
+      for (const recipe of recipes) {
+        const quantityToRestore = recipe.quantity * item.quantity;
+        await Material.update(
+          { quantity: sequelize.literal(`quantity + ${quantityToRestore}`) },
+          { where: { materialId: recipe.materialId }, transaction }
+        );
+        console.log(
+          `Restored ${quantityToRestore} to materialId: ${recipe.materialId} for canceled POS orderId: ${parsedOrderId}`
+        );
+      }
+    }
+
+    order.status_id = 5;
+    order.canceledBy = userId;
+    order.canceledAt = new Date();
+    await order.save({ transaction });
+
+    await ReasonCancel.create(
+      {
+        orderId: parsedOrderId,
+        userId: userId,
+        reason: "Cancelled by staff from POS application.",
+        createdAt: new Date(),
+      },
+      { transaction }
+    );
+
+    await transaction.commit();
+    console.log(`POS Order ${parsedOrderId} successfully canceled by userId: ${userId}.`);
+
+    res.status(200).json({
+      success: true,
+      message: "Order canceled successfully and materials have been restored.",
+    });
+  } catch (error) {
+    console.error("Error in cancelOrderForPos:", error.message, error.stack);
+    await transaction.rollback();
+    return res.status(500).send("Failed to cancel order.");
   }
 };
 
@@ -1101,4 +1187,5 @@ module.exports = {
   setOrderToPreparing,
   setOrderToCooked,
   generateAndUploadInvoice,
+  cancelOrderForPos,
 };
