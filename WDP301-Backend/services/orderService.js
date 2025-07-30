@@ -112,7 +112,7 @@ const createOrder = async (req, res) => {
     soDienThoaiNguoiDatHo,
   });
 
-  // Validation logic (giữ nguyên)
+  // Validation logic
   if (orderItems === undefined) {
     console.log("orderItems is undefined");
     return res.status(400).send("Order items are required");
@@ -155,7 +155,7 @@ const createOrder = async (req, res) => {
     }
   }
 
-  // Promotion validation (giữ nguyên)
+  // Promotion validation
   if (promotion_code || order_discount_value) {
     if (!promotion_code) {
       console.log("Missing promotion_code when order_discount_value is provided:", order_discount_value);
@@ -222,8 +222,10 @@ const createOrder = async (req, res) => {
   console.log("Transaction started");
 
   try {
-    // Product and material validation (giữ nguyên)
+    // START: MODIFIED SECTION
+    // Combined loop for product validation and material deduction
     for (const item of orderItems) {
+      // 1. Validate Product
       const product = await Product.findOne({
         where: { productId: item.productId, isActive: true },
         transaction,
@@ -247,46 +249,49 @@ const createOrder = async (req, res) => {
         console.log("Transaction rolled back due to price mismatch");
         return res.status(400).send(`Price for product ID ${item.productId} does not match`);
       }
-    }
 
-    for (const item of orderItems) {
+      // 2. Fetch recipes for the product
       const recipes = await ProductRecipe.findAll({
         where: { productId: item.productId },
         include: [{ model: Material, as: "Material" }],
         transaction,
       });
-      if (!recipes || recipes.length === 0) {
-        console.log(`No recipes found for productId: ${item.productId}`);
-        await transaction.rollback();
-        console.log("Transaction rolled back due to no recipes found");
-        return res.status(400).send(`No recipes found for product ID ${item.productId}`);
-      }
 
-      for (const recipe of recipes) {
-        const material = recipe.Material;
-        const requiredQuantity = recipe.quantity * item.quantity;
-        if (material.quantity < requiredQuantity) {
-          console.log(
-            `Insufficient material quantity for materialId: ${material.materialId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
-          );
-          await transaction.rollback();
-          console.log("Transaction rolled back due to insufficient material");
-          return res
-            .status(400)
-            .send(
-              `Insufficient material ${material.name} for product ID ${item.productId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
-            );
-        }
-
-        material.quantity -= requiredQuantity;
-        await material.save({ transaction });
+      // 3. NEW LOGIC: Only deduct materials if recipes exist
+      if (recipes && recipes.length > 0) {
         console.log(
-          `Deducted ${requiredQuantity} from materialId: ${material.materialId}. New quantity: ${material.quantity}`
+          `Found ${recipes.length} recipes for productId: ${item.productId}. Proceeding with material deduction.`
         );
+        for (const recipe of recipes) {
+          const material = recipe.Material;
+          const requiredQuantity = recipe.quantity * item.quantity;
+          if (material.quantity < requiredQuantity) {
+            console.log(
+              `Insufficient material quantity for materialId: ${material.materialId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
+            );
+            await transaction.rollback();
+            console.log("Transaction rolled back due to insufficient material");
+            return res
+              .status(400)
+              .send(
+                `Insufficient material ${material.name} for product ID ${item.productId}. Required: ${requiredQuantity}, Available: ${material.quantity}`
+              );
+          }
+
+          material.quantity -= requiredQuantity;
+          await material.save({ transaction });
+          console.log(
+            `Deducted ${requiredQuantity} from materialId: ${material.materialId}. New quantity: ${material.quantity}`
+          );
+        }
+      } else {
+        // If no recipes, just log it and continue. No error is thrown.
+        console.log(`No recipes found for productId: ${item.productId}. Skipping material deduction.`);
       }
     }
+    // END: MODIFIED SECTION
 
-    // Calculate order details (giữ nguyên)
+    // Calculate order details
     const order_amount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     console.log("Calculated order_amount:", order_amount);
 

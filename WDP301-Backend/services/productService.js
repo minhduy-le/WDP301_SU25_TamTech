@@ -24,10 +24,8 @@ const validateProductData = (data) => {
     throw new Error("ProductTypeId must be a positive integer");
   }
 
-  if (recipes) {
-    if (!Array.isArray(recipes)) {
-      throw new Error("Recipes must be an array");
-    }
+  // Only validate recipes if they are provided
+  if (recipes && Array.isArray(recipes)) {
     for (const recipe of recipes) {
       if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
         throw new Error("Each recipe must have a valid materialId (positive integer)");
@@ -55,6 +53,7 @@ const createProduct = async (productData) => {
       throw new Error("Product name already exists");
     }
 
+    // Only check materials if recipes are provided
     if (recipes.length > 0) {
       for (const recipe of recipes) {
         const material = await Material.findByPk(recipe.materialId, { transaction });
