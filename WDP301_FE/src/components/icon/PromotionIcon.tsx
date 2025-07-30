@@ -5,6 +5,7 @@ const PromotionIcon = () => {
       width="20"
       height="20"
       viewBox="0 0 24 24"
+      style={{ marginRight: 10 }}
     >
       <path
         fill="#2D1E1A"

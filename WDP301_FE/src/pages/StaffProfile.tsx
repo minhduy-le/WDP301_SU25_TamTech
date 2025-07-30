@@ -58,8 +58,18 @@ const StaffProfile = () => {
             message.success("Cập nhật thông tin thành công");
           },
           onError: (error) => {
-            message.success("Cập nhật thông tin thất bại");
-            console.error("Update failed:", error);
+            const errorMessage = error.message;
+            if (errorMessage === "Phone number already exists") {
+              message.error(
+                "Số điện thoại đã được sử dụng. Vui lòng sử dụng số khác."
+              );
+            } else if (errorMessage === "Email already exists") {
+              message.error(
+                "Email đã được sử dụng. Vui lòng sử dụng email khác."
+              );
+            } else {
+              message.error(errorMessage);
+            }
           },
         }
       );
@@ -90,7 +100,7 @@ const StaffProfile = () => {
     <div
       style={{
         minHeight: "90vh",
-        background: "#fefce8", // amber-25
+        background: "#fefce8",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -101,17 +111,17 @@ const StaffProfile = () => {
         bordered={false}
         style={{
           borderRadius: 24,
-          boxShadow: "0 4px 24px rgba(146,64,14,0.10)", // amber-800 với độ trong suốt
+          boxShadow: "0 4px 24px rgba(146,64,14,0.10)",
           width: 520,
           padding: "48px 32px",
-          background: "#ffffff", // white
+          background: "#ffffff",
           display: "flex",
           flexDirection: "column",
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <UserOutlined
-            style={{ fontSize: 96, color: "#d97706", marginBottom: 16 }} // amber-600
+            style={{ fontSize: 96, color: "#d97706", marginBottom: 16 }}
           />
         </div>
         {!editMode ? (
@@ -153,8 +163,8 @@ const StaffProfile = () => {
                 onClick={handleOpenPasswordModal}
                 style={{
                   borderRadius: 8,
-                  borderColor: "#d97706", // amber-600
-                  color: "#d97706", // amber-600
+                  borderColor: "#d97706",
+                  color: "#d97706",
                   fontWeight: 500,
                 }}
               >
@@ -165,8 +175,8 @@ const StaffProfile = () => {
                 icon={<EditOutlined />}
                 onClick={handleEdit}
                 style={{
-                  background: "#92400e", // amber-800
-                  borderColor: "#92400e", // amber-800
+                  background: "#92400e",
+                  borderColor: "#92400e",
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -217,16 +227,13 @@ const StaffProfile = () => {
                 size="large"
               />
             </Form.Item>
-            <Form.Item name="note" label="Ghi chú">
-              <Input.TextArea rows={2} size="large" />
-            </Form.Item>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <Button
                 type="primary"
                 onClick={handleSave}
                 style={{
-                  background: "#92400e", // amber-800
-                  borderColor: "#92400e", // amber-800
+                  background: "#92400e",
+                  borderColor: "#92400e",
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -252,8 +259,8 @@ const StaffProfile = () => {
           cancelText="Hủy"
           okButtonProps={{
             style: {
-              background: "#92400e", // amber-800
-              borderColor: "#92400e", // amber-800
+              background: "#92400e",
+              borderColor: "#92400e",
               borderRadius: 8,
             },
           }}

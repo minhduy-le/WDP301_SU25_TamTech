@@ -85,7 +85,7 @@ const Register = () => {
   ) => {
     const charCode = e.charCode;
     if (charCode < 48 || charCode > 57) {
-      e.preventDefault(); // Block non-numeric characters
+      e.preventDefault();
     }
   };
 

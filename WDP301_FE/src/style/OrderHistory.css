@@ -156,3 +156,17 @@
 .modal-feedback .ant-modal-content {
   background-color: #efe6db;
 }
+
+.history-pagination .ant-pagination-item-active {
+  background-color: #efe6db !important;
+  border-color: #da7339 !important;
+}
+
+.history-pagination .ant-pagination-item-active a {
+  color: #da7339 !important;
+}
+
+.history-pagination .ant-pagination-item {
+  background-color: transparent;
+  border-color: white;
+}
