@@ -892,8 +892,9 @@ router.post("/", verifyToken, async (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   get:
- *     summary: Get a product by ID
- *     tags: [Products]
+ *     summary: Get a product by ID, including its feedbacks
+ *     tags:
+ *       - Products
  *     parameters:
  *       - in: path
  *         name: id
@@ -903,7 +904,7 @@ router.post("/", verifyToken, async (req, res) => {
  *           minimum: 1
  *         description: Product ID
  *     responses:
- *       200:
+ *       '200':
  *         description: Product retrieved successfully
  *         content:
  *           application/json:
@@ -935,9 +936,9 @@ router.post("/", verifyToken, async (req, res) => {
  *                     isActive:
  *                       type: boolean
  *                     averageRating:
- *                         type: number
- *                         description: Average rating of the product (0 if no ratings)
- *                         example: 4.5
+ *                       type: number
+ *                       description: Average rating of the product (0 if no ratings)
+ *                       example: 4.5
  *                     ProductType:
  *                       type: object
  *                       properties:
@@ -969,21 +970,38 @@ router.post("/", verifyToken, async (req, res) => {
  *                                 type: integer
  *                               storeId:
  *                                 type: integer
- *       400:
+ *                     Feedbacks:
+ *                       type: array
+ *                       description: List of feedbacks for the product
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           feedbackId:
+ *                             type: integer
+ *                           rating:
+ *                             type: integer
+ *                           comment:
+ *                             type: string
+ *                           createAt:
+ *                             type: string
+ *                             format: date-time
+ *                           userId:
+ *                             type: string
+ *       '400':
  *         description: Invalid product ID
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: ProductId must be a positive integer
- *       404:
+ *       '404':
  *         description: Product not found
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: Product not found or inactive
- *       500:
+ *       '500':
  *         description: Server error
  *         content:
  *           text/plain:

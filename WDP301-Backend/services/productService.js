@@ -312,6 +312,7 @@ const getProductById = async (productId) => {
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
+      { model: require("../models/feedback"), as: "Feedbacks" },
     ],
   });
 
