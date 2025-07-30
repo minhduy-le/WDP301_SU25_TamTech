@@ -843,7 +843,7 @@ const ProductManagement: React.FC = () => {
                       if (previewUrl) URL.revokeObjectURL(previewUrl);
                       setPreviewUrl(null);
                     }}
-                    style={{ borderRadius: 6 }}
+                    style={{ borderRadius: 6, outline: "none", boxShadow: "none" }}
                     disabled={isSubmitting}
                   >
                     Hủy
@@ -1136,63 +1136,82 @@ const ProductManagement: React.FC = () => {
                 required
               >
                 <Form.List name="recipes">
-                  {(fields, { add, remove }) => (
-                    <>
-                      {fields.map((field, _index) => (
-                        <Space
-                          key={field.key}
-                          align="baseline"
-                          style={{ display: "flex", marginBottom: 8 }}
-                        >
-                          <Form.Item
-                            {...field}
-                            name={[field.name, "materialId"]}
-                            rules={[
-                              { required: true, message: "Chọn nguyên liệu" },
-                            ]}
-                            style={{ minWidth: 200 }}
+                  {(fields, { add, remove }) => {
+                    // Lấy danh sách materialId đã được chọn trong các field khác
+                    const selectedMaterialIds = fields.map(field => {
+                      const fieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
+                      return fieldValue;
+                    }).filter(id => id !== undefined && id !== null);
+
+                    return (
+                      <>
+                        {fields.map((field, index) => (
+                          <Space
+                            key={field.key}
+                            align="baseline"
+                            style={{ display: "flex", marginBottom: 8 }}
                           >
-                            <Select
-                              placeholder="Chọn nguyên liệu"
-                              style={{ borderRadius: 6 }}
+                            <Form.Item
+                              {...field}
+                              name={[field.name, "materialId"]}
+                              rules={[
+                                { required: true, message: "Chọn nguyên liệu" },
+                              ]}
+                              style={{ minWidth: 200 }}
                             >
-                              {materials.map((m) => (
-                                <Option key={m.materialId} value={m.materialId}>
-                                  {m.name}
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                          <Form.Item
-                            {...field}
-                            name={[field.name, "quantity"]}
-                            rules={[
-                              { required: true, message: "Nhập số lượng" },
-                            ]}
-                          >
-                            <InputNumber
-                              min={1}
-                              style={{ width: 120, borderRadius: 6 }}
-                            />
-                          </Form.Item>
-                          {fields.length > 1 && (
-                            <MinusCircleOutlined
-                              onClick={() => remove(field.name)}
-                              style={{ color: "#ff4d4f" }}
-                            />
-                          )}
-                        </Space>
-                      ))}
-                      <Button
-                        type="dashed"
-                        onClick={() => add()}
-                        block
-                        icon={<PlusOutlined />}
-                      >
-                        Thêm nguyên liệu
-                      </Button>
-                    </>
-                  )}
+                              <Select
+                                placeholder="Chọn nguyên liệu"
+                                style={{ borderRadius: 6 }}
+                                onChange={() => {
+                                  // Force re-render để cập nhật danh sách nguyên liệu có sẵn
+                                  form.validateFields(['recipes']);
+                                }}
+                              >
+                                {materials
+                                  .filter(material => {
+                                    // Lọc ra nguyên liệu chưa được chọn trong các field khác
+                                    const currentFieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
+                                    return !selectedMaterialIds.includes(material.materialId) || 
+                                           material.materialId === currentFieldValue;
+                                  })
+                                  .map((m) => (
+                                    <Option key={m.materialId} value={m.materialId}>
+                                      {m.name}
+                                    </Option>
+                                  ))}
+                              </Select>
+                            </Form.Item>
+                            <Form.Item
+                              {...field}
+                              name={[field.name, "quantity"]}
+                              rules={[
+                                { required: true, message: "Nhập số lượng" },
+                              ]}
+                            >
+                              <InputNumber
+                                min={1}
+                                style={{ width: 120, borderRadius: 6 }}
+                              />
+                            </Form.Item>
+                            {fields.length > 1 && (
+                              <MinusCircleOutlined
+                                onClick={() => remove(field.name)}
+                                style={{ color: "#ff4d4f" }}
+                              />
+                            )}
+                          </Space>
+                        ))}
+                        <Button
+                          type="dashed"
+                          onClick={() => add()}
+                          block
+                          icon={<PlusOutlined />}
+                        >
+                          Thêm nguyên liệu
+                        </Button>
+                      </>
+                    );
+                  }}
                 </Form.List>
               </Form.Item>
               <Space
