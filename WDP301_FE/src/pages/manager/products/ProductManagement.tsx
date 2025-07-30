@@ -1137,7 +1137,6 @@ const ProductManagement: React.FC = () => {
               >
                 <Form.List name="recipes">
                   {(fields, { add, remove }) => {
-                    // Lấy danh sách materialId đã được chọn trong các field khác
                     const selectedMaterialIds = fields.map(field => {
                       const fieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
                       return fieldValue;
@@ -1145,7 +1144,7 @@ const ProductManagement: React.FC = () => {
 
                     return (
                       <>
-                        {fields.map((field, index) => (
+                        {fields.map((field, _index) => (
                           <Space
                             key={field.key}
                             align="baseline"
@@ -1161,15 +1160,13 @@ const ProductManagement: React.FC = () => {
                             >
                               <Select
                                 placeholder="Chọn nguyên liệu"
-                                style={{ borderRadius: 6 }}
+                                style={{ borderRadius: 6, outline: "none", boxShadow: "none", border: "none" }}
                                 onChange={() => {
-                                  // Force re-render để cập nhật danh sách nguyên liệu có sẵn
                                   form.validateFields(['recipes']);
                                 }}
                               >
                                 {materials
                                   .filter(material => {
-                                    // Lọc ra nguyên liệu chưa được chọn trong các field khác
                                     const currentFieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
                                     return !selectedMaterialIds.includes(material.materialId) || 
                                            material.materialId === currentFieldValue;
