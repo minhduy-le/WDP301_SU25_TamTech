@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, Users } from "lucide-react";
-import {
-  Button,
-  Card,
-  Image,
-  Space,
-  Typography,
-  Rate,
-} from "antd";
+import { Clock, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button, Card, Image, Space, Typography, Rate } from "antd";
 import AddOnModal from "../components/home/AddOnModal";
 import { useCartStore } from "../store/cart.store";
 import { useAuthStore } from "../hooks/usersApi";
@@ -49,9 +42,10 @@ interface Feedback {
   id: number;
   productId: number;
   userId: number;
+  orderId: number;
   comment: string;
   rating: number;
-  isFeedback: boolean;
+  isResponsed: boolean;
   createdAt: string;
   updatedAt: string;
   User: User;
@@ -68,9 +62,11 @@ interface Product {
   createBy: string;
   storeId: number;
   isActive: boolean;
+  averageRating: number;
   ProductRecipes: ProductRecipe[];
   ProductType: ProductType;
   Store: Store;
+  Feedbacks: Feedback[];
 }
 
 const { Title, Text, Paragraph } = Typography;
@@ -82,16 +78,23 @@ const ProductDetail = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [showAddOnModal, setShowAddOnModal] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
   const { addToCart } = useCartStore();
   const { user } = useAuthStore();
 
-  const averageRating =
-    feedbacks.length > 0
-      ? (
-          feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length
-        ).toFixed(1)
-      : "0.0";
+  useEffect(() => {
+    if (relatedProducts.length <= 4) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => {
+        const maxSlides = Math.ceil(relatedProducts.length / 4) - 1;
+        return prev >= maxSlides ? 0 : prev + 1;
+      });
+    }, 4000); 
+
+    return () => clearInterval(interval);
+  }, [relatedProducts.length]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -100,6 +103,10 @@ const ProductDetail = () => {
           `${import.meta.env.VITE_API_URL}products/${productId}`
         );
         setProduct(res.data.product);
+        // Set feedbacks from product data if available
+        if (res.data.product.Feedbacks) {
+          setFeedbacks(res.data.product.Feedbacks);
+        }
       } catch (err) {
         setProduct(null);
       } finally {
@@ -107,19 +114,14 @@ const ProductDetail = () => {
       }
     };
 
-    const fetchFeedbacks = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}feedback/${productId}`
-        );
-        setFeedbacks(res.data.feedbacks);
-      } catch (err) {
-        console.error("Error fetching feedbacks:", err);
-      }
-    };
+    setLoading(true);
+    setProduct(null);
+    setFeedbacks([]);
+    setRelatedProducts([]);
+    setCurrentSlide(0);
+    setShowAddOnModal(false);
 
     fetchProduct();
-    fetchFeedbacks();
   }, [productId]);
 
   useEffect(() => {
@@ -127,9 +129,10 @@ const ProductDetail = () => {
       if (!product) return;
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}products/type/${product.productTypeId}`
+          `${import.meta.env.VITE_API_URL}products/type/${
+            product.productTypeId
+          }`
         );
-        // Exclude the current product
         setRelatedProducts(
           res.data.products.filter(
             (p: Product) => p.productId !== product.productId
@@ -171,6 +174,20 @@ const ProductDetail = () => {
     }).format(parseFloat(price));
   };
 
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => {
+      const maxSlides = Math.ceil(relatedProducts.length / 4) - 1;
+      return prev <= 0 ? maxSlides : prev - 1;
+    });
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => {
+      const maxSlides = Math.ceil(relatedProducts.length / 4) - 1;
+      return prev >= maxSlides ? 0 : prev + 1;
+    });
+  };
+
   return (
     <div
       style={{
@@ -198,7 +215,7 @@ const ProductDetail = () => {
               preview={{
                 style: {
                   borderRadius: "30px",
-                }
+                },
               }}
             />
 
@@ -210,10 +227,12 @@ const ProductDetail = () => {
                 <Rate
                   disabled
                   allowHalf
-                  value={parseFloat(averageRating)}
+                  value={Number(product?.averageRating) || 0}
                   style={{ color: "#fadb14" }}
                 />
-                <Text type="secondary">({averageRating})</Text>
+                <Text type="secondary">
+                  ({Number(product?.averageRating)?.toFixed(1)})
+                </Text>
               </Space>
               <Space>
                 <Users size={16} />
@@ -222,22 +241,8 @@ const ProductDetail = () => {
             </Space>
           </Space>
 
-          {/* Thông tin sản phẩm */}
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <Space direction="vertical" size="small">
-              <Text
-                style={{
-                  width: "60px",
-                  backgroundColor: "#f1f5f9",
-                  height: "20px",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {product.ProductType.name}
-              </Text>
               <Title
                 level={2}
                 style={{
@@ -253,7 +258,6 @@ const ProductDetail = () => {
               </Paragraph>
             </Space>
 
-            {/* Giá */}
             <Card
               style={{ borderColor: "#fed7aa", backgroundColor: "#fef0cc" }}
             >
@@ -269,13 +273,9 @@ const ProductDetail = () => {
                 >
                   {formatPrice(product.price)}
                 </Title>
-                <Text delete type="secondary">
-                  {formatPrice((parseFloat(product.price) * 1.2).toString())}
-                </Text>
               </Space>
             </Card>
 
-            {/* Nguyên liệu */}
             <Card style={{ borderStyle: "dashed", borderColor: "#fb923c" }}>
               <Title level={4} style={{ margin: "0 0 20px 0" }}>
                 Nguyên liệu chính
@@ -309,13 +309,7 @@ const ProductDetail = () => {
                       </Space>
                       <div style={{ textAlign: "right" }}>
                         <Text strong style={{ color: "#16a34a", fontSize: 12 }}>
-                          {recipe.quantity} phần
-                        </Text>
-                        <Text
-                          type="secondary"
-                          style={{ display: "block", fontSize: 12 }}
-                        >
-                          Còn {recipe.Material.quantity} trong kho
+                          {recipe.quantity}g
                         </Text>
                       </div>
                     </div>
@@ -324,7 +318,6 @@ const ProductDetail = () => {
               </Space>
             </Card>
 
-            {/* Actions */}
             <Space direction="vertical" size="middle" style={{ width: "100%" }}>
               <Button
                 type="primary"
@@ -341,65 +334,33 @@ const ProductDetail = () => {
               >
                 Đặt món ngay - {formatPrice(product.price)}
               </Button>
-              <Space
+
+              <Button
+                size="large"
+                block
                 style={{
+                  background: "#fff",
+                  color: "#111",
+                  border: "2px solid #dbeafe",
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  boxShadow: "none",
                   width: "100%",
-                  display: "flex",
-                  gap: 16,
-                  justifyContent: "space-between",
+                  transition: "border-color 0.2s",
                 }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.borderColor = "#f35732")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.borderColor = "#dbeafe")
+                }
+                onMouseEnter={(e) => (e.currentTarget.style.outline = "none")}
+                onClick={() => setShowAddOnModal(true)}
               >
-                <Button
-                  size="large"
-                  block
-                  style={{
-                    background: "#fff",
-                    color: "#111",
-                    border: "2px solid #dbeafe",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    boxShadow: "none",
-                    width: "280px",
-                    transition: "border-color 0.2s",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.borderColor = "#f35732")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.borderColor = "#dbeafe")
-                  }
-                  onMouseEnter={(e) => (e.currentTarget.style.outline = "none")}
-                  onClick={() => setShowAddOnModal(true)}
-                >
-                  Thêm vào giỏ
-                </Button>
-                <Button
-                  size="large"
-                  block
-                  style={{
-                    background: "#fff",
-                    color: "#111",
-                    border: "2px solid #dbeafe",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    boxShadow: "none",
-                    width: "280px",
-                    transition: "border-color 0.2s",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.borderColor = "#f35732")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.borderColor = "#dbeafe")
-                  }
-                  onMouseEnter={(e) => (e.currentTarget.style.outline = "none")}
-                >
-                  Yêu thích ♡
-                </Button>
-              </Space>
+                Thêm vào giỏ
+              </Button>
             </Space>
 
-            {/* Thông tin giao hàng */}
             <Card style={{ borderColor: "#bfdbfe" }}>
               <Space>
                 <Clock size={20} style={{ color: "#2563eb" }} />
@@ -418,8 +379,7 @@ const ProductDetail = () => {
             </Card>
           </Space>
         </div>
-
-        <Card style={{ marginTop: 48, borderColor: "#bfdbfe" }}>
+  <Card style={{ marginTop: 48, borderColor: "#bfdbfe" }}>
           <Title
             level={3}
             style={{ marginBottom: 24, margin: "0 20px 10px 0" }}
@@ -432,7 +392,6 @@ const ProductDetail = () => {
                 <Space direction="vertical" style={{ width: "100%" }}>
                   <Space>
                     <Space direction="vertical" size={0}>
-                      <Text strong>{feedback.User.fullName}</Text>
                       <Text type="secondary" style={{ fontSize: 12 }}>
                         {new Date(feedback.createdAt).toLocaleDateString(
                           "vi-VN"
@@ -462,127 +421,347 @@ const ProductDetail = () => {
           </Space>
         </Card>
 
-        {/* Related Products Section */}
-        <div style={{ marginTop: 48 }}>
-          <Title level={2} style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 10 }}>
-            <span  role="img" aria-label="chef">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="40"
-                height="40"
-                viewBox="0 0 256 256"
-              >
-                <path
-                  fill="#f76d1b"
-                  d="M240 112a56.06 56.06 0 0 0-56-56c-1.77 0-3.54.1-5.29.26a56 56 0 0 0-101.42 0C75.54 56.1 73.77 56 72 56a56 56 0 0 0-24 106.59V208a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-45.41A56.09 56.09 0 0 0 240 112m-48 96H64v-40.58a55.5 55.5 0 0 0 8 .58h112a55.5 55.5 0 0 0 8-.58Zm-8-56h-13.75l5.51-22.06a8 8 0 0 0-15.52-3.88L153.75 152H136v-24a8 8 0 0 0-16 0v24h-17.75l-6.49-25.94a8 8 0 1 0-15.52 3.88L85.75 152H72a40 40 0 0 1 0-80h.58a55 55 0 0 0-.58 8a8 8 0 0 0 16 0a40 40 0 0 1 80 0a8 8 0 0 0 16 0a55 55 0 0 0-.58-8h.58a40 40 0 0 1 0 80"
-                  stroke-width="6.5"
-                  stroke="#f76d1b"
-                />
-              </svg>
-            </span>
-            Các món liên quan
-          </Title>
-          <div
-            style={{
-              display: "flex",
-              gap: 24,
-              overflowX: "auto",
-              paddingBottom: 16,
-            }}
-          >
-            {relatedProducts.length === 0 && (
-              <Text type="secondary">Không có món liên quan</Text>
-            )}
-            {relatedProducts.map((item) => (
-              <Card
-                key={item.productId}
-                hoverable
+        {relatedProducts.length > 0 &&
+          (relatedProducts.length >= 4 || relatedProducts.length % 4 === 0) && (
+            <div style={{ marginTop: 48 }}>
+              <Title
+                level={2}
                 style={{
-                  minWidth: 260,
-                  maxWidth: 280,
-                  borderRadius: 16,
-                  flex: "0 0 auto",
-                  background: "#fff",
+                  marginBottom: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
                 }}
-                cover={
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    style={{
-                      width: "100%",
-                      height: 160,
-                      objectFit: "cover",
-                      borderTopLeftRadius: 16,
-                      borderTopRightRadius: 16,
-                    }}
-                  />
-                }
-                bodyStyle={{ padding: 16 }}
               >
-                <Title
-                  level={5}
+                <span role="img" aria-label="chef">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="40"
+                    height="40"
+                    viewBox="0 0 256 256"
+                  >
+                    <path
+                      fill="#f76d1b"
+                      d="M240 112a56.06 56.06 0 0 0-56-56c-1.77 0-3.54.1-5.29.26a56 56 0 0 0-101.42 0C75.54 56.1 73.77 56 72 56a56 56 0 0 0-24 106.59V208a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16v-45.41A56.09 56.09 0 0 0 240 112m-48 96H64v-40.58a55.5 55.5 0 0 0 8 .58h112a55.5 55.5 0 0 0 8-.58Zm-8-56h-13.75l5.51-22.06a8 8 0 0 0-15.52-3.88L153.75 152H136v-24a8 8 0 0 0-16 0v24h-17.75l-6.49-25.94a8 8 0 1 0-15.52 3.88L85.75 152H72a40 40 0 0 1 0-80h.58a55 55 0 0 0-.58 8a8 8 0 0 0 16 0a40 40 0 0 1 80 0a8 8 0 0 0 16 0a55 55 0 0 0-.58-8h.58a40 40 0 0 1 0 80"
+                      strokeWidth="6.5"
+                      stroke="#f76d1b"
+                    />
+                  </svg>
+                </span>
+                Các món liên quan
+              </Title>
+
+              <div style={{ position: "relative" }}>
+                {relatedProducts.length > 4 &&
+                  Math.ceil(relatedProducts.length / 4) > 1 && (
+                    <>
+                      <Button
+                        type="text"
+                        icon={<ChevronLeft size={24} />}
+                        onClick={handlePrevSlide}
+                        style={{
+                          position: "absolute",
+                          left: -20,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          zIndex: 10,
+                          background: "#fff",
+                          border: "2px solid #f97316",
+                          borderRadius: "50%",
+                          width: 48,
+                          outline: "none",
+                          height: 48,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 4px 12px rgba(249, 115, 22, 0.3)",
+                          transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#f97316";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.transform =
+                            "translateY(-50%) scale(1.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#fff";
+                          e.currentTarget.style.color = "#f97316";
+                          e.currentTarget.style.transform =
+                            "translateY(-50%) scale(1)";
+                        }}
+                      />
+                      <Button
+                        type="text"
+                        icon={<ChevronRight size={24} />}
+                        onClick={handleNextSlide}
+                        style={{
+                          position: "absolute",
+                          right: -20,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          zIndex: 10,
+                          background: "#fff",
+                          border: "2px solid #f97316",
+                          borderRadius: "50%",
+                          outline: "none",
+                          width: 48,
+                          height: 48,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 4px 12px rgba(249, 115, 22, 0.3)",
+                          transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#f97316";
+                          e.currentTarget.style.color = "#fff";
+                          e.currentTarget.style.transform =
+                            "translateY(-50%) scale(1.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#fff";
+                          e.currentTarget.style.color = "#f97316";
+                          e.currentTarget.style.transform =
+                            "translateY(-50%) scale(1)";
+                        }}
+                      />
+                    </>
+                  )}
+
+                <div
                   style={{
-                    margin: 0,
-                    padding: 0,
-                    fontWeight: 700,
-                    fontSize: 18,
-                    minHeight: 40,
+                    overflow: "hidden",
+                    borderRadius: 16,
+                    position: "relative",
                   }}
                 >
-                  {item.name}
-                </Title>
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 14,
-                    minHeight: 40,
-                    display: "block",
-                    margin: "0",
-                  }}
-                >
-                  {item.description}
-                </Text>
-                {/* <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    margin: "8px 0",
-                  }}
-                >
-                  <Rate
-                    disabled
-                    defaultValue={4}
-                    style={{ color: "#fadb14", fontSize: 18 }}
-                  />
-                  <Text type="secondary" style={{ fontSize: 14 }}>
-                    (4.0)
-                  </Text>
-                </div> */}
-                <Text strong style={{ color: "#ea580c", fontSize: 18 }}>
-                  {formatPrice(item.price)}
-                </Text>
-                <Button
-                  type="primary"
-                  style={{
-                    marginTop: 12,
-                    background: "#ff7a1a",
-                    border: "none",
-                    fontWeight: 700,
-                    borderRadius: 8,
-                    width: "100%",
-                  }}
-                  onClick={() =>
-                    (window.location.href = `/product/${item.productId}`)
-                  }
-                >
-                  Xem chi tiết
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </div>
-        <AddOnModal open={showAddOnModal} onClose={() => setShowAddOnModal(false)} product={product} />
+                  <div
+                    style={{
+                      display: "flex",
+                      transition: "transform 0.5s ease-in-out",
+                      transform: `translateX(-${currentSlide * 100}%)`,
+                    }}
+                  >
+                    {Array.from({
+                      length: Math.ceil(relatedProducts.length / 4),
+                    }).map((_, slideIndex) => (
+                      <div
+                        key={slideIndex}
+                        style={{
+                          minWidth: "100%",
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, 1fr)",
+                          gap: 24,
+                          padding: "0 8px",
+                        }}
+                      >
+                        {relatedProducts
+                          .slice(slideIndex * 4, slideIndex * 4 + 4)
+                          .map((item) => (
+                            <Card
+                              key={item.productId}
+                              hoverable
+                              style={{
+                                borderRadius: 16,
+                                overflow: "hidden",
+                                border: "1px solid #f3f4f6",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                                transition: "all 0.3s ease",
+                                cursor: "pointer",
+                                position: "relative",
+                              }}
+                              bodyStyle={{ padding: 0 }}
+                              onClick={() =>
+                                navigate(`/product/${item.productId}`)
+                              }
+                            >
+                              <div style={{ position: "relative" }}>
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  style={{
+                                    width: "100%",
+                                    height: 200,
+                                    objectFit: "cover",
+                                    transition: "transform 0.3s ease",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform =
+                                      "scale(1.05)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform =
+                                      "scale(1)";
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: 10,
+                                    right: 10,
+                                    background: "#fff",
+                                    borderRadius: 20,
+                                    padding: "2px 10px 2px 6px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    color: "#f59e42",
+                                    zIndex: 2,
+                                  }}
+                                >
+                                  <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="#f59e42"
+                                    style={{ marginRight: 4 }}
+                                  >
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  {Number(item.averageRating).toFixed(1)}
+                                </div>
+                              </div>
+                              <div style={{ padding: 20 }}>
+                                <Title
+                                  level={4}
+                                  style={{
+                                    margin: "0 0 12px 0",
+                                    fontSize: 18,
+                                    fontWeight: 700,
+                                    lineHeight: 1.3,
+                                    height: 48,
+                                    overflow: "hidden",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    color: "#1f2937",
+                                  }}
+                                >
+                                  {item.name}
+                                </Title>
+                                <Text
+                                  type="secondary"
+                                  style={{
+                                    fontSize: 14,
+                                    lineHeight: 1.4,
+                                    height: 40,
+                                    overflow: "hidden",
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    marginBottom: 16,
+                                    color: "#6b7280",
+                                  }}
+                                >
+                                  {item.description}
+                                </Text>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginTop: "auto",
+                                  }}
+                                >
+                                  <Text
+                                    strong
+                                    style={{
+                                      color: "#ea580c",
+                                      fontSize: 20,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {formatPrice(item.price)}
+                                  </Text>
+                                  <Button
+                                    type="primary"
+                                    size="small"
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, #f97316, #ea580c)",
+                                      border: "none",
+                                      borderRadius: 8,
+                                      fontWeight: 600,
+                                      height: 36,
+                                      boxShadow:
+                                        "0 2px 4px rgba(249, 115, 22, 0.3)",
+                                      transition: "all 0.2s ease",
+                                      outline: "none",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(-1px)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 4px 8px rgba(249, 115, 22, 0.4)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.transform =
+                                        "translateY(0)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 2px 4px rgba(249, 115, 22, 0.3)";
+                                    }}
+                                  >
+                                    Xem chi tiết
+                                  </Button>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {relatedProducts.length > 4 &&
+                  Math.ceil(relatedProducts.length / 4) > 1 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 8,
+                        marginTop: 24,
+                      }}
+                    >
+                      {Array.from({
+                        length: Math.ceil(relatedProducts.length / 4),
+                      }).map((_, index) => (
+                        <div
+                          key={index}
+                          onClick={() => setCurrentSlide(index)}
+                          style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor:
+                              currentSlide === index ? "#f97316" : "#e5e7eb",
+                            cursor: "pointer",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (currentSlide !== index) {
+                              e.currentTarget.style.backgroundColor = "#fbbf24";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (currentSlide !== index) {
+                              e.currentTarget.style.backgroundColor = "#e5e7eb";
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </div>
+          )}
+
+        <AddOnModal
+          open={showAddOnModal}
+          onClose={() => setShowAddOnModal(false)}
+          product={product}
+        />
       </div>
     </div>
   );
