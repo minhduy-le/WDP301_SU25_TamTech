@@ -10,7 +10,7 @@ import {
   message,
 } from "antd";
 import "../style/Cart.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "../store/cart.store";
 import { DeleteOutlined } from "@ant-design/icons";
 
@@ -37,28 +37,45 @@ interface CartProps {
 }
 
 const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
-  const [selectedItems, setSelectedItems] = useState<CartItem[]>(cartItems);
+  // Sử dụng mảng uniqueId để theo dõi các item được chọn
+  const [selectedItemIds, setSelectedItemIds] = useState<number[]>(
+    () => cartItems.map((_, index) => index) // Khởi tạo với tất cả index làm uniqueId
+  );
   const { removeFromCart } = useCartStore();
 
-  const handleCheckboxChange = (item: CartItem, checked: boolean) => {
-    if (checked) {
-      setSelectedItems((prev) => [...prev, item]);
-    } else {
-      setSelectedItems((prev) =>
-        prev.filter((i) => i.productId !== item.productId)
-      );
-    }
+  // Cập nhật selectedItemIds khi cartItems thay đổi
+  useEffect(() => {
+    setSelectedItemIds(cartItems.map((_, index) => index));
+  }, [cartItems]);
+
+  const handleCheckboxChange = (index: number, checked: boolean) => {
+    setSelectedItemIds((prev) => {
+      if (checked) {
+        return [...prev, index]; // Thêm index nếu check
+      } else {
+        return prev.filter((id) => id !== index); // Loại bỏ index nếu uncheck
+      }
+    });
   };
 
-  // const total = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  // Lấy danh sách item được chọn dựa trên index
+  const selectedItems = cartItems.filter((_, index) =>
+    selectedItemIds.includes(index)
+  );
+
   const total = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
 
   const handleRemoveItem = (item: CartItem) => {
-    removeFromCart(item.userId, item.productId, item.addOns);
-    setSelectedItems((prev) =>
-      prev.filter((i) => i.productId !== item.productId)
+    const indexToRemove = cartItems.findIndex(
+      (cartItem) =>
+        cartItem.productId === item.productId &&
+        JSON.stringify(cartItem.addOns) === JSON.stringify(item.addOns)
     );
-    message.success("Đã xóa sản phẩm khỏi giỏ hàng");
+    if (indexToRemove !== -1) {
+      removeFromCart(item.userId, item.productId, item.addOns);
+      setSelectedItemIds((prev) => prev.filter((id) => id !== indexToRemove));
+      message.success("Đã xóa sản phẩm khỏi giỏ hàng");
+    }
   };
 
   const handleConfirmOrder = () => {
@@ -79,17 +96,15 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
         <Divider style={{ borderTop: "1px solid #2d1e1a", margin: "6px 0" }} />
         <List
           dataSource={cartItems}
-          renderItem={(item) => (
+          renderItem={(item, index) => (
             <List.Item className="cart-item">
               <Row style={{ width: "100%" }}>
                 <Col span={1} style={{ paddingTop: 1 }}>
                   <Checkbox
                     onChange={(e) =>
-                      handleCheckboxChange(item, e.target.checked)
+                      handleCheckboxChange(index, e.target.checked)
                     }
-                    checked={selectedItems.some(
-                      (i) => i.productId === item.productId
-                    )}
+                    checked={selectedItemIds.includes(index)}
                     className="checkbox-cart"
                   />
                 </Col>
@@ -97,8 +112,8 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                   <Text className="cart-item-name">{item.productName}</Text>
                   {item.addOns.length > 0 && (
                     <ul className="item-description-list">
-                      {item.addOns.map((addOn, index) => (
-                        <li key={index} className="item-description">
+                      {item.addOns.map((addOn, addOnIndex) => (
+                        <li key={addOnIndex} className="item-description">
                           {addOn.productTypeName}
                           {/* x{addOn.quantity} */}
                         </li>
@@ -119,16 +134,15 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
                     style={{ display: "flex", gap: 5, justifyContent: "end" }}
                   >
                     <Text className="item-price">
-                      {/* {(item.totalPrice / item.quantity).toLocaleString()}đ */}
                       {item.price.toLocaleString()}đ
                     </Text>
                     <Text className="item-quantity">x{item.quantity}</Text>
                   </div>
                   {item.addOns.length > 0 && (
                     <div>
-                      {item.addOns.map((addOn, index) => (
+                      {item.addOns.map((addOn, addOnIndex) => (
                         <div
-                          key={index}
+                          key={addOnIndex}
                           style={{
                             display: "flex",
                             gap: 5,
