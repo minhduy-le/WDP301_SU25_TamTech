@@ -120,6 +120,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/user/order-tracking/:orderId",
         "/user/promotion",
         "/payment-cancel",
+        "/form-refund-order",
       ],
       Shipper: [],
       Manager: [
@@ -137,10 +138,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/blog",
         "/manager/materials-process",
       ],
-      Admin: [
-        "/admin/users",
-        "/admin/profile",
-      ],
+      Admin: ["/admin/users", "/admin/profile"],
     };
 
     const userRole = decoded.role as UserRole;

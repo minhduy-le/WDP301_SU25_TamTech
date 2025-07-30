@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Row,
   Col,
@@ -152,7 +153,7 @@ const OrderTracking = () => {
                     form.resetFields();
                     queryClient.invalidateQueries({ queryKey: ["orders"] });
                   },
-                  onError: (error) => {
+                  onError: (error: any) => {
                     message.error("Gửi email thất bại: " + error.message);
                   },
                 }
