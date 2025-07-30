@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import dayjs from "dayjs";
 import {
   Card,
   Row,
@@ -11,6 +12,7 @@ import {
   Button,
   Progress,
   message,
+  DatePicker,
 } from "antd";
 import {
   DollarOutlined,
@@ -18,6 +20,7 @@ import {
   TrophyOutlined,
   DownloadOutlined,
   DashboardOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import {
   XAxis,
@@ -121,11 +124,38 @@ const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
 
 const ManagerDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  
+  // Hàm format ngày thành MM-dd-YYYY
+  const formatDate = (date: any) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}-${day}-${year}`;
+  };
+  
+  // Tính toán ngày mặc định: từ hiện tại đến 7 ngày trước
+  const getDefaultDateRange = () => {
+    const endDate = dayjs();
+    const startDate = dayjs().subtract(7, 'day');
+    return {
+      startDate: formatDate(startDate.toDate()),
+      endDate: formatDate(endDate.toDate()),
+      startDateObj: startDate,
+      endDateObj: endDate
+    };
+  };
+
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState<string>(defaultRange.startDate);
+  const [endDate, setEndDate] = useState<string>(defaultRange.endDate);
+  
   const { data: staffProductivity = [] } = useStaffProductivity();
 
   const { data: revenueStats } = useRevenueStats(selectedYear);
   const { data: topProductsData = [], isLoading: topProductsLoading } =
-    useTopProducts();
+    useTopProducts(startDate, endDate);
   const monthlyRevenueData =
     revenueStats?.map((s) => ({
       month: `Tháng ${s.month}`,
@@ -151,6 +181,17 @@ const ManagerDashboard: React.FC = () => {
     "Doanh thu tháng trước": w.previousMonthRevenue,
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
+
+  // Hàm xử lý khi chọn ngày
+  const handleDateChange = (dates: any) => {
+    if (dates && dates.length === 2) {
+      setStartDate(formatDate(dates[0]));
+      setEndDate(formatDate(dates[1]));
+    } else {
+      setStartDate("");
+      setEndDate("");
+    }
+  };
 
   const handleExportReport = () => {
     try {
@@ -200,6 +241,16 @@ const ManagerDashboard: React.FC = () => {
         "Số lượng bán": product.sold,
         "Doanh thu (VNĐ)": `${product.revenue.toLocaleString()} đ`
       }));
+      
+      // Thêm thông tin khoảng thời gian nếu có
+      if (startDate && endDate) {
+        productData.unshift({
+          "Thứ hạng": 0,
+          "Tên sản phẩm": `Khoảng thời gian: ${startDate} - ${endDate}`,
+          "Số lượng bán": 0,
+          "Doanh thu (VNĐ)": "0 đ"
+        });
+      }
       
       const productSheet = XLSX.utils.json_to_sheet(productData);
       XLSX.utils.book_append_sheet(workbook, productSheet, "Sản phẩm bán chạy");
@@ -293,6 +344,25 @@ const ManagerDashboard: React.FC = () => {
         /* Màu icon dropdown */
         .ant-select-arrow {
           color: #D97B41 !important;
+        }
+        /* Màu border và shadow khi focus vào DatePicker */
+        .ant-picker-focused,
+        .ant-picker:focus,
+        .ant-picker:hover {
+          border-color: #D97B41 !important;
+          box-shadow: 0 0 0 2px #F9E4B7 !important;
+        }
+        /* Màu icon trong DatePicker */
+        .ant-picker-suffix {
+          color: #D97B41 !important;
+        }
+        /* Màu ngày được chọn trong calendar */
+        .ant-picker-cell-selected .ant-picker-cell-inner {
+          background-color: #D97B41 !important;
+        }
+        /* Màu ngày hover trong calendar */
+        .ant-picker-cell:hover .ant-picker-cell-inner {
+          background-color: #F9E4B7 !important;
         }
       `}</style>
       <Row gutter={[24, 24]}>
@@ -599,41 +669,62 @@ const ManagerDashboard: React.FC = () => {
               </Card>
             </Col>
             <Col span={24}>
-              <Card
-                title={
-                  <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                    Top 6 sản phẩm bán chạy
-                  </span>
-                }
-                bordered={false}
-                style={{ borderRadius: 12 }}
-              >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={topProducts}
-                  loading={topProductsLoading}
-                  renderItem={(item, _idx) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            style={{ background: "#D97B41" }}
-                            icon={<TrophyOutlined />}
-                          />
-                        }
-                        title={
-                          <span style={{ fontWeight: 600 }}>{item.name}</span>
-                        }
-                        description={
-                          <span>
-                            Bán: <b>{item.sold}</b> | Doanh thu:{" "}
-                            <b>{item.revenue.toLocaleString()}đ</b>
-                          </span>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                             <Card
+                 title={
+                   <span style={{ color: "#A05A2C", fontWeight: 600 }}>
+                     Top 6 sản phẩm bán chạy
+                   </span>
+                 }
+                 bordered={false}
+                 style={{ borderRadius: 12 }}
+               >
+                 <div style={{ marginBottom: 16 }}>
+                   <DatePicker.RangePicker
+                     onChange={handleDateChange}
+                     placeholder={["Từ ngày", "Đến ngày"]}
+                     format="DD/MM/YYYY"
+                     style={{ width: "100%" }}
+                     allowClear={true}
+                     defaultValue={[defaultRange.startDateObj, defaultRange.endDateObj]}
+                   />
+                 </div>
+                {!startDate || !endDate ? (
+                  <div style={{ 
+                    textAlign: "center", 
+                    padding: "40px 20px",
+                    color: "#999"
+                  }}>
+                    <CalendarOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+                    <div>Vui lòng chọn khoảng thời gian để xem sản phẩm bán chạy</div>
+                  </div>
+                ) : (
+                  <List
+                    itemLayout="horizontal"
+                    dataSource={topProducts}
+                    loading={topProductsLoading}
+                    renderItem={(item, _idx) => (
+                      <List.Item>
+                        <List.Item.Meta
+                          avatar={
+                            <Avatar
+                              style={{ background: "#D97B41" }}
+                              icon={<TrophyOutlined />}
+                            />
+                          }
+                          title={
+                            <span style={{ fontWeight: 600 }}>{item.name}</span>
+                          }
+                          description={
+                            <span>
+                              Bán: <b>{item.sold}</b> | Doanh thu:{" "}
+                              <b>{item.revenue.toLocaleString()}đ</b>
+                            </span>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                )}
               </Card>
             </Col>
           </Row>
