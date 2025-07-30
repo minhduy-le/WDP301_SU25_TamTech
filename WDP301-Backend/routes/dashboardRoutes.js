@@ -212,10 +212,27 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/dashboard/top-products:
  *   get:
- *     summary: Get top 6 best-selling products
+ *     summary: Get top 6 best-selling products within a date range
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "MM-dd-YYYY"
+ *         description: Start date for the range (format MM-dd-YYYY)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "MM-dd-YYYY"
+ *         description: End date for the range (format MM-dd-YYYY)
  *     responses:
  *       200:
  *         description: Top products retrieved successfully
@@ -242,6 +259,20 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  *                       totalRevenue:
  *                         type: number
  *                         description: Total revenue from the product
+ *                 durationDays:
+ *                   type: integer
+ *                   description: Number of days between startDate and endDate
+ *       400:
+ *         description: Invalid date format or range
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *         content:
@@ -267,11 +298,13 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  */
 router.get("/top-products", verifyToken, async (req, res, next) => {
   try {
-    const stats = await dashboardService.getTopProducts();
+    const { startDate, endDate } = req.query;
+    const { stats, durationDays } = await dashboardService.getTopProducts(startDate, endDate);
     res.status(200).json({
       status: 200,
       message: "Top products retrieved successfully",
       stats,
+      durationDays,
     });
   } catch (error) {
     console.error("Error retrieving top products:", error);
