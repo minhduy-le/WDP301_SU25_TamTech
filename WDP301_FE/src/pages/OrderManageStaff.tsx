@@ -249,7 +249,6 @@ const StaffOrderManagement = () => {
   };
 
   const handleFileChange = (info: UploadChangeParam) => {
-    console.log("File change:", info.file.status, info.fileList);
     if (info.file.status === "done") {
       message.success(`${info.file.name} đã được tải lên thành công!`);
     } else if (info.file.status === "error") {
@@ -281,6 +280,7 @@ const StaffOrderManagement = () => {
           setFileList([]);
         },
         onError: (error) => {
+          console.error("Upload error:", error);
           message.error(error.message || "Tải lên thất bại!");
         },
       }

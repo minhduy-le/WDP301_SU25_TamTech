@@ -59,6 +59,7 @@ export interface OrderHistory {
   order_discount_value: number;
   order_amount: number;
   invoiceUrl: string;
+  certificationOfDelivered: string;
   order_point_earn: number;
   note: string;
   payment_method: string;
@@ -246,9 +247,15 @@ export const useUploadRefundCertificate = () => {
     mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
       const formData = new FormData();
       formData.append("file", file);
+
       const response = await axiosInstance.post(
         `orders/upload-refunded-certification/${orderId}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
       return response.data;
     },
