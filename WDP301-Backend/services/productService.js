@@ -175,7 +175,9 @@ const updateProduct = async (productId, updateData) => {
     throw new Error("ProductId must be a positive integer");
   }
 
-  const { name, description, price, image, productTypeId } = updateData;
+  const { name, description, price, image, productTypeId, recipes } = updateData;
+
+  // Validate basic product fields
   if (name !== undefined && (typeof name !== "string" || name.trim() === "" || name.trim().length > 100)) {
     throw new Error("Name must be a non-empty string and cannot exceed 100 characters");
   }
@@ -189,39 +191,88 @@ const updateProduct = async (productId, updateData) => {
     throw new Error("ProductTypeId must be a positive integer");
   }
 
-  const product = await Product.findByPk(productId);
-  if (!product || !product.isActive) {
-    throw new Error("Product not found or inactive");
-  }
-
-  if (name !== undefined) {
-    const existingProduct = await Product.findOne({
-      where: {
-        name: name.trim(),
-        productId: { [Op.ne]: productId },
-        isActive: true,
-      },
-    });
-    if (existingProduct) {
-      throw new Error("Product name already exists");
+  // Validate recipes if provided
+  if (recipes && Array.isArray(recipes)) {
+    for (const recipe of recipes) {
+      if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+        throw new Error("Each recipe must have a valid materialId (positive integer)");
+      }
+      if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+        throw new Error("Each recipe must have a valid quantity (positive integer)");
+      }
     }
   }
 
-  await product.update({
-    name: name ? name.trim() : product.name,
-    description: description !== undefined ? (description ? description.trim() : null) : product.description,
-    price: price !== undefined ? price : product.price,
-    image: image !== undefined ? image : product.image,
-    productTypeId: productTypeId || product.productTypeId,
-  });
+  const transaction = await sequelize.transaction();
+  try {
+    const product = await Product.findByPk(productId, { transaction });
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or inactive");
+    }
 
-  return await Product.findByPk(productId, {
-    include: [
-      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-      { model: require("../models/productType"), as: "ProductType" },
-      { model: require("../models/store"), as: "Store" },
-    ],
-  });
+    if (name !== undefined) {
+      const existingProduct = await Product.findOne({
+        where: {
+          name: name.trim(),
+          productId: { [Op.ne]: productId },
+          isActive: true,
+        },
+        transaction,
+      });
+      if (existingProduct) {
+        throw new Error("Product name already exists");
+      }
+    }
+
+    // Update product fields
+    await product.update(
+      {
+        name: name ? name.trim() : product.name,
+        description: description !== undefined ? (description ? description.trim() : null) : product.description,
+        price: price !== undefined ? price : product.price,
+        image: image !== undefined ? image : product.image,
+        productTypeId: productTypeId || product.productTypeId,
+      },
+      { transaction }
+    );
+
+    // Handle recipes update
+    if (recipes && Array.isArray(recipes)) {
+      // Clear existing recipes
+      await ProductRecipe.destroy({ where: { productId: productId }, transaction });
+
+      // Add new recipes
+      if (recipes.length > 0) {
+        for (const recipe of recipes) {
+          const material = await Material.findByPk(recipe.materialId, { transaction });
+          if (!material) {
+            throw new Error(`Material with ID ${recipe.materialId} not found`);
+          }
+          await ProductRecipe.create(
+            {
+              productId: productId,
+              materialId: recipe.materialId,
+              quantity: recipe.quantity,
+            },
+            { transaction }
+          );
+        }
+      }
+    }
+
+    await transaction.commit();
+
+    return await Product.findByPk(productId, {
+      include: [
+        { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+        { model: require("../models/productType"), as: "ProductType" },
+        { model: require("../models/store"), as: "Store" },
+      ],
+    });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 };
 
 const softDeleteProduct = async (productId) => {
@@ -261,6 +312,7 @@ const getProductById = async (productId) => {
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
+      { model: require("../models/feedback"), as: "Feedbacks" },
     ],
   });
 

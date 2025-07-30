@@ -1703,6 +1703,14 @@ const getAllOrders = async (req, res) => {
           model: User,
           as: "User",
           attributes: ["id", "fullName", "phone_number"],
+          include: [
+            {
+              model: BankUserInformation,
+              as: "BankUserInformations",
+              attributes: ["bankName", "bankNumber"],
+              required: false,
+            },
+          ],
         },
         {
           model: OrderItem,
@@ -1746,6 +1754,13 @@ const getAllOrders = async (req, res) => {
       status: order.OrderStatus ? order.OrderStatus.status : null,
       fullName: order.User ? order.User.fullName : null,
       phone_number: order.User ? order.User.phone_number : null,
+      bankAccounts:
+        order.User && order.User.BankUserInformations
+          ? order.User.BankUserInformations.map((bank) => ({
+              bankName: bank.bankName,
+              bankNumber: bank.bankNumber,
+            }))
+          : [],
       isRefund: order.isRefund,
       reason: order.ReasonCancels?.length > 0 ? order.ReasonCancels[0].reason : null,
       orderItems: order.OrderItems.map((item) => ({
