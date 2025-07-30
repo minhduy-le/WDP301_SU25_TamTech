@@ -1,10 +1,10 @@
-import { Row, Col, Card, Typography, message } from "antd";
+import { Row, Col, Card, Typography } from "antd";
 import "../style/UserInformation.css";
 import { useEffect, useState } from "react";
 import { useGetAddressUser } from "../hooks/locationsApi";
 import { useAuthStore } from "../hooks/usersApi";
 import LocationBoldIcon from "../components/icon/LocationBoldIcon";
-import { PhoneOutlined, EditOutlined } from "@ant-design/icons";
+import { PhoneOutlined } from "@ant-design/icons";
 import { useGetProfileUser } from "../hooks/profileApi";
 import dayjs from "dayjs";
 
@@ -81,7 +81,7 @@ const UserInformation = () => {
                   justifyContent: "space-between",
                 }}
               >
-                <div className="edit-contact-icon">
+                {/* <div className="edit-contact-icon">
                   <EditOutlined
                     style={{ fontSize: 18 }}
                     onClick={() =>
@@ -90,7 +90,7 @@ const UserInformation = () => {
                       )
                     }
                   />
-                </div>
+                </div> */}
                 <Text
                   style={{
                     fontFamily: "Montserrat, sans-serif",
@@ -119,6 +119,7 @@ const UserInformation = () => {
                       fontFamily: "Montserrat, sans-serif",
                       color: "#2d1e1a",
                       fontSize: 15,
+                      display: "flex",
                     }}
                   >
                     <LocationBoldIcon /> {contact.address}

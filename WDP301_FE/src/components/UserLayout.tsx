@@ -203,13 +203,16 @@ const UserLayout = () => {
               mode="vertical"
               className="sidebar-menu"
               selectedKeys={[activePage]}
+              style={{ borderInlineEnd: "none" }}
               onClick={({ key }) => handleMenuClick(key)}
             >
               <Menu.Item key="1" className="menu-item">
                 <UserBoldIcon /> Thông tin thành viên
               </Menu.Item>
               <Menu.Item key="3" className="menu-item">
-                <ContainerOutlined style={{ fontSize: 20, color: "#2D1E1A" }} />{" "}
+                <ContainerOutlined
+                  style={{ fontSize: 20, color: "#2D1E1A", marginRight: 10 }}
+                />{" "}
                 Lịch sử mua hàng
               </Menu.Item>
               <Menu.Item key="4" className="menu-item">

@@ -11,6 +11,7 @@ import {
   Tabs,
   message,
   Skeleton,
+  Pagination,
 } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import "../style/OrderHistory.css";
@@ -80,6 +81,9 @@ const OrderHistorys = () => {
   );
 
   const { mutate: createFeedback } = useCreateFeedback();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   const calculateTotal = (order: OrderHistory) => {
     const itemTotal = order.orderItems.reduce(
@@ -300,6 +304,15 @@ const OrderHistorys = () => {
     }
   }, [feedbackQueries, selectedOrder]);
 
+  const paginatedOrders = sortedOrderHistory.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="order-history-container">
       <Title level={2} className="order-history-title">
@@ -309,8 +322,8 @@ const OrderHistorys = () => {
         <Tabs.TabPane tab="Tất cả" key="all">
           {isOrderHistoryLoading ? (
             <Skeleton active style={{ padding: "0 34px" }} />
-          ) : sortedOrderHistory.length > 0 ? (
-            sortedOrderHistory.map((order) => {
+          ) : paginatedOrders.length > 0 ? (
+            paginatedOrders.map((order) => {
               const actions = getActionsForStatus(order.status);
               const itemCount = order.orderItems.length;
               const isLoading = loadingButtons[order.orderId] || false;
@@ -437,15 +450,33 @@ const OrderHistorys = () => {
               Chưa có lịch sử mua hàng
             </div>
           )}
+          {!isOrderHistoryLoading && sortedOrderHistory.length > pageSize && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "0 24px",
+              }}
+            >
+              <Pagination
+                current={currentPage}
+                total={sortedOrderHistory.length}
+                pageSize={pageSize}
+                align="end"
+                className="history-pagination"
+                onChange={handlePageChange}
+                showSizeChanger={false}
+              />
+            </div>
+          )}
         </Tabs.TabPane>
 
         {statusTabs.map(({ text, value }) => (
           <Tabs.TabPane tab={text} key={value}>
             {isOrderHistoryLoading ? (
               <Skeleton active style={{ padding: "0 34px" }} />
-            ) : sortedOrderHistory.filter((order) => order.status === value)
+            ) : paginatedOrders.filter((order) => order.status === value)
                 .length > 0 ? (
-              sortedOrderHistory
+              paginatedOrders
                 .filter((order) => order.status === value)
                 .map((order) => {
                   const actions = getActionsForStatus(order.status);
@@ -577,6 +608,30 @@ const OrderHistorys = () => {
                 Chưa có lịch sử mua hàng
               </div>
             )}
+            {!isOrderHistoryLoading &&
+              sortedOrderHistory.filter((order) => order.status === value)
+                .length > pageSize && (
+                <div
+                  style={{
+                    marginTop: "20px",
+                    padding: "0 24px",
+                  }}
+                >
+                  <Pagination
+                    current={currentPage}
+                    total={
+                      sortedOrderHistory.filter(
+                        (order) => order.status === value
+                      ).length
+                    }
+                    align="end"
+                    className="history-pagination"
+                    pageSize={pageSize}
+                    onChange={handlePageChange}
+                    showSizeChanger={false}
+                  />
+                </div>
+              )}
           </Tabs.TabPane>
         ))}
       </Tabs>

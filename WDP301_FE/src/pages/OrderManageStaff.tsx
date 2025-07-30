@@ -71,7 +71,6 @@ const StaffOrderManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
   const { data: shippers, isLoading: isShippersLoading } =
     useGetShipperScheduled();
@@ -347,7 +346,7 @@ const StaffOrderManagement = () => {
           return "";
         }
         const shipper = shippers?.find((s) => s.id === assignToShipperId);
-        return shipper ? shipper.fullName : "Không tìm thấy shipper";
+        return shipper ? shipper.fullName : "";
       },
     },
     {
@@ -484,7 +483,7 @@ const StaffOrderManagement = () => {
                   type="text"
                   danger
                   icon={
-                    <CheckCircleOutlined
+                    <CloseCircleOutlined
                       style={{ fontSize: 16, color: "#d97706" }}
                     />
                   }
@@ -524,11 +523,9 @@ const StaffOrderManagement = () => {
         const matchesSearch =
           order.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
           order.orderId.toString().includes(searchText);
-        const matchesStatus =
-          statusFilter === "all" || order.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        return matchesSearch;
       }),
-    [orders, searchText, statusFilter]
+    [orders, searchText]
   );
 
   return (
@@ -658,7 +655,7 @@ const StaffOrderManagement = () => {
                 }}
                 allowClear
               />
-              <Select
+              {/* <Select
                 value={statusFilter}
                 style={{ width: 200, borderRadius: 6, borderColor: "#fde68a" }}
                 onChange={(value) => setStatusFilter(value)}
@@ -672,7 +669,7 @@ const StaffOrderManagement = () => {
                 <Option value="Delivering">Đang giao</Option>
                 <Option value="Delivered">Đã giao</Option>
                 <Option value="Canceled">Đã hủy</Option>
-              </Select>
+              </Select> */}
             </Space>
           </div>
 

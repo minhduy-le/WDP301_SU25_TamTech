@@ -1,6 +1,6 @@
 import { Row, Col, Card, Typography, Button, Skeleton } from "antd";
 import "../style/Blog.css";
-import { useBlogs } from "../hooks/blogsApi";
+import { useBlogActive } from "../hooks/blogsApi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,7 +11,7 @@ const Blog = () => {
     data: blogs,
     isLoading: isLoadingBlogs,
     isError: isErrorBlogs,
-  } = useBlogs();
+  } = useBlogActive();
 
   const [visibleBlogs, setVisibleBlogs] = useState(9);
 
@@ -51,7 +51,10 @@ const Blog = () => {
               style={{ maxWidth: "33.33%" }}
             >
               <Card className="blog-card">
-                <div className="card-image-container">
+                <div
+                  className="card-image-container"
+                  style={{ height: "max-content" }}
+                >
                   <img
                     src={post.image}
                     alt={post.title}
