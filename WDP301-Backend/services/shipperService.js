@@ -33,6 +33,17 @@ const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
     throw new Error("Invalid shipper ID or user is not a shipper");
   }
 
+  const ongoingOrder = await Order.findOne({
+    where: {
+      assignToShipperId: shipperId,
+      certificationOfDelivered: null,
+    },
+  });
+
+  if (ongoingOrder) {
+    throw new Error("Shipper đang có đơn hàng chưa giao xong và không thể nhận đơn mới.");
+  }
+
   const schedule = await Schedule.findOne({
     where: { dayOfWeek: date.toFormat("MM-dd-yyyy") },
     include: [

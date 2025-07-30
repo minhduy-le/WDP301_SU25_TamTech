@@ -39,16 +39,21 @@ interface TopProductsResponse {
   stats: TopProduct[];
 }
 
-export const useTopProducts = () => {
+export const useTopProducts = (startDate?: string, endDate?: string) => {
   return useQuery<TopProduct[], Error>({
-    queryKey: ["top-products"],
+    queryKey: ["top-products", startDate, endDate],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      
       const response = await axiosInstance.get<TopProductsResponse>(
-        "dashboard/top-products"
+        `dashboard/top-products?${params.toString()}`
       );
       const { stats } = response.data;
       return Array.isArray(stats) ? stats : [];
     },
+    enabled: !!(startDate && endDate),
   });
 };
 

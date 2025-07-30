@@ -357,6 +357,10 @@ router.get("/search-by-name-and-type-name", async (req, res) => {
  *                         type: number
  *                       image:
  *                         type: string
+ *                       averageRating:
+ *                         type: number
+ *                         description: Average rating of the product (0 if no ratings)
+ *                         example: 4.5
  *                       ProductType:
  *                         type: object
  *                         properties:
@@ -892,7 +896,7 @@ router.post("/", verifyToken, async (req, res) => {
  *     tags: [Products]
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: id
  *         required: true
  *         schema:
  *           type: integer
@@ -930,6 +934,10 @@ router.post("/", verifyToken, async (req, res) => {
  *                       type: integer
  *                     isActive:
  *                       type: boolean
+ *                     averageRating:
+ *                         type: number
+ *                         description: Average rating of the product (0 if no ratings)
+ *                         example: 4.5
  *                     ProductType:
  *                       type: object
  *                       properties:

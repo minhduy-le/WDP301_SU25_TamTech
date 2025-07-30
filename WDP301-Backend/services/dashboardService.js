@@ -78,9 +78,12 @@ const getRevenueStats = async (year) => {
     throw new Error("Year must be between 2001 and " + currentYear);
   }
 
+  // Get order status IDs for Pending (1), Canceled (5), and Failed (9)
+  const excludedStatusIds = [1, 5, 9]; // From orderStatus.js: Pending=1, Canceled=5, Failed=9
+
   const revenueData = await Order.findAll({
     where: {
-      status_id: { [Op.ne]: 1 },
+      status_id: { [Op.notIn]: excludedStatusIds },
       [Op.and]: [sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("YEAR FROM order_create_at")), parsedYear)],
     },
     attributes: [
@@ -104,7 +107,31 @@ const getRevenueStats = async (year) => {
   return monthlyRevenue;
 };
 
-const getTopProducts = async () => {
+const getTopProducts = async (startDate, endDate) => {
+  const moment = require("moment");
+
+  // Validate date format and range
+  if (!startDate || !endDate) {
+    throw new Error("Both startDate and endDate are required");
+  }
+
+  const parsedStartDate = moment(startDate, "MM-DD-YYYY", true);
+  const parsedEndDate = moment(endDate, "MM-DD-YYYY", true);
+
+  if (!parsedStartDate.isValid() || !parsedEndDate.isValid()) {
+    throw new Error("Invalid date format. Use MM-dd-YYYY");
+  }
+
+  if (parsedStartDate.isAfter(parsedEndDate)) {
+    throw new Error("startDate must be before or equal to endDate");
+  }
+
+  // Calculate duration in days (inclusive of endDate)
+  const durationDays = parsedEndDate.diff(parsedStartDate, "days") + 1;
+
+  // Get order status IDs for Pending (1), Canceled (5), and Failed (9)
+  const excludedStatusIds = [1, 5, 9]; // From orderStatus.js: Pending=1, Canceled=5, Failed=9
+
   const topProducts = await OrderItem.findAll({
     attributes: [
       [sequelize.col("Product.name"), "productName"],
@@ -122,7 +149,10 @@ const getTopProducts = async () => {
         as: "Order",
         attributes: [],
         where: {
-          status_id: { [Op.notIn]: [1, 5] },
+          status_id: { [Op.notIn]: excludedStatusIds },
+          order_create_at: {
+            [Op.between]: [parsedStartDate.startOf("day").toDate(), parsedEndDate.endOf("day").toDate()],
+          },
         },
       },
     ],
@@ -132,11 +162,13 @@ const getTopProducts = async () => {
     raw: true,
   });
 
-  return topProducts.map((item) => ({
+  const stats = topProducts.map((item) => ({
     productName: item.productName,
     totalQuantity: parseInt(item.totalQuantity) || 0,
     totalRevenue: parseFloat(item.totalRevenue) || 0,
   }));
+
+  return { stats, durationDays };
 };
 
 const getCurrentMonthRevenue = async () => {
@@ -150,7 +182,7 @@ const getCurrentMonthRevenue = async () => {
 
   const currentRevenueData = await Order.findAll({
     where: {
-      status_id: { [Op.notIn]: [1, 5] },
+      status_id: { [Op.notIn]: [1, 5, 9] },
       [Op.and]: [
         sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("YEAR FROM order_create_at")), currentYear),
         sequelize.where(sequelize.fn("EXTRACT", sequelize.literal("MONTH FROM order_create_at")), currentMonth),
