@@ -1007,8 +1007,9 @@ router.get("/:id", async (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   put:
- *     summary: Update a product
- *     tags: [Products]
+ *     summary: Update a product, including its recipes
+ *     tags:
+ *       - Products
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -1037,9 +1038,9 @@ router.get("/:id", async (req, res) => {
  *                 example: Updated description
  *               price:
  *                 type: number
- *                 minimum: 0.01
- *                 maximum: 999999.99
- *                 example: 39.99
+ *                 minimum: 1000
+ *                 maximum: 1000000
+ *                 example: 39990
  *               image:
  *                 type: string
  *                 example: https://example.com/updated-image.jpg
@@ -1047,8 +1048,24 @@ router.get("/:id", async (req, res) => {
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
+ *               recipes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - materialId
+ *                     - quantity
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 2
  *     responses:
- *       200:
+ *       '200':
  *         description: Product updated successfully
  *         content:
  *           application/json:
@@ -1110,30 +1127,37 @@ router.get("/:id", async (req, res) => {
  *                                 type: integer
  *                               storeId:
  *                                 type: integer
- *       400:
+ *       '400':
  *         description: Invalid input
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *               examples:
- *                 invalidId: { value: "ProductId must be a positive integer" }
- *                 invalidName: { value: "Name must be a non-empty string and cannot exceed 100 characters" }
- *                 invalidPrice: { value: "Price must be a number greater than 0 and less than 1,000,000" }
- *       401:
+ *             examples:
+ *               invalidId:
+ *                 value: ProductId must be a positive integer
+ *               invalidName:
+ *                 value: Name must be a non-empty string and cannot exceed 100 characters
+ *               invalidPrice:
+ *                 value: Price must be a number greater than 0 and less than 1,000,000
+ *               invalidRecipes:
+ *                 value: Each recipe must have a valid materialId and quantity
+ *               materialNotFound:
+ *                 value: Material with ID 5 not found
+ *       '401':
  *         description: Unauthorized
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *       404:
+ *       '404':
  *         description: Product not found
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: Product not found or inactive
- *       500:
+ *       '500':
  *         description: Server error
  *         content:
  *           text/plain:
@@ -1143,14 +1167,15 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    const { name, description, price, image, productTypeId } = req.body;
+    const { name, description, price, image, productTypeId, recipes } = req.body;
 
     const updateData = {
       name,
       description,
       price,
-      image, // Store the image as provided
+      image,
       productTypeId,
+      recipes, // Pass recipes to the service
     };
 
     const updatedProduct = await productService.updateProduct(productId, updateData);
@@ -1163,7 +1188,9 @@ router.put("/:id", verifyToken, async (req, res) => {
           error.message.includes("Name") ||
           error.message.includes("Price") ||
           error.message.includes("ProductTypeId") ||
-          error.message.includes("Description")
+          error.message.includes("Description") ||
+          error.message.includes("recipe") || // Catch recipe validation errors
+          error.message.includes("Material")
           ? 400
           : error.message.includes("not found")
           ? 404
