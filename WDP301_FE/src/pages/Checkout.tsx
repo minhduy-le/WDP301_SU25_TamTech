@@ -4,7 +4,6 @@ import {
   Row,
   Col,
   Input,
-  Select,
   Radio,
   Button,
   Card,
@@ -20,7 +19,7 @@ import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
+// import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
 import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser } from "../hooks/profileApi";
@@ -32,7 +31,7 @@ import {
 } from "../hooks/promotionApi";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 
-const { Option } = Select;
+// const { Option } = Select;
 const { Title, Text } = Typography;
 
 interface AddOn {
@@ -59,10 +58,10 @@ interface OrderItem {
 }
 
 const Checkout = () => {
-  const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
-  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
-    null
-  );
+  // const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
+  // const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
+  //   null
+  // );
   const [detailedAddress, setDetailedAddress] = useState("");
   const [isDatHo, setIsDatHo] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<number>(4);
@@ -70,7 +69,7 @@ const Checkout = () => {
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
   const [nguoiDatHo, setNguoiDatHo] = useState("");
   const [sdtNguoiDatHo, setSdtNguoiDatHo] = useState("");
-  const [selectedWard, setSelectedWard] = useState<string | null>(null);
+  // const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
@@ -89,16 +88,16 @@ const Checkout = () => {
   const { data: userPromotions, isLoading } = useGetPromotionUser(userId ?? 0);
   const { data: userProfile } = useGetProfileUser(userId || 0);
 
-  const {
-    data: districts = [],
-    isLoading: isDistrictsLoading,
-    isError: isDistrictsError,
-  } = useDistricts();
-  const {
-    data: wards = [],
-    isLoading: isWardsLoading,
-    isError: isWardsError,
-  } = useWardByDistrictId(selectedDistrictId);
+  // const {
+  //   data: districts = [],
+  //   isLoading: isDistrictsLoading,
+  //   isError: isDistrictsError,
+  // } = useDistricts();
+  // const {
+  //   data: wards = [],
+  //   isLoading: isWardsLoading,
+  //   isError: isWardsError,
+  // } = useWardByDistrictId(selectedDistrictId);
 
   const {
     data: promotion,
@@ -226,59 +225,28 @@ const Checkout = () => {
             setDetailedAddressProxy(cleanedAddress);
             setIsAddressFromPlacesProxy(true);
             const deliverAddress = cleanedAddress.trim();
-            if (selectedDistrictId && selectedWard) {
-              const selectedDistrict = districts.find(
-                (district) => district.districtId === selectedDistrictId
-              );
-              calculateShipping(
-                {
-                  deliver_address:
-                    `${deliverAddress}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim(),
+            calculateShipping(
+              { deliver_address: deliverAddress },
+              {
+                onSuccess: (data: any) => {
+                  setDeliveryFee(data.fee || 0);
+                  message.success("Phí giao hàng đã được cập nhật.");
                 },
-                {
-                  onSuccess: (data: any) => {
-                    setDeliveryFee(data.fee || 0);
-                    message.success("Phí giao hàng đã được cập nhật.");
-                  },
-                  onError: (error: any) => {
-                    if (
-                      error.response.data?.message ===
-                      "Delivery address must be in the format: street name, ward, district, city"
-                    ) {
-                      message.error(
-                        "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-                      );
-                    } else {
-                      message.error(error.response.data?.message);
-                    }
-                    setDeliveryFee(22000);
-                  },
-                }
-              );
-            } else {
-              calculateShipping(
-                { deliver_address: deliverAddress },
-                {
-                  onSuccess: (data: any) => {
-                    setDeliveryFee(data.fee || 0);
-                    message.success("Phí giao hàng đã được cập nhật.");
-                  },
-                  onError: (error: any) => {
-                    if (
-                      error.response.data?.message ===
-                      "Delivery address must be in the format: street name, ward, district, city"
-                    ) {
-                      message.error(
-                        "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-                      );
-                    } else {
-                      message.error(error.response.data?.message);
-                    }
-                    setDeliveryFee(22000);
-                  },
-                }
-              );
-            }
+                onError: (error: any) => {
+                  if (
+                    error.response.data?.message ===
+                    "Delivery address must be in the format: street name, ward, district, city"
+                  ) {
+                    message.error(
+                      "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                    );
+                  } else {
+                    message.error(error.response.data?.message);
+                  }
+                  setDeliveryFee(22000);
+                },
+              }
+            );
           } else {
             message.error("Không thể lấy địa chỉ từ Google Maps.");
           }
@@ -338,59 +306,28 @@ const Checkout = () => {
           .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
           .trim();
       }
-      if (selectedDistrictId && selectedWard) {
-        const selectedDistrict = districts.find(
-          (district) => district.districtId === selectedDistrictId
-        );
-        calculateShipping(
-          {
-            deliver_address:
-              `${deliverAddress}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim(),
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
           },
-          {
-            onSuccess: (data: any) => {
-              setDeliveryFee(data.fee || 0);
-              message.success("Phí giao hàng đã được cập nhật.");
-            },
-            // onError: (error: any) => {
-            //   if (
-            //     error.response.data?.message ===
-            //     "Delivery address must be in the format: street name, ward, district, city"
-            //   ) {
-            //     message.error(
-            //       "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-            //     );
-            //   } else {
-            //     message.error(error.response.data?.message);
-            //   }
-            //   setDeliveryFee(22000);
-            // },
-          }
-        );
-      } else {
-        calculateShipping(
-          { deliver_address: deliverAddress },
-          {
-            onSuccess: (data: any) => {
-              setDeliveryFee(data.fee || 0);
-              message.success("Phí giao hàng đã được cập nhật.");
-            },
-            // onError: (error: any) => {
-            //   if (
-            //     error.response.data?.message ===
-            //     "Delivery address must be in the format: street name, ward, district, city"
-            //   ) {
-            //     message.error(
-            //       "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-            //     );
-            //   } else {
-            //     message.error(error.response.data?.message);
-            //   }
-            //   setDeliveryFee(22000);
-            // },
-          }
-        );
-      }
+          // onError: (error: any) => {
+          //   if (
+          //     error.response.data?.message ===
+          //     "Delivery address must be in the format: street name, ward, district, city"
+          //   ) {
+          //     message.error(
+          //       "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+          //     );
+          //   } else {
+          //     message.error(error.response.data?.message);
+          //   }
+          //   setDeliveryFee(22000);
+          // },
+        }
+      );
     }
   };
 
@@ -407,14 +344,14 @@ const Checkout = () => {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const total = subtotal - discountOnItems - promoDiscount + deliveryFee;
 
-  const handleDistrictChange = (value: number) => {
-    setSelectedDistrictId(value);
-    setSelectedWard(null);
-  };
+  // const handleDistrictChange = (value: number) => {
+  //   setSelectedDistrictId(value);
+  //   setSelectedWard(null);
+  // };
 
-  const handleWardChange = (value: string) => {
-    setSelectedWard(value);
-  };
+  // const handleWardChange = (value: string) => {
+  //   setSelectedWard(value);
+  // };
 
   const { mutate: calculateShipping } = useCalculateShipping();
   const { mutate: createOrder } = useCreateOrder();
@@ -491,14 +428,9 @@ const Checkout = () => {
 
     const paymentMethodId = paymentMethod ?? 0;
 
-    const selectedDistrict = districts.find(
-      (district) => district.districtId === selectedDistrictId
-    );
-
     let orderAddress = detailedAddress.trim();
     if (isDatHo && detailedAddressProxy) {
-      orderAddress =
-        `${detailedAddressProxy}, ${selectedWard}, ${selectedDistrict?.name}, TPHCM`.trim();
+      orderAddress = detailedAddressProxy;
     }
 
     const orderData = {
@@ -725,7 +657,7 @@ const Checkout = () => {
                     value={sdtNguoiDatHo}
                     onChange={(e) => setSdtNguoiDatHo(e.target.value)}
                   />
-                  <Row style={{ justifyContent: "space-between" }}>
+                  {/* <Row style={{ justifyContent: "space-between" }}>
                     <Col span={11}>
                       <Select
                         defaultValue={null}
@@ -770,7 +702,7 @@ const Checkout = () => {
                         ))}
                       </Select>
                     </Col>
-                  </Row>
+                  </Row> */}
                   {isLoaded ? (
                     <StandaloneSearchBox
                       onLoad={(ref) => (inputrefProxy.current = ref)}
@@ -808,7 +740,7 @@ const Checkout = () => {
                       disabled
                     />
                   )}
-                  <div className="delivery-info">
+                  {/* <div className="delivery-info">
                     <Radio.Group
                       value={deliveryTimeOption}
                       onChange={(e) => setDeliveryTimeOption(e.target.value)}
@@ -823,7 +755,7 @@ const Checkout = () => {
                         Giao ngay
                       </Radio>
                     </Radio.Group>
-                  </div>
+                  </div> */}
                 </>
               )}
             </Space>
@@ -1154,6 +1086,7 @@ const Checkout = () => {
                 whiteSpace: "nowrap",
                 alignContent: "center",
                 marginRight: 11,
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               Mã khuyến mãi
@@ -1197,7 +1130,9 @@ const Checkout = () => {
           )}
         </div>
         <div style={{ marginBottom: 16, marginTop: 15 }}>
-          <Text>Chọn khuyến mãi từ tài khoản:</Text>
+          <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            Chọn khuyến mãi từ tài khoản:
+          </Text>
           {isLoading ? (
             <Spin />
           ) : userPromotions && userPromotions.length > 0 ? (
@@ -1288,7 +1223,9 @@ const Checkout = () => {
               </Card>
             ))
           ) : (
-            <Text>Không có khuyến mãi nào từ tài khoản.</Text>
+            <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              Không có khuyến mãi nào từ tài khoản.
+            </Text>
           )}
         </div>
       </Modal>
