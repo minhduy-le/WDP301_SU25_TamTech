@@ -34,7 +34,6 @@ import {
   useApproveOrder,
   useCookOrder,
   usePrepareOrder,
-  useCancelOrderPayment,
   useCancelOrderSendEmail,
   useUploadRefundCertificate,
 } from "../hooks/ordersApi";
@@ -87,7 +86,6 @@ const StaffOrderManagement = () => {
   const approveOrderMutation = useApproveOrder();
   const prepareOrderMutation = usePrepareOrder();
   const cookOrderMutation = useCookOrder();
-  const cancelOrder = useCancelOrderPayment();
   const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
 
@@ -125,19 +123,6 @@ const StaffOrderManagement = () => {
         onError: (error: AxiosError) =>
           message.error(
             error.response?.data?.toString() || "Hoàn thành nấu thất bại!"
-          ),
-      }
-    );
-  };
-
-  const handleCancelOrder = (orderId: number) => {
-    cancelOrder.mutate(
-      { orderId },
-      {
-        onSuccess: () => message.success("Hủy đơn hàng thành công!"),
-        onError: (error: AxiosError) =>
-          message.error(
-            error.response?.data?.toString() || "Hủy đơn hàng thất bại!"
           ),
       }
     );
@@ -530,32 +515,6 @@ const StaffOrderManagement = () => {
                 icon={<DeliveryIcon />}
                 className="btn-action-status"
               />
-            </Tooltip>
-          )}
-          {record.status === "Paid" && (
-            <Tooltip title="Hủy đơn">
-              <Popconfirm
-                title="Xác nhận hủy đơn"
-                description="Bạn có chắc muốn hủy đơn hàng này hay không?"
-                onConfirm={() => handleCancelOrder(record.orderId)}
-                okText="Xác nhận"
-                cancelText="Hủy"
-                okButtonProps={{
-                  danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
-                }}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={
-                    <CloseCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }}
-                    />
-                  }
-                  className="btn-action-status"
-                />
-              </Popconfirm>
             </Tooltip>
           )}
           {record.status === "Canceled" && record.invoiceUrl !== null && (
@@ -1093,11 +1052,43 @@ const StaffOrderManagement = () => {
           className="modal-upload-refund"
           style={{ borderRadius: 12, top: 20 }}
         >
+          {selectedOrder && selectedOrder.bankAccounts.length > 0 && (
+            <>
+              <Input
+                value={selectedOrder.bankAccounts[0].bankName}
+                disabled
+                style={{
+                  width: "100%",
+                  borderRadius: 6,
+                  borderColor: "#fde68a",
+                  background: "#ffffff",
+                  color: "black",
+                  fontWeight: 600,
+                }}
+                placeholder="Tên ngân hàng"
+              />
+              <Input
+                value={selectedOrder.bankAccounts[0].bankNumber}
+                disabled
+                style={{
+                  marginTop: 8,
+                  width: "100%",
+                  borderRadius: 6,
+                  borderColor: "#fde68a",
+                  background: "#ffffff",
+                  color: "black",
+                  fontWeight: 600,
+                }}
+                placeholder="Số tài khoản"
+              />
+            </>
+          )}
           <Upload
             beforeUpload={() => false}
             onChange={handleFileChange}
             fileList={fileList}
             accept="image/*"
+            style={{ marginTop: 8 }}
             maxCount={1}
           >
             <Button icon={<UploadOutlined />}>Chọn file ảnh</Button>

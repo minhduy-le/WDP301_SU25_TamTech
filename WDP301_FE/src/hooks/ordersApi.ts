@@ -47,6 +47,12 @@ export interface OrderHistory {
   status: string;
   fullName: string;
   phone_number: string;
+  bankAccounts: [
+    {
+      bankName: string;
+      bankNumber: string;
+    }
+  ];
   orderItems: [
     {
       productId: number;

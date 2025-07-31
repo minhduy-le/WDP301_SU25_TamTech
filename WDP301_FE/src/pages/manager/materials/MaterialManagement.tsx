@@ -193,7 +193,8 @@ const MaterialManagement = () => {
         const matchesSearch =
           material.name.toLowerCase().includes(searchText.toLowerCase()) ||
           material.materialId?.toString().includes(searchText);
-        return matchesSearch;
+        const filterProcess = material.isProcessExpired === false;
+        return matchesSearch && filterProcess;
       }),
     [materials, searchText]
   );
