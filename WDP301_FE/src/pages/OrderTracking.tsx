@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Row,
   Col,
@@ -20,10 +19,9 @@ import {
   useGetOrderById,
   useGetBank,
   useCancelOrder,
-  useCancelOrderSendEmail,
 } from "../hooks/ordersApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom"; // Thêm useParams
+import { useNavigate, useParams } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -117,7 +115,6 @@ const OrderTracking = () => {
 
   const { data: bankData } = useGetBank();
   const cancelOrderMutation = useCancelOrder();
-  const sendEmailMutation = useCancelOrderSendEmail();
 
   if (isLoading) {
     return <div>Đang tải thông tin đơn hàng...</div>;
@@ -144,20 +141,12 @@ const OrderTracking = () => {
           { orderId: order.orderId, cancelReason },
           {
             onSuccess: () => {
-              sendEmailMutation.mutate(
-                { orderId: order.orderId },
-                {
-                  onSuccess: () => {
-                    message.success("Hủy đơn thành công và email đã được gửi!");
-                    setIsCancelModalVisible(false);
-                    form.resetFields();
-                    queryClient.invalidateQueries({ queryKey: ["orders"] });
-                  },
-                  onError: (error: any) => {
-                    message.error("Gửi email thất bại: " + error.message);
-                  },
-                }
+              message.success(
+                "Hủy đơn thành công hãy chờ gửi chứng từ hoàn tiến qua email!"
               );
+              setIsCancelModalVisible(false);
+              form.resetFields();
+              queryClient.invalidateQueries({ queryKey: ["orders"] });
             },
             onError: (error) => {
               message.error("Hủy đơn thất bại: " + error.message);
