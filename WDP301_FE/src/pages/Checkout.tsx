@@ -955,7 +955,7 @@ const Checkout = () => {
                   {subtotal.toLocaleString()}đ
                 </Text>
               </div>
-              <div className="summary-item">
+              {/* <div className="summary-item">
                 <Text
                   style={{
                     fontFamily: "'Montserrat', sans-serif",
@@ -974,7 +974,7 @@ const Checkout = () => {
                 >
                   -{discountOnItems.toLocaleString()}đ
                 </Text>
-              </div>
+              </div> */}
               <div className="summary-item">
                 <Text
                   style={{
