@@ -200,6 +200,21 @@ const getShippersByDate = async () => {
   return shippers;
 };
 
+const getAssignedOrders = async (shipperId) => {
+  const shipper = await User.findByPk(shipperId);
+  if (!shipper || shipper.role !== "Shipper") {
+    throw new Error("User is not a shipper");
+  }
+
+  const orders = await Order.findAll({
+    where: {
+      assignToShipperId: shipperId,
+    },
+  });
+
+  return orders;
+};
+
 module.exports = {
   getShippers,
   assignShipperToOrder,
@@ -207,4 +222,5 @@ module.exports = {
   updateStartTime,
   updateEndTime,
   getShippersByDate,
+  getAssignedOrders,
 };
