@@ -312,4 +312,53 @@ router.put("/:scheduleId/end-time", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/shippers/assigned-orders:
+ *   get:
+ *     summary: Lấy các đơn hàng được gán cho shipper hiện tại
+ *     description: Lấy danh sách tất cả các đơn hàng đã được gán cho shipper đang đăng nhập (dựa trên token).
+ *     tags: [Shippers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đơn hàng được gán thành công.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   orderId:
+ *                     type: integer
+ *                   assignToShipperId:
+ *                     type: integer
+ *                   # Thêm các thuộc tính khác của đơn hàng tại đây, ví dụ:
+ *                   status:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *       401:
+ *         description: Unauthorized (Chưa xác thực).
+ *       403:
+ *         description: Forbidden (Người dùng không phải là shipper).
+ *       500:
+ *         description: Lỗi máy chủ.
+ */
+router.get("/assigned-orders", verifyToken, async (req, res, next) => {
+  try {
+    const shipperId = req.userId;
+    const orders = await shipperService.getAssignedOrders(shipperId);
+    res.status(200).json(orders);
+  } catch (error) {
+    if (error.message === "User is not a shipper") {
+      return res.status(403).send(error.message);
+    }
+    res.status(400).send(error.message);
+  }
+});
+
 module.exports = router;
