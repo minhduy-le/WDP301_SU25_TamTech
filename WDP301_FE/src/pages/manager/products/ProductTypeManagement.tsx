@@ -62,6 +62,10 @@ const ProductTypeManagement: React.FC<ProductTypeManagementProps> = ({ onChanged
   };
 
   const handleEdit = (record: ProductType) => {
+    if (record.name === "Thức uống") {
+      message.warning("Không thể chỉnh sửa loại 'Thức uống'!");
+      return;
+    }
     setEditingType(record);
     form.setFieldsValue(record);
     setIsModalVisible(true);
@@ -156,7 +160,8 @@ const ProductTypeManagement: React.FC<ProductTypeManagementProps> = ({ onChanged
 
   const productTypeMenu = (record: ProductType): MenuProps["items"] =>
     ([
-      {
+      // Không cho phép chỉnh sửa loại "Thức uống"
+      record.name !== "Thức uống" && {
         key: "edit",
         icon: <EditOutlined />,
         label: "Chỉnh sửa",
