@@ -35,6 +35,7 @@ import {
   useCookOrder,
   usePrepareOrder,
   useCancelOrderPayment,
+  useCancelOrderSendEmail,
   useUploadRefundCertificate,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
@@ -87,6 +88,7 @@ const StaffOrderManagement = () => {
   const prepareOrderMutation = usePrepareOrder();
   const cookOrderMutation = useCookOrder();
   const cancelOrder = useCancelOrderPayment();
+  const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
 
   const handleApproveOrder = (orderId: number) => {
@@ -274,10 +276,22 @@ const StaffOrderManagement = () => {
       { orderId: currentOrderId, file: selectedFile },
       {
         onSuccess: () => {
-          message.success("Chứng từ hoàn tiền đã được tải lên thành công!");
-          setIsUploadModalVisible(false);
-          setSelectedFile(null);
-          setFileList([]);
+          sendEmailMutation.mutate(
+            { orderId: currentOrderId },
+            {
+              onSuccess: () => {
+                message.success(
+                  "Chứng từ hoàn tiền đã được tải lên và gửi tới email người dùng!"
+                );
+                setIsUploadModalVisible(false);
+                setSelectedFile(null);
+                setFileList([]);
+              },
+              onError: (error: any) => {
+                message.error("Gửi email thất bại: " + error.message);
+              },
+            }
+          );
         },
         onError: (error) => {
           console.error("Upload error:", error);
