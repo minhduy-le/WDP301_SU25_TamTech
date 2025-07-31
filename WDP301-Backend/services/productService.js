@@ -103,12 +103,13 @@ const createProduct = async (productData) => {
   }
 };
 
-const getProducts = async ({ page, limit, offset }) => {
+const getProducts = async ({ page, size, offset }) => {
   if (!Number.isInteger(page) || page < 1) {
     throw new Error("Page must be a positive integer");
   }
-  if (!Number.isInteger(limit) || limit < 1) {
-    throw new Error("Limit must be a positive integer");
+  // Cập nhật validation từ 'limit' sang 'size'
+  if (!Number.isInteger(size) || size < 1) {
+    throw new Error("Size must be a positive integer");
   }
   if (!Number.isInteger(offset) || offset < 0) {
     throw new Error("Offset must be a non-negative integer");
@@ -117,7 +118,7 @@ const getProducts = async ({ page, limit, offset }) => {
   const totalCount = await Product.count({ where: { isActive: true } });
 
   const products = await Product.findAll({
-    limit,
+    limit: size, // Sử dụng 'size' cho truy vấn Sequelize
     offset,
     order: [["price", "DESC"]],
     attributes: {
@@ -139,7 +140,7 @@ const getProducts = async ({ page, limit, offset }) => {
 
   return {
     products: products,
-    totalPages: Math.ceil(totalCount / limit),
+    totalPages: Math.ceil(totalCount / size), // Tính toán tổng số trang với 'size'
   };
 };
 

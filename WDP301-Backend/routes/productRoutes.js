@@ -591,7 +591,8 @@ router.get("/type/:productTypeId", async (req, res) => {
  * /api/products:
  *   get:
  *     summary: Get products with pagination, sort by price descending, and include average rating
- *     tags: [Products]
+ *     tags:
+ *       - Products
  *     parameters:
  *       - in: query
  *         name: page
@@ -600,6 +601,13 @@ router.get("/type/:productTypeId", async (req, res) => {
  *           minimum: 1
  *           default: 1
  *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
+ *         description: Number of products per page
  *     responses:
  *       200:
  *         description: List of products retrieved successfully
@@ -613,95 +621,71 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                   items:
  *                     type: object
  *                     properties:
- *                       productId:
+ *                       id:
  *                         type: integer
  *                       name:
  *                         type: string
- *                       description:
- *                         type: string
  *                       price:
  *                         type: number
- *                       image:
- *                         type: string
- *                       createAt:
- *                         type: string
- *                         format: date-time
- *                       productTypeId:
- *                         type: integer
- *                       createBy:
- *                         type: string
- *                       storeId:
- *                         type: integer
- *                       isActive:
- *                         type: boolean
+ *                         format: float
  *                       averageRating:
  *                         type: number
- *                         description: Average rating of the product (0 if no ratings)
- *                         example: 4.50
- *                       ProductType:
- *                         type: object
- *                         properties:
- *                           productTypeId:
- *                             type: integer
- *                           name:
- *                             type: string
- *                       ProductRecipes:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             productRecipeId:
- *                               type: integer
- *                             productId:
- *                               type: integer
- *                             materialId:
- *                               type: integer
- *                             quantity:
- *                               type: integer
- *                             Material:
- *                               type: object
- *                               properties:
- *                                 materialId:
- *                                   type: integer
- *                                 name:
- *                                   type: string
- *                                 quantity:
- *                                   type: integer
- *                                 storeId:
- *                                   type: integer
+ *                         format: float
+ *                   example:
+ *                     - id: 1
+ *                       name: Product A
+ *                       price: 150.0
+ *                       averageRating: 4.2
+ *                     - id: 2
+ *                       name: Product B
+ *                       price: 120.0
+ *                       averageRating: 3.9
  *                 totalPages:
  *                   type: integer
+ *                   example: 5
  *                 currentPage:
  *                   type: integer
+ *                   example: 1
  *       400:
- *         description: Invalid page number
+ *         description: Invalid page or size number
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
- *               example: Page must be a positive integer
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               invalidPage:
+ *                 value:
+ *                   message: Page must be a positive integer
+ *               invalidSize:
+ *                 value:
+ *                   message: Size must be a positive integer
  *       500:
  *         description: Server error
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
  */
 router.get("/", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
-    const offset = (page - 1) * limit;
+    const size = parseInt(req.query.size) > 0 ? parseInt(req.query.size) : 10;
+    const offset = (page - 1) * size;
 
-    const result = await productService.getProducts({ page, limit, offset });
+    const result = await productService.getProducts({ page, size, offset });
     res.status(200).json({ products: result.products, totalPages: result.totalPages, currentPage: page });
   } catch (error) {
     console.error("Error retrieving products:", error);
     res
       .status(
-        error.message.includes("Page") || error.message.includes("Limit") || error.message.includes("Offset")
-          ? 400
-          : 500
+        error.message.includes("Page") || error.message.includes("Size") || error.message.includes("Offset") ? 400 : 500
       )
       .send(error.message);
   }
