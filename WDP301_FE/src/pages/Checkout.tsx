@@ -387,7 +387,6 @@ const Checkout = () => {
       if (subtotal >= selectedUserPromo.minOrderAmount) {
         message.success("Khuyến mãi từ tài khoản đã được áp dụng.");
         setAppliedPromotion(selectedUserPromo);
-        // Bỏ chọn checkbox và hủy áp dụng khuyến mãi
         setSelectedUserPromo(null);
         setIsModalVisible(false);
       } else {
@@ -396,7 +395,6 @@ const Checkout = () => {
         );
       }
     } else {
-      // Nếu không có khuyến mãi nào được chọn, hủy áp dụng khuyến mãi hiện tại
       setAppliedPromotion(null);
       setIsModalVisible(false);
       message.info("Đã hủy áp dụng khuyến mãi.");
