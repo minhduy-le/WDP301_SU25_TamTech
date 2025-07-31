@@ -138,7 +138,6 @@ const ProductManagement: React.FC = () => {
       }));
       setProducts(processedProducts);
       setTotalPages(totalPagesFromApi);
-      // Nếu dữ liệu trả về rỗng và page > 1, tự động chuyển về trang trước đó
       if (processedProducts.length === 0 && page > 1) {
         setPage(page - 1);
         fetchProducts(page - 1, typeId);
@@ -222,7 +221,6 @@ const ProductManagement: React.FC = () => {
     fetchMaterials();
   }, []);
 
-  // Chỉ setPage(1) khi filterType thay đổi
   useEffect(() => {
     setPage(1);
     fetchProducts(1, filterType);
@@ -344,6 +342,15 @@ const ProductManagement: React.FC = () => {
         imageUrl = values.image[0].url;
       } else if (typeof values.image === "string") {
         imageUrl = values.image;
+      }
+
+      const selectedProductType = productTypes?.find(type => type.productTypeId === values.productTypeId);
+      const isDrinkType = selectedProductType?.name === "Thức uống";
+      
+      if (!isDrinkType && (!values.recipes || values.recipes.length === 0)) {
+        message.error("Sản phẩm này cần phải có ít nhất một nguyên liệu!");
+        setIsSubmitting(false);
+        return;
       }
 
       const productPayload = {
@@ -773,7 +780,6 @@ const ProductManagement: React.FC = () => {
               const matchType = filterType
                 ? product.ProductType?.productTypeId === filterType
                 : true;
-              // Chỉ lọc theo trạng thái nếu filterStatus được chọn, còn mặc định thì show hết
               const matchStatus =
                 filterStatus !== undefined
                   ? product.isActive === filterStatus
@@ -1133,7 +1139,7 @@ const ProductManagement: React.FC = () => {
               </Space>
               <Form.Item
                 label={<span style={{ color: "#A05A2C" }}>Nguyên liệu</span>}
-                required
+                required={false}
               >
                 <Form.List name="recipes">
                   {(fields, { add, remove }) => {
@@ -1142,8 +1148,38 @@ const ProductManagement: React.FC = () => {
                       return fieldValue;
                     }).filter(id => id !== undefined && id !== null);
 
+                    const currentProductTypeId = form.getFieldValue('productTypeId');
+                    const currentProductType = productTypes?.find(type => type.productTypeId === currentProductTypeId);
+                    const isDrinkType = currentProductType?.name === "Thức uống";
+
                     return (
                       <>
+                        {isDrinkType && (
+                          <div style={{ 
+                            marginBottom: 16, 
+                            padding: "8px 12px", 
+                            backgroundColor: "#E6F7FF", 
+                            border: "1px solid #91D5FF", 
+                            borderRadius: 6,
+                            color: "#1890FF",
+                            fontSize: 14
+                          }}>
+                            ℹ️ Loại "Thức uống" không bắt buộc phải có nguyên liệu
+                          </div>
+                        )}
+                        {!isDrinkType && currentProductTypeId && (
+                          <div style={{ 
+                            marginBottom: 16, 
+                            padding: "8px 12px", 
+                            backgroundColor: "#FFF2E8", 
+                            border: "1px solid #FFBB96", 
+                            borderRadius: 6,
+                            color: "#D46B08",
+                            fontSize: 14
+                          }}>
+                            ⚠️ Loại "{currentProductType?.name}" cần phải có ít nhất một nguyên liệu
+                          </div>
+                        )}
                         {fields.map((field, _index) => (
                           <Space
                             key={field.key}
@@ -1154,7 +1190,10 @@ const ProductManagement: React.FC = () => {
                               {...field}
                               name={[field.name, "materialId"]}
                               rules={[
-                                { required: true, message: "Chọn nguyên liệu" },
+                                {
+                                  required: !isDrinkType,
+                                  message: "Chọn nguyên liệu"
+                                }
                               ]}
                               style={{ minWidth: 200 }}
                             >
@@ -1162,7 +1201,6 @@ const ProductManagement: React.FC = () => {
                                 placeholder="Chọn nguyên liệu"
                                 style={{ borderRadius: 6, outline: "none", boxShadow: "none", border: "none" }}
                                 onChange={() => {
-                                  form.validateFields(['recipes']);
                                 }}
                               >
                                 {materials
@@ -1182,7 +1220,10 @@ const ProductManagement: React.FC = () => {
                               {...field}
                               name={[field.name, "quantity"]}
                               rules={[
-                                { required: true, message: "Nhập số lượng" },
+                                {
+                                  required: !isDrinkType,
+                                  message: "Nhập số lượng"
+                                }
                               ]}
                             >
                               <InputNumber
@@ -1198,14 +1239,27 @@ const ProductManagement: React.FC = () => {
                             )}
                           </Space>
                         ))}
-                        <Button
-                          type="dashed"
-                          onClick={() => add()}
-                          block
-                          icon={<PlusOutlined />}
-                        >
-                          Thêm nguyên liệu
-                        </Button>
+                        {!isDrinkType && (
+                          <Button
+                            type="dashed"
+                            onClick={() => add()}
+                            block
+                            icon={<PlusOutlined />}
+                          >
+                            Thêm nguyên liệu
+                          </Button>
+                        )}
+                        {isDrinkType && (
+                          <Button
+                            type="dashed"
+                            onClick={() => add()}
+                            block
+                            icon={<PlusOutlined />}
+                            style={{ borderColor: "#91D5FF", color: "#1890FF" }}
+                          >
+                            Thêm nguyên liệu (tùy chọn)
+                          </Button>
+                        )}
                       </>
                     );
                   }}

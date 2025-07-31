@@ -215,6 +215,38 @@ const getAssignedOrders = async (shipperId) => {
   return orders;
 };
 
+const getRegisteredScheduleDates = async (shipperId) => {
+  const shipper = await User.findByPk(shipperId);
+  if (!shipper || shipper.role !== "Shipper") {
+    throw new Error("User is not a shipper");
+  }
+
+  const schedules = await Schedule.findAll({
+    include: [
+      {
+        model: ScheduleShipper,
+        as: "ScheduleShippers",
+        where: { shipperId },
+        attributes: [],
+      },
+    ],
+    attributes: ["scheduleId", "dayOfWeek", "startTime", "endTime"],
+    order: [["dayOfWeek", "DESC"]], 
+  });
+
+  const uniqueSchedules = [];
+  const seenDates = new Set();
+
+  for (const schedule of schedules) {
+    if (!seenDates.has(schedule.dayOfWeek)) {
+      uniqueSchedules.push(schedule);
+      seenDates.add(schedule.dayOfWeek);
+    }
+  }
+
+  return uniqueSchedules;
+};
+
 module.exports = {
   getShippers,
   assignShipperToOrder,
@@ -223,4 +255,5 @@ module.exports = {
   updateEndTime,
   getShippersByDate,
   getAssignedOrders,
+  getRegisteredScheduleDates,
 };

@@ -361,4 +361,59 @@ router.get("/assigned-orders", verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/shippers/registered-schedules:
+ *   get:
+ *     summary: Lấy ngày làm việc đã đăng ký của shipper
+ *     description: Lấy danh sách các ngày làm việc đã được đăng ký bởi shipper đang đăng nhập, trả về cả ngày và thời gian check-in/check-out nếu có.
+ *     tags: [Shippers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách ngày đăng ký thành công.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   scheduleId:
+ *                     type: integer
+ *                     example: 12
+ *                   dayOfWeek:
+ *                     type: string
+ *                     example: "Monday"
+ *                   startTime:
+ *                     type: string
+ *                     format: time
+ *                     nullable: true
+ *                     example: "08:00:00"
+ *                   endTime:
+ *                     type: string
+ *                     format: time
+ *                     nullable: true
+ *                     example: "17:00:00"
+ *       401:
+ *         description: Unauthorized (Chưa xác thực).
+ *       403:
+ *         description: Forbidden (Người dùng không phải là shipper).
+ *       400:
+ *         description: Lỗi xử lý yêu cầu.
+ */
+router.get("/registered-schedules", verifyToken, async (req, res, next) => {
+  try {
+    const shipperId = req.userId;
+    const schedules = await shipperService.getRegisteredScheduleDates(shipperId);
+    res.status(200).json(schedules);
+  } catch (error) {
+    if (error.message === "User is not a shipper") {
+      return res.status(403).send(error.message);
+    }
+    res.status(400).send(error.message);
+  }
+});
+
 module.exports = router;

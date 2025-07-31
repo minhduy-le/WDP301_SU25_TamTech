@@ -276,7 +276,7 @@ const ProductDetail = () => {
               </Space>
             </Card>
 
-            <Card style={{ borderStyle: "dashed", borderColor: "#fb923c" }}>
+            {/* <Card style={{ borderStyle: "dashed", borderColor: "#fb923c" }}>
               <Title level={4} style={{ margin: "0 0 20px 0" }}>
                 Nguyên liệu chính
               </Title>
@@ -316,7 +316,7 @@ const ProductDetail = () => {
                   </Card>
                 ))}
               </Space>
-            </Card>
+            </Card> */}
 
             <Space direction="vertical" size="middle" style={{ width: "100%" }}>
               <Button
