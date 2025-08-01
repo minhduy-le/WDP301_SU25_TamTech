@@ -55,6 +55,12 @@ export interface OrderHistory {
       price: number;
     }
   ];
+  bankAccounts: [
+    {
+      bankName: string;
+      bankNumber: string;
+    }
+  ];
   order_shipping_fee: number;
   order_discount_value: number;
   order_amount: number;
@@ -101,7 +107,7 @@ export const useGetNotifications = () => {
   return useQuery<Notification[], Error>({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    refetchInterval: 60000, 
+    refetchInterval: 60000,
   });
 };
 
@@ -270,6 +276,38 @@ export const useCancelOrderPayment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useUploadRefundCertificate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await axiosInstance.post(
+        `orders/upload-refunded-certification/${orderId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage =
+          error.response.data?.message || error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };
