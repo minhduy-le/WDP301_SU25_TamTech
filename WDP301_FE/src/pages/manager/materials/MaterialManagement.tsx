@@ -167,9 +167,8 @@ const MaterialManagement = () => {
         handleCloseDeleteModal();
         queryClient.invalidateQueries({ queryKey: ["materials"] });
       },
-      onError: (error) => {
-        const errorMessage = (error as unknown as { responseValue: string })
-          .responseValue;
+      onError: (error: any) => {
+        const errorMessage = error.response?.data;
         if (
           errorMessage ===
           "Cannot delete material as it is referenced by active product recipes"
