@@ -47,12 +47,6 @@ export interface OrderHistory {
   status: string;
   fullName: string;
   phone_number: string;
-  bankAccounts: [
-    {
-      bankName: string;
-      bankNumber: string;
-    }
-  ];
   orderItems: [
     {
       productId: number;
@@ -65,11 +59,9 @@ export interface OrderHistory {
   order_discount_value: number;
   order_amount: number;
   invoiceUrl: string;
-  certificationOfDelivered: string;
   order_point_earn: number;
   note: string;
   payment_method: string;
-  assignToShipperId: number;
 }
 
 export interface Notification {
@@ -99,7 +91,6 @@ interface Bank {
   ];
 }
 
-// Add the new hook to fetch notifications
 const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await axiosInstance.get<Notification[]>("notifications");
   return response.data;
@@ -109,7 +100,7 @@ export const useGetNotifications = () => {
   return useQuery<Notification[], Error>({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    refetchInterval: 60000, // Refetch every 60 seconds to keep it fresh
+    refetchInterval: 60000, 
   });
 };
 
@@ -247,39 +238,6 @@ export const useCancelOrderSendEmail = () => {
   });
 };
 
-export const useUploadRefundCertificate = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await axiosInstance.post(
-        `orders/upload-refunded-certification/${orderId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-    onError: (error: any) => {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorMessage =
-          error.response.data?.message || error.response.data;
-        throw new Error(errorMessage);
-      } else {
-        throw new Error("An unexpected error occurred");
-      }
-    },
-  });
-};
-
 const fetchBank = async (): Promise<Bank> => {
   const response = await axiosInstance.get<Bank>("banks");
   return response.data;
@@ -302,12 +260,27 @@ export const useGetOrderById = (orderId: number) => {
   });
 };
 
+// Hook hủy đơn hàng thông thường (cho khách hàng)
 export const useCancelOrderPayment = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, AxiosError, MutationVariables>({
     mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`orders/${orderId}/cancel`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+// Hook hủy đơn hàng POS (cho staff)
+export const useCancelPOSOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`pos-orders/${orderId}/cancel`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
