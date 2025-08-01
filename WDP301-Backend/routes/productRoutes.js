@@ -693,6 +693,109 @@ router.get("/", async (req, res) => {
 
 /**
  * @swagger
+ * /api/products/summary:
+ *   get:
+ *     summary: Get a summarized list of products (name, description, price) with pagination
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
+ *         description: Number of products per page
+ *     responses:
+ *       200:
+ *         description: Summarized list of products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                         format: float
+ *                   example:
+ *                     - productId: 1
+ *                       name: "Product A"
+ *                       description: "This is product A"
+ *                       price: 150000.0
+ *                     - productId: 2
+ *                       name: "Product B"
+ *                       description: "This is product B"
+ *                       price: 120000.0
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: Invalid page or size number
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Page and size must be positive integers
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.get("/summary", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) > 0 ? parseInt(req.query.size) : 10;
+    const offset = (page - 1) * size;
+
+    const result = await productService.getProductsSummary({ page, size, offset });
+
+    res.status(200).json({
+      products: result.products,
+      totalPages: result.totalPages,
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving product summary:", error);
+    res
+      .status(
+        error.message.includes("Page") || error.message.includes("Size") || error.message.includes("Offset") ? 400 : 500
+      )
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/products:
  *   post:
  *     summary: Create a new product with optional recipes

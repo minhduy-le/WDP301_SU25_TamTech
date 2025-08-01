@@ -144,6 +144,35 @@ const getProducts = async ({ page, size, offset }) => {
   };
 };
 
+const getProductsSummary = async ({ page, size, offset }) => {
+  if (!Number.isInteger(page) || page < 1) {
+    throw new Error("Page must be a positive integer");
+  }
+  if (!Number.isInteger(size) || size < 1) {
+    throw new Error("Size must be a positive integer");
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error("Offset must be a non-negative integer");
+  }
+
+  // Lấy tổng số sản phẩm đang hoạt động để phân trang
+  const totalCount = await Product.count({ where: { isActive: true } });
+
+  // Tìm sản phẩm chỉ với các trường được yêu cầu
+  const products = await Product.findAll({
+    limit: size,
+    offset,
+    where: { isActive: true },
+    order: [["price", "DESC"]], // Giữ nguyên thứ tự sắp xếp theo giá giảm dần
+    attributes: ["productId", "name", "description", "price"], // Chỉ lấy các trường này
+  });
+
+  return {
+    products: products,
+    totalPages: Math.ceil(totalCount / size),
+  };
+};
+
 const getProductsByType = async (productTypeId) => {
   if (!Number.isInteger(productTypeId) || productTypeId < 1) {
     throw new Error("ProductTypeId must be a positive integer");
@@ -512,4 +541,5 @@ module.exports = {
   searchProductsByNameAndType,
   searchProductsByNameAndTypeName,
   reactivateProduct,
+  getProductsSummary,
 };
