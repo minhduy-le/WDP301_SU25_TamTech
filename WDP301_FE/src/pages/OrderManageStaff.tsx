@@ -284,7 +284,7 @@ const StaffOrderManagement = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: 140,
+      width: 160,
       align: "center" as const,
       filters: [
         { text: "Chờ thanh toán", value: "Pending" },
@@ -319,6 +319,20 @@ const StaffOrderManagement = () => {
               status.charAt(0).toUpperCase() + status.slice(1)}
           </Tag>
         );
+      },
+    },
+    {
+      title: "Shipper",
+      dataIndex: "assignToShipperId",
+      key: "shipper",
+      width: 150,
+      align: "center" as const,
+      render: (assignToShipperId: number) => {
+        if (assignToShipperId === null) {
+          return "";
+        }
+        const shipper = shippers?.find((s) => s.id === assignToShipperId);
+        return shipper ? shipper.fullName : "Không tìm thấy shipper";
       },
     },
     {
@@ -425,7 +439,7 @@ const StaffOrderManagement = () => {
               </Popconfirm>
             </Tooltip>
           )}
-          {record.status === "Cooked" && (
+          {record.status === "Cooked" && record.assignToShipperId === null && (
             <Tooltip title="Giao hàng">
               <Button
                 type="text"
@@ -763,6 +777,15 @@ const StaffOrderManagement = () => {
                 <Descriptions.Item label="Số điện thoại">
                   <span style={{ color: "#d97706" }}>
                     {selectedOrder.phone_number}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Shipper">
+                  <span style={{ color: "#d97706" }}>
+                    {selectedOrder.assignToShipperId
+                      ? shippers?.find(
+                          (s) => s.id === selectedOrder.assignToShipperId
+                        )?.fullName || ""
+                      : ""}
                   </span>
                 </Descriptions.Item>
                 {selectedOrder.note && (
