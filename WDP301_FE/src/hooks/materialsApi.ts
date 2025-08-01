@@ -150,6 +150,17 @@ export const useDeleteMaterial = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
     },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data;
+        const customError = new Error("API Error");
+        (customError as any).responseValue = errorMessage;
+        throw customError;
+      } else {
+        const errorMessage = (error as Error).message;
+        throw new Error(errorMessage);
+      }
+    },
   });
 };
 
