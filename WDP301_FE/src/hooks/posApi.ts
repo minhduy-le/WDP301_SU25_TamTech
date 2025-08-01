@@ -178,11 +178,36 @@ export const usePOSApi = () => {
     []
   )
 
+  const cancelOrder = useCallback(
+    async (orderId: number) => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) throw new Error('No token found')
+        
+        const response = await axios.put(`/pos-orders/${orderId}/cancel`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            accept: 'application/json',
+          },
+        })
+        return response.data
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          throw error.response?.data || error.message || error
+        }
+        throw error
+      }
+    },
+    []
+  )
+
   return {
     getLatestOrder,
     getProductTypes,
     getProductsByType,
     getAllProducts,
     createOrder,
+    cancelOrder,
   }
 }
