@@ -2064,13 +2064,20 @@ const uploadRefundCertification = async (orderId, userId, file) => {
   }
 };
 
-const sendRefundEmail = async (orderId, userId) => {
+const sendRefundEmail = async (orderId) => {
   try {
     console.log(`Preparing refund email for orderId: ${orderId}`);
     const order = await Order.findOne({ where: { orderId } });
     if (!order) {
       console.log(`Order not found for orderId: ${orderId}`);
       throw new Error("Order not found");
+    }
+
+    // Lấy userId trực tiếp từ thông tin đơn hàng
+    const userId = order.userId;
+    if (!userId) {
+      console.log(`userId not found in order for orderId: ${orderId}`);
+      throw new Error("User ID not found in the order");
     }
 
     const user = await User.findOne({ where: { id: userId } });
