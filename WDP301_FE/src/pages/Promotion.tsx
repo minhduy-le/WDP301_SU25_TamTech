@@ -15,7 +15,7 @@ const Promotion = () => {
   const vouchers = userPromotions
     ? userPromotions.map((promotion) => ({
         id: promotion.promotionId,
-        title: promotion.name,
+        title: promotion.code,
         discount: promotion.discountAmount
           ? `Giảm tối đa ${promotion.discountAmount.toLocaleString()}đ`
           : undefined,
