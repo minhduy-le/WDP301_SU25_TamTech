@@ -260,27 +260,12 @@ export const useGetOrderById = (orderId: number) => {
   });
 };
 
-// Hook hủy đơn hàng thông thường (cho khách hàng)
 export const useCancelOrderPayment = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, AxiosError, MutationVariables>({
     mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
       await axiosInstance.put(`orders/${orderId}/cancel`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-  });
-};
-
-// Hook hủy đơn hàng POS (cho staff)
-export const useCancelPOSOrder = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, AxiosError, MutationVariables>({
-    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
-      await axiosInstance.put(`pos-orders/${orderId}/cancel`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
