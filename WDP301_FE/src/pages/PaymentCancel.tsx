@@ -3,7 +3,7 @@ import "../style/PaymentSuccess.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import TomatoError from "./Tomato Error.json";
-import { useCancelOrderPayment } from "../hooks/ordersApi";
+import { useCancelPOSOrder } from "../hooks/ordersApi";
 import { useEffect, useState } from "react";
 
 const PaymentCancel = () => {
@@ -11,17 +11,24 @@ const PaymentCancel = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
-  const { mutate: cancelOrder } = useCancelOrderPayment();
+  const { mutate: cancelOrder } = useCancelPOSOrder();
   const [hasCalled, setHasCalled] = useState(false);
 
   useEffect(() => {
     if (orderId !== "N/A" && !hasCalled) {
       const parsedOrderId = parseInt(orderId, 10);
+      
+      if (isNaN(parsedOrderId) || parsedOrderId <= 0) {
+        message.error("Mã đơn hàng không hợp lệ.");
+        return;
+      }
+            
       cancelOrder(
         { orderId: parsedOrderId },
         {
           onSuccess: () => {
             setHasCalled(true);
+            message.success('Đã hủy đơn hàng thành công');
           },
           onError: (error: any) => {
             message.error(
