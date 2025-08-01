@@ -168,7 +168,18 @@ const MaterialManagement = () => {
         queryClient.invalidateQueries({ queryKey: ["materials"] });
       },
       onError: (error) => {
-        message.error(error.message || "Xóa thất bại!");
+        const errorMessage = (error as unknown as { responseValue: string })
+          .responseValue;
+        if (
+          errorMessage ===
+          "Cannot delete material as it is referenced by active product recipes"
+        ) {
+          message.error(
+            "Không thể xóa nguyên liệu vì đang có sản phẩm sử dụng nguyên liệu này"
+          );
+        } else {
+          message.error(errorMessage);
+        }
       },
     });
   };
