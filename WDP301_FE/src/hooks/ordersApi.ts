@@ -47,12 +47,6 @@ export interface OrderHistory {
   status: string;
   fullName: string;
   phone_number: string;
-  bankAccounts: [
-    {
-      bankName: string;
-      bankNumber: string;
-    }
-  ];
   orderItems: [
     {
       productId: number;
@@ -65,11 +59,9 @@ export interface OrderHistory {
   order_discount_value: number;
   order_amount: number;
   invoiceUrl: string;
-  certificationOfDelivered: string;
   order_point_earn: number;
   note: string;
   payment_method: string;
-  assignToShipperId: number;
 }
 
 export interface Notification {
@@ -99,7 +91,6 @@ interface Bank {
   ];
 }
 
-// Add the new hook to fetch notifications
 const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await axiosInstance.get<Notification[]>("notifications");
   return response.data;
@@ -109,7 +100,7 @@ export const useGetNotifications = () => {
   return useQuery<Notification[], Error>({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
-    refetchInterval: 60000, // Refetch every 60 seconds to keep it fresh
+    refetchInterval: 60000, 
   });
 };
 
@@ -243,39 +234,6 @@ export const useCancelOrderSendEmail = () => {
         `orders/send-refunded-email/${orderId}`
       );
       return response.data;
-    },
-  });
-};
-
-export const useUploadRefundCertificate = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await axiosInstance.post(
-        `orders/upload-refunded-certification/${orderId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-    onError: (error: any) => {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorMessage =
-          error.response.data?.message || error.response.data;
-        throw new Error(errorMessage);
-      } else {
-        throw new Error("An unexpected error occurred");
-      }
     },
   });
 };

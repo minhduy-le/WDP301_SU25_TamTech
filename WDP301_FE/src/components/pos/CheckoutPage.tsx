@@ -53,7 +53,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
   const [customerSearchError, setCustomerSearchError] = useState('')
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false)
-  const [phoneError, setPhoneError] = useState('')
 
   const handlePhoneBlur = async () => {
     if (!customerPhone.trim()) return
@@ -73,15 +72,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!customerPhone.trim()) {
-      setPhoneError('Số điện thoại khách hàng là bắt buộc')
-      return
-    }
-    
     setIsProcessing(true)
     setMessage(null)
-    setPhoneError('')
     try {
       let payment_method_id = 2 
 
@@ -116,7 +108,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         orderNumber,
       }
       if (res?.orderId) {
-        navigate(`/staff/pos-success?orderId=${res.orderId}`)
+        navigate(`/staff/payment-success?orderId=${res.orderId}`)
         return
       }
       onCompleteOrder(checkoutData)
@@ -222,6 +214,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
         </div>
       </div>
 
+      {/* Payment Form */}
       <div className="w-96 bg-white border-l border-amber-200 flex flex-col">
         <div className="p-6 border-b border-amber-200">
           <h2 className="text-xl font-bold text-amber-800">
@@ -231,25 +224,20 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
           <div className="flex-1 p-6 space-y-6">
+            {/* Customer Phone */}
             <div>
               <label className="block text-amber-700 font-medium mb-2">
-                Số điện thoại khách hàng <span className="text-red-500">*</span>
+                Số điện thoại khách hàng (tùy chọn)
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-400" />
                 <input
                   type="tel"
                   value={customerPhone}
-                  onChange={(e) => {
-                    setCustomerPhone(e.target.value)
-                    if (phoneError) setPhoneError('')
-                  }}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="Nhập số điện thoại"
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none bg-white text-amber-800 placeholder:text-amber-400 shadow-sm ${
-                    phoneError ? 'border-red-300 focus:ring-red-300 focus:border-red-400' : 'border-amber-200'
-                  }`}
+                  className="w-full pl-10 pr-4 py-3 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none bg-white text-amber-800 placeholder:text-amber-400 shadow-sm"
                   onBlur={handlePhoneBlur}
-                  required
                 />
               </div>
               {isSearchingCustomer && (
@@ -267,13 +255,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   {customerSearchError}
                 </div>
               )}
-              {phoneError && (
-                <div className="text-red-600 text-sm mt-1">
-                  {phoneError}
-                </div>
-              )}
             </div>
 
+            {/* Payment Method */}
             <div>
               <label className="block text-amber-700 font-medium mb-3">
                 Phương thức thanh toán
