@@ -62,6 +62,7 @@ export interface OrderHistory {
   order_point_earn: number;
   note: string;
   payment_method: string;
+  assignToShipperId: number;
 }
 
 export interface Notification {
