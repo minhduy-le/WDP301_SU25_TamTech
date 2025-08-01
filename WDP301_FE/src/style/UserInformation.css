@@ -36,6 +36,10 @@
   border: none;
 }
 
+.sidebar-menu .ant-menu-item .anticon-container {
+  margin-right: 10px !important;
+}
+
 .menu-item {
   font-size: 15px;
   color: #2d1e1a !important;
