@@ -3,7 +3,7 @@ import "../style/PaymentSuccess.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import TomatoError from "./Tomato Error.json";
-import { useCancelOrderPayment } from "../hooks/ordersApi";
+import { usePOSApi } from "../hooks/posApi";
 import { useEffect, useState } from "react";
 
 const PaymentCancel = () => {
@@ -11,29 +11,29 @@ const PaymentCancel = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const orderId = queryParams.get("orderId") || "N/A";
-  const { mutate: cancelOrder } = useCancelOrderPayment();
+  const { cancelOrder } = usePOSApi();
   const [hasCalled, setHasCalled] = useState(false);
 
   useEffect(() => {
-    if (orderId !== "N/A" && !hasCalled) {
-      const parsedOrderId = parseInt(orderId, 10);
-      cancelOrder(
-        { orderId: parsedOrderId },
-        {
-          onSuccess: () => {
-            setHasCalled(true);
-          },
-          onError: (error: any) => {
-            message.error(
-              "Có lỗi xảy ra khi hủy đơn hàng: " +
-                (error.message || "Lỗi không xác định")
-            );
-          },
+    const handleCancelOrder = async () => {
+      if (orderId !== "N/A" && !hasCalled) {
+        try {
+          const parsedOrderId = parseInt(orderId, 10);
+          await cancelOrder(parsedOrderId);
+          setHasCalled(true);
+          message.success("Đã hủy đơn hàng thành công");
+        } catch (error: any) {
+          message.error(
+            "Có lỗi xảy ra khi hủy đơn hàng: " +
+              (error.message || "Lỗi không xác định")
+          );
         }
-      );
-    } else if (orderId === "N/A") {
-      message.error("Không tìm thấy mã đơn hàng.");
-    }
+      } else if (orderId === "N/A") {
+        message.error("Không tìm thấy mã đơn hàng.");
+      }
+    };
+
+    handleCancelOrder();
   }, [cancelOrder, orderId, hasCalled]);
 
   const handleBackToOrders = () => {
