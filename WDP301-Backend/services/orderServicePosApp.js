@@ -23,9 +23,9 @@ const { sendPushNotification } = require("../config/firebase");
 console.log("Loading orderServicePosApp.js version 2025-07-15-pos-app-v1");
 
 const payos = new PayOS(
-  "669d4d45-4e88-4daa-9394-916beea82d6b",
-  "4ca70acc-44eb-400a-88fb-9edcd9d1a745",
-  "eb38f8b3a3b43bd30a79030407cbe19c9b0cf599916d1e2428f4c3f92c8fbda4"
+  "f40166f0-0dd8-45a9-9848-7e211862f799",
+  "8966d38f-7467-4644-85b5-98c8a4e2bf74",
+  "82df2018a909487760c1bb5af3e5994fd4781e78028eef1e0e66f2036eb8b9b9"
 );
 const YOUR_DOMAIN = "https://wdp301-su25.space";
 const FRONTEND_DOMAIN = "https://wdp301-su25.space";
