@@ -7,6 +7,7 @@ import {
   Typography,
   message,
   Skeleton,
+  Tag,
 } from "antd";
 import "../style/Menu.css";
 import { useState } from "react";
@@ -80,9 +81,6 @@ const Menu = () => {
   } = useGetProductById(String(selectedProductId));
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [isQuantityModalVisible, setIsQuantityModalVisible] = useState(false);
-  const [selectedQuantityProduct, setSelectedQuantityProduct] =
-    useState<ProductDto | null>(null);
 
   const [addOnQuantities, setAddOnQuantities] = useState<
     Record<string, number>
@@ -98,6 +96,21 @@ const Menu = () => {
     return (
       productTypes?.find((type) => type.productTypeId === id)?.name || "Unknown"
     );
+  };
+
+  const calculateMaxProductQuantity = (product: ProductDto): number => {
+    if (!product.ProductRecipes || product.ProductRecipes.length === 0)
+      return 0;
+
+    const quantities = product.ProductRecipes.map((recipe) => {
+      const materialQuantity = recipe.Material?.quantity || 0;
+      const recipeQuantity = recipe.quantity || 1;
+      return materialQuantity > 0
+        ? Math.floor(materialQuantity / recipeQuantity)
+        : 0;
+    });
+
+    return Math.min(...quantities);
   };
 
   const showModal = (product: ProductDto) => {
@@ -179,7 +192,10 @@ const Menu = () => {
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= 10) {
+    const maxQuantity = productDetail
+      ? calculateMaxProductQuantity(productDetail)
+      : 10;
+    if (newQuantity >= 1 && newQuantity <= maxQuantity) {
       setQuantity(newQuantity);
     }
   };
@@ -201,48 +217,6 @@ const Menu = () => {
 
   const handleShowMore = () => {
     setVisibleProducts((prev) => prev + 9);
-  };
-
-  const showQuantityModal = (product: ProductDto) => {
-    setSelectedQuantityProduct(product);
-    setQuantity(1);
-    setIsQuantityModalVisible(true);
-  };
-
-  const handleQuantityModalClose = () => {
-    setIsQuantityModalVisible(false);
-    setSelectedQuantityProduct(null);
-    setQuantity(1);
-  };
-
-  const handleAddProductToCart = () => {
-    if (!user?.id) {
-      message.error("Bạn phải đăng nhập để thêm sản phẩm vào giỏ hàng");
-      return;
-    }
-
-    if (selectedQuantityProduct && user?.id) {
-      const cartItem = {
-        userId: user.id,
-        productId: selectedQuantityProduct.productId,
-        productName: selectedQuantityProduct.name,
-        addOns: [],
-        quantity,
-        price: Number(selectedQuantityProduct.price),
-        totalPrice: Number(selectedQuantityProduct.price) * quantity,
-      };
-
-      addToCart(cartItem);
-      message.success("Thêm vào giỏ hàng thành công");
-      handleQuantityModalClose();
-    }
-  };
-
-  const handleQuantityChangeForModal = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= 10) {
-      setQuantity(newQuantity);
-    }
   };
 
   const totalPrice = productDetail
@@ -300,59 +274,90 @@ const Menu = () => {
             <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
             <Row gutter={[16, 16]} className="menu-card-row">
-              {mainProducts.slice(0, visibleProducts).map((product) => (
-                <Col
-                  xs={24}
-                  sm={12}
-                  md={8}
-                  lg={8}
-                  xl={8}
-                  className="menu-column"
-                  key={product.productId}
-                >
-                  <Card className="menu-card">
-                    <div className="card-image-container">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="card-image"
-                      />
-                      <div className="card-rating">
-                        <span className="card-rating-star">
-                          <StarOutlined />
-                        </span>
-                        <span>{product.averageRating}</span>
-                      </div>
-                    </div>
-                    <div className="card-content">
-                      <h3 className="card-title">
-                        {product.name.toUpperCase()}
-                      </h3>
-                      <p className="card-description">{product.description}</p>
-                      <div className="card-price-container">
-                        <div className="card-price">
-                          {Number(product.price).toLocaleString("vi-VN")}đ
+              {mainProducts.slice(0, visibleProducts).map((product) => {
+                const maxQuantity = calculateMaxProductQuantity(product);
+                return (
+                  <Col
+                    xs={24}
+                    sm={12}
+                    md={8}
+                    lg={8}
+                    xl={8}
+                    className="menu-column"
+                    key={product.productId}
+                  >
+                    <Card className="menu-card">
+                      <div className="card-image-container">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="card-image"
+                        />
+                        <div className="card-rating">
+                          <span className="card-rating-star">
+                            <StarOutlined />
+                          </span>
+                          <span>{product.averageRating}</span>
                         </div>
                         {productTypeId === 1 ? (
-                          <Button
-                            className="add-button"
-                            onClick={() => showModal(product)}
-                          >
-                            Thêm
-                          </Button>
+                          maxQuantity > 0 ? (
+                            <div className="quantity-product-count">
+                              <Tag
+                                color="green"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                }}
+                              >
+                                Còn {maxQuantity} phần
+                              </Tag>
+                            </div>
+                          ) : (
+                            <div className="quantity-product-count">
+                              <Tag
+                                color="red"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                }}
+                              >
+                                Sản phẩm này hiện tại đã hết hàng
+                              </Tag>
+                            </div>
+                          )
                         ) : (
-                          <Button
-                            className="add-button"
-                            onClick={() => showQuantityModal(product)}
-                          >
-                            Thêm
-                          </Button>
+                          <></>
                         )}
                       </div>
-                    </div>
-                  </Card>
-                </Col>
-              ))}
+                      <div className="card-content">
+                        <h3 className="card-title">
+                          {product.name.toUpperCase()}
+                        </h3>
+                        <p className="card-description">
+                          {product.description}
+                        </p>
+                        <div className="card-price-container">
+                          <div
+                            className="card-price"
+                            style={{ marginBottom: 0 }}
+                          >
+                            {Number(product.price).toLocaleString("vi-VN")}đ
+                          </div>
+                          {productTypeId === 1 ? (
+                            <Button
+                              className="add-button"
+                              onClick={() => showModal(product)}
+                              disabled={maxQuantity === 0}
+                            >
+                              Thêm
+                            </Button>
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                );
+              })}
               {visibleProducts < mainProducts.length && (
                 <Col span={24} className="button-show-more">
                   <Button className="custom-button" onClick={handleShowMore}>
@@ -406,6 +411,11 @@ const Menu = () => {
                       {productDetail.description}
                     </li>
                   </ul>
+                  <Text style={{ display: "block", textAlign: "left" }}>
+                    <Tag color="green">
+                      Còn {calculateMaxProductQuantity(productDetail)} phần
+                    </Tag>
+                  </Text>
                 </Col>
               </Row>
               <div className="modal-quantity">
@@ -424,7 +434,9 @@ const Menu = () => {
                   <Button
                     className="quantity-button plus-button"
                     onClick={() => handleQuantityChange(1)}
-                    disabled={quantity === 10}
+                    disabled={
+                      quantity >= calculateMaxProductQuantity(productDetail)
+                    }
                   >
                     +
                   </Button>
@@ -443,7 +455,7 @@ const Menu = () => {
                     ) : query.data && query.data.length > 0 ? (
                       <>
                         <Text className="add-ons-title">
-                          {getProductTypeName(typeId)} - chọn 1
+                          {getProductTypeName(typeId)}
                         </Text>
                         {query.data.map((item, index) => (
                           <div className="add-on-item" key={item.productId}>
@@ -508,68 +520,6 @@ const Menu = () => {
             </>
           ) : (
             <div>Không có chi tiết món ăn</div>
-          )}
-        </div>
-      </Modal>
-
-      <Modal
-        visible={isQuantityModalVisible}
-        onCancel={handleQuantityModalClose}
-        footer={null}
-        className="menu-modal"
-        centered
-        width={400}
-      >
-        <div className="modal-content">
-          {selectedQuantityProduct ? (
-            <>
-              <Row>
-                <Col span={24} style={{ textAlign: "center" }}>
-                  <Text className="modal-title">
-                    {selectedQuantityProduct.name.toUpperCase()}
-                  </Text>
-                </Col>
-              </Row>
-              <div
-                className="modal-quantity"
-                style={{
-                  textAlign: "center",
-                  justifyContent: "center",
-                  margin: "10px 0",
-                }}
-              >
-                <div className="quantity-selector">
-                  <Button
-                    className="quantity-button minus-button"
-                    onClick={() => handleQuantityChangeForModal(-1)}
-                    disabled={quantity === 1}
-                  >
-                    −
-                  </Button>
-                  <Text className="quantity-number">{quantity}</Text>
-                  <Button
-                    className="quantity-button plus-button"
-                    onClick={() => handleQuantityChangeForModal(1)}
-                    disabled={quantity === 10}
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-              <div className="modal-buttons" style={{ textAlign: "center" }}>
-                <Button
-                  className="add-to-cart-button"
-                  onClick={handleAddProductToCart}
-                >
-                  {(
-                    Number(selectedQuantityProduct.price) * quantity
-                  ).toLocaleString("vi-VN")}
-                  đ - Thêm vào giỏ hàng
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div>Không có sản phẩm được chọn</div>
           )}
         </div>
       </Modal>

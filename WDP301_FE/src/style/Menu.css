@@ -413,3 +413,10 @@
     max-width: 100%;
   }
 }
+
+.quantity-product-count {
+  width: -webkit-fill-available;
+  text-align: right;
+  position: absolute;
+  bottom: 167px;
+}
