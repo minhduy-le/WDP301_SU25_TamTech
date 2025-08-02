@@ -177,19 +177,6 @@ export const useGetOrders = () => {
   });
 };
 
-export const useApproveOrder = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, AxiosError, MutationVariables>({
-    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
-      await axiosInstance.put(`orders/${orderId}/approved`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-  });
-};
-
 export const usePrepareOrder = () => {
   const queryClient = useQueryClient();
 

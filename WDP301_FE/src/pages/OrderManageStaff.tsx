@@ -31,7 +31,6 @@ import type { ColumnType } from "antd/es/table";
 import {
   useGetOrders,
   type OrderHistory,
-  useApproveOrder,
   useCookOrder,
   usePrepareOrder,
   useCancelOrderSendEmail,
@@ -51,7 +50,6 @@ dayjs.tz.setDefault(dayjs.tz.guess());
 const statusMap: { [key: string]: string } & {
   Pending: string;
   Paid: string;
-  Approved: string;
   Preparing: string;
   Cooked: string;
   Delivering: string;
@@ -60,7 +58,6 @@ const statusMap: { [key: string]: string } & {
 } = {
   Pending: "Chờ thanh toán",
   Paid: "Đã thanh toán",
-  Approved: "Xác nhận đơn",
   Preparing: "Đang nấu ăn",
   Cooked: "Đã nấu xong",
   Delivering: "Đang giao",
@@ -83,24 +80,10 @@ const StaffOrderManagement = () => {
     useGetShipperScheduled();
   const assignShipperMutation = useAssignShipper();
 
-  const approveOrderMutation = useApproveOrder();
   const prepareOrderMutation = usePrepareOrder();
   const cookOrderMutation = useCookOrder();
   const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
-
-  const handleApproveOrder = (orderId: number) => {
-    approveOrderMutation.mutate(
-      { orderId },
-      {
-        onSuccess: () => message.success("Đơn hàng đã được xác nhận!"),
-        onError: (error: AxiosError) =>
-          message.error(
-            error.response?.data?.toString() || "Xác nhận đơn hàng thất bại!"
-          ),
-      }
-    );
-  };
 
   const handlePrepareOrder = (orderId: number) => {
     prepareOrderMutation.mutate(
@@ -229,8 +212,6 @@ const StaffOrderManagement = () => {
         return { tagBg: "#fffbeb", tagText: "#92400e", iconColor: "#92400e" };
       case "Paid":
         return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
-      case "Approved":
-        return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Preparing":
         return { tagBg: "#fde68a", tagText: "#92400e", iconColor: "#92400e" };
       case "Cooked":
@@ -252,8 +233,6 @@ const StaffOrderManagement = () => {
       case "Pending":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
       case "Paid":
-        return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
-      case "Approved":
         return <CheckCircleOutlined style={{ color: theme.iconColor }} />;
       case "Preparing":
         return <ClockCircleOutlined style={{ color: theme.iconColor }} />;
@@ -355,7 +334,6 @@ const StaffOrderManagement = () => {
       filters: [
         { text: "Chờ thanh toán", value: "Pending" },
         { text: "Đã thanh toán", value: "Paid" },
-        { text: "Xác nhận đơn", value: "Approved" },
         { text: "Đang nấu ăn", value: "Repairing" },
         { text: "Đã nấu xong", value: "Cooked" },
         { text: "Đang giao", value: "Delivering" },
@@ -428,32 +406,6 @@ const StaffOrderManagement = () => {
             />
           </Tooltip>
           {record.status === "Paid" && (
-            <Tooltip title="Xác nhận">
-              <Popconfirm
-                title="Xác nhận"
-                description="Bạn có chắc muốn xác nhận đơn hàng này hay không?"
-                onConfirm={() => handleApproveOrder(record.orderId)}
-                okText="Xác nhận"
-                cancelText="Hủy"
-                okButtonProps={{
-                  danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
-                }}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={
-                    <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }}
-                    />
-                  }
-                  className="btn-action-status"
-                />
-              </Popconfirm>
-            </Tooltip>
-          )}
-          {record.status === "Approved" && (
             <Tooltip title="Chuẩn bị nấu">
               <Popconfirm
                 title="Xác nhận chuẩn bị nấu"
@@ -536,26 +488,24 @@ const StaffOrderManagement = () => {
               />
             </Tooltip>
           )}
-          {record.status !== "Pending" &&
-            record.status !== "Approved" &&
-            record.status !== "Canceled" && (
-              <Tooltip title="In hóa đơn">
-                <Button
-                  type="link"
-                  icon={<PrintIcon />}
-                  onClick={() => handlePrintInvoice(record.invoiceUrl)}
-                  style={{
-                    color: "#d97706",
-                    fontWeight: 600,
-                    padding: 0,
-                    outline: "none",
-                    boxShadow: "none",
-                    border: "none",
-                    background: "#fefce8",
-                  }}
-                />
-              </Tooltip>
-            )}
+          {record.status !== "Pending" && record.status !== "Canceled" && (
+            <Tooltip title="In hóa đơn">
+              <Button
+                type="link"
+                icon={<PrintIcon />}
+                onClick={() => handlePrintInvoice(record.invoiceUrl)}
+                style={{
+                  color: "#d97706",
+                  fontWeight: 600,
+                  padding: 0,
+                  outline: "none",
+                  boxShadow: "none",
+                  border: "none",
+                  background: "#fefce8",
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
