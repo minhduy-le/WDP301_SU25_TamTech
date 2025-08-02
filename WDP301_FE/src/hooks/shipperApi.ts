@@ -8,9 +8,11 @@ export interface Shipper {
   fullName: string;
   email: string;
   phone_number: string;
+  activeOrderCount: number;
 }
 
 interface AssignShipper {
+  orderIds: number[];
   shipperId: number;
   orderDate: string;
 }
@@ -31,15 +33,9 @@ export const useAssignShipper = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      orderId,
-      assignShipper,
-    }: {
-      orderId: number;
-      assignShipper: AssignShipper;
-    }) => {
+    mutationFn: async ({ assignShipper }: { assignShipper: AssignShipper }) => {
       const response = await axiosInstance.post(
-        `shippers/assign/${orderId}`,
+        "shippers/assign",
         assignShipper
       );
       return response.data;

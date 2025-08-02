@@ -11,9 +11,11 @@ import {
   Modal,
   Descriptions,
   Tooltip,
-  Popconfirm,
   message,
   Upload,
+  Col,
+  Checkbox,
+  Row,
 } from "antd";
 import type { UploadFile, UploadChangeParam } from "antd/es/upload/interface";
 import {
@@ -31,14 +33,13 @@ import type { ColumnType } from "antd/es/table";
 import {
   useGetOrders,
   type OrderHistory,
-  useCookOrder,
-  usePrepareOrder,
   useCancelOrderSendEmail,
   useUploadRefundCertificate,
+  useChangeOrderPreparing,
+  useChangeOrderCooked,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
 import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
-import DeliveryIcon from "../components/icon/DeliveryIcon";
 import PrintIcon from "../components/icon/PrintIcon";
 import { getFormattedPrice } from "../utils/formatPrice";
 import printJS from "print-js";
@@ -70,81 +71,133 @@ const { Option } = Select;
 const StaffOrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
+  const [isPreparingModalVisible, setIsPreparingModalVisible] = useState(false);
+  const [isCookedModalVisible, setIsCookedModalVisible] = useState(false);
+  const [isAssignShipperModalVisible, setIsAssignShipperModalVisible] =
+    useState(false);
   const [searchText, setSearchText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [selectedOrderIdsPreparing, setSelectedOrderIdsPreparing] = useState<
+    number[]
+  >([]);
+  const [selectedOrderIdsCooked, setSelectedOrderIdsCooked] = useState<
+    number[]
+  >([]);
+  const [selectedOrderIdsForShipper, setSelectedOrderIdsForShipper] = useState<
+    number[]
+  >([]);
+  // const [, setShipperAssignments] = useState<{
+  //   [key: number]: number;
+  // }>({});
+  const [selectedShipperId, setSelectedShipperId] = useState<number | null>(
+    null
+  );
   const { data: orders, isLoading: isOrderLoading } = useGetOrders();
   const { data: shippers, isLoading: isShippersLoading } =
     useGetShipperScheduled();
   const assignShipperMutation = useAssignShipper();
+  const updateOrderPreparing = useChangeOrderPreparing();
+  const updateOrderCooked = useChangeOrderCooked();
 
-  const prepareOrderMutation = usePrepareOrder();
-  const cookOrderMutation = useCookOrder();
   const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
 
-  const handlePrepareOrder = (orderId: number) => {
-    prepareOrderMutation.mutate(
-      { orderId },
-      {
-        onSuccess: () => message.success("Đơn hàng đang được chuẩn bị!"),
-        onError: (error: AxiosError) =>
-          message.error(
-            error.response?.data?.toString() || "Chuẩn bị đơn hàng thất bại!"
-          ),
-      }
-    );
-  };
+  const handlePreparingSubmit = () => {
+    if (selectedOrderIdsPreparing.length === 0) {
+      message.error("Vui lòng chọn ít nhất một đơn hàng!");
+      return;
+    }
 
-  const handleCookOrder = (orderId: number) => {
-    cookOrderMutation.mutate(
-      { orderId },
-      {
-        onSuccess: () => message.success("Đơn hàng đã nấu xong!"),
-        onError: (error: AxiosError) =>
-          message.error(
-            error.response?.data?.toString() || "Hoàn thành nấu thất bại!"
-          ),
-      }
-    );
-  };
-
-  const handleAssignShipper = (orderId: number, shipperId: number) => {
-    const orderDate = dayjs().format("MM-DD-YYYY");
-
-    assignShipperMutation.mutate(
-      { orderId, assignShipper: { shipperId, orderDate } },
+    updateOrderPreparing.mutate(
+      { orderIds: selectedOrderIdsPreparing },
       {
         onSuccess: () => {
-          message.success("Đã gán shipper thành công!");
-          setIsAssignModalVisible(false);
+          message.success("Chuyển trạng thái sang Preparing thành công!");
+          setIsPreparingModalVisible(false);
+          setSelectedOrderIdsPreparing([]);
+        },
+        onError: (error) => {
+          message.error("Chuyển trạng thái thất bại: " + error.message);
+        },
+      }
+    );
+  };
+
+  const handleCookedSubmit = () => {
+    if (selectedOrderIdsCooked.length === 0) {
+      message.error("Vui lòng chọn ít nhất một đơn hàng!");
+      return;
+    }
+
+    updateOrderCooked.mutate(
+      { orderIds: selectedOrderIdsCooked },
+      {
+        onSuccess: () => {
+          message.success("Chuyển trạng thái sang Cooked thành công!");
+          setIsCookedModalVisible(false);
+          setSelectedOrderIdsCooked([]);
+        },
+        onError: (error) => {
+          message.error("Chuyển trạng thái thất bại: " + error.message);
+        },
+      }
+    );
+  };
+
+  const handleAssignShipper = () => {
+    if (selectedOrderIdsForShipper.length === 0) {
+      message.error("Vui lòng chọn ít nhất một đơn hàng!");
+      return;
+    }
+
+    if (!selectedShipperId) {
+      message.error("Vui lòng chọn shipper!");
+      return;
+    }
+
+    const assignment = {
+      orderIds: selectedOrderIdsForShipper,
+      shipperId: selectedShipperId,
+      orderDate: dayjs().format("MM-DD-YYYY"),
+    };
+
+    assignShipperMutation.mutate(
+      { assignShipper: assignment },
+      {
+        onSuccess: () => {
+          message.success(
+            `Đã gán shipper cho đơn hàng ${assignment.orderIds.join(
+              ", "
+            )} thành công!`
+          );
         },
         onError: (error: AxiosError) => {
-          {
-            const errorMessage =
-              error.response?.data?.toString() || "Gán shipper thất bại!";
-            if (
-              errorMessage.includes("Shipper has not registered a schedule for")
-            ) {
-              const extractedDate =
-                errorMessage.match(/(\d{2}-\d{2}-\d{4})/)?.[0] || orderDate;
-              message.error(
-                `Shipper chưa đăng ký lịch trình cho ngày ${extractedDate}`
-              );
-            } else {
-              message.error(errorMessage);
-            }
+          const errorMessage =
+            error.response?.data?.toString() || "Gán shipper thất bại!";
+          if (
+            errorMessage.includes("Shipper has not registered a schedule for")
+          ) {
+            const extractedDate =
+              errorMessage.match(/(\d{2}-\d{2}-\d{4})/)?.[0] ||
+              dayjs().format("MM-DD-YYYY");
+            message.error(
+              `Shipper chưa đăng ký lịch trình cho ngày ${extractedDate}`
+            );
+          } else {
+            message.error(errorMessage);
           }
         },
       }
     );
+
+    setIsAssignShipperModalVisible(false);
+    setSelectedOrderIdsForShipper([]);
+    // setShipperAssignments({});
+    setSelectedShipperId(null); // Reset selectedShipperId
   };
 
-  const [selectedShipperId, setSelectedShipperId] = useState<number | null>(
-    null
-  );
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
   const handleUploadRefundCertificate = (orderId: number) => {
@@ -405,71 +458,6 @@ const StaffOrderManagement = () => {
               }}
             />
           </Tooltip>
-          {record.status === "Paid" && (
-            <Tooltip title="Chuẩn bị nấu">
-              <Popconfirm
-                title="Xác nhận chuẩn bị nấu"
-                description="Bạn có chắc muốn xác nhận chuẩn bị nấu hay không?"
-                onConfirm={() => handlePrepareOrder(record.orderId)}
-                okText="Xác nhận"
-                cancelText="Hủy"
-                okButtonProps={{
-                  danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
-                }}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={
-                    <ClockCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }}
-                    />
-                  }
-                  className="btn-action-status"
-                />
-              </Popconfirm>
-            </Tooltip>
-          )}
-          {record.status === "Preparing" && (
-            <Tooltip title="Hoàn thành nấu">
-              <Popconfirm
-                title="Xác nhận hoàn thành nấu"
-                description="Bạn có chắc muốn xác nhận hoàn thành nấu hay không?"
-                onConfirm={() => handleCookOrder(record.orderId)}
-                okText="Xác nhận"
-                cancelText="Hủy"
-                okButtonProps={{
-                  danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
-                }}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={
-                    <CheckCircleOutlined
-                      style={{ fontSize: 16, color: "#d97706" }}
-                    />
-                  }
-                  className="btn-action-status"
-                />
-              </Popconfirm>
-            </Tooltip>
-          )}
-          {record.status === "Cooked" && record.assignToShipperId === null && (
-            <Tooltip title="Giao hàng">
-              <Button
-                type="text"
-                onClick={() => {
-                  setCurrentOrderId(record.orderId);
-                  setIsAssignModalVisible(true);
-                }}
-                icon={<DeliveryIcon />}
-                className="btn-action-status"
-              />
-            </Tooltip>
-          )}
           {record.status === "Canceled" && record.invoiceUrl !== null && (
             <Tooltip title="Chụp ảnh hoàn tiền">
               <Button
@@ -520,6 +508,20 @@ const StaffOrderManagement = () => {
         return matchesSearch;
       }),
     [orders, searchText]
+  );
+
+  const paidOrders = useMemo(
+    () => filteredOrders?.filter((order) => order.status === "Paid") || [],
+    [filteredOrders]
+  );
+  const preparingOrders = useMemo(
+    () => filteredOrders?.filter((order) => order.status === "Preparing") || [],
+    [filteredOrders]
+  );
+
+  const cookedOrders = useMemo(
+    () => filteredOrders?.filter((order) => order.status === "Cooked") || [],
+    [filteredOrders]
   );
 
   return (
@@ -649,6 +651,47 @@ const StaffOrderManagement = () => {
                 }}
                 allowClear
               />
+            </Space>
+            <Space wrap>
+              <Button
+                type="primary"
+                onClick={() => setIsPreparingModalVisible(true)}
+                style={{
+                  background: "#fcd34d",
+                  borderColor: "#fcd34d",
+                  borderRadius: 6,
+                  height: 32,
+                  color: "#92400e",
+                }}
+              >
+                Chuẩn bị nấu
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => setIsCookedModalVisible(true)}
+                style={{
+                  background: "#fcd34d",
+                  borderColor: "#fcd34d",
+                  borderRadius: 6,
+                  height: 32,
+                  color: "#92400e",
+                }}
+              >
+                Hoàn thành nấu
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => setIsAssignShipperModalVisible(true)}
+                style={{
+                  background: "#fcd34d",
+                  borderColor: "#fcd34d",
+                  borderRadius: 6,
+                  height: 32,
+                  color: "#92400e",
+                }}
+              >
+                Gán Shipper
+              </Button>
             </Space>
           </div>
 
@@ -877,79 +920,6 @@ const StaffOrderManagement = () => {
         <Modal
           title={
             <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
-              Chọn Shipper Giao Hàng
-            </span>
-          }
-          centered
-          open={isAssignModalVisible}
-          onCancel={() => setIsAssignModalVisible(false)}
-          footer={[
-            <Button
-              key="back"
-              onClick={() => setIsAssignModalVisible(false)}
-              style={{
-                borderRadius: 6,
-                borderColor: "#fde68a",
-                color: "#d97706",
-              }}
-            >
-              Hủy
-            </Button>,
-            <Button
-              key="submit"
-              type="primary"
-              disabled={!selectedShipperId}
-              onClick={() =>
-                currentOrderId &&
-                selectedShipperId &&
-                handleAssignShipper(currentOrderId, selectedShipperId)
-              }
-              style={{
-                background: "#fcd34d",
-                borderColor: "#fcd34d",
-                borderRadius: 6,
-              }}
-            >
-              Xác nhận
-            </Button>,
-          ]}
-          styles={{
-            body: {
-              background: "#fefce8",
-              borderRadius: "0 0 12px 12px",
-              padding: "24px",
-            },
-            header: {
-              borderBottom: `1px solid #fde68a`,
-              paddingBottom: 16,
-              marginBottom: 0,
-            },
-          }}
-          className="modal-assign-shipper"
-          style={{ borderRadius: 12, top: 20 }}
-        >
-          <Select
-            placeholder="Chọn shipper"
-            style={{
-              width: "100%",
-              border: "#fde68a",
-              background: "#ffffff",
-            }}
-            onChange={(value) => setSelectedShipperId(value)}
-            loading={isShippersLoading}
-            value={selectedShipperId}
-          >
-            {shippers?.map((shipper) => (
-              <Option key={shipper.id} value={shipper.id}>
-                {shipper.fullName}
-              </Option>
-            ))}
-          </Select>
-        </Modal>
-
-        <Modal
-          title={
-            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
               Tải lên Chứng từ Hoàn tiền
             </span>
           }
@@ -1046,6 +1016,720 @@ const StaffOrderManagement = () => {
           >
             <Button icon={<UploadOutlined />}>Chọn file ảnh</Button>
           </Upload>
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              Chuẩn bị nấu
+            </span>
+          }
+          width={1100}
+          centered
+          open={isPreparingModalVisible}
+          onCancel={() => {
+            setIsPreparingModalVisible(false);
+            setSelectedOrderIdsPreparing([]);
+          }}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => {
+                setIsPreparingModalVisible(false);
+                setSelectedOrderIdsPreparing([]);
+              }}
+              style={{
+                borderRadius: 6,
+                borderColor: "#fde68a",
+                color: "#d97706",
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              disabled={selectedOrderIdsPreparing.length === 0}
+              onClick={handlePreparingSubmit}
+              style={{
+                background: "#fcd34d",
+                borderColor: "#fcd34d",
+                borderRadius: 6,
+              }}
+            >
+              Xác nhận
+            </Button>,
+          ]}
+          styles={{
+            body: {
+              background: "#fefce8",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid #fde68a`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          className="modal-preparing-cooked"
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          {paidOrders.length > 0 ? (
+            <div>
+              {paidOrders.reduce((acc, order, index) => {
+                if (index % 4 === 0) {
+                  acc.push(
+                    <Row key={index} gutter={16} style={{ marginBottom: 16 }}>
+                      <Col span={6}>
+                        <Card>
+                          <Checkbox
+                            checked={selectedOrderIdsPreparing.includes(
+                              order.orderId
+                            )}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrderIdsPreparing([
+                                  ...selectedOrderIdsPreparing,
+                                  order.orderId,
+                                ]);
+                              } else {
+                                setSelectedOrderIdsPreparing(
+                                  selectedOrderIdsPreparing.filter(
+                                    (id) => id !== order.orderId
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <span style={{ marginLeft: 8 }}>
+                            Mã ĐH: {order.orderId}
+                          </span>
+                          <br />
+                          <span>Khách hàng: {order.fullName}</span>
+                          <br />
+                          <span>
+                            Ngày đặt:{" "}
+                            {dayjs(order.order_create_at).format(
+                              "DD/MM/YYYY HH:mm"
+                            )}
+                          </span>
+                        </Card>
+                      </Col>
+                      {paidOrders[index + 1] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsPreparing.includes(
+                                paidOrders[index + 1].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsPreparing([
+                                    ...selectedOrderIdsPreparing,
+                                    paidOrders[index + 1].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsPreparing(
+                                    selectedOrderIdsPreparing.filter(
+                                      (id) =>
+                                        id !== paidOrders[index + 1].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {paidOrders[index + 1].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {paidOrders[index + 1].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                      {paidOrders[index + 2] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsPreparing.includes(
+                                paidOrders[index + 2].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsPreparing([
+                                    ...selectedOrderIdsPreparing,
+                                    paidOrders[index + 2].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsPreparing(
+                                    selectedOrderIdsPreparing.filter(
+                                      (id) =>
+                                        id !== paidOrders[index + 2].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {paidOrders[index + 2].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {paidOrders[index + 2].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                      {paidOrders[index + 3] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsPreparing.includes(
+                                paidOrders[index + 3].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsPreparing([
+                                    ...selectedOrderIdsPreparing,
+                                    paidOrders[index + 3].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsPreparing(
+                                    selectedOrderIdsPreparing.filter(
+                                      (id) =>
+                                        id !== paidOrders[index + 3].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {paidOrders[index + 3].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {paidOrders[index + 3].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                    </Row>
+                  );
+                }
+                return acc;
+              }, [] as JSX.Element[])}
+            </div>
+          ) : (
+            <p>Không có đơn hàng nào có trạng thái Paid.</p>
+          )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              Hoàn thành nấu
+            </span>
+          }
+          centered
+          width={1100}
+          open={isCookedModalVisible}
+          onCancel={() => {
+            setIsCookedModalVisible(false);
+            setSelectedOrderIdsCooked([]);
+          }}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => {
+                setIsCookedModalVisible(false);
+                setSelectedOrderIdsCooked([]);
+              }}
+              style={{
+                borderRadius: 6,
+                borderColor: "#fde68a",
+                color: "#d97706",
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              disabled={selectedOrderIdsCooked.length === 0}
+              onClick={handleCookedSubmit}
+              style={{
+                background: "#fcd34d",
+                borderColor: "#fcd34d",
+                borderRadius: 6,
+              }}
+            >
+              Xác nhận
+            </Button>,
+          ]}
+          styles={{
+            body: {
+              background: "#fefce8",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid #fde68a`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          className="modal-preparing-cooked"
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          {preparingOrders.length > 0 ? (
+            <div>
+              {preparingOrders.reduce((acc, order, index) => {
+                if (index % 4 === 0) {
+                  acc.push(
+                    <Row key={index} gutter={16} style={{ marginBottom: 16 }}>
+                      <Col span={6}>
+                        <Card>
+                          <Checkbox
+                            checked={selectedOrderIdsCooked.includes(
+                              order.orderId
+                            )}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOrderIdsCooked([
+                                  ...selectedOrderIdsCooked,
+                                  order.orderId,
+                                ]);
+                              } else {
+                                setSelectedOrderIdsCooked(
+                                  selectedOrderIdsCooked.filter(
+                                    (id) => id !== order.orderId
+                                  )
+                                );
+                              }
+                            }}
+                          />
+                          <span style={{ marginLeft: 8 }}>
+                            Mã ĐH: {order.orderId}
+                          </span>
+                          <br />
+                          <span>Khách hàng: {order.fullName}</span>
+                          <br />
+                          <span>
+                            Ngày đặt:{" "}
+                            {dayjs(order.order_create_at).format(
+                              "DD/MM/YYYY HH:mm"
+                            )}
+                          </span>
+                        </Card>
+                      </Col>
+                      {preparingOrders[index + 1] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsCooked.includes(
+                                preparingOrders[index + 1].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsCooked([
+                                    ...selectedOrderIdsCooked,
+                                    preparingOrders[index + 1].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsCooked(
+                                    selectedOrderIdsCooked.filter(
+                                      (id) =>
+                                        id !==
+                                        preparingOrders[index + 1].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {preparingOrders[index + 1].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {preparingOrders[index + 1].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                      {preparingOrders[index + 2] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsCooked.includes(
+                                preparingOrders[index + 2].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsCooked([
+                                    ...selectedOrderIdsCooked,
+                                    preparingOrders[index + 2].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsCooked(
+                                    selectedOrderIdsCooked.filter(
+                                      (id) =>
+                                        id !==
+                                        preparingOrders[index + 2].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {preparingOrders[index + 2].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {preparingOrders[index + 2].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                      {preparingOrders[index + 3] && (
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsCooked.includes(
+                                preparingOrders[index + 3].orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsCooked([
+                                    ...selectedOrderIdsCooked,
+                                    preparingOrders[index + 3].orderId,
+                                  ]);
+                                } else {
+                                  setSelectedOrderIdsCooked(
+                                    selectedOrderIdsCooked.filter(
+                                      (id) =>
+                                        id !==
+                                        preparingOrders[index + 3].orderId
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {preparingOrders[index + 3].orderId}
+                            </span>
+                            <br />
+                            <span>
+                              Khách hàng: {preparingOrders[index + 3].fullName}
+                            </span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                      )}
+                    </Row>
+                  );
+                }
+                return acc;
+              }, [] as JSX.Element[])}
+            </div>
+          ) : (
+            <p>Không có đơn hàng nào có trạng thái Preparing.</p>
+          )}
+        </Modal>
+
+        <Modal
+          title={
+            <span style={{ color: "#d97706", fontWeight: 700, fontSize: 22 }}>
+              Gán Shipper
+            </span>
+          }
+          width={1100}
+          centered
+          open={isAssignShipperModalVisible}
+          onCancel={() => {
+            setIsAssignShipperModalVisible(false);
+            setSelectedOrderIdsForShipper([]);
+            // setShipperAssignments({});
+          }}
+          footer={[
+            <Button
+              key="back"
+              onClick={() => {
+                setIsAssignShipperModalVisible(false);
+                setSelectedOrderIdsForShipper([]);
+                // setShipperAssignments({});
+              }}
+              style={{
+                borderRadius: 6,
+                borderColor: "#fde68a",
+                color: "#d97706",
+              }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              disabled={
+                selectedOrderIdsForShipper.length === 0 || !selectedShipperId
+              }
+              onClick={handleAssignShipper}
+              style={{
+                background: "#fcd34d",
+                borderColor: "#fcd34d",
+                borderRadius: 6,
+              }}
+            >
+              Xác nhận
+            </Button>,
+          ]}
+          styles={{
+            body: {
+              background: "#fefce8",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px",
+            },
+            header: {
+              borderBottom: `1px solid #fde68a`,
+              paddingBottom: 16,
+              marginBottom: 0,
+            },
+          }}
+          className="modal-preparing-cooked"
+          style={{ borderRadius: 12, top: 20 }}
+        >
+          {cookedOrders.length > 0 ? (
+            <div>
+              <Select
+                placeholder="Chọn shipper"
+                style={{ width: "100%", marginBottom: 16 }}
+                onChange={(value) => setSelectedShipperId(value)}
+                value={selectedShipperId || undefined}
+                loading={isShippersLoading}
+              >
+                {shippers?.map((shipper) => (
+                  <Option key={shipper.id} value={shipper.id}>
+                    <>
+                      {shipper.fullName}{" "}
+                      <Tag color="green">
+                        Tổng đơn hàng giao: {shipper.activeOrderCount}
+                      </Tag>
+                    </>
+                  </Option>
+                ))}
+              </Select>
+              <div>
+                {cookedOrders.reduce((acc, order, index) => {
+                  if (index % 4 === 0) {
+                    acc.push(
+                      <Row key={index} gutter={16} style={{ marginBottom: 16 }}>
+                        <Col span={6}>
+                          <Card>
+                            <Checkbox
+                              checked={selectedOrderIdsForShipper.includes(
+                                order.orderId
+                              )}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOrderIdsForShipper([
+                                    ...selectedOrderIdsForShipper,
+                                    order.orderId,
+                                  ]);
+                                } else {
+                                  const newSelected =
+                                    selectedOrderIdsForShipper.filter(
+                                      (id) => id !== order.orderId
+                                    );
+                                  setSelectedOrderIdsForShipper(newSelected);
+                                }
+                              }}
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Mã ĐH: {order.orderId}
+                            </span>
+                            <br />
+                            <span>Khách hàng: {order.fullName}</span>
+                            <br />
+                            <span>
+                              Ngày đặt:{" "}
+                              {dayjs(order.order_create_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </Card>
+                        </Col>
+                        {cookedOrders[index + 1] && (
+                          <Col span={6}>
+                            <Card>
+                              <Checkbox
+                                checked={selectedOrderIdsForShipper.includes(
+                                  cookedOrders[index + 1].orderId
+                                )}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedOrderIdsForShipper([
+                                      ...selectedOrderIdsForShipper,
+                                      cookedOrders[index + 1].orderId,
+                                    ]);
+                                  } else {
+                                    const newSelected =
+                                      selectedOrderIdsForShipper.filter(
+                                        (id) =>
+                                          id !== cookedOrders[index + 1].orderId
+                                      );
+                                    setSelectedOrderIdsForShipper(newSelected);
+                                  }
+                                }}
+                              />
+                              <span style={{ marginLeft: 8 }}>
+                                Mã ĐH: {cookedOrders[index + 1].orderId}
+                              </span>
+                              <br />
+                              <span>
+                                Khách hàng: {cookedOrders[index + 1].fullName}
+                              </span>
+                              <br />
+                              <span>
+                                Ngày đặt:{" "}
+                                {dayjs(order.order_create_at).format(
+                                  "DD/MM/YYYY HH:mm"
+                                )}
+                              </span>
+                            </Card>
+                          </Col>
+                        )}
+                        {cookedOrders[index + 2] && (
+                          <Col span={6}>
+                            <Card>
+                              <Checkbox
+                                checked={selectedOrderIdsForShipper.includes(
+                                  cookedOrders[index + 2].orderId
+                                )}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedOrderIdsForShipper([
+                                      ...selectedOrderIdsForShipper,
+                                      cookedOrders[index + 2].orderId,
+                                    ]);
+                                  } else {
+                                    const newSelected =
+                                      selectedOrderIdsForShipper.filter(
+                                        (id) =>
+                                          id !== cookedOrders[index + 2].orderId
+                                      );
+                                    setSelectedOrderIdsForShipper(newSelected);
+                                  }
+                                }}
+                              />
+                              <span style={{ marginLeft: 8 }}>
+                                Mã ĐH: {cookedOrders[index + 2].orderId}
+                              </span>
+                              <br />
+                              <span>
+                                Khách hàng: {cookedOrders[index + 2].fullName}
+                              </span>
+                              <br />
+                              <span>
+                                Ngày đặt:{" "}
+                                {dayjs(order.order_create_at).format(
+                                  "DD/MM/YYYY HH:mm"
+                                )}
+                              </span>
+                            </Card>
+                          </Col>
+                        )}
+                        {cookedOrders[index + 3] && (
+                          <Col span={6}>
+                            <Card>
+                              <Checkbox
+                                checked={selectedOrderIdsForShipper.includes(
+                                  cookedOrders[index + 3].orderId
+                                )}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedOrderIdsForShipper([
+                                      ...selectedOrderIdsForShipper,
+                                      cookedOrders[index + 3].orderId,
+                                    ]);
+                                  } else {
+                                    const newSelected =
+                                      selectedOrderIdsForShipper.filter(
+                                        (id) =>
+                                          id !== cookedOrders[index + 3].orderId
+                                      );
+                                    setSelectedOrderIdsForShipper(newSelected);
+                                  }
+                                }}
+                              />
+                              <span style={{ marginLeft: 8 }}>
+                                Mã ĐH: {cookedOrders[index + 3].orderId}
+                              </span>
+                              <br />
+                              <span>
+                                Khách hàng: {cookedOrders[index + 3].fullName}
+                              </span>
+                              <br />
+                              <span>
+                                Ngày đặt:{" "}
+                                {dayjs(order.order_create_at).format(
+                                  "DD/MM/YYYY HH:mm"
+                                )}
+                              </span>
+                            </Card>
+                          </Col>
+                        )}
+                      </Row>
+                    );
+                  }
+                  return acc;
+                }, [] as JSX.Element[])}
+              </div>
+            </div>
+          ) : (
+            <p>Không có đơn hàng nào có trạng thái Cooked.</p>
+          )}
         </Modal>
       </div>
     </div>
