@@ -4,6 +4,7 @@ const Schedule = require("../models/schedule");
 const ScheduleShipper = require("../models/ScheduleShipper");
 const httpErrors = require("http-errors");
 const { DateTime } = require("luxon");
+const { Op } = require("sequelize");
 
 const getShippers = async () => {
   const shippers = await User.findAll({
@@ -13,24 +14,31 @@ const getShippers = async () => {
   return shippers;
 };
 
-const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
-  if (!orderId || !shipperId || !orderDate) {
-    throw new Error("Order ID, Shipper ID, and Order Date are required");
+const assignShipperToOrder = async (orderIds, shipperId, orderDate) => {
+  if (!Array.isArray(orderIds) || orderIds.length === 0) {
+    throw new Error("Yêu cầu phải có một danh sách ID đơn hàng (orderIds).");
+  }
+  if (!shipperId || !orderDate) {
+    throw new Error("Yêu cầu phải có ID của shipper (shipperId) và ngày giao hàng (orderDate).");
   }
 
   const date = DateTime.fromFormat(orderDate, "MM-dd-yyyy");
   if (!date.isValid) {
-    throw new Error("Invalid date format. Use MM-DD-YYYY");
+    throw new Error("Định dạng ngày không hợp lệ. Vui lòng sử dụng MM-DD-YYYY.");
   }
-
-  const order = await Order.findByPk(orderId);
-  if (!order) {
-    throw new Error("Order not found");
-  }
+  const formattedDate = date.toFormat("MM-dd-yyyy");
 
   const shipper = await User.findByPk(shipperId);
   if (!shipper || shipper.role !== "Shipper") {
-    throw new Error("Invalid shipper ID or user is not a shipper");
+    throw new Error("ID shipper không hợp lệ hoặc người dùng không phải là shipper.");
+  }
+
+  const schedule = await Schedule.findOne({
+    where: { dayOfWeek: formattedDate },
+    include: [{ model: ScheduleShipper, as: "ScheduleShippers", where: { shipperId }, required: true }],
+  });
+  if (!schedule) {
+    throw new Error(`Shipper chưa đăng ký lịch làm việc cho ngày ${orderDate}.`);
   }
 
   const ongoingOrder = await Order.findOne({
@@ -39,34 +47,40 @@ const assignShipperToOrder = async (orderId, shipperId, orderDate) => {
       certificationOfDelivered: null,
     },
   });
-
   if (ongoingOrder) {
-    throw new Error("Shipper đang có đơn hàng chưa giao xong và không thể nhận đơn mới.");
+    throw new Error("Shipper đang có đơn hàng chưa giao xong và không thể nhận thêm đơn mới.");
   }
 
-  const schedule = await Schedule.findOne({
-    where: { dayOfWeek: date.toFormat("MM-dd-yyyy") },
-    include: [
-      {
-        model: ScheduleShipper,
-        as: "ScheduleShippers",
-        where: { shipperId },
-        required: true,
-      },
-    ],
-  });
+  const orders = await Order.findAll({ where: { orderId: orderIds } });
+  const orderMap = new Map(orders.map((o) => [o.orderId, o]));
 
-  if (!schedule) {
-    throw new Error(`Shipper has not registered a schedule for ${orderDate}`);
+  const successfulIds = [];
+  const failedAssignments = [];
+
+  for (const orderId of orderIds) {
+    const parsedOrderId = parseInt(orderId, 10);
+    const order = orderMap.get(parsedOrderId);
+
+    if (!order) {
+      failedAssignments.push({ orderId, reason: "Không tìm thấy đơn hàng." });
+    } else if (order.assignToShipperId) {
+      failedAssignments.push({ orderId, reason: `Đơn hàng đã được gán cho shipper ID ${order.assignToShipperId}.` });
+    } else {
+      successfulIds.push(parsedOrderId);
+    }
   }
 
-  order.assignToShipperId = shipperId;
-  await order.save();
+  if (successfulIds.length > 0) {
+    await Order.update({ assignToShipperId: shipperId }, { where: { orderId: successfulIds } });
+  }
 
   return {
-    message: "Shipper assigned successfully",
-    orderId: order.orderId,
-    shipperId: shipperId,
+    message: "Hoàn tất quá trình gán đơn hàng hàng loạt.",
+    shipperId,
+    successCount: successfulIds.length,
+    failureCount: failedAssignments.length,
+    assignedOrderIds: successfulIds,
+    failedAssignments,
   };
 };
 
@@ -215,7 +229,30 @@ const getShippersByDate = async () => {
     .flatMap((schedule) => schedule.ScheduleShippers.map((ss) => ss.Shipper))
     .filter((shipper) => shipper !== null);
 
-  return shippers;
+  const uniqueShippers = Array.from(new Map(shippers.map((s) => [s.id, s])).values());
+
+  // Với mỗi shipper, đếm số đơn hàng chưa giao xong
+  const shippersWithOrderCount = await Promise.all(
+    uniqueShippers.map(async (shipper) => {
+      const shipperData = shipper.get({ plain: true });
+
+      const activeOrderCount = await Order.count({
+        where: {
+          assignToShipperId: shipper.id,
+          status_id: {
+            [Op.ne]: 4,
+          },
+        },
+      });
+
+      shipperData.activeOrderCount = activeOrderCount;
+      return shipperData;
+    })
+  );
+
+  shippersWithOrderCount.sort((a, b) => b.activeOrderCount - a.activeOrderCount);
+
+  return shippersWithOrderCount;
 };
 
 const getAssignedOrders = async (shipperId) => {
