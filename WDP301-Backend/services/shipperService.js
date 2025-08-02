@@ -85,6 +85,24 @@ const registerSchedule = async (shipperId, dayOfWeek) => {
     throw new Error("Date must be after today");
   }
 
+  const formattedDate = date.toFormat("MM-dd-yyyy");
+
+  const existingRegistration = await Schedule.findOne({
+    where: { dayOfWeek: formattedDate },
+    include: [
+      {
+        model: ScheduleShipper,
+        as: "ScheduleShippers",
+        where: { shipperId },
+        required: true,
+      },
+    ],
+  });
+
+  if (existingRegistration) {
+    throw new Error(`Bạn đã đăng ký lịch làm việc cho ngày ${formattedDate} rồi.`);
+  }
+
   const schedule = await Schedule.create({ dayOfWeek: date.toFormat("MM-dd-yyyy") });
 
   const scheduleShipper = await ScheduleShipper.create({
@@ -231,7 +249,7 @@ const getRegisteredScheduleDates = async (shipperId) => {
       },
     ],
     attributes: ["scheduleId", "dayOfWeek", "startTime", "endTime"],
-    order: [["dayOfWeek", "DESC"]], 
+    order: [["dayOfWeek", "DESC"]],
   });
 
   const uniqueSchedules = [];
