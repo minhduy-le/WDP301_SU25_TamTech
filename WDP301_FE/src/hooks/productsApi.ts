@@ -40,20 +40,25 @@ export interface ProductDto {
     productTypeId: number;
     name: string;
   };
-  ProductRecipes: [
-    {
-      productRecipeId: number;
-      productId: number;
+  ProductRecipes: Array<{
+    productRecipeId: number;
+    productId: number;
+    materialId: number;
+    quantity: number;
+    Material: {
       materialId: number;
+      name: string;
       quantity: number;
-      Material: {
-        materialId: number;
-        name: string;
-        quantity: number;
-        storeId: number;
-      };
-    }
-  ];
+      barCode: string;
+      storeId: number;
+      isActive: boolean;
+      startDate: Date;
+      expireDate: Date;
+      timeExpired: string;
+      isExpired: boolean;
+      isProcessExpired: boolean;
+    };
+  }>;
 }
 
 interface MutationVariables {
