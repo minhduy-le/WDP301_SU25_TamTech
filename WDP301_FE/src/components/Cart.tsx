@@ -13,6 +13,7 @@ import "../style/Cart.css";
 import { useState, useEffect } from "react";
 import { useCartStore } from "../store/cart.store";
 import { DeleteOutlined } from "@ant-design/icons";
+import { useGetProductByTypeId } from "../hooks/productsApi";
 
 const { Text } = Typography;
 
@@ -43,12 +44,40 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
   );
   const { removeFromCart } = useCartStore();
 
+  const { data: mainProducts = [] } = useGetProductByTypeId(1);
+
+  const calculateMaxProductQuantity = (productId: number): number => {
+    const product = mainProducts.find((p) => p.productId === productId);
+    if (!product?.ProductRecipes || product.ProductRecipes.length === 0)
+      return 0;
+
+    const quantities = product.ProductRecipes.map((recipe) => {
+      const materialQuantity = recipe.Material?.quantity || 0;
+      const recipeQuantity = recipe.quantity || 1;
+      return materialQuantity > 0
+        ? Math.floor(materialQuantity / recipeQuantity)
+        : 0;
+    });
+
+    return Math.min(...quantities);
+  };
+
   // Cập nhật selectedItemIds khi cartItems thay đổi
   useEffect(() => {
     setSelectedItemIds(cartItems.map((_, index) => index));
   }, [cartItems]);
 
   const handleCheckboxChange = (index: number, checked: boolean) => {
+    const cartItem = cartItems[index];
+    const maxQuantity = calculateMaxProductQuantity(cartItem.productId);
+
+    if (checked && cartItem.quantity > maxQuantity) {
+      // message.error(
+      //   "Sản phẩm bị dư số lượng. Vui lòng xóa sản phẩm này khỏi giỏ hàng và thêm lại để đặt hàng."
+      // );
+      return; // Không cho phép check nếu vượt quá số lượng
+    }
+
     setSelectedItemIds((prev) => {
       if (checked) {
         return [...prev, index]; // Thêm index nếu check
@@ -63,7 +92,10 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
     selectedItemIds.includes(index)
   );
 
-  const total = selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const total = selectedItems.reduce((sum, item) => {
+    const maxQuantity = calculateMaxProductQuantity(item.productId);
+    return item.quantity <= maxQuantity ? sum + item.totalPrice : sum;
+  }, 0);
 
   const handleRemoveItem = (item: CartItem) => {
     const indexToRemove = cartItems.findIndex(
@@ -80,10 +112,21 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
 
   const handleConfirmOrder = () => {
     if (selectedItems.length === 0) {
-      alert("Vui lòng chọn ít nhất một món để xác nhận đơn hàng!");
+      message.warning("Vui lòng chọn ít nhất một món để xác nhận đơn hàng!");
       return;
     }
-    onConfirmOrder(selectedItems);
+
+    const validSelectedItems = selectedItems.filter((item) => {
+      const maxQuantity = calculateMaxProductQuantity(item.productId);
+      return item.quantity <= maxQuantity;
+    });
+
+    if (validSelectedItems.length === 0) {
+      message.warning("Không có sản phẩm hợp lệ để đặt hàng!");
+      return;
+    }
+
+    onConfirmOrder(validSelectedItems);
   };
 
   return (
@@ -96,90 +139,114 @@ const Cart = ({ cartItems, onConfirmOrder }: CartProps) => {
         <Divider style={{ borderTop: "1px solid #2d1e1a", margin: "6px 0" }} />
         <List
           dataSource={cartItems}
-          renderItem={(item, index) => (
-            <List.Item className="cart-item">
-              <Row style={{ width: "100%" }}>
-                <Col span={1} style={{ paddingTop: 1 }}>
-                  <Checkbox
-                    onChange={(e) =>
-                      handleCheckboxChange(index, e.target.checked)
-                    }
-                    checked={selectedItemIds.includes(index)}
-                    className="checkbox-cart"
-                  />
-                </Col>
-                <Col span={16} style={{ paddingLeft: 9 }}>
-                  <Text className="cart-item-name">{item.productName}</Text>
-                  {item.addOns.length > 0 && (
-                    <ul className="item-description-list">
-                      {item.addOns.map((addOn, addOnIndex) => (
-                        <li key={addOnIndex} className="item-description">
-                          {addOn.productTypeName}
-                          {/* x{addOn.quantity} */}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </Col>
-                <Col
-                  span={5}
-                  style={{
-                    textAlign: "right",
-                    display: "flex",
-                    gap: 5,
-                    flexDirection: "column",
-                  }}
-                >
-                  <div
-                    style={{ display: "flex", gap: 5, justifyContent: "end" }}
-                  >
-                    <Text className="item-price">
-                      {item.price.toLocaleString()}đ
-                    </Text>
-                    <Text className="item-quantity">x{item.quantity}</Text>
-                  </div>
-                  {item.addOns.length > 0 && (
-                    <div>
-                      {item.addOns.map((addOn, addOnIndex) => (
-                        <div
-                          key={addOnIndex}
-                          style={{
-                            display: "flex",
-                            gap: 5,
-                            justifyContent: "end",
-                          }}
-                        >
-                          <Text className="item-price">
-                            {addOn.price.toLocaleString()}đ
-                          </Text>
-                          <Text className="item-quantity">
-                            x{addOn.quantity}
-                          </Text>
+          renderItem={(item, index) => {
+            const maxQuantity = calculateMaxProductQuantity(item.productId);
+            const isOverQuantity = item.quantity > maxQuantity;
+            const isChecked = selectedItemIds.includes(index);
+
+            return (
+              <List.Item className="cart-item">
+                <Col style={{ width: "100%" }}>
+                  <Row style={{ width: "100%" }}>
+                    <Col span={1} style={{ paddingTop: 1 }}>
+                      <Checkbox
+                        onChange={(e) =>
+                          handleCheckboxChange(index, e.target.checked)
+                        }
+                        checked={isChecked && !isOverQuantity}
+                        disabled={isOverQuantity}
+                        className="checkbox-cart"
+                      />
+                    </Col>
+                    <Col span={16} style={{ paddingLeft: 9 }}>
+                      <Text className="cart-item-name">{item.productName}</Text>
+                      {item.addOns.length > 0 && (
+                        <ul className="item-description-list">
+                          {item.addOns.map((addOn, addOnIndex) => (
+                            <li key={addOnIndex} className="item-description">
+                              {addOn.productTypeName}
+                              {/* x{addOn.quantity} */}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </Col>
+                    <Col
+                      span={5}
+                      style={{
+                        textAlign: "right",
+                        display: "flex",
+                        gap: 5,
+                        flexDirection: "column",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 5,
+                          justifyContent: "end",
+                        }}
+                      >
+                        <Text className="item-price">
+                          {item.price.toLocaleString()}đ
+                        </Text>
+                        <Text className="item-quantity">x{item.quantity}</Text>
+                      </div>
+                      {item.addOns.length > 0 && (
+                        <div>
+                          {item.addOns.map((addOn, addOnIndex) => (
+                            <div
+                              key={addOnIndex}
+                              style={{
+                                display: "flex",
+                                gap: 5,
+                                justifyContent: "end",
+                              }}
+                            >
+                              <Text className="item-price">
+                                {addOn.price.toLocaleString()}đ
+                              </Text>
+                              <Text className="item-quantity">
+                                x{addOn.quantity}
+                              </Text>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      )}
+                    </Col>
+                    <Col
+                      span={2}
+                      style={{
+                        textAlign: "right",
+                        display: "flex",
+                        gap: 5,
+                        paddingLeft: 12,
+                      }}
+                    >
+                      <Button
+                        type="text"
+                        onClick={() => handleRemoveItem(item)}
+                        className="btn-remove-cart"
+                      >
+                        <DeleteOutlined />
+                      </Button>
+                    </Col>
+                  </Row>
+                  <Row>
+                    {isOverQuantity && (
+                      <Text
+                        type="danger"
+                        style={{ fontSize: 12, marginLeft: 26 }}
+                      >
+                        Sản phẩm bị dư số lượng. Vui lòng xóa và thêm lại để đặt
+                        hàng.
+                      </Text>
+                    )}
+                  </Row>
                 </Col>
-                <Col
-                  span={2}
-                  style={{
-                    textAlign: "right",
-                    display: "flex",
-                    gap: 5,
-                    paddingLeft: 12,
-                  }}
-                >
-                  <Button
-                    type="text"
-                    onClick={() => handleRemoveItem(item)}
-                    className="btn-remove-cart"
-                  >
-                    <DeleteOutlined />
-                  </Button>
-                </Col>
-              </Row>
-            </List.Item>
-          )}
+              </List.Item>
+            );
+          }}
           bordered={false}
         />
         <hr className="cart-divider" />

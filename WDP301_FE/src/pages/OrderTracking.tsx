@@ -33,9 +33,6 @@ const items = [
     title: "Đặt hàng thành công",
   },
   {
-    title: "Xác nhận đơn hàng",
-  },
-  {
     title: "Đang chuẩn bị",
   },
   {
@@ -64,16 +61,14 @@ const getStepIndex = (status: string) => {
       return 1;
     case "Paid":
       return 2;
-    case "Approved":
-      return 3;
     case "Preparing":
-      return 4;
+      return 3;
     case "Cooked":
-      return 5;
+      return 4;
     case "Delivering":
-      return 6;
+      return 5;
     case "Delivered":
-      return 7;
+      return 6;
     default:
       return 0;
   }
