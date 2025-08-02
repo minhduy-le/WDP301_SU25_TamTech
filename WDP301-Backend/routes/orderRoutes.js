@@ -1090,22 +1090,30 @@ router.put("/:orderId/approved", verifyToken, setOrderToApproved);
 
 /**
  * @swagger
- * /api/orders/{orderId}/preparing:
+ * /api/orders/preparing:
  *   put:
- *     summary: Set order status to Preparing
+ *     summary: Set status to "Preparing" for multiple orders
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderIds
+ *             properties:
+ *               orderIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: A list of order IDs to update
+ *                 example: [101, 102, 105]
  *     responses:
  *       200:
- *         description: Order status updated to Preparing
+ *         description: Batch update complete. Response includes counts and details of success/failures.
  *         content:
  *           application/json:
  *             schema:
@@ -1113,71 +1121,58 @@ router.put("/:orderId/approved", verifyToken, setOrderToApproved);
  *               properties:
  *                 message:
  *                   type: string
- *                 orderId:
+ *                 successCount:
  *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Preparing
+ *                 failureCount:
+ *                   type: integer
+ *                 updatedOrderIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                 failedOrders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: integer
+ *                       reason:
+ *                         type: string
  *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Paid. It must be Approved to transition to Preparing.'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 status:
- *                   type: integer
+ *         description: Invalid request body
  *       403:
  *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff can set orders to Preparing'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
  *       500:
  *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
  */
-router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
+router.put("/preparing", verifyToken, setOrderToPreparing);
 
 /**
  * @swagger
- * /api/orders/{orderId}/cooked:
+ * /api/orders/cooked:
  *   put:
- *     summary: Set order status to Cooked
+ *     summary: Set status to "Cooked" for multiple orders
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderIds
+ *             properties:
+ *               orderIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: A list of order IDs to update
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Order status updated to Cooked
+ *         description: Batch update complete. Response includes counts and details of successes and failures.
  *         content:
  *           application/json:
  *             schema:
@@ -1185,59 +1180,31 @@ router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
  *               properties:
  *                 message:
  *                   type: string
- *                 orderId:
+ *                 successCount:
  *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Cooked
- *                 cookedBy:
+ *                 failureCount:
  *                   type: integer
- *                   description: ID of the staff who marked the order as cooked
- *                 cookedTime:
- *                   type: string
- *                   format: date-time
- *                   description: Timestamp when the order was marked as cooked
+ *                 updatedOrderIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                 failedOrders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: integer
+ *                       reason:
+ *                         type: string
  *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Approved. It must be Preparing to transition to Cooked.'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 status:
- *                   type: integer
+ *         description: Invalid request body or invalid status transition
  *       403:
  *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff can set orders to Cooked'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
  *       500:
  *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
  */
-router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
+router.put("/cooked", verifyToken, setOrderToCooked);
 
 /**
  * @swagger

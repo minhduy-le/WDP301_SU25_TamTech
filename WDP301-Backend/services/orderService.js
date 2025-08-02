@@ -1374,11 +1374,11 @@ const setOrderToApproved = async (req, res) => {
 };
 
 const setOrderToPreparing = async (req, res) => {
-  console.log("setOrderToPreparing called at:", new Date().toISOString());
-  console.log("Request params:", req.params);
+  console.log("setOrderToPreparing (bulk) called at:", new Date().toISOString());
+  console.log("Request body:", req.body);
   console.log("User ID:", req.userId, "User role:", req.userRole);
 
-  const { orderId } = req.params;
+  const { orderIds } = req.body;
   const userId = req.userId;
   const userRole = req.userRole;
 
@@ -1387,61 +1387,60 @@ const setOrderToPreparing = async (req, res) => {
     return res.status(403).send("Unauthorized: Only Staff can set orders to Preparing");
   }
 
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).send("Invalid order ID");
+  if (!Array.isArray(orderIds) || orderIds.length === 0) {
+    return res.status(400).send("Request body must contain an array of order IDs.");
   }
 
   const transaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({
-      where: { orderId: parsedOrderId },
+    const orders = await Order.findAll({
+      where: { orderId: orderIds },
       include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
       transaction,
     });
 
-    if (!order) {
-      console.log("Order not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).send("Order not found");
+    const orderMap = new Map(orders.map((order) => [order.orderId, order]));
+    const successIds = [];
+    const failures = [];
+
+    for (const orderId of orderIds) {
+      const parsedOrderId = parseInt(orderId, 10);
+      const order = orderMap.get(parsedOrderId);
+
+      if (!order) {
+        failures.push({ orderId, reason: "Order not found." });
+      } else {
+        successIds.push(parsedOrderId);
+      }
     }
 
-    if (order.status_id !== 8) {
-      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
-      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
-      await transaction.rollback();
-      return res
-        .status(400)
-        .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Approved to transition to Preparing.`
-        );
+    if (successIds.length > 0) {
+      await Order.update({ status_id: 6 }, { where: { orderId: successIds }, transaction }); // 6: Preparing
+      console.log(`Updated status to 'Preparing' for order IDs: ${successIds.join(", ")}`);
     }
-
-    order.status_id = 6; // Preparing
-    await order.save({ transaction });
 
     await transaction.commit();
-    console.log("Order status updated to Preparing for orderId:", parsedOrderId);
 
     res.status(200).json({
-      message: "Order status updated to Preparing",
-      orderId: parsedOrderId,
-      status: "Preparing",
+      message: "Batch update to 'Preparing' complete.",
+      successCount: successIds.length,
+      failureCount: failures.length,
+      updatedOrderIds: successIds,
+      failedOrders: failures,
     });
   } catch (error) {
-    console.error("Error in setOrderToPreparing:", error.message, error.stack);
+    console.error("Error in setOrderToPreparing (bulk):", error.message, error.stack);
     await transaction.rollback();
-    return res.status(500).send("Failed to update order status");
+    return res.status(500).send("Failed to update order statuses");
   }
 };
 
 const setOrderToCooked = async (req, res) => {
-  console.log("setOrderToCooked called at:", new Date().toISOString());
-  console.log("Request params:", req.params);
+  console.log("setOrderToCooked (bulk) called at:", new Date().toISOString());
+  console.log("Request body:", req.body);
   console.log("User ID:", req.userId, "User role:", req.userRole);
 
-  const { orderId } = req.params;
+  const { orderIds } = req.body;
   const userId = req.userId;
   const userRole = req.userRole;
 
@@ -1450,54 +1449,59 @@ const setOrderToCooked = async (req, res) => {
     return res.status(403).send("Unauthorized: Only Staff can set orders to Cooked");
   }
 
-  const parsedOrderId = parseInt(orderId, 10);
-  if (isNaN(parsedOrderId)) {
-    console.log("Invalid orderId format:", orderId);
-    return res.status(400).send("Invalid order ID");
+  if (!Array.isArray(orderIds) || orderIds.length === 0) {
+    return res.status(400).send("Request body must contain an array of order IDs.");
   }
 
   const transaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({
-      where: { orderId: parsedOrderId },
+    const orders = await Order.findAll({
+      where: { orderId: orderIds },
       include: [{ model: OrderStatus, as: "OrderStatus", attributes: ["status"] }],
       transaction,
     });
 
-    if (!order) {
-      console.log("Order not found for orderId:", parsedOrderId);
-      await transaction.rollback();
-      return res.status(404).send("Order not found");
+    const orderMap = new Map(orders.map((order) => [order.orderId, order]));
+    const successIds = [];
+    const failures = [];
+
+    for (const orderId of orderIds) {
+      const parsedOrderId = parseInt(orderId, 10);
+      const order = orderMap.get(parsedOrderId);
+
+      if (!order) {
+        failures.push({ orderId, reason: "Order not found." });
+      } else if (order.status_id !== 6) {
+        // Trạng thái hợp lệ để chuyển sang 'Cooked' là 'Preparing' (status_id: 6)
+        const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
+        failures.push({
+          orderId,
+          reason: `Invalid status: Order is currently '${currentStatus}'. It must be 'Preparing' to transition to 'Cooked'.`,
+        });
+      } else {
+        successIds.push(parsedOrderId);
+      }
     }
 
-    if (order.status_id !== 6) {
-      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `status_id: ${order.status_id}`;
-      console.log("Invalid status transition for orderId:", parsedOrderId, "Current status:", currentStatus);
-      await transaction.rollback();
-      return res
-        .status(400)
-        .send(
-          `Invalid status transition: Order is currently ${currentStatus}. It must be Preparing to transition to Cooked.`
-        );
+    if (successIds.length > 0) {
+      await Order.update(
+        { status_id: 7, cookedBy: userId, cookedTime: new Date() }, // 7: Cooked
+        { where: { orderId: successIds }, transaction }
+      );
+      console.log(`Updated status to 'Cooked' for order IDs: ${successIds.join(", ")}`);
     }
-
-    order.status_id = 7; // Cooked
-    order.cookedBy = userId;
-    order.cookedTime = new Date();
-    await order.save({ transaction });
 
     await transaction.commit();
-    console.log("Order status updated to Cooked for orderId:", parsedOrderId);
 
     res.status(200).json({
-      message: "Order status updated to Cooked",
-      orderId: parsedOrderId,
-      status: "Cooked",
-      cookedBy: userId,
-      cookedTime: order.cookedTime,
+      message: "Batch update to 'Cooked' complete.",
+      successCount: successIds.length,
+      failureCount: failures.length,
+      updatedOrderIds: successIds,
+      failedOrders: failures,
     });
   } catch (error) {
-    console.error("Error in setOrderToCooked:", error.message, error.stack);
+    console.error("Error in setOrderToCooked (bulk):", error.message, error.stack);
     await transaction.rollback();
     return res.status(500).send("Failed to update order status");
   }

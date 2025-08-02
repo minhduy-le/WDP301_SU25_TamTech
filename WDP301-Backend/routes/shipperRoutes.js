@@ -46,20 +46,13 @@ router.get("/", verifyToken, async (req, res, next) => {
 
 /**
  * @swagger
- * /api/shippers/assign/{orderId}:
+ * /api/shippers/assign:
  *   post:
- *     summary: Assign a shipper to an order
- *     description: Update the assignToShipperId field of an order with the specified shipper ID for a specific date
+ *     summary: Assign a shipper to multiple orders
+ *     description: Assigns a single shipper to a batch of orders for a specific date. The shipper must be scheduled for that date and have no other ongoing deliveries.
  *     tags: [Shippers]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order to assign a shipper to
  *     requestBody:
  *       required: true
  *       content:
@@ -67,18 +60,25 @@ router.get("/", verifyToken, async (req, res, next) => {
  *           schema:
  *             type: object
  *             required:
+ *               - orderIds
  *               - shipperId
  *               - orderDate
  *             properties:
+ *               orderIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: A list of order IDs to be assigned.
+ *                 example: [101, 102, 103]
  *               shipperId:
  *                 type: integer
- *                 description: The ID of the shipper to assign
+ *                 description: The ID of the shipper to assign.
  *               orderDate:
  *                 type: string
- *                 description: The date of the order in MM-DD-YYYY format
+ *                 description: The date of the orders in MM-DD-YYYY format.
  *     responses:
  *       200:
- *         description: Shipper assigned successfully
+ *         description: Batch assignment process completed.
  *         content:
  *           application/json:
  *             schema:
@@ -86,24 +86,36 @@ router.get("/", verifyToken, async (req, res, next) => {
  *               properties:
  *                 message:
  *                   type: string
- *                 orderId:
- *                   type: integer
  *                 shipperId:
  *                   type: integer
+ *                 successCount:
+ *                   type: integer
+ *                 failureCount:
+ *                   type: integer
+ *                 assignedOrderIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                 failedAssignments:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: integer
+ *                       reason:
+ *                         type: string
  *       400:
- *         description: Invalid input, invalid date format, or shipper not scheduled for the specified date
- *       404:
- *         description: Order not found
+ *         description: Invalid input, shipper not available, or some orders could not be assigned.
  *       401:
  *         description: Unauthorized
  *       500:
  *         description: Server error
  */
-router.post("/assign/:orderId", verifyToken, async (req, res, next) => {
+router.post("/assign", verifyToken, async (req, res, next) => {
   try {
-    const { orderId } = req.params;
-    const { shipperId, orderDate } = req.body;
-    const result = await shipperService.assignShipperToOrder(orderId, shipperId, orderDate);
+    const { orderIds, shipperId, orderDate } = req.body;
+    const result = await shipperService.assignShipperToOrder(orderIds, shipperId, orderDate);
     res.status(200).json(result);
   } catch (error) {
     res.status(400).send(error.message);
@@ -172,7 +184,7 @@ router.post("/register", verifyToken, async (req, res, next) => {
  * /api/shippers/scheduled/currentDate:
  *   get:
  *     summary: Get list of shippers scheduled for today
- *     description: Retrieve all shippers who have registered a schedule for the current date
+ *     description: Retrieve all shippers who have registered a schedule for the current date, including their active order count.
  *     tags: [Shippers]
  *     security:
  *       - bearerAuth: []
@@ -194,6 +206,10 @@ router.post("/register", verifyToken, async (req, res, next) => {
  *                     type: string
  *                   phone_number:
  *                     type: string
+ *                   activeOrderCount:
+ *                     type: integer
+ *                     description: The number of orders assigned to the shipper that are not yet delivered (status_id != 4).
+ *                     example: 2
  *       401:
  *         description: Unauthorized
  *       500:
