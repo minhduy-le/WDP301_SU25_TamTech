@@ -21,6 +21,7 @@ const Blog = require("./blog");
 const ReasonCancel = require("./reasonCancel");
 const FcmToken = require("./fcmToken");
 const BankUserInformation = require("./bankUser");
+const Transaction = require("./transaction");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
@@ -100,7 +101,14 @@ User.hasMany(Blog, { foreignKey: "authorId", as: "Blogs" });
 User.hasMany(FcmToken, { foreignKey: "userId", as: "FcmTokens" });
 FcmToken.belongsTo(User, { foreignKey: "userId", as: "User" });
 
+Order.hasMany(Transaction, { foreignKey: "orderId", as: "Transactions" });
+Transaction.belongsTo(Order, { foreignKey: "orderId", as: "Order" });
+
+PaymentMethod.hasMany(Transaction, { foreignKey: "payment_method_id", as: "Transactions" });
+Transaction.belongsTo(PaymentMethod, { foreignKey: "payment_method_id", as: "PaymentMethod" });
+
 module.exports = {
+  Transaction,
   Product,
   ProductType,
   Store,
