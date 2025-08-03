@@ -45,12 +45,13 @@ import { POSPage } from "./pages/POSPage";
 import POSSuccess from "./components/pos/POSSuccess";
 import ReportManagement from "./pages/admin/ReportManagement";
 import CancelOrderSuccess from "./pages/CancelOrderSuccess";
-import PaymentCancel from "./pages/PaymentCancel"; 
+import PaymentCancel from "./pages/PaymentCancel";
 import MaterialProcessManagement from "./pages/manager/materials/MaterialProcessManagement";
 import UserLayout from "./components/UserLayout";
 import OrderTracking from "./pages/OrderTracking";
 import Promotion from "./pages/Promotion";
 import OrderHistorys from "./pages/OrderHistory";
+import FormRefund from "./pages/FormRefund";
 
 const LayoutWithNavFooter = () => (
   <>
@@ -94,6 +95,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/form-refund-order" element={<FormRefund />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             {/* <Route path="/user-information" element={<UserInfomation />} /> */}
             <Route path="/user" element={<UserLayout />}>
@@ -149,8 +151,8 @@ function App() {
             <Route path="/staff/chat" element={<StaffChat />} />
             <Route path="/staff/pos" element={<POSPage />} />
             <Route path="/staff/payment-success" element={<POSSuccess />} />
-            
-          </Route><Route path="/staff/pos/payment-cancel" element={<PaymentCancel />} />
+          </Route>
+          <Route path="/staff/pos/payment-cancel" element={<PaymentCancel />} />
         </Routes>
       </AuthGuardProvider>
     </Router>
