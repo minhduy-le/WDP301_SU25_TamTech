@@ -102,6 +102,11 @@ export interface OrderChangeStatus {
   orderIds: number[];
 }
 
+interface CreateBank {
+  bankName: string;
+  bankNumber: string;
+}
+
 const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await axiosInstance.get<Notification[]>("notifications");
   return response.data;
@@ -247,6 +252,7 @@ export const useGetBank = () => {
     queryFn: fetchBank,
   });
 };
+
 export const useGetOrderById = (orderId: number) => {
   return useQuery<OrderHistory, Error>({
     queryKey: ["orders", orderId],
@@ -338,6 +344,39 @@ export const useChangeTransaction = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
+
+export const useCancelOrderForStaff = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`orders/${orderId}/cancel/for-staff`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useCreateBankUser = () => {
+  return useMutation({
+    mutationFn: async (newBank: CreateBank) => {
+      const response = await axiosInstance.post(
+        "banks/user-information",
+        newBank
+      );
+      return response.data;
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };

@@ -58,12 +58,12 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/product/:productId",
       "/blog",
       "/blog/:id",
-      "/form-refund-order",
     ];
 
     const matchDynamicRoute = (routePattern: string, path: string) => {
       const dynamicRoutePattern = routePattern
         .replace(/:productId/, "[0-9]+")
+        .replace(/:userId/, "[0-9]+")
         .replace(/:orderId/, "[0-9]+")
         .replace(/:id/, "[0-9]+");
       const regex = new RegExp(`^${dynamicRoutePattern}$`);
@@ -78,6 +78,9 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         publicRoutes.includes(location.pathname)
       ) {
         return;
+      }
+      if (location.pathname === "/form-refund-order") {
+        localStorage.setItem("redirectAfterLogin", "/form-refund-order");
       }
       navigate("/login", { replace: true });
       return;
@@ -99,6 +102,15 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       Admin: "/admin/users",
       Manager: "/manager/dashboard",
     };
+
+    const redirectPath = localStorage.getItem("redirectAfterLogin");
+    if (redirectPath && redirectPath === "/form-refund-order") {
+      if (decoded.role === "User") {
+        navigate(redirectPath, { replace: true });
+        localStorage.removeItem("redirectAfterLogin"); // Xóa sau khi redirect
+        return;
+      }
+    }
 
     if (location.pathname === "/") {
       navigate(roleRedirects[decoded.role as UserRole], { replace: true });
@@ -122,6 +134,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/user/order-tracking/:orderId",
         "/user/promotion",
         "/payment-cancel",
+        "/form-refund-order",
       ],
       Shipper: [],
       Manager: [
@@ -153,6 +166,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         if (
           route.includes(":productId") ||
           route.includes(":orderId") ||
+          route.includes(":userId") ||
           route.includes(":id")
         ) {
           return matchDynamicRoute(route, location.pathname);

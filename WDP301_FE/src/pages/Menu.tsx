@@ -392,7 +392,7 @@ const Menu = () => {
                     ) : query.data && query.data.length > 0 ? (
                       <>
                         <Text className="add-ons-title">
-                          {getProductTypeName(typeId)} - chọn 1
+                          {getProductTypeName(typeId)}
                         </Text>
                         {query.data.map((item, index) => (
                           <div className="add-on-item" key={item.productId}>
