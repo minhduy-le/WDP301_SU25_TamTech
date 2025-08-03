@@ -40,7 +40,6 @@ interface FeedbackItem {
 const statusMap: { [key: string]: string } & {
   Pending: string;
   Paid: string;
-  Approved: string;
   Preparing: string;
   Cooked: string;
   Delivering: string;
@@ -49,7 +48,6 @@ const statusMap: { [key: string]: string } & {
 } = {
   Pending: "Chờ thanh toán",
   Paid: "Đã thanh toán",
-  Approved: "Xác nhận đơn",
   Preparing: "Đang nấu ăn",
   Cooked: "Đã nấu xong",
   Delivering: "Đang giao",
@@ -272,7 +270,6 @@ const OrderHistorys = () => {
   const statusTabs = [
     { text: "Chờ thanh toán", value: "Pending" },
     { text: "Đã thanh toán", value: "Paid" },
-    { text: "Xác nhận đơn", value: "Approved" },
     { text: "Đang nấu ăn", value: "Preparing" },
     { text: "Đã nấu xong", value: "Cooked" },
     { text: "Đang giao", value: "Delivering" },

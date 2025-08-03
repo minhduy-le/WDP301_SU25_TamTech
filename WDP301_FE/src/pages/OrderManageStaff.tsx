@@ -513,7 +513,7 @@ const StaffOrderManagement = () => {
   const paidOrders = useMemo(
     () =>
       filteredOrders?.filter(
-        (order) => order.status === "Paid" && order.payment_method !== "Momo"
+        (order) => order.status === "Paid" && order.payment_method === "PayOS"
       ) || [],
     [filteredOrders]
   );
@@ -522,7 +522,7 @@ const StaffOrderManagement = () => {
     () =>
       filteredOrders?.filter(
         (order) =>
-          order.status === "Preparing" && order.payment_method !== "Momo"
+          order.status === "Preparing" && order.payment_method === "PayOS"
       ) || [],
     [filteredOrders]
   );
@@ -530,7 +530,7 @@ const StaffOrderManagement = () => {
   const cookedOrders = useMemo(
     () =>
       filteredOrders?.filter(
-        (order) => order.status === "Cooked" && order.payment_method !== "Momo"
+        (order) => order.status === "Cooked" && order.payment_method === "PayOS"
       ) || [],
     [filteredOrders]
   );
