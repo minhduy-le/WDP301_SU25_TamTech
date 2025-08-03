@@ -48,6 +48,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'transfer'>('transfer')
   const [isProcessing, setIsProcessing] = useState(false)
   const { createOrder } = usePOSApi()
+  
+  console.log('CheckoutPage - orderItems with addOns:', orderItems)
   const navigate = useNavigate()
   const [message, setMessage] = useState<string | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
@@ -75,20 +77,39 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
     setIsProcessing(true)
     setMessage(null)
     try {
-      let payment_method_id = 2 
+      let payment_method_id = 4
 
-      const apiOrderItems = orderItems.map((item) => ({
-        productId: Number(item.id),
-        quantity: item.quantity,
-        price: item.price,
-      }))
+      const apiOrderItems: Array<{productId: number, quantity: number, price: number}> = []
+      
+      orderItems.forEach((item) => {
+        apiOrderItems.push({
+          productId: Number(item.id),
+          quantity: item.quantity,
+          price: item.price,
+        })
+        
+        if (item.addOns && item.addOns.length > 0) {
+          item.addOns.forEach((addOn) => {
+            if (addOn.quantity > 0) {
+              apiOrderItems.push({
+                productId: addOn.productId,
+                quantity: addOn.quantity,
+                price: addOn.price,
+              })
+            }
+          })
+        }
+      })
+      
+      console.log('POS Order Items being sent to API:', apiOrderItems)
+      console.log('Original orderItems with addOns:', orderItems)
 
       const res = await createOrder({
         orderItems: apiOrderItems,
         order_discount_value: discountAmount,
         order_shipping_fee: 0,
         payment_method_id,
-        order_address: 'POS order',
+        order_address: 'Tại quầy',
         note: '',
         promotion_code: promotionCode,
         customer_phone: customerPhone,
@@ -161,31 +182,50 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             <div className="p-4">
               <div className="space-y-4">
                 {orderItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center space-x-4 py-3 border-b border-amber-100 last:border-b-0"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-bold text-amber-800">{item.name}</h3>
-                      <p className="text-amber-600 text-sm line-clamp-1">
-                        {item.description}
-                      </p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <span className="text-amber-700 font-medium">
-                          {item.price.toLocaleString()}đ × {item.quantity}
-                        </span>
+                  <div key={item.id} className="border-b border-amber-100 last:border-b-0 pb-4 last:pb-0">
+                    {/* Main Product */}
+                    <div className="flex items-center space-x-4 py-3">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-bold text-amber-800">{item.name}</h3>
+                        <p className="text-amber-600 text-sm line-clamp-1">
+                          {item.description}
+                        </p>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <span className="text-amber-700 font-medium">
+                            {item.price.toLocaleString()}đ × {item.quantity}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-amber-800">
+                          {(item.price * item.quantity).toLocaleString()}đ
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-amber-800">
-                        {(item.price * item.quantity).toLocaleString()}đ
+                    
+                    {/* Add-ons */}
+                    {item.addOns && item.addOns.length > 0 && (
+                      <div className="ml-20 space-y-2">
+                        <div className="text-sm font-medium text-amber-700 mb-2">Món kèm:</div>
+                        {item.addOns.map((addOn, index) => (
+                          <div key={index} className="flex justify-between items-center py-1 px-3 bg-amber-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                              <span className="text-sm text-amber-800">{addOn.productTypeName}</span>
+                              <span className="text-xs text-amber-600">× {addOn.quantity}</span>
+                            </div>
+                            <span className="text-sm font-medium text-amber-800">
+                              {(addOn.price * addOn.quantity).toLocaleString()}đ
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -304,16 +344,21 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <div className="flex justify-between">
                   <span className="text-amber-600">Số lượng món:</span>
                   <span className="font-medium text-amber-700">
-                    {orderItems.length}
+                    {orderItems.reduce((total, item) => {
+                      const addOnCount = item.addOns ? item.addOns.length : 0;
+                      return total + 1 + addOnCount; 
+                    }, 0)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-amber-600">Tổng sản phẩm:</span>
                   <span className="font-medium text-amber-700">
-                    {orderItems.reduce(
-                      (total, item) => total + item.quantity,
-                      0
-                    )}
+                    {orderItems.reduce((total, item) => {
+                      const mainQuantity = item.quantity;
+                      const addOnQuantity = item.addOns ? 
+                        item.addOns.reduce((sum, addOn) => sum + addOn.quantity, 0) : 0;
+                      return total + mainQuantity + addOnQuantity;
+                    }, 0)}
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-amber-200">

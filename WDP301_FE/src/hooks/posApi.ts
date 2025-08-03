@@ -1,6 +1,6 @@
 import axios from '../config/axios'
 import { AxiosError } from 'axios'
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 
 export interface ProductType {
   productTypeId: number
@@ -210,4 +210,58 @@ export const usePOSApi = () => {
     createOrder,
     cancelOrder,
   }
+}
+
+// Hook for add-on products (similar to Menu.tsx)
+export const useAddOnProducts = () => {
+  const { getProductTypes, getProductsByType } = usePOSApi()
+  const [addOnProducts, setAddOnProducts] = useState<{
+    typeId: number;
+    typeName: string;
+    products: Product[];
+    loading: boolean;
+  }[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchAddOnProducts = async () => {
+      setLoading(true)
+      try {
+        const productTypes = await getProductTypes()
+        const addOnTypes = productTypes.filter(type => type.productTypeId !== 1 && type.isActive)
+        
+        const addOnPromises = addOnTypes.map(async (type) => {
+          try {
+            const products = await getProductsByType(type.productTypeId)
+            return {
+              typeId: type.productTypeId,
+              typeName: type.name,
+              products: products || [],
+              loading: false
+            }
+          } catch (error) {
+            console.error(`Error fetching products for type ${type.productTypeId}:`, error)
+            return {
+              typeId: type.productTypeId,
+              typeName: type.name,
+              products: [],
+              loading: false
+            }
+          }
+        })
+
+        const results = await Promise.all(addOnPromises)
+        setAddOnProducts(results)
+      } catch (error) {
+        console.error('Error fetching add-on products:', error)
+        setAddOnProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAddOnProducts()
+  }, [getProductTypes, getProductsByType])
+
+  return { addOnProducts, loading }
 }
