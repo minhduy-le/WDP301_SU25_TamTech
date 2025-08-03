@@ -21,6 +21,7 @@ import OrderManagement from "./pages/manager/orders/OrderManagement";
 import ProductManagement from "./pages/manager/products/ProductManagement";
 import PromotionManagement from "./pages/manager/promotions/PromotionManagement";
 import EmployeeManagement from "./pages/manager/staffs/EmployeeManagement";
+import TransactionManagement from "./pages/manager/transactions/TransactionManagement";
 import ProductDetail from "./pages/ProductDetail";
 import AdminSidebar from "./components/admin/AdminSidebar";
 import UserManagement from "./pages/admin/UserManagement";
@@ -115,6 +116,7 @@ function App() {
           <Route element={<LayoutWithSidebarManager />}>
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/orders" element={<OrderManagement />} />
+            <Route path="/manager/transactions" element={<TransactionManagement />} />
             <Route path="/manager/materials" element={<MaterialManagement />} />
             <Route
               path="/manager/materials-process"

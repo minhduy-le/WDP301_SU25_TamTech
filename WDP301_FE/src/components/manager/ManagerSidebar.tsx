@@ -12,12 +12,13 @@ import {
   TagOutlined,
   ShoppingOutlined,
   MessageOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
-import { MessageCircle, Clipboard, Scroll } from "lucide-react";
+import { MessageCircle, Scroll } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -37,25 +38,16 @@ const ManagerSidebar: React.FC = () => {
       label: "Tổng quan",
     },
     {
+      key: "/manager/transactions",
+      icon: <CreditCardOutlined />,
+      label: "Quản lý giao dịch",
+    },
+    {
       key: "/manager/orders",
       icon: <ShoppingFilled />,
       label: "Quản lý đơn hàng",
     },
-    {
-      key: "materials",
-      icon: <Clipboard />,
-      label: "Nguyên liệu",
-      children: [
-        {
-          key: "/manager/materials",
-          label: "Quản lý nguyên liệu",
-        },
-        {
-          key: "/manager/materials-process",
-          label: "Quản lý nguyên liệu đã xử lý",
-        },
-      ],
-    },
+  
     {
       key: "/manager/products",
       icon: <ShoppingOutlined />,
