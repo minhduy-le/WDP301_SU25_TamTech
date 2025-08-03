@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Button, Card, message, Typography, Spin } from "antd";
+import { Row, Col, Button, Card, Typography, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useCartStore } from "../../store/cart.store";
-import { useAuthStore } from "../../hooks/usersApi";
 import { useProductTypes } from "../../hooks/productTypesApi";
 import type { ProductDto } from "../../hooks/productsApi";
 import { useGetProductByTypeId } from "../../hooks/productsApi";
@@ -12,8 +10,6 @@ const { Title, Text } = Typography;
 
 const OurMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { addToCart } = useCartStore();
-  const { user } = useAuthStore();
   const { data: productTypes, isLoading: isProductTypesLoading } = useProductTypes();
   const [activeTypeId, setActiveTypeId] = useState<number | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -254,54 +250,38 @@ const OurMenu: React.FC = () => {
                       >
                         {parseFloat(item.price.toString()).toLocaleString()}đ
                       </Text>
-                      <Button
-                        type="primary"
-                        shape="circle"
-                        style={{
-                          backgroundColor: "#f97316",
-                          borderColor: "#e67e22",
-                          width: "100px",
-                          height: "40px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
-                          fontWeight: "bold",
-                          outline: "none",
-                          fontFamily: "'Montserrat', sans-serif",
-                        }}
-                        onClick={() => {
-                          if (isMainDish) {
+                      {isMainDish && (
+                        <Button
+                          type="primary"
+                          shape="circle"
+                          style={{
+                            backgroundColor: "#f97316",
+                            borderColor: "#e67e22",
+                            width: "100px",
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
+                            fontWeight: "bold",
+                            outline: "none",
+                            fontFamily: "'Montserrat', sans-serif",
+                          }}
+                          onClick={() => {
                             handleOpenModal(item);
-                          } else {
-                            if (!user?.id) {
-                              message.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-                              return;
-                            }
-                            const cartItem = {
-                              userId: user.id,
-                              productId: item.productId,
-                              productName: item.name,
-                              addOns: [],
-                              quantity: 1,
-                              price: item.price,
-                              totalPrice: item.price,
-                            };
-                            addToCart(cartItem);
-                            message.success(`${item.name} đã được thêm vào giỏ hàng!`);
-                          }
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = "#fb923c";
-                          (e.currentTarget as HTMLElement).style.transform = "scale(1.05)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = "#f97316";
-                          (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                        }}
-                      >
-                        Thêm
-                      </Button>
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = "#fb923c";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = "#f97316";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                          }}
+                        >
+                          Thêm
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
