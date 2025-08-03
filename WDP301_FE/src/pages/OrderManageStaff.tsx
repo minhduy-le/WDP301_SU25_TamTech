@@ -1031,7 +1031,11 @@ const StaffOrderManagement = () => {
           {selectedOrder && selectedOrder.bankAccounts.length > 0 && (
             <>
               <Input
-                value={selectedOrder.bankAccounts[0].bankName}
+                value={
+                  selectedOrder.bankAccounts[
+                    selectedOrder.bankAccounts.length - 1
+                  ].bankName
+                }
                 disabled
                 style={{
                   width: "100%",
@@ -1044,7 +1048,11 @@ const StaffOrderManagement = () => {
                 placeholder="Tên ngân hàng"
               />
               <Input
-                value={selectedOrder.bankAccounts[0].bankNumber}
+                value={
+                  selectedOrder.bankAccounts[
+                    selectedOrder.bankAccounts.length - 1
+                  ].bankNumber
+                }
                 disabled
                 style={{
                   marginTop: 8,
