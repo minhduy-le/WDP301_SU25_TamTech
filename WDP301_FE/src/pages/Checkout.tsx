@@ -29,7 +29,6 @@ import {
   useGetPromotionUser,
   type Promotion,
 } from "../hooks/promotionApi";
-import { useGetProductByTypeId } from "../hooks/productsApi";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 
 // const { Option } = Select;
@@ -117,23 +116,6 @@ const Checkout = () => {
 
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
   const [isLoadingButton, setIsLoadingButton] = useState(false);
-  const { data: mainProducts = [] } = useGetProductByTypeId(1);
-
-  const calculateMaxProductQuantity = (productId: number): number => {
-    const product = mainProducts.find((p) => p.productId === productId);
-    if (!product?.ProductRecipes || product.ProductRecipes.length === 0)
-      return 0;
-
-    const quantities = product.ProductRecipes.map((recipe) => {
-      const materialQuantity = recipe.Material?.quantity || 0;
-      const recipeQuantity = recipe.quantity || 1;
-      return materialQuantity > 0
-        ? Math.floor(materialQuantity / recipeQuantity)
-        : 0;
-    });
-
-    return Math.min(...quantities);
-  };
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -510,23 +492,17 @@ const Checkout = () => {
     setSelectedItems((prevItems) =>
       prevItems.map((item) => {
         if (item.productId === productId) {
-          const maxQuantity = calculateMaxProductQuantity(item.productId);
           const newQuantity = item.quantity + 1;
-          if (newQuantity <= maxQuantity) {
-            const addOnTotalPrice = item.addOns.reduce(
-              (sum, addOn) => sum + addOn.price * addOn.quantity,
-              0
-            );
-            const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
-            return {
-              ...item,
-              quantity: newQuantity,
-              totalPrice: newTotalPrice,
-            };
-          } else {
-            message.error(`Số lượng vượt quá giới hạn (${maxQuantity} phần).`);
-            return item;
-          }
+          const addOnTotalPrice = item.addOns.reduce(
+            (sum, addOn) => sum + addOn.price * addOn.quantity,
+            0
+          );
+          const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
+          return {
+            ...item,
+            quantity: newQuantity,
+            totalPrice: newTotalPrice,
+          };
         }
         return item;
       })
@@ -881,10 +857,6 @@ const Checkout = () => {
                             <span>{item.quantity}</span>
                             <Button
                               onClick={() => handleIncrement(item.productId)}
-                              disabled={
-                                item.quantity >=
-                                calculateMaxProductQuantity(item.productId)
-                              }
                             >
                               +
                             </Button>

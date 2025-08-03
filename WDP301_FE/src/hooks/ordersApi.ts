@@ -98,6 +98,10 @@ interface Bank {
   ];
 }
 
+export interface OrderChangeStatus {
+  orderIds: number[];
+}
+
 const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await axiosInstance.get<Notification[]>("notifications");
   return response.data;
@@ -295,6 +299,32 @@ export const useUploadRefundCertificate = () => {
       } else {
         throw new Error("An unexpected error occurred");
       }
+    },
+  });
+};
+
+export const useChangeOrderPreparing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, OrderChangeStatus>({
+    mutationFn: async ({ orderIds }: OrderChangeStatus): Promise<void> => {
+      await axiosInstance.put("orders/preparing", { orderIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useChangeOrderCooked = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, OrderChangeStatus>({
+    mutationFn: async ({ orderIds }: OrderChangeStatus): Promise<void> => {
+      await axiosInstance.put("orders/cooked", { orderIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 };

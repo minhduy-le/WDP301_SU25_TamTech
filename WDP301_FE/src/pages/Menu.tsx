@@ -7,7 +7,6 @@ import {
   Typography,
   message,
   Skeleton,
-  Tag,
 } from "antd";
 import "../style/Menu.css";
 import { useState } from "react";
@@ -98,21 +97,6 @@ const Menu = () => {
     );
   };
 
-  const calculateMaxProductQuantity = (product: ProductDto): number => {
-    if (!product.ProductRecipes || product.ProductRecipes.length === 0)
-      return 0;
-
-    const quantities = product.ProductRecipes.map((recipe) => {
-      const materialQuantity = recipe.Material?.quantity || 0;
-      const recipeQuantity = recipe.quantity || 1;
-      return materialQuantity > 0
-        ? Math.floor(materialQuantity / recipeQuantity)
-        : 0;
-    });
-
-    return Math.min(...quantities);
-  };
-
   const showModal = (product: ProductDto) => {
     setSelectedProductId(product.productId);
     setIsModalVisible(true);
@@ -192,10 +176,7 @@ const Menu = () => {
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    const maxQuantity = productDetail
-      ? calculateMaxProductQuantity(productDetail)
-      : 10;
-    if (newQuantity >= 1 && newQuantity <= maxQuantity) {
+    if (newQuantity >= 1) {
       setQuantity(newQuantity);
     }
   };
@@ -205,7 +186,7 @@ const Menu = () => {
       const newValue = (prev[key] || 0) + change;
       return {
         ...prev,
-        [key]: newValue >= 0 && newValue <= 10 ? newValue : 0,
+        [key]: newValue >= 0 ? newValue : 0,
       };
     });
   };
@@ -274,90 +255,54 @@ const Menu = () => {
             <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
             <Row gutter={[16, 16]} className="menu-card-row">
-              {mainProducts.slice(0, visibleProducts).map((product) => {
-                const maxQuantity = calculateMaxProductQuantity(product);
-                return (
-                  <Col
-                    xs={24}
-                    sm={12}
-                    md={8}
-                    lg={8}
-                    xl={8}
-                    className="menu-column"
-                    key={product.productId}
-                  >
-                    <Card className="menu-card">
-                      <div className="card-image-container">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="card-image"
-                        />
-                        <div className="card-rating">
-                          <span className="card-rating-star">
-                            <StarOutlined />
-                          </span>
-                          <span>{product.averageRating}</span>
+              {mainProducts.slice(0, visibleProducts).map((product) => (
+                <Col
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={8}
+                  xl={8}
+                  className="menu-column"
+                  key={product.productId}
+                >
+                  <Card className="menu-card">
+                    <div className="card-image-container">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="card-image"
+                      />
+                      <div className="card-rating">
+                        <span className="card-rating-star">
+                          <StarOutlined />
+                        </span>
+                        <span>{product.averageRating}</span>
+                      </div>
+                    </div>
+                    <div className="card-content">
+                      <h3 className="card-title">
+                        {product.name.toUpperCase()}
+                      </h3>
+                      <p className="card-description">{product.description}</p>
+                      <div className="card-price-container">
+                        <div className="card-price">
+                          {Number(product.price).toLocaleString("vi-VN")}đ
                         </div>
                         {productTypeId === 1 ? (
-                          maxQuantity > 0 ? (
-                            <div className="quantity-product-count">
-                              <Tag
-                                color="green"
-                                style={{
-                                  fontFamily: "'Montserrat', sans-serif",
-                                }}
-                              >
-                                Còn {maxQuantity} phần
-                              </Tag>
-                            </div>
-                          ) : (
-                            <div className="quantity-product-count">
-                              <Tag
-                                color="red"
-                                style={{
-                                  fontFamily: "'Montserrat', sans-serif",
-                                }}
-                              >
-                                Sản phẩm này hiện tại đã hết hàng
-                              </Tag>
-                            </div>
-                          )
+                          <Button
+                            className="add-button"
+                            onClick={() => showModal(product)}
+                          >
+                            Thêm
+                          </Button>
                         ) : (
                           <></>
                         )}
                       </div>
-                      <div className="card-content">
-                        <h3 className="card-title">
-                          {product.name.toUpperCase()}
-                        </h3>
-                        <p className="card-description">
-                          {product.description}
-                        </p>
-                        <div className="card-price-container">
-                          <div
-                            className="card-price"
-                            style={{ marginBottom: 0 }}
-                          >
-                            {Number(product.price).toLocaleString("vi-VN")}đ
-                          </div>
-                          {productTypeId === 1 ? (
-                            <Button
-                              className="add-button"
-                              onClick={() => showModal(product)}
-                              disabled={maxQuantity === 0}
-                            >
-                              Thêm
-                            </Button>
-                          ) : (
-                            <></>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  </Col>
-                );
-              })}
+                    </div>
+                  </Card>
+                </Col>
+              ))}
               {visibleProducts < mainProducts.length && (
                 <Col span={24} className="button-show-more">
                   <Button className="custom-button" onClick={handleShowMore}>
@@ -411,11 +356,6 @@ const Menu = () => {
                       {productDetail.description}
                     </li>
                   </ul>
-                  <Text style={{ display: "block", textAlign: "left" }}>
-                    <Tag color="green">
-                      Còn {calculateMaxProductQuantity(productDetail)} phần
-                    </Tag>
-                  </Text>
                 </Col>
               </Row>
               <div className="modal-quantity">
@@ -434,9 +374,6 @@ const Menu = () => {
                   <Button
                     className="quantity-button plus-button"
                     onClick={() => handleQuantityChange(1)}
-                    disabled={
-                      quantity >= calculateMaxProductQuantity(productDetail)
-                    }
                   >
                     +
                   </Button>
@@ -455,7 +392,7 @@ const Menu = () => {
                     ) : query.data && query.data.length > 0 ? (
                       <>
                         <Text className="add-ons-title">
-                          {getProductTypeName(typeId)}
+                          {getProductTypeName(typeId)} - chọn 1
                         </Text>
                         {query.data.map((item, index) => (
                           <div className="add-on-item" key={item.productId}>
@@ -490,9 +427,6 @@ const Menu = () => {
                                     `${typeId}-${index}`,
                                     1
                                   )
-                                }
-                                disabled={
-                                  addOnQuantities[`${typeId}-${index}`] === 10
                                 }
                               >
                                 +
