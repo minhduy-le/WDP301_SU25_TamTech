@@ -80,7 +80,10 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         return;
       }
       if (location.pathname === "/form-refund-order") {
-        localStorage.setItem("redirectAfterLogin", "/form-refund-order");
+        localStorage.setItem(
+          "redirectAfterLogin",
+          location.pathname + location.search
+        );
       }
       navigate("/login", { replace: true });
       return;
@@ -104,7 +107,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     };
 
     const redirectPath = localStorage.getItem("redirectAfterLogin");
-    if (redirectPath && redirectPath === "/form-refund-order") {
+    if (redirectPath && redirectPath.startsWith("/form-refund-order")) {
       if (decoded.role === "User") {
         navigate(redirectPath, { replace: true });
         localStorage.removeItem("redirectAfterLogin"); // Xóa sau khi redirect
