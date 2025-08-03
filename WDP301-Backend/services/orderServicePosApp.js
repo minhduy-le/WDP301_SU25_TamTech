@@ -218,12 +218,6 @@ const createOrder = async (req, res) => {
         include: [{ model: Material, as: "Material" }],
         transaction,
       });
-      if (!recipes || recipes.length === 0) {
-        console.log(`No recipes found for productId: ${item.productId}`);
-        await transaction.rollback();
-        console.log("Transaction rolled back due to no recipes found");
-        return res.status(400).send(`No recipes found for product ID ${item.productId}`);
-      }
 
       for (const recipe of recipes) {
         const material = recipe.Material;

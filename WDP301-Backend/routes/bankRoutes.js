@@ -66,10 +66,8 @@ router.get("/", async (req, res) => {
  * @swagger
  * /api/banks/user-information:
  *   post:
- *     summary: Lưu thông tin tài khoản ngân hàng của người dùng
+ *     summary: Lưu thông tin tài khoản ngân hàng cho một userId cụ thể
  *     tags: [Banks]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -77,47 +75,38 @@ router.get("/", async (req, res) => {
  *           schema:
  *             type: object
  *             required:
+ *               - userId
  *               - bankName
  *               - bankNumber
  *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: ID của người dùng cần lưu thông tin.
+ *                 example: 12
  *               bankName:
  *                 type: string
- *                 description: 'Tên ngân hàng (ví dụ: "Ngân hàng TMCP Công thương Việt Nam").'
- *                 example: "Ngân hàng TMCP Kỹ thương Việt Nam"
+ *                 description: Tên ngân hàng.
+ *                 example: Ngân hàng TMCP Kỹ thương Việt Nam
  *               bankNumber:
  *                 type: string
- *                 description: 'Số tài khoản ngân hàng.'
- *                 example: "1903xxxxxxxx"
+ *                 description: Số tài khoản ngân hàng.
+ *                 example: "190312345678"
  *     responses:
  *       201:
  *         description: Thông tin ngân hàng đã được lưu thành công.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Bank information saved successfully."
- *                 bankInfo:
- *                   $ref: '#/components/schemas/BankUserInformation'
  *       400:
  *         description: Dữ liệu đầu vào không hợp lệ.
- *       401:
- *         description: Unauthorized.
  *       500:
  *         description: Lỗi máy chủ.
  */
-router.post("/user-information", verifyToken, async (req, res) => {
+router.post("/user-information", async (req, res) => {
   try {
-    const { bankName, bankNumber } = req.body;
-    const userId = req.userId;
+    const { userId, bankName, bankNumber } = req.body;
 
-    if (!bankName || !bankNumber) {
-      return res.status(400).json({ message: "Bank name and bank number are required." });
+    if (!userId || !bankName || !bankNumber) {
+      return res.status(400).json({ message: "userId, bankName, and bankNumber are required." });
     }
 
-    // Sử dụng findOrCreate để tránh tạo bản ghi trùng lặp
     const [bankInfo, created] = await BankUserInformation.findOrCreate({
       where: { userId: userId, bankNumber: bankNumber },
       defaults: {
@@ -137,4 +126,5 @@ router.post("/user-information", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Failed to save bank information.", error: error.message });
   }
 });
+
 module.exports = router;
