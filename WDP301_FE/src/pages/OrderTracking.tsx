@@ -9,10 +9,11 @@ import {
   Input,
   Form,
   message,
+  Tooltip,
 } from "antd";
 import "../style/OrderTracking.css";
-import { useState } from "react";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { getFormattedPrice } from "../utils/formatPrice";
 import {
@@ -107,9 +108,37 @@ const OrderTracking = () => {
 
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const { data: bankData } = useGetBank();
   const cancelOrderMutation = useCancelOrder();
+
+  useEffect(() => {
+    if (order && order.status === "Paid") {
+      const orderTime = dayjs(order.order_create_at);
+      const tenMinutesLater = orderTime.add(10, "minute");
+      const now = dayjs();
+      const diffInSeconds = tenMinutesLater.diff(now, "second");
+
+      if (diffInSeconds > 0) {
+        setTimeLeft(diffInSeconds);
+      } else {
+        setTimeLeft(0);
+      }
+
+      const timer = setInterval(() => {
+        const newDiff = tenMinutesLater.diff(dayjs(), "second");
+        if (newDiff <= 0) {
+          setTimeLeft(0);
+          clearInterval(timer);
+        } else {
+          setTimeLeft(newDiff);
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [order]);
 
   if (isLoading) {
     return <div>Đang tải thông tin đơn hàng...</div>;
@@ -154,6 +183,12 @@ const OrderTracking = () => {
       });
   };
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? "0" + secs : secs}`;
+  };
+
   return (
     <div className="order-tracking-container">
       <Row gutter={[16, 16]}>
@@ -170,6 +205,8 @@ const OrderTracking = () => {
               <br />
               Thời gian đặt hàng:{" "}
               {dayjs(order.order_create_at).format("HH:mm, DD/MM/YYYY")}
+              <br />
+              Thời gian nấu: 30 phút
             </p>
             <Row>
               <Col span={12}>
@@ -295,12 +332,34 @@ const OrderTracking = () => {
             </div>
             <div className="button-group">
               {order.status === "Paid" && (
-                <Button
-                  className="view-order"
-                  onClick={() => setIsCancelModalVisible(true)}
-                >
-                  Hủy đơn
-                </Button>
+                <>
+                  <div
+                    style={{
+                      fontFamily: "Montserrat, sans-serif",
+                      fontSize: 15,
+                    }}
+                  >
+                    {timeLeft !== null && timeLeft > 0 && (
+                      <span>
+                        Thời gian để hủy đơn hàng còn {formatTime(timeLeft)}
+                      </span>
+                    )}
+                  </div>
+                  <Tooltip
+                    title="Lưu ý: Chỉ có thể hủy đơn hàng trong 10 phút kể từ khi đặt hàng"
+                    placement="top"
+                    overlayInnerStyle={{ width: 420 }}
+                  >
+                    <Button
+                      className="view-order"
+                      onClick={() => setIsCancelModalVisible(true)}
+                      disabled={timeLeft === 0 || timeLeft === null}
+                    >
+                      Hủy đơn
+                      <InfoCircleOutlined />
+                    </Button>
+                  </Tooltip>
+                </>
               )}
             </div>
           </div>

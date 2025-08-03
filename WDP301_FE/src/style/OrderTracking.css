@@ -37,6 +37,7 @@
   font-size: 16px;
   color: #2d1e1a;
   margin-bottom: 20px;
+  font-family: "Montserrat", sans-serif;
 }
 
 .tracking-timeline {
@@ -89,8 +90,10 @@
 
 .button-group {
   display: flex;
-  gap: 20px;
+  gap: 10px;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 
 .view-order {
