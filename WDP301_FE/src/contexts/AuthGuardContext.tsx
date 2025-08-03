@@ -58,6 +58,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/product/:productId",
       "/blog",
       "/blog/:id",
+      "/form-refund-order",
     ];
 
     const matchDynamicRoute = (routePattern: string, path: string) => {
@@ -138,10 +139,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/blog",
         "/manager/materials-process",
       ],
-      Admin: [
-        "/admin/users",
-        "/admin/profile",
-      ],
+      Admin: ["/admin/users", "/admin/profile"],
     };
 
     const userRole = decoded.role as UserRole;

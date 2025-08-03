@@ -58,14 +58,24 @@ const FormRefund = () => {
             },
           ]}
         >
-          <Input placeholder="Nhập số tài khoản" />
+          <Input
+            placeholder="Nhập số tài khoản"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          />
         </Form.Item>
         <Form.Item>
           <Button
             type="primary"
             htmlType="submit"
             loading={isSubmitting}
-            style={{ width: "100%", marginTop: "20px" }}
+            style={{
+              width: "100%",
+              marginTop: "20px",
+              fontFamily: "'Montserrat', sans-serif",
+              backgroundColor: "#78a243",
+              fontSize: 17,
+              height: 40,
+            }}
           >
             Gửi yêu cầu hoàn tiền
           </Button>
