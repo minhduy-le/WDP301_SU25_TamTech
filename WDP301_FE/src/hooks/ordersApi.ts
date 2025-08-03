@@ -328,3 +328,16 @@ export const useChangeOrderCooked = () => {
     },
   });
 };
+
+export const useChangeTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`transactions/${orderId}/set-paid`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
