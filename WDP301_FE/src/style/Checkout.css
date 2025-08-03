@@ -146,11 +146,6 @@
   border-radius: 5px !important;
 }
 
-.ant-btn {
-  border: none !important;
-  outline: none !important;
-}
-
 .section-card .ant-input {
   height: 40px;
   font-size: 15px;

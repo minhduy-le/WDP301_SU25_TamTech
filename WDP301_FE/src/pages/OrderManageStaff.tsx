@@ -16,6 +16,7 @@ import {
   Col,
   Checkbox,
   Row,
+  Popconfirm,
 } from "antd";
 import type { UploadFile, UploadChangeParam } from "antd/es/upload/interface";
 import {
@@ -37,6 +38,7 @@ import {
   useUploadRefundCertificate,
   useChangeOrderPreparing,
   useChangeOrderCooked,
+  useCancelOrderForStaff,
 } from "../hooks/ordersApi";
 import { AxiosError } from "axios";
 import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
@@ -103,6 +105,7 @@ const StaffOrderManagement = () => {
 
   const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
+  const cancelOrderForStaff = useCancelOrderForStaff();
 
   const handlePreparingSubmit = () => {
     if (selectedOrderIdsPreparing.length === 0) {
@@ -253,6 +256,19 @@ const StaffOrderManagement = () => {
         onError: (error: any) => {
           message.error(error.message || "Tải lên thất bại!");
         },
+      }
+    );
+  };
+
+  const handleCancelOrderForStaff = (orderId: number) => {
+    cancelOrderForStaff.mutate(
+      { orderId },
+      {
+        onSuccess: () => message.success("Hủy đơn hàng thành công!"),
+        onError: (error: AxiosError) =>
+          message.error(
+            error.response?.data?.toString() || "Hủy đơn hàng thất bại!"
+          ),
       }
     );
   };
@@ -458,6 +474,32 @@ const StaffOrderManagement = () => {
               }}
             />
           </Tooltip>
+          {record.status === "Paid" && (
+            <Tooltip title="Hủy đơn hàng">
+              <Popconfirm
+                title="Hủy đơn hàng"
+                description="Bạn có chắc muốn hủy đơn hàng này hay không?"
+                onConfirm={() => handleCancelOrderForStaff(record.orderId)}
+                okText="Xác nhận"
+                cancelText="Hủy"
+                okButtonProps={{
+                  danger: true,
+                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
+                }}
+              >
+                <Button
+                  type="text"
+                  danger
+                  icon={
+                    <CheckCircleOutlined
+                      style={{ fontSize: 16, color: "#d97706" }}
+                    />
+                  }
+                  className="btn-action-status"
+                />
+              </Popconfirm>
+            </Tooltip>
+          )}
           {record.status === "Canceled" && record.invoiceUrl !== null && (
             <Tooltip title="Chụp ảnh hoàn tiền">
               <Button
