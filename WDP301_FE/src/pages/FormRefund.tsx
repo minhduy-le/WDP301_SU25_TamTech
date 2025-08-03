@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button, Form, Input, Select, message } from "antd";
 import { useState } from "react";
-import { useGetBank } from "../hooks/ordersApi";
+import { useCreateBankUser, useGetBank } from "../hooks/ordersApi";
 import "../style/FormRefund.css";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -9,14 +11,35 @@ const FormRefund = () => {
   const [form] = Form.useForm();
   const { data: bankData, isLoading } = useGetBank();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const userId = queryParams.get("userId") || "N/A";
+  const { mutate: createBankUser } = useCreateBankUser();
 
-  const handleSubmit = () => {
+  const handleSubmit = (values: any) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      message.success("Yêu cầu hoàn tiền đã được gửi thành công!");
-      form.resetFields();
-      setIsSubmitting(false);
-    }, 1000);
+    const bankData = {
+      userId: parseInt(userId, 10),
+      bankName: values.bankName,
+      bankNumber: values.bankNumber,
+    };
+
+    createBankUser(bankData, {
+      onSuccess: () => {
+        message.success(
+          "Yêu cầu hoàn tiền đã được gửi thành công hãy chờ gửi chứng từ hoàn tiền qua email!"
+        );
+        form.resetFields();
+        setIsSubmitting(false);
+        navigate("/");
+      },
+      onError: (error: any) => {
+        const errorMessage = error?.message || "Đã xảy ra lỗi khi gửi yêu cầu!";
+        message.error(errorMessage);
+        setIsSubmitting(false);
+      },
+    });
   };
 
   if (isLoading) {
@@ -26,7 +49,6 @@ const FormRefund = () => {
   return (
     <div className="refund-form-container">
       <div className="refund-title">Yêu cầu hoàn tiền</div>
-      {/* <Divider style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }} /> */}
       <Form
         form={form}
         name="refundForm"
