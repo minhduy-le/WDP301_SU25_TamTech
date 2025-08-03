@@ -17,6 +17,7 @@ const {
   uploadRefundCertification,
   getLatestOrder,
   setOrderToCanceledWhenUserCancel,
+  cancelOrderForStaff,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -1811,6 +1812,65 @@ router.post("/send-refunded-email/:orderId", verifyToken, async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     res.status(error.status || 500).json({ message: error.message || "Failed to send refund email" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cancel/for-staff:
+ *   put:
+ *     summary: Hủy đơn hàng bởi nhân viên và gửi email thông báo
+ *     description: >
+ *       Chỉ dành cho nhân viên (Staff) hoặc quản trị viên (Admin).
+ *       API này sẽ chuyển trạng thái đơn hàng thành "Đã hủy" (ID: 5),
+ *       hoàn trả lại nguyên vật liệu vào kho, và gửi một email thông báo
+ *       cho khách hàng về việc hủy đơn kèm theo link để điền form hoàn tiền.
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của đơn hàng cần hủy.
+ *     responses:
+ *       200:
+ *         description: Hủy đơn hàng thành công và email đã được gửi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Đơn hàng đã được hủy và email thông báo đã được gửi đi."
+ *       400:
+ *         description: Đơn hàng không thể hủy do trạng thái không hợp lệ.
+ *       403:
+ *         description: Không có quyền truy cập (không phải Staff/Admin).
+ *       404:
+ *         description: Không tìm thấy đơn hàng.
+ *       500:
+ *         description: Lỗi máy chủ.
+ */
+router.put("/:orderId/cancel/for-staff", verifyToken, async (req, res) => {
+  const userRole = req.userRole;
+  if (!["Staff", "Admin"].includes(userRole)) {
+    return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
+  }
+
+  try {
+    const { orderId } = req.params;
+    const staffUserId = req.userId;
+    const result = await cancelOrderForStaff(orderId, staffUserId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to cancel order." });
   }
 });
 

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thông báo hủy đơn hàng</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
+      .content {
+        padding: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        font-size: 0.9em;
+        color: #777;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 25px;
+        margin: 20px 0;
+        background-color: #d9534f;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Thông Báo Hủy Đơn Hàng #${{orderId}}</h2>
+      </div>
+      <div class="content">
+        <p>Chào {{fullName}},</p>
+        <p>
+          Chúng tôi rất tiếc phải thông báo rằng đơn hàng #${{orderId}} của bạn đã phải hủy bỏ vì một số lý do từ phía
+          cửa hàng.
+        </p>
+        <p>
+          Chúng tôi thành thật xin lỗi vì sự bất tiện này. Để đảm bảo quyền lợi của bạn, chúng tôi sẽ tiến hành hoàn lại
+          toàn bộ số tiền bạn đã thanh toán cho đơn hàng.
+        </p>
+        <p>
+          Vui lòng nhấp vào nút bên dưới để điền thông tin nhận hoàn tiền. Đội ngũ của chúng tôi sẽ xử lý yêu cầu của
+          bạn trong thời gian sớm nhất.
+        </p>
+        <a href="{{refundLink}}" class="button">Điền Form Hoàn Tiền</a>
+        <p>Nếu bạn có bất kỳ câu hỏi nào, xin đừng ngần ngại liên hệ với chúng tôi.</p>
+        <p>Trân trọng,<br />Đội ngũ Tấm Tắc</p>
+      </div>
+      <div class="footer">
+        <p>&copy; 2025 Tấm Tắc. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

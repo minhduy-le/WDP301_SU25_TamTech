@@ -141,6 +141,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/dashboard",
         "/manager/orders",
         "/manager/orders/confirm-orders",
+        "/manager/transactions",
         "/manager/products",
         "/manager/promotions",
         "/manager/staffs",

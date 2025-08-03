@@ -1980,6 +1980,113 @@ const getLatestOrder = async (req, res) => {
   }
 };
 
+const cancelOrderForStaff = async (orderId, staffUserId) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const order = await Order.findOne({
+      where: { orderId },
+      include: [
+        { model: User, as: "User", attributes: ["id", "email", "fullName"] },
+        { model: OrderStatus, as: "OrderStatus", attributes: ["status"] },
+      ],
+      transaction,
+    });
+
+    if (!order) {
+      throw Object.assign(new Error("Không tìm thấy đơn hàng"), { status: 404 });
+    }
+
+    // Chỉ cho phép hủy các đơn hàng chưa được giao hoặc chưa bị hủy
+    if ([4, 5].includes(order.status_id)) {
+      // 4: Delivered, 5: Canceled
+      const currentStatus = order.OrderStatus ? order.OrderStatus.status : `ID ${order.status_id}`;
+      throw Object.assign(new Error(`Không thể hủy đơn hàng đã ở trạng thái '${currentStatus}'`), { status: 400 });
+    }
+
+    // Hoàn trả lại nguyên vật liệu
+    const orderItems = await OrderItem.findAll({ where: { orderId }, transaction });
+    for (const item of orderItems) {
+      const recipes = await ProductRecipe.findAll({ where: { productId: item.productId }, transaction });
+      for (const recipe of recipes) {
+        const quantityToRestore = recipe.quantity * item.quantity;
+        await Material.update(
+          { quantity: sequelize.literal(`quantity + ${quantityToRestore}`) },
+          { where: { materialId: recipe.materialId }, transaction }
+        );
+        console.log(`[Staff Cancel] Restored ${quantityToRestore} for materialId: ${recipe.materialId}`);
+      }
+    }
+
+    // Cập nhật trạng thái đơn hàng
+    order.status_id = 5; // Canceled
+    await order.save({ transaction });
+
+    // Ghi nhận lý do hủy (có thể tùy chỉnh)
+    await ReasonCancel.create(
+      {
+        orderId,
+        userId: staffUserId,
+        reason: "Hủy bởi nhân viên do vấn đề nội bộ.",
+      },
+      { transaction }
+    );
+
+    // Commit transaction trước khi gửi email
+    await transaction.commit();
+    console.log(`[Staff Cancel] Order ${orderId} canceled and transaction committed.`);
+
+    // Gửi email sau khi đã chắc chắn hủy đơn thành công
+    try {
+      if (!order.User || !order.User.email) {
+        console.warn(`[Staff Cancel] Không thể gửi email cho đơn hàng ${orderId} vì thiếu thông tin người dùng.`);
+        return {
+          success: true,
+          message: "Đơn hàng đã được hủy thành công nhưng không thể gửi email do thiếu thông tin.",
+        };
+      }
+
+      const emailTemplatePath = path.join(__dirname, "../templates/staffCancelEmail.html");
+      const emailTemplateSource = await fs.readFile(emailTemplatePath, "utf8");
+      const template = handlebars.compile(emailTemplateSource);
+
+      const templateData = {
+        fullName: order.User.fullName || "Quý khách",
+        orderId: order.orderId,
+        refundLink: `https://wdp301-su25.space/form-refund-order?userId=${order.User.id}`,
+      };
+
+      const htmlContent = template(templateData);
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: '"Tấm Tắc" <support@tam-tac.vn>',
+        to: order.User.email,
+        subject: `Thông báo về việc hủy đơn hàng #${order.orderId}`,
+        html: htmlContent,
+      });
+      console.log(`[Staff Cancel] Refund notification email sent to ${order.User.email} for order ${orderId}.`);
+    } catch (emailError) {
+      console.error(`[Staff Cancel] Lỗi khi gửi email cho đơn hàng ${orderId}:`, emailError);
+      // Không ném lỗi ra ngoài vì đơn hàng đã hủy thành công
+      return { success: true, message: "Đơn hàng đã được hủy, nhưng có lỗi xảy ra khi gửi email thông báo." };
+    }
+
+    return { success: true, message: "Đơn hàng đã được hủy và email thông báo đã được gửi đi." };
+  } catch (error) {
+    await transaction.rollback();
+    console.error(`[Staff Cancel] Lỗi khi hủy đơn hàng ${orderId}:`, error);
+    // Ném lỗi ra ngoài để route có thể bắt và trả về status code phù hợp
+    throw error;
+  }
+};
+
 module.exports = {
   createOrder,
   handlePaymentSuccess,
@@ -1997,4 +2104,5 @@ module.exports = {
   uploadRefundCertification,
   getLatestOrder,
   setOrderToCanceledWhenUserCancel,
+  cancelOrderForStaff,
 };
