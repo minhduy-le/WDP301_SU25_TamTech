@@ -103,6 +103,7 @@ export interface OrderChangeStatus {
 }
 
 interface CreateBank {
+  userId: number;
   bankName: string;
   bankNumber: string;
 }

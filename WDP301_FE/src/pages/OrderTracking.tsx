@@ -166,7 +166,7 @@ const OrderTracking = () => {
           {
             onSuccess: () => {
               message.success(
-                "Hủy đơn thành công hãy chờ gửi chứng từ hoàn tiến qua email!"
+                "Hủy đơn thành công hãy chờ gửi chứng từ hoàn tiền qua email!"
               );
               setIsCancelModalVisible(false);
               form.resetFields();

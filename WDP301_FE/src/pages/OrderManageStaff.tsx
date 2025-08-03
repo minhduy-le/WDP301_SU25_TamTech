@@ -451,7 +451,7 @@ const StaffOrderManagement = () => {
     {
       title: "Hành động",
       key: "actions",
-      width: 220,
+      width: 180,
       align: "center" as const,
       render: (_: any, record: OrderHistory) => (
         <Space size={12}>
