@@ -24,6 +24,7 @@ const Information = require("../models/information");
 const axios = require("axios");
 const sequelize = require("../config/database");
 const { generateAndUploadInvoice } = require("../services/orderService");
+const { User, Transaction } = require("../models/associations");
 require("dotenv").config();
 const multer = require("multer");
 
@@ -597,53 +598,89 @@ router.put("/:orderId/cancel", verifyToken, async (req, res) => {
  *         description: Server error
  */
 router.post("/webhook", async (req, res) => {
-  console.log("PayOS webhook received at:", new Date().toISOString());
-  console.log("Webhook headers:", JSON.stringify(req.headers, null, 2));
-  console.log("Webhook body:", JSON.stringify(req.body, null, 2));
-  const { orderCode, status, code } = req.body;
+  console.log("[WEBHOOK] Received at:", new Date().toISOString());
+  console.log("[WEBHOOK] Body:", JSON.stringify(req.body, null, 2));
+
+  const orderCode = req.body.data ? req.body.data.orderCode : req.body.orderCode;
+  const status = req.body.data ? req.body.data.status : req.body.status;
+
   if (!orderCode) {
-    console.log("Missing orderCode in webhook");
+    console.log("[WEBHOOK] Missing orderCode in webhook payload.");
     return res.status(400).json({ message: "Order code is required" });
   }
+
+  const webhookTransaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({ where: { orderId: orderCode } });
+    const order = await Order.findOne({ where: { orderId: orderCode }, transaction: webhookTransaction });
     if (!order) {
-      console.log("Order not found for orderCode:", orderCode);
+      console.log(`[WEBHOOK] Order not found for orderCode: ${orderCode}`);
+      await webhookTransaction.rollback();
       return res.status(404).json({ message: "Order not found" });
     }
-    if (status === "PAID" && code === "00") {
-      console.log("Webhook updating status_id to 2 for orderId:", orderCode);
-      order.status_id = 2; // Paid
-      order.payment_time = new Date();
 
-      const user = await User.findOne({ where: { id: order.userId } });
+    if (order.status_id === 1 && status === "PAID") {
+      console.log(`[WEBHOOK] Processing PAID status for orderId: ${orderCode}`);
+
+      // Cập nhật trạng thái Order
+      order.status_id = 2;
+      order.payment_time = new Date();
+      await order.save({ transaction: webhookTransaction });
+      console.log(`[WEBHOOK] Set order ${orderCode} status to 2 (Paid).`);
+
+      // Cập nhật điểm thành viên cho User
+      const user = await User.findOne({ where: { id: order.userId }, transaction: webhookTransaction });
       if (user) {
         const currentMemberPoint = user.member_point || 0;
         const orderPointEarn = order.order_point_earn || 0;
         user.member_point = currentMemberPoint + orderPointEarn;
-        console.log(`Updated user ${user.id} member_point to ${user.member_point}`);
-        await user.save();
+        await user.save({ transaction: webhookTransaction });
+        console.log(`[WEBHOOK] Updated user ${user.id} member_point to ${user.member_point}`);
       }
 
-      const transaction = await sequelize.transaction();
-      try {
-        const invoiceUrl = await generateAndUploadInvoice(order, orderCode, transaction);
-        order.invoiceUrl = invoiceUrl;
-        await order.save({ transaction });
-        await transaction.commit();
-        console.log("Invoice generated and saved for orderId:", orderCode, "Invoice URL:", invoiceUrl);
-      } catch (error) {
-        await transaction.rollback();
-        console.error("Error generating invoice for orderId:", orderCode, error.message);
-        return res.status(500).json({ message: "Failed to generate invoice", error: error.message });
+      // Cập nhật trạng thái Transaction
+      const existingTransaction = await Transaction.findOne({
+        where: { orderId: orderCode },
+        transaction: webhookTransaction,
+      });
+
+      if (existingTransaction) {
+        existingTransaction.status = "PAID";
+        await existingTransaction.save({ transaction: webhookTransaction });
+        console.log(`[WEBHOOK] Transaction record for order ${orderCode} updated to PAID successfully.`);
+      } else {
+        console.warn(`[WEBHOOK] Transaction record not found for orderId ${orderCode}, creating a new one.`);
+        await Transaction.create(
+          {
+            orderId: orderCode,
+            payment_method_id: order.payment_method_id,
+            amount: order.order_subtotal - (order.order_discount_value || 0),
+            status: "PAID",
+            transaction_time: new Date(),
+          },
+          { transaction: webhookTransaction }
+        );
+        console.log(`[WEBHOOK] New transaction created for orderId ${orderCode}`);
       }
+
+      // Tạo và lưu hóa đơn
+      const invoiceUrl = await generateAndUploadInvoice(order, orderCode, webhookTransaction);
+      order.invoiceUrl = invoiceUrl;
+      await order.save({ transaction: webhookTransaction });
+
+      await webhookTransaction.commit();
+      console.log(`[WEBHOOK] Transaction committed successfully for orderId: ${orderCode}`);
     } else {
-      console.log("Webhook skipped: Payment not successful", { status, code });
+      console.log(
+        `[WEBHOOK] Skipped processing for orderId: ${orderCode}. Reason: Payment not successful or order already processed.`,
+        { paymentStatus: status, currentOrderStatusId: order.status_id }
+      );
     }
+
     res.status(200).json({ message: "Webhook processed" });
   } catch (error) {
-    console.error("Error in webhook:", error.message, error.stack);
-    res.status(500).json({ message: "Failed to process webhook", error: error.message });
+    console.error(`[WEBHOOK] Critical error in webhook handler for orderCode: ${orderCode}`, error);
+    await webhookTransaction.rollback();
+    res.status(200).json({ message: "Webhook processed with internal error." });
   }
 });
 
