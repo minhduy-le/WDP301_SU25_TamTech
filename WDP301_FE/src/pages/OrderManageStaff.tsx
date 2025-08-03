@@ -511,16 +511,27 @@ const StaffOrderManagement = () => {
   );
 
   const paidOrders = useMemo(
-    () => filteredOrders?.filter((order) => order.status === "Paid") || [],
+    () =>
+      filteredOrders?.filter(
+        (order) => order.status === "Paid" && order.payment_method !== "Momo"
+      ) || [],
     [filteredOrders]
   );
+
   const preparingOrders = useMemo(
-    () => filteredOrders?.filter((order) => order.status === "Preparing") || [],
+    () =>
+      filteredOrders?.filter(
+        (order) =>
+          order.status === "Preparing" && order.payment_method !== "Momo"
+      ) || [],
     [filteredOrders]
   );
 
   const cookedOrders = useMemo(
-    () => filteredOrders?.filter((order) => order.status === "Cooked") || [],
+    () =>
+      filteredOrders?.filter(
+        (order) => order.status === "Cooked" && order.payment_method !== "Momo"
+      ) || [],
     [filteredOrders]
   );
 
@@ -1077,6 +1088,23 @@ const StaffOrderManagement = () => {
         >
           {paidOrders.length > 0 ? (
             <div>
+              <Checkbox
+                checked={paidOrders.every((order) =>
+                  selectedOrderIdsPreparing.includes(order.orderId)
+                )}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedOrderIdsPreparing(
+                      paidOrders.map((order) => order.orderId)
+                    );
+                  } else {
+                    setSelectedOrderIdsPreparing([]);
+                  }
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                Tất cả
+              </Checkbox>
               {paidOrders.reduce((acc, order, index) => {
                 if (index % 4 === 0) {
                   acc.push(
@@ -1306,6 +1334,23 @@ const StaffOrderManagement = () => {
         >
           {preparingOrders.length > 0 ? (
             <div>
+              <Checkbox
+                checked={preparingOrders.every((order) =>
+                  selectedOrderIdsCooked.includes(order.orderId)
+                )}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedOrderIdsCooked(
+                      preparingOrders.map((order) => order.orderId)
+                    );
+                  } else {
+                    setSelectedOrderIdsCooked([]);
+                  }
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                Tất cả
+              </Checkbox>
               {preparingOrders.reduce((acc, order, index) => {
                 if (index % 4 === 0) {
                   acc.push(
