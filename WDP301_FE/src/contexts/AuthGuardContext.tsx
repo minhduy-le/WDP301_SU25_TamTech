@@ -58,6 +58,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       "/product/:productId",
       "/blog",
       "/blog/:id",
+      "/form-refund-order",
     ];
 
     const matchDynamicRoute = (routePattern: string, path: string) => {
@@ -79,12 +80,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       ) {
         return;
       }
-      if (location.pathname === "/form-refund-order") {
-        localStorage.setItem(
-          "redirectAfterLogin",
-          location.pathname + location.search
-        );
-      }
       navigate("/login", { replace: true });
       return;
     }
@@ -105,15 +100,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       Admin: "/admin/users",
       Manager: "/manager/dashboard",
     };
-
-    const redirectPath = localStorage.getItem("redirectAfterLogin");
-    if (redirectPath && redirectPath.startsWith("/form-refund-order")) {
-      if (decoded.role === "User") {
-        navigate(redirectPath, { replace: true });
-        localStorage.removeItem("redirectAfterLogin"); // Xóa sau khi redirect
-        return;
-      }
-    }
 
     if (location.pathname === "/") {
       navigate(roleRedirects[decoded.role as UserRole], { replace: true });
@@ -137,7 +123,6 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/user/order-tracking/:orderId",
         "/user/promotion",
         "/payment-cancel",
-        "/form-refund-order",
       ],
       Shipper: [],
       Manager: [
