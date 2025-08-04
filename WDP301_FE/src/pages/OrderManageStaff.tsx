@@ -45,6 +45,7 @@ import { useAssignShipper, useGetShipperScheduled } from "../hooks/shipperApi";
 import PrintIcon from "../components/icon/PrintIcon";
 import { getFormattedPrice } from "../utils/formatPrice";
 import printJS from "print-js";
+import { useQueryClient } from "@tanstack/react-query";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -106,6 +107,7 @@ const StaffOrderManagement = () => {
   const sendEmailMutation = useCancelOrderSendEmail();
   const uploadRefundCertificateMutation = useUploadRefundCertificate();
   const cancelOrderForStaff = useCancelOrderForStaff();
+  const queryClient = useQueryClient();
 
   const handlePreparingSubmit = () => {
     if (selectedOrderIdsPreparing.length === 0) {
@@ -120,6 +122,7 @@ const StaffOrderManagement = () => {
           message.success("Chuyển trạng thái sang Preparing thành công!");
           setIsPreparingModalVisible(false);
           setSelectedOrderIdsPreparing([]);
+          queryClient.invalidateQueries({ queryKey: ["orders"] });
         },
         onError: (error) => {
           message.error("Chuyển trạng thái thất bại: " + error.message);
@@ -141,6 +144,7 @@ const StaffOrderManagement = () => {
           message.success("Chuyển trạng thái sang Cooked thành công!");
           setIsCookedModalVisible(false);
           setSelectedOrderIdsCooked([]);
+          queryClient.invalidateQueries({ queryKey: ["orders"] });
         },
         onError: (error) => {
           message.error("Chuyển trạng thái thất bại: " + error.message);
