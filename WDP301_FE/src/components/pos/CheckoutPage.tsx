@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
   ArrowLeft,
-  Phone,
   Smartphone,
   CheckCircle,
   Receipt,
@@ -9,7 +8,6 @@ import {
 import type { OrderItem, CheckoutData } from '../../typings/pos.types'
 import type { Promotion } from '../../hooks/promotionApi'
 import { usePOSApi } from '../../hooks/posApi'
-import { getCustomerByPhone } from '../../hooks/accountApi'
 import { useNavigate } from 'react-router-dom'
 
 interface CheckoutPageProps {
@@ -44,7 +42,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   discountAmount,
   promotionCode,
 }) => {
-  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerPhone] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'transfer'>('transfer')
   const [isProcessing, setIsProcessing] = useState(false)
   const { createOrder } = usePOSApi()
@@ -52,25 +50,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   console.log('CheckoutPage - orderItems with addOns:', orderItems)
   const navigate = useNavigate()
   const [message, setMessage] = useState<string | null>(null)
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
-  const [customerSearchError, setCustomerSearchError] = useState('')
-  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false)
-
-  const handlePhoneBlur = async () => {
-    if (!customerPhone.trim()) return
-    setIsSearchingCustomer(true)
-    setCustomerSearchError('')
-    setCustomerInfo(null)
-    try {
-      const data: CustomerInfo = await getCustomerByPhone(customerPhone.trim())
-      setCustomerInfo(data)
-    } catch {
-      setCustomerSearchError('Không tìm thấy khách hàng với số điện thoại này.')
-      setCustomerInfo(null)
-    } finally {
-      setIsSearchingCustomer(false)
-    }
-  }
+  const [customerInfo] = useState<CustomerInfo | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -165,7 +145,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             </button>
             <div className="h-6 w-px bg-amber-200"></div>
             <h1 className="text-2xl font-bold text-amber-800">
-              Xác nhận đơn hàng #{orderNumber}
+              Xác nhận đơn hàng {orderNumber}
             </h1>
           </div>
 
@@ -267,39 +247,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
           <div className="flex-1 p-6 space-y-6">
-            {/* Customer Phone */}
-            <div>
-              <label className="block text-amber-700 font-medium mb-2">
-                Số điện thoại khách hàng (tùy chọn)
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-amber-400" />
-                <input
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="Nhập số điện thoại"
-                  className="w-full pl-10 pr-4 py-3 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none bg-white text-amber-800 placeholder:text-amber-400 shadow-sm"
-                  onBlur={handlePhoneBlur}
-                />
-              </div>
-              {isSearchingCustomer && (
-                <div className="text-amber-600 text-sm mt-1">
-                  Đang tìm kiếm khách hàng...
-                </div>
-              )}
-              {customerInfo && (
-                <div className="text-green-700 text-sm mt-1">
-                  Khách: {customerInfo.fullName} ({customerInfo.email})
-                </div>
-              )}
-              {customerSearchError && (
-                <div className="text-red-600 text-sm mt-1">
-                  {customerSearchError}
-                </div>
-              )}
-            </div>
-
             {/* Payment Method */}
             <div>
               <label className="block text-amber-700 font-medium mb-3">
