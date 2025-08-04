@@ -49,6 +49,10 @@ const verifyToken = require("../middlewares/verifyToken");
  *                     type: string
  *                     format: date-time
  *                     description: Thời gian giao dịch được thực hiện.
+ *                   type:
+ *                     type: string
+ *                     description: Loại giao dịch (IN, OUT).
+ *                     example: "IN"
  *       401:
  *         description: Unauthorized - Không có quyền truy cập.
  *       500:

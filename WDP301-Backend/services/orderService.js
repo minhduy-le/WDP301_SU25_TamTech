@@ -379,6 +379,7 @@ const createOrder = async (req, res) => {
           transaction_code: null, // Mã giao dịch sẽ được cập nhật sau
           status: "PENDING", // Trạng thái ban đầu
           transaction_time: new Date(),
+          type: "IN",
         },
         { transaction }
       );
@@ -851,6 +852,7 @@ const handlePaymentSuccess = async (req, res) => {
 
     if (existingTransaction) {
       existingTransaction.status = "PAID";
+      existingTransaction.type = "IN";
       existingTransaction.transaction_code = paymentId || orderCode || null;
       await existingTransaction.save({ transaction });
       console.log("--- Transaction record updated to PAID successfully ---");
@@ -2020,6 +2022,19 @@ const cancelOrderForStaff = async (orderId, staffUserId) => {
     // Cập nhật trạng thái đơn hàng
     order.status_id = 5; // Canceled
     await order.save({ transaction });
+
+    await Transaction.create(
+      {
+        orderId: order.orderId,
+        payment_method_id: order.payment_method_id,
+        amount: Math.round(order.order_subtotal - (order.order_discount_value || 0)),
+        transaction_code: null, 
+        status: "CANCELED",
+        transaction_time: new Date(),
+        type: "OUT", 
+      },
+      { transaction }
+    );
 
     // Ghi nhận lý do hủy (có thể tùy chỉnh)
     await ReasonCancel.create(

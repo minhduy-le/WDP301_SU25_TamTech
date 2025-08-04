@@ -24,6 +24,7 @@ const getAllTransactions = async (req, res) => {
       amount: tx.amount,
       status: tx.status,
       transaction_time: tx.transaction_time,
+      type: tx.type,
     }));
 
     res.status(200).json(formattedTransactions);

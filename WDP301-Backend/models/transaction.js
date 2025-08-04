@@ -37,6 +37,10 @@ const Transaction = sequelize.define(
       type: DataTypes.STRING(50), // Ví dụ: 'PAID', 'FAILED'
       allowNull: false,
     },
+    type: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+    },
     transaction_time: {
       type: DataTypes.DATE,
       allowNull: false,
