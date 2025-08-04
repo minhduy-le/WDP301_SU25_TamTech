@@ -26,6 +26,7 @@ import {
   CloseCircleOutlined,
   ClockCircleOutlined,
   UploadOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -495,7 +496,7 @@ const StaffOrderManagement = () => {
                   type="text"
                   danger
                   icon={
-                    <CheckCircleOutlined
+                    <DeleteOutlined
                       style={{ fontSize: 16, color: "#d97706" }}
                     />
                   }
@@ -579,7 +580,8 @@ const StaffOrderManagement = () => {
         (order) =>
           order.status === "Cooked" &&
           order.payment_method === "PayOS" &&
-          order.assignToShipperId === null
+          order.assignToShipperId === null &&
+          order.order_address !== "Tại quầy"
       ) || [],
     [filteredOrders]
   );
