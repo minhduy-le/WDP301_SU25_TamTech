@@ -164,6 +164,18 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                     <p className="text-amber-600 text-xs mt-1 line-clamp-2">
                       {item.description}
                     </p>
+                    {/* Display add-ons if available */}
+                    {item.addOns && item.addOns.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <span className="text-xs font-medium text-amber-700">Món kèm:</span>
+                        {item.addOns.map((addOn, index) => (
+                          <div key={index} className="text-xs text-amber-600 flex justify-between">
+                            <span>+ {addOn.productTypeName} x{addOn.quantity}</span>
+                            <span>{(addOn.price * addOn.quantity).toLocaleString()}đ</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => onRemoveFromOrder(item.id)}
@@ -195,7 +207,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                     </button>
                   </div>
                   <span className="font-bold text-amber-700 text-sm">
-                    {(item.price * item.quantity).toLocaleString()}đ
+                    {(item.totalPrice || (item.price * item.quantity)).toLocaleString()}đ
                   </span>
                 </div>
               </div>

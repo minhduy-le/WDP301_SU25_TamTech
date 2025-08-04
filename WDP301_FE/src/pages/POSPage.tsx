@@ -10,6 +10,7 @@ import type { Product } from '../hooks/posApi'
 import type {
   MenuItem,
   OrderItem,
+  AddOnItem,
   ConfirmationPopup as ConfirmationPopupType,
   CheckoutData,
 } from '../typings/pos.types'
@@ -76,24 +77,17 @@ export const POSPage: React.FC = () => {
     })
   }
 
-  const confirmAddToOrder = () => {
+  const confirmAddToOrder = (addOns: AddOnItem[], totalPrice: number) => {
     if (!confirmationPopup.item) return
 
     const item = confirmationPopup.item
-    const existingItem = currentOrder.find(
-      (orderItem) => orderItem.id === item.id
-    )
-    if (existingItem) {
-      setCurrentOrder(
-        currentOrder.map((orderItem) =>
-          orderItem.id === item.id
-            ? { ...orderItem, quantity: orderItem.quantity + 1 }
-            : orderItem
-        )
-      )
-    } else {
-      setCurrentOrder([...currentOrder, { ...item, quantity: 1 }])
+    const orderItem: OrderItem = {
+      ...item,
+      quantity: 1,
+      addOns: addOns,
+      totalPrice: totalPrice
     }
+    setCurrentOrder([...currentOrder, orderItem])
 
     setConfirmationPopup({ isOpen: false, item: null })
   }
@@ -124,7 +118,10 @@ export const POSPage: React.FC = () => {
 
   const getTotalPrice = () => {
     return currentOrder.reduce(
-      (total, item) => total + item.price * item.quantity,
+      (total, item) => {
+        const itemPrice = item.totalPrice || (item.price * item.quantity)
+        return total + itemPrice
+      },
       0
     )
   }
@@ -171,12 +168,12 @@ export const POSPage: React.FC = () => {
   }
 
   const filteredItems = products.filter((item) => {
-    // Search filter
+    const isMainDish = item.productTypeId === 1
+    
     const matchesSearch =
       searchTerm === '' ||
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase())
-    // Price filter
     let matchesPrice = true
     if (priceFilter === 'low') {
       matchesPrice = item.price <= 50000
@@ -185,10 +182,9 @@ export const POSPage: React.FC = () => {
     } else if (priceFilter === 'high') {
       matchesPrice = item.price > 100000
     }
-    return matchesSearch && matchesPrice
+    return isMainDish && matchesSearch && matchesPrice
   })
 
-  // Map Product -> MenuItem
   const mappedItems: MenuItem[] = filteredItems.map((item) => ({
     id: item.productId.toString(),
     name: item.name,
@@ -197,8 +193,6 @@ export const POSPage: React.FC = () => {
     category: item.productTypeId.toString(),
     image: item.image,
   }))
-
-  // Check if user is logged in
   const token = localStorage.getItem('token')
   if (!token) {
     return (

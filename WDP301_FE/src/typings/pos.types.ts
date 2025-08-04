@@ -25,6 +25,13 @@ export interface MenuItem {
   ProductRecipes?: ProductRecipe[] 
 }
 
+export interface AddOnItem {
+  productId: number
+  productTypeName: string
+  quantity: number
+  price: number
+}
+
 export interface OrderItem {
   id: string
   name: string
@@ -33,6 +40,8 @@ export interface OrderItem {
   category: string
   image: string
   quantity: number
+  addOns?: AddOnItem[]
+  totalPrice?: number
 }
 
 export interface ConfirmationPopup {
