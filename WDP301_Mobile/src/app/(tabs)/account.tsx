@@ -42,17 +42,28 @@ const AccountPage = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
   const { appState, setAppState, cart, setCart } = useCurrentApp();
   const [time, setTime] = useState("");
-  const decodeAndSetToken = async () => {
+  const fetchUserProfile = async () => {
     try {
       const token = await AsyncStorage.getItem("access_token");
       if (token) {
-        const decoded = jwtDecode(token);
-        setDecodeToken(decoded);
+        const decoded = jwtDecode(token) as any;
+        const userId = decoded.id;
+        const response = await axios.get(`${API_URL}/api/profiles/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data && response.data.user) {
+          setDecodeToken(response.data.user);
+        } else {
+          setDecodeToken("");
+        }
       } else {
         setDecodeToken("");
       }
     } catch (error) {
-      console.error("Error retrieving or decoding access token:", error);
+      console.error("Error fetching user profile:", error);
       setDecodeToken("");
     }
   };
@@ -62,11 +73,11 @@ const AccountPage = () => {
   }, []);
 
   useEffect(() => {
-    decodeAndSetToken();
+    fetchUserProfile();
   }, [appState]);
   useFocusEffect(
     useCallback(() => {
-      decodeAndSetToken();
+      fetchUserProfile();
     }, [])
   );
 
