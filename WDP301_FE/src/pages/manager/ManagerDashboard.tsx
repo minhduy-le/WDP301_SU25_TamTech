@@ -125,7 +125,6 @@ const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
 const ManagerDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   
-  // Hàm format ngày thành MM-dd-YYYY
   const formatDate = (date: any) => {
     if (!date) return "";
     const d = new Date(date);
@@ -135,7 +134,6 @@ const ManagerDashboard: React.FC = () => {
     return `${month}-${day}-${year}`;
   };
   
-  // Tính toán ngày mặc định: từ hiện tại đến 7 ngày trước
   const getDefaultDateRange = () => {
     const endDate = dayjs();
     const startDate = dayjs().subtract(7, 'day');
@@ -182,7 +180,6 @@ const ManagerDashboard: React.FC = () => {
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
 
-  // Hàm xử lý khi chọn ngày
   const handleDateChange = (dates: any) => {
     if (dates && dates.length === 2) {
       setStartDate(formatDate(dates[0]));
@@ -195,10 +192,8 @@ const ManagerDashboard: React.FC = () => {
 
   const handleExportReport = () => {
     try {
-      // Tạo workbook mới
       const workbook = XLSX.utils.book_new();
       
-      // Sheet 1: Tổng quan
       const overviewData = [
         {
           "Chỉ số": "Doanh thu tháng này",
@@ -225,7 +220,6 @@ const ManagerDashboard: React.FC = () => {
       const overviewSheet = XLSX.utils.json_to_sheet(overviewData);
       XLSX.utils.book_append_sheet(workbook, overviewSheet, "Tổng quan");
       
-      // Sheet 2: Doanh thu theo tháng
       const revenueData = monthlyRevenueData.map(item => ({
         "Tháng": item.month,
         "Doanh thu (VNĐ)": `${item.revenue.toLocaleString()} đ`
@@ -234,7 +228,6 @@ const ManagerDashboard: React.FC = () => {
       const revenueSheet = XLSX.utils.json_to_sheet(revenueData);
       XLSX.utils.book_append_sheet(workbook, revenueSheet, "Doanh thu theo tháng");
       
-      // Sheet 3: Sản phẩm bán chạy
       const productData = topProducts.map((product, index) => ({
         "Thứ hạng": index + 1,
         "Tên sản phẩm": product.name,
@@ -242,7 +235,6 @@ const ManagerDashboard: React.FC = () => {
         "Doanh thu (VNĐ)": `${product.revenue.toLocaleString()} đ`
       }));
       
-      // Thêm thông tin khoảng thời gian nếu có
       if (startDate && endDate) {
         productData.unshift({
           "Thứ hạng": 0,
@@ -255,7 +247,6 @@ const ManagerDashboard: React.FC = () => {
       const productSheet = XLSX.utils.json_to_sheet(productData);
       XLSX.utils.book_append_sheet(workbook, productSheet, "Sản phẩm bán chạy");
       
-      // Sheet 4: Hiệu suất nhân viên
       const staffData = staffProductivity.map((staff, index) => ({
         "Thứ hạng": index + 1,
         "Tên nhân viên": staff.fullName,
@@ -265,7 +256,6 @@ const ManagerDashboard: React.FC = () => {
       const staffSheet = XLSX.utils.json_to_sheet(staffData);
       XLSX.utils.book_append_sheet(workbook, staffSheet, "Hiệu suất nhân viên");
       
-      // Sheet 5: Loại sản phẩm bán chạy
       const productTypeData = productTypeStats.map((item, index) => ({
         "Thứ hạng": index + 1,
         "Loại sản phẩm": item.productType,
@@ -275,7 +265,6 @@ const ManagerDashboard: React.FC = () => {
       const productTypeSheet = XLSX.utils.json_to_sheet(productTypeData);
       XLSX.utils.book_append_sheet(workbook, productTypeSheet, "Loại sản phẩm");
       
-      // Xuất file
       const fileName = `Bao_cao_Dashboard_${selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
       
@@ -366,7 +355,7 @@ const ManagerDashboard: React.FC = () => {
         }
       `}</style>
       <Row gutter={[24, 24]}>
-        <Col xs={24} md={12} lg={6}>
+        <Col xs={24} md={8} lg={8}>
           <Card
             bordered={false}
             style={{
@@ -403,7 +392,7 @@ const ManagerDashboard: React.FC = () => {
             )}
           </Card>
         </Col>
-        <Col xs={24} md={12} lg={6}>
+        <Col xs={24} md={8} lg={8}>
           <Card
             bordered={false}
             style={{
@@ -439,7 +428,7 @@ const ManagerDashboard: React.FC = () => {
             )}
           </Card>
         </Col>
-        <Col xs={24} md={12} lg={6}>
+        <Col xs={24} md={8} lg={8}>
           <Card
             bordered={false}
             style={{
@@ -463,42 +452,6 @@ const ManagerDashboard: React.FC = () => {
             <Text type="secondary" style={{ color: "#A05A2C" }}>
               Mỗi đơn hàng trong tháng này
             </Text>
-          </Card>
-        </Col>
-        <Col xs={24} md={12} lg={6}>
-          <Card
-            bordered={false}
-            style={{
-              borderRadius: 12,
-              boxShadow: "0 4px 16px rgba(160,90,44,0.08)",
-            }}
-          >
-            <Statistic
-              title={
-                <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                  Sản phẩm bán ra
-                </span>
-              }
-              value={currentMonthProductStats?.currentQuantity || 0}
-              valueStyle={{ color: "#faad14", fontWeight: 700 }}
-              prefix={<ShoppingOutlined />}
-              precision={0}
-              groupSeparator=","
-            />
-            {typeof currentMonthProductStats?.percentageChange === "number" ? (
-              <Text
-                type={
-                  currentMonthProductStats.percentageChange >= 0
-                    ? "success"
-                    : "warning"
-                }
-              >
-                {currentMonthProductStats.percentageChange >= 0 ? "+" : ""}
-                {currentMonthProductStats.percentageChange}% so với tháng trước
-              </Text>
-            ) : (
-              <Text type="secondary">Đang tải...</Text>
-            )}
           </Card>
         </Col>
       </Row>
