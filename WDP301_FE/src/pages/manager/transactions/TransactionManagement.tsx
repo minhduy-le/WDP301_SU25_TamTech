@@ -14,13 +14,14 @@ interface Transaction {
   amount: number;
   status: string;
   transaction_time: string;
+  type: string;
 }
 
 const statusMap: { [key: string]: string } = {
   PAID: "Đã thanh toán",
-  PENDING: "Chờ thanh toán",
-  FAILED: "Thất bại",
-  REFUNDED: "Hoàn tiền",
+  PENDING: "Đang xử lý",
+  CANCELED: "Đã hủy",
+  CANCEL: "Đã hủy",
 };
 
 const getStatusTheme = (
@@ -30,11 +31,11 @@ const getStatusTheme = (
     case "PAID":
       return { tagBg: "#D1FAE5", tagText: "#065F46" };
     case "PENDING":
+    case "PROCESSING":
       return { tagBg: "#FEF3C7", tagText: "#92400E" };
-    case "FAILED":
-      return { tagBg: "#FEE2E2", tagText: "#991B1B" };
-    case "REFUNDED":
-      return { tagBg: "#DBEAFE", tagText: "#1E40AF" };
+    case "CANCELED":
+    case "CANCEL":
+      return { tagBg: "#F3F4F6", tagText: "#6B7280" };
     default:
       return { tagBg: "#F3F4F6", tagText: "#374151" };
   }
@@ -46,6 +47,7 @@ const TransactionManagement: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
 
@@ -95,15 +97,17 @@ const TransactionManagement: React.FC = () => {
           transaction.transactionId.toString().includes(searchText) ||
           transaction.orderId.toString().includes(searchText) ||
           transaction.payment_method.toLowerCase().includes(searchText.toLowerCase());
+        const matchesType =
+          typeFilter === "all" || transaction.type === typeFilter;
         const matchesStatus =
           statusFilter === "all" || transaction.status === statusFilter;
         const matchesDate = !dateRange || (
           dayjs(transaction.transaction_time).isAfter(dateRange[0].startOf('day')) &&
           dayjs(transaction.transaction_time).isBefore(dateRange[1].endOf('day'))
         );
-        return matchesSearch && matchesStatus && matchesDate;
+        return matchesSearch && matchesType && matchesStatus && matchesDate;
       }),
-    [transactions, searchText, statusFilter, dateRange]
+    [transactions, searchText, typeFilter, statusFilter, dateRange]
   );
 
   const columns = [
@@ -159,13 +163,42 @@ const TransactionManagement: React.FC = () => {
       width: 150,
       align: "right" as const,
       sorter: (a: Transaction, b: Transaction) => a.amount - b.amount,
-      render: (amount: number) => `${amount.toLocaleString()}đ`,
+      render: (amount: number, record: Transaction) => (
+        <span style={{ 
+          color: record.type === "IN" ? "#059669" : "#DC2626",
+          fontWeight: 600 
+        }}>
+          {record.type === "IN" ? "+" : "-"}{amount.toLocaleString()}đ
+        </span>
+      ),
+    },
+    {
+      title: "Loại giao dịch",
+      dataIndex: "type",
+      key: "type",
+      width: 130,
+      align: "center" as const,
+      sorter: (a: Transaction, b: Transaction) => a.type.localeCompare(b.type),
+      render: (type: string) => (
+        <Tag 
+          style={{
+            backgroundColor: type === "IN" ? "#D1FAE5" : "#FEE2E2",
+            color: type === "IN" ? "#065F46" : "#991B1B",
+            border: `1px solid ${type === "IN" ? "#A7F3D0" : "#FECACA"}`,
+            borderRadius: 8,
+            fontWeight: 600,
+            padding: "2px 8px"
+          }}
+        >
+          {type === "IN" ? "Tiền nhận" : "Tiền hoàn"}
+        </Tag>
+      ),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
-      width: 180,
+      width: 130,
       align: "center" as const,
       render: (status: string) => {
         const theme = getStatusTheme(status);
@@ -275,12 +308,12 @@ const TransactionManagement: React.FC = () => {
           <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
             <Space>
               <Input
-                placeholder="Nhập mã giao dịch, mã đơn hàng, phương thức..."
+                placeholder="Tìm kiếm mã giao dịch, mã đơn hàng, phương thức thanh toán..."
                 prefix={<SearchOutlined style={{ color: "#A05A2C" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 style={{
-                  width: 280,
+                  width: 320,
                   borderRadius: 6,
                   borderColor: "#E9C97B",
                   height: 33,
@@ -292,15 +325,24 @@ const TransactionManagement: React.FC = () => {
               />
             </Space>
             <Select
+              value={typeFilter}
+              onChange={setTypeFilter}
+              style={{ width: 200 }}
+              options={[
+                { label: "Tất cả loại giao dịch", value: "all" },
+                { label: "Tiền nhận", value: "IN" },
+                { label: "Tiền hoàn", value: "OUT" },
+              ]}
+            />
+            <Select
               value={statusFilter}
               onChange={setStatusFilter}
               style={{ width: 180 }}
               options={[
                 { label: "Tất cả trạng thái", value: "all" },
                 { label: "Đã thanh toán", value: "PAID" },
-                { label: "Chờ thanh toán", value: "PENDING" },
-                { label: "Thất bại", value: "FAILED" },
-                { label: "Hoàn tiền", value: "REFUNDED" },
+                { label: "Đang xử lý", value: "PENDING" },
+                { label: "Đã hủy", value: "CANCELED" },
               ]}
             />
             <RangePicker
@@ -399,6 +441,20 @@ const TransactionManagement: React.FC = () => {
                   {dayjs(selectedTransaction.transaction_time).format(
                     "DD/MM/YYYY HH:mm:ss"
                   )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Loại giao dịch">
+                  <Tag 
+                    style={{
+                      backgroundColor: selectedTransaction.type === "IN" ? "#D1FAE5" : "#FEE2E2",
+                      color: selectedTransaction.type === "IN" ? "#065F46" : "#991B1B",
+                      border: `1px solid ${selectedTransaction.type === "IN" ? "#A7F3D0" : "#FECACA"}`,
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      padding: "4px 12px"
+                    }}
+                  >
+                    {selectedTransaction.type === "IN" ? "Tiền nhận" : "Tiền hoàn"}
+                  </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   {(() => {
