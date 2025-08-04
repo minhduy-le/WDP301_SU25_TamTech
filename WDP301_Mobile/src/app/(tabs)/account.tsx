@@ -40,7 +40,7 @@ const getCurrentDateTime = (): string => {
 const ScreenWidth = Dimensions.get("screen").width;
 const AccountPage = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
-  const { appState, setAppState } = useCurrentApp();
+  const { appState, setAppState, cart, setCart } = useCurrentApp();
   const [time, setTime] = useState("");
   const decodeAndSetToken = async () => {
     try {
@@ -48,19 +48,6 @@ const AccountPage = () => {
       if (token) {
         const decoded = jwtDecode(token);
         setDecodeToken(decoded);
-
-        if (decoded && decoded.id) {
-          try {
-            const res = await axios.get(
-              `${API_URL}/api/profiles/${decoded.id}`
-            );
-            console.log(res.data.user);
-
-            setDecodeToken(res.data.user);
-          } catch (apiError) {
-            console.error("Error fetching fresh user data:", apiError);
-          }
-        }
       } else {
         setDecodeToken("");
       }
@@ -92,6 +79,7 @@ const AccountPage = () => {
       {
         text: "Xác nhận",
         onPress: async () => {
+          setCart({});
           await AsyncStorage.removeItem("access_token");
           setAppState(0);
           router.replace("/(tabs)");
@@ -240,7 +228,7 @@ const AccountPage = () => {
           </View>
         )}
         <Pressable
-          onPress={() => router.replace("/(user)/account/info")}
+          onPress={() => router.navigate("/(user)/account/info")}
           style={{
             paddingVertical: 15,
             paddingHorizontal: 10,

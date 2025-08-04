@@ -25,10 +25,6 @@ const OrderSuccess = () => {
           Tấm Tắc xin chân thành cảm ơn bạn
         </Text>
         <Text style={styles.text}>
-          Đơn hàng được khởi tạo lúc 13:46 27/01/2025
-        </Text>
-        <Text style={styles.text}>Mã đơn hàng: #1524267123</Text>
-        <Text style={styles.text}>
           Hãy chú ý điện thoại trong quá trình giao hàng nhé!!!
         </Text>
         <View style={styles.btnView}>

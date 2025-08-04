@@ -142,3 +142,8 @@ export const likeRestaurantAPI = (restaurant: string, quantity: number) => {
   const url = `/api/v1/likes`;
   return axios.post<IBackendRes<IUserLogin>>(url, { restaurant, quantity });
 };
+
+export const getActiveBlogsAPI = () => {
+  const url = `${API_URL}/api/blogs/active`;
+  return axios.get(url);
+};

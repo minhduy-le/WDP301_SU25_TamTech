@@ -19,6 +19,7 @@
     "@react-navigation/native": "^7.1.6",
     "@types/jwt-decode": "^3.1.0",
     "axios": "^1.9.0",
+    "date-fns": "^4.1.0",
     "debounce": "2.1.1",
     "expo": "53.0.12",
     "expo-camera": "~16.1.8",

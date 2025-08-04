@@ -7,11 +7,11 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { API_URL, APP_COLOR } from "@/utils/constant";
-import { TextInput } from "react-native-gesture-handler";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import debounce from "debounce";
@@ -245,6 +245,7 @@ const RestaurantsPage = () => {
                         fontSize: 17,
                         marginTop: 5,
                       }}
+                      numberOfLines={1}
                     >
                       {item.description}
                     </Text>
@@ -259,61 +260,65 @@ const RestaurantsPage = () => {
                     </Text>
                   </View>
                 </View>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 5,
-                    position: "absolute",
-                    bottom: 5,
-                    right: 10,
-                    borderWidth: 0.5,
-                    borderColor: APP_COLOR.BROWN,
-                    paddingHorizontal: 5,
-                    paddingVertical: 3,
-                    borderRadius: 50,
-                  }}
-                >
-                  <Pressable
-                    onPress={() => handleQuantityChange(item, "MINUS")}
-                    style={({ pressed }) => ({
-                      opacity: quantity > 0 ? (pressed ? 0.5 : 1) : 0.3,
-                    })}
-                    disabled={quantity === 0}
-                  >
-                    <AntDesign
-                      name="minuscircle"
-                      size={24}
-                      color={
-                        quantity > 0 ? APP_COLOR.BUTTON_YELLOW : APP_COLOR.BROWN
-                      }
-                    />
-                  </Pressable>
-
-                  <Text
+                {item.productType === "Đồ ăn" && (
+                  <View
                     style={{
-                      minWidth: 25,
-                      textAlign: "center",
-                      fontFamily: FONTS.medium,
-                      color: APP_COLOR.BROWN,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                      position: "absolute",
+                      bottom: 5,
+                      right: 10,
+                      borderWidth: 0.5,
+                      borderColor: APP_COLOR.BROWN,
+                      paddingHorizontal: 5,
+                      paddingVertical: 3,
+                      borderRadius: 50,
                     }}
                   >
-                    {quantity}
-                  </Text>
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "MINUS")}
+                      style={({ pressed }) => ({
+                        opacity: quantity > 0 ? (pressed ? 0.5 : 1) : 0.3,
+                      })}
+                      disabled={quantity === 0}
+                    >
+                      <AntDesign
+                        name="minuscircle"
+                        size={24}
+                        color={
+                          quantity > 0
+                            ? APP_COLOR.BUTTON_YELLOW
+                            : APP_COLOR.BROWN
+                        }
+                      />
+                    </Pressable>
 
-                  <Pressable
-                    onPress={() => handleQuantityChange(item, "PLUS")}
-                    style={({ pressed }) => ({
-                      opacity: pressed ? 0.5 : 1,
-                    })}
-                  >
-                    <AntDesign
-                      name="pluscircle"
-                      size={24}
-                      color={APP_COLOR.BUTTON_YELLOW}
-                    />
-                  </Pressable>
-                </View>
+                    <Text
+                      style={{
+                        minWidth: 25,
+                        textAlign: "center",
+                        fontFamily: FONTS.medium,
+                        color: APP_COLOR.BROWN,
+                      }}
+                    >
+                      {quantity}
+                    </Text>
+
+                    <Pressable
+                      onPress={() => handleQuantityChange(item, "PLUS")}
+                      style={({ pressed }) => ({
+                        opacity: pressed ? 0.5 : 1,
+                      })}
+                    >
+                      <AntDesign
+                        name="pluscircle"
+                        size={24}
+                        color={APP_COLOR.BUTTON_YELLOW}
+                      />
+                    </Pressable>
+                  </View>
+                )}
               </View>
             );
           }}

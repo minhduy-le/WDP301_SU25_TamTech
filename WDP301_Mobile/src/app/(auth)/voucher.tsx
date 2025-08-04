@@ -8,9 +8,9 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-
 const Voucher = () => {
   const [vouchers, setVouchers] = useState<any[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
@@ -19,8 +19,12 @@ const Voucher = () => {
         if (token) {
           const decoded: any = jwtDecode(token);
           userId = decoded.id;
+          setIsLoggedIn(true);
         }
-        if (!userId) return setVouchers([]);
+        if (!userId) {
+          setIsLoggedIn(false);
+          return setVouchers([]);
+        }
         const res = await axios.get(
           `${API_URL}/api/promotions/user/${userId}`,
           {
@@ -54,20 +58,42 @@ const Voucher = () => {
         </Pressable>
         <Text style={styles.text}>Mã ưu đãi của tôi</Text>
       </View>
-      <FlatList
-        data={vouchers}
-        renderItem={({ item }) => (
-          <VoucherComponent
-            code={item.name}
-            description={`Giảm ${item.discountAmount.toLocaleString()}đ`}
-            date={
-              item.endDate ? new Date(item.endDate).toLocaleDateString() : ""
-            }
-            promotionId={item.promotionId}
-          />
-        )}
-        keyExtractor={(item) => item.promotionId?.toString() || item.code}
-      />
+      {!isLoggedIn ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: FONTS.medium,
+              color: APP_COLOR.BROWN,
+              textAlign: "center",
+            }}
+          >
+            Hãy đăng nhập để nhận ưu đãi
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={vouchers}
+          renderItem={({ item }) => (
+            <VoucherComponent
+              code={item.name}
+              description={`Giảm ${item.discountAmount.toLocaleString()}đ`}
+              date={
+                item.endDate ? new Date(item.endDate).toLocaleDateString() : ""
+              }
+              promotionId={item.promotionId}
+            />
+          )}
+          keyExtractor={(item) => item.promotionId?.toString() || item.code}
+        />
+      )}
     </View>
   );
 };

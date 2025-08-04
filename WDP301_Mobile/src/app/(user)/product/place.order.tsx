@@ -17,7 +17,8 @@ import {
   Platform,
   TextInput,
   FlatList,
-  WebView,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import Toast from "react-native-root-toast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -75,6 +76,8 @@ const PlaceOrderPage = () => {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [availablePromotions, setAvailablePromotions] = useState<any[]>([]);
+  const [showPromotions, setShowPromotions] = useState(false);
   const handleCreateOrder = async (
     orderItems: any,
     order_discount_value: number,
@@ -160,6 +163,8 @@ const PlaceOrderPage = () => {
       console.error("Error creating order:", error);
 
       if (axios.isAxiosError(error) && error.response) {
+        console.log(error.response.data);
+
         const errorMessage =
           error.response.data.message || "Có lỗi xảy ra khi đặt hàng!";
         Toast.show(errorMessage, {
@@ -200,7 +205,55 @@ const PlaceOrderPage = () => {
           `https://maps.googleapis.com/maps/api/place/queryautocomplete/json?input=${text}&language=vi&key=AIzaSyAwSwTDdF00hbh21k7LsX-4Htuwqm9MlPg`
         );
         if (res.data) {
-          setAddressSuggestions(res.data.predictions);
+          const hcmAddresses = res.data.predictions.filter(
+            (prediction: any) => {
+              const description = prediction.description.toLowerCase();
+              const terms = prediction.terms || [];
+              const hcmKeywords = [
+                "thành phố hồ chí minh",
+                "tp.hcm",
+                "tp hcm",
+                "hồ chí minh",
+                "ho chi minh",
+                "quận 1",
+                "quận 2",
+                "quận 3",
+                "quận 4",
+                "quận 5",
+                "quận 6",
+                "quận 7",
+                "quận 8",
+                "quận 9",
+                "quận 10",
+                "quận 11",
+                "quận 12",
+                "quận bình tân",
+                "quận bình thạnh",
+                "quận gò vấp",
+                "quận phú nhuận",
+                "quận tân bình",
+                "quận tân phú",
+                "huyện bình chánh",
+                "huyện cần giờ",
+                "huyện củ chi",
+                "huyện hóc môn",
+                "huyện nhà bè",
+              ];
+              const hasHcmKeyword = hcmKeywords.some((keyword) =>
+                description.includes(keyword)
+              );
+              const hasHcmInTerms = terms.some((term: any) => {
+                const termValue = term.value.toLowerCase();
+                return hcmKeywords.some((keyword) =>
+                  termValue.includes(keyword)
+                );
+              });
+
+              return hasHcmKeyword || hasHcmInTerms;
+            }
+          );
+
+          setAddressSuggestions(hcmAddresses);
         }
       } catch (e) {
         console.log("Google API error:", e);
@@ -211,6 +264,55 @@ const PlaceOrderPage = () => {
 
   const handleSelectAddressAuto = async (address: string) => {
     const cleanedAddress = address.replace(/,\s*Việt Nam$/, "");
+    const addressLower = cleanedAddress.toLowerCase();
+    const hcmKeywords = [
+      "thành phố hồ chí minh",
+      "tp.hcm",
+      "tp hcm",
+      "hồ chí minh",
+      "ho chi minh",
+      "quận 1",
+      "quận 2",
+      "quận 3",
+      "quận 4",
+      "quận 5",
+      "quận 6",
+      "quận 7",
+      "quận 8",
+      "quận 9",
+      "quận 10",
+      "quận 11",
+      "quận 12",
+      "quận bình tân",
+      "quận bình thạnh",
+      "quận gò vấp",
+      "quận phú nhuận",
+      "quận tân bình",
+      "quận tân phú",
+      "huyện bình chánh",
+      "huyện cần giờ",
+      "huyện củ chi",
+      "huyện hóc môn",
+      "huyện nhà bè",
+    ];
+
+    const isHcmAddress = hcmKeywords.some((keyword) =>
+      addressLower.includes(keyword)
+    );
+
+    if (!isHcmAddress) {
+      Toast.show("Chỉ hỗ trợ giao hàng tại TP.HCM!", {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.CANCEL,
+        opacity: 1,
+      });
+      setSearchTerm("");
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
     setSearchTerm(cleanedAddress);
     setAddressSuggestions([]);
     setSelectedAddress(cleanedAddress);
@@ -247,6 +349,53 @@ const PlaceOrderPage = () => {
 
   const handleSelectAddress = async (address: string) => {
     const cleanedAddress = address.replace(/,\s*Việt Nam$/, "");
+    const addressLower = cleanedAddress.toLowerCase();
+    const hcmKeywords = [
+      "thành phố hồ chí minh",
+      "tp.hcm",
+      "tp hcm",
+      "hồ chí minh",
+      "ho chi minh",
+      "quận 1",
+      "quận 2",
+      "quận 3",
+      "quận 4",
+      "quận 5",
+      "quận 6",
+      "quận 7",
+      "quận 8",
+      "quận 9",
+      "quận 10",
+      "quận 11",
+      "quận 12",
+      "quận bình tân",
+      "quận bình thạnh",
+      "quận gò vấp",
+      "quận phú nhuận",
+      "quận tân bình",
+      "quận tân phú",
+      "huyện bình chánh",
+      "huyện cần giờ",
+      "huyện củ chi",
+      "huyện hóc môn",
+      "huyện nhà bè",
+    ];
+
+    const isHcmAddress = hcmKeywords.some((keyword) =>
+      addressLower.includes(keyword)
+    );
+
+    if (!isHcmAddress) {
+      Toast.show("Chỉ hỗ trợ giao hàng tại TP.HCM!", {
+        duration: Toast.durations.LONG,
+        textColor: "white",
+        backgroundColor: APP_COLOR.CANCEL,
+        opacity: 1,
+      });
+      setModalVisible(false);
+      return;
+    }
+
     setSelectedAddress(cleanedAddress);
     setModalVisible(false);
     try {
@@ -285,6 +434,27 @@ const PlaceOrderPage = () => {
   ) => {
     setSelectedOption(value);
     setFieldValue("paymentMethodId", Number(value));
+  };
+
+  const fetchUserPromotions = async () => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+      let userId = "";
+      if (token) {
+        const decoded: any = jwtDecode(token);
+        userId = decoded.id;
+      }
+      if (!userId) return;
+      const res = await axios.get(`${API_URL}/api/promotions/user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          accept: "*/*",
+        },
+      });
+      setAvailablePromotions(res.data);
+    } catch (e) {
+      setAvailablePromotions([]);
+    }
   };
 
   useEffect(() => {
@@ -441,7 +611,7 @@ const PlaceOrderPage = () => {
           }}
         >
           <TextInput
-            placeholder="Nhập địa chỉ của bạn"
+            placeholder="Nhập địa chỉ của bạn (chỉ hỗ trợ TP.HCM)"
             value={searchTerm}
             onFocus={() => setShowSuggestions(true)}
             onChangeText={(text) => {
@@ -461,6 +631,17 @@ const PlaceOrderPage = () => {
             }}
             placeholderTextColor={APP_COLOR.BROWN}
           />
+          <Text
+            style={{
+              fontFamily: FONTS.regular,
+              fontSize: 12,
+              color: APP_COLOR.GREY,
+              marginBottom: 5,
+              fontStyle: "italic",
+            }}
+          >
+            * Chỉ hỗ trợ giao hàng tại TP.HCM
+          </Text>
           {showSuggestions && addressSuggestions.length > 0 && (
             <View
               style={{
@@ -684,9 +865,14 @@ const PlaceOrderPage = () => {
                       </Text>
                       <Pressable
                         onPress={() => {
-                          couponStatus === true
-                            ? setCouponStatus(false)
-                            : setCouponStatus(true);
+                          if (couponStatus === true) {
+                            setCouponStatus(false);
+                            setShowPromotions(false);
+                          } else {
+                            setCouponStatus(true);
+                            fetchUserPromotions();
+                            setShowPromotions(true);
+                          }
                         }}
                       >
                         <Text
@@ -806,6 +992,87 @@ const PlaceOrderPage = () => {
                     touched={touched.promotionCode}
                     placeholder="Nhập mã khuyến mãi"
                   />
+                )}
+                {showPromotions && availablePromotions.length > 0 && (
+                  <View style={{ marginTop: 10, paddingHorizontal: 10 }}>
+                    <Text
+                      style={{
+                        fontFamily: FONTS.medium,
+                        fontSize: 16,
+                        color: APP_COLOR.BROWN,
+                        marginBottom: 10,
+                      }}
+                    >
+                      Mã khuyến mãi khả dụng:
+                    </Text>
+                    <FlatList
+                      data={availablePromotions}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      keyExtractor={(item) => item.promotionId.toString()}
+                      renderItem={({ item }) => (
+                        <Pressable
+                          onPress={() => {
+                            setFieldValue("promotionCode", item.code);
+                            setShowPromotions(false);
+                            setCouponStatus(false);
+                          }}
+                          style={{
+                            backgroundColor: APP_COLOR.WHITE,
+                            padding: 12,
+                            marginRight: 10,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: APP_COLOR.BROWN,
+                            width: 150,
+                            minHeight: 80,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: FONTS.bold,
+                              fontSize: 14,
+                              color: APP_COLOR.BROWN,
+                              marginBottom: 4,
+                            }}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: FONTS.regular,
+                              fontSize: 12,
+                              color: APP_COLOR.BROWN,
+                              marginBottom: 4,
+                            }}
+                          >
+                            {item.description}
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: FONTS.medium,
+                              fontSize: 12,
+                              color: APP_COLOR.ORANGE,
+                            }}
+                          >
+                            Giảm: {item.discountAmount?.toLocaleString()}đ
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: FONTS.regular,
+                              fontSize: 10,
+                              color: APP_COLOR.GREY,
+                            }}
+                          >
+                            HSD:{" "}
+                            {item.endDate
+                              ? new Date(item.endDate).toLocaleDateString()
+                              : ""}
+                          </Text>
+                        </Pressable>
+                      )}
+                    />
+                  </View>
                 )}
                 <View style={styles.dropdownContainer}>
                   <Text style={styles.dropdownLabel}>

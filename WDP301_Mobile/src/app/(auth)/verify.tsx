@@ -121,9 +121,9 @@ const VerifyPage = () => {
 
   useEffect(() => {
     if (code && code.length === 6) {
-      verifyCustomerEmail;
+      verifyCustomerEmail(email as string, code);
     }
-  }, [code]);
+  }, [code, email]);
 
   const handleResendCode = async () => {
     if (countdown > 0) return;

@@ -13,7 +13,6 @@
     },
     "ios": {
       "supportsTablet": true,
-      "scheme": "tamtac-app",
       "bundleIdentifier": "com.tamtac.app",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Sử dụng Face ID để đăng nhập nhanh"
@@ -24,7 +23,6 @@
         "foregroundImage": "./src/assets/splash.png",
         "backgroundColor": "#ffffff"
       },
-      "scheme": "tamtac-app",
       "package": "com.tamtac.app",
       "permissions": ["USE_BIOMETRICS"]
     },
