@@ -18,11 +18,14 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import logo from "@/assets/logo.png";
 import ShareButton from "@/components/button/share.button";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-root-toast";
 interface IProduct {
   productId: string;
   name: string;
   price: number;
   image: string;
+  averageRating: number;
 }
 
 const BestSellerPage = () => {
@@ -126,7 +129,7 @@ const BestSellerPage = () => {
                 <View style={styles.productFooter}>
                   <View style={styles.ratingContainer}>
                     <AntDesign name="star" size={24} color={APP_COLOR.ORANGE} />
-                    <Text style={styles.ratingText}>4.6 (52)</Text>
+                    <Text style={styles.ratingText}>{item.averageRating}</Text>
                   </View>
                   <View style={styles.quantityControls}>
                     <Pressable
@@ -179,7 +182,19 @@ const BestSellerPage = () => {
         />
         <ShareButton
           title="Đặt hàng"
-          onPress={() => router.navigate("/(user)/product/place.order")}
+          onPress={async () => {
+            const token = await AsyncStorage.getItem("access_token");
+            if (token) {
+              router.navigate("/(user)/product/place.order");
+            } else {
+              Toast.show("Vui lòng đăng nhập để đặt hàng", {
+                duration: Toast.durations.LONG,
+                textColor: "white",
+                backgroundColor: APP_COLOR.CANCEL,
+                opacity: 1,
+              });
+            }
+          }}
           textStyle={styles.btnText}
           btnStyle={styles.btnView}
         />

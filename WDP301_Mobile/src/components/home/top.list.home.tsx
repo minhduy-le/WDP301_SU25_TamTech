@@ -42,12 +42,6 @@ const icon = [
     source: require("@/assets/icons/thong-tin.png"),
     targetScreen: "account",
   },
-  {
-    key: 6,
-    name: "Thông báo",
-    source: require("@/assets/icons/thong-bao.png"),
-    targetScreen: "notification",
-  },
 ];
 const IconItem = ({ item }: any) => {
   const router = useRouter();

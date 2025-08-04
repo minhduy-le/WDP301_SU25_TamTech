@@ -4,7 +4,7 @@ import { APP_COLOR } from "@/utils/constant";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import logo from "@/assets/logo.png";
-const chatbotUrl = "https://udify.app/chatbot/84XresgPoO8dLdgJ";
+const chatbotUrl = "https://udify.app/chatbot/W5v0fU363xTJIw5f";
 const AIPage = () => {
   const { appState } = useCurrentApp();
   return (
@@ -28,7 +28,9 @@ const AIPage = () => {
           mediaPlaybackRequiresUserAction={false}
         />
       ) : (
-        <View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <Text
             style={{
               color: APP_COLOR.BROWN,

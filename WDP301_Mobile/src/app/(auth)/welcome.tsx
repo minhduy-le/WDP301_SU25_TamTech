@@ -26,7 +26,11 @@ import { Formik } from "formik";
 import ShareInput from "@/components/input/share.input";
 import { CustomerSignInSchema } from "@/utils/validate.schema";
 import Toast from "react-native-root-toast";
-import { customerLoginAPI, forgotPasswordAPI } from "@/utils/api";
+import {
+  customerLoginAPI,
+  forgotPasswordAPI,
+  resendCodeAPI,
+} from "@/utils/api";
 
 const WelcomePage = () => {
   const { setAppState } = useCurrentApp();
@@ -57,43 +61,48 @@ const WelcomePage = () => {
           opacity: 1,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Lỗi khi đăng nhập", error);
-      Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {
-        duration: Toast.durations.LONG,
-        textColor: "white",
-        backgroundColor: APP_COLOR.ORANGE,
-        opacity: 1,
-        position: -50,
-      });
-      setFogotPassword(true);
-      resetForm();
-      setLoading(false);
-    }
-  };
-  const handleQuickLogin = async () => {
-    try {
-      const token = await AsyncStorage.getItem("access_token");
-      if (token) {
-        const isBiometricAuth = await checkBiometricAuth();
-        if (isBiometricAuth) {
-          const authenticated = await authenticateWithBiometric();
-          if (authenticated) {
-            router.replace("/(tabs)");
-          } else {
-            console.log("Xác thực không thành công.");
-          }
-        } else {
-          console.log("Không có phương thức xác thực vân tay.");
+
+      // Kiểm tra nếu lỗi là "Account not activated"
+      if (error?.response?.data === "Account not activated") {
+        try {
+          // Gọi API resend-otp
+          await resendCodeAPI(email);
+          Toast.show("Tài khoản chưa được kích hoạt. Đã gửi lại mã OTP.", {
+            duration: Toast.durations.LONG,
+            textColor: "white",
+            backgroundColor: APP_COLOR.ORANGE,
+            opacity: 1,
+            position: -50,
+          });
+          // Chuyển sang trang verify với email
+          router.replace({
+            pathname: "/(auth)/verify",
+            params: { email: email },
+          });
+        } catch (resendError) {
+          console.log("Lỗi khi gửi lại OTP", resendError);
+          Toast.show("Không thể gửi lại mã OTP. Vui lòng thử lại.", {
+            duration: Toast.durations.LONG,
+            textColor: "white",
+            backgroundColor: APP_COLOR.CANCEL,
+            opacity: 1,
+            position: -50,
+          });
         }
       } else {
-        Alert.alert(
-          "Đăng nhập quá hạn",
-          "Hãy đăng nhập để sử dụng tính năng này"
-        );
+        Toast.show("Lỗi khi đăng nhập. Vui lòng thử lại.", {
+          duration: Toast.durations.LONG,
+          textColor: "white",
+          backgroundColor: APP_COLOR.ORANGE,
+          opacity: 1,
+          position: -50,
+        });
+        setFogotPassword(true);
+        resetForm();
       }
-    } catch (error) {
-      console.error("Lỗi đăng nhập vân tay:", error);
+      setLoading(false);
     }
   };
   const handleForgotPassword = async (email: string) => {
@@ -166,6 +175,7 @@ const WelcomePage = () => {
                         value={values.password}
                         error={errors.password}
                         touched={touched.password}
+                        secureTextEntry={true}
                       />
                       {fogotPasword && (
                         <Pressable
@@ -185,22 +195,14 @@ const WelcomePage = () => {
                         </Pressable>
                       )}
                       <View style={{ height: 10 }}></View>
-                      <View style={{ flexDirection: "row" }}>
-                        <ShareButton
-                          title="Đăng nhập"
-                          onPress={handleSubmit}
-                          textStyle={styles.loginBtnText}
-                          btnStyle={styles.loginBtn}
-                          pressStyle={{ alignSelf: "stretch" }}
-                        />
-                        <ShareButton
-                          title=" "
-                          onPress={handleQuickLogin}
-                          textStyle={styles.loginBtnText}
-                          btnStyle={styles.loginBtnFast}
-                          pressStyle={{ alignSelf: "stretch" }}
-                        />
-                      </View>
+
+                      <ShareButton
+                        title="Đăng nhập"
+                        onPress={handleSubmit}
+                        textStyle={styles.loginBtnText}
+                        btnStyle={styles.loginBtn}
+                        pressStyle={{ alignSelf: "stretch" }}
+                      />
                     </View>
                   )}
                 </Formik>

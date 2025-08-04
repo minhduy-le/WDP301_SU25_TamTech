@@ -314,7 +314,7 @@ const OrderDetailsPage = () => {
                   <View
                     style={{
                       flexDirection: "row",
-                      gap: 140,
+                      gap: 125,
                     }}
                   >
                     <Text
@@ -389,12 +389,6 @@ const OrderDetailsPage = () => {
           <Text style={styles.value}>{orderDetails.note}</Text>
           <View style={{ flexDirection: "row" }}>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.buttonFooter}
-                onPress={() => console.log("Hủy")}
-              >
-                <Text style={styles.buttonText}>Hủy đơn</Text>
-              </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.buttonFooter,

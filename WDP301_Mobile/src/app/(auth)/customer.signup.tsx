@@ -133,6 +133,8 @@ const CustomerSignUpPage = () => {
                   value={values.date_of_birth}
                   error={errors.date_of_birth}
                   touched={touched.date_of_birth}
+                  minDate="1900-01-01"
+                  maxDate={new Date().toISOString().split("T")[0]}
                 />
                 <ShareInput
                   placeholder="Nhập mật khẩu"

@@ -1,6 +1,28 @@
 export {};
 
 declare global {
+  interface IBlog {
+    id: number;
+    title: string;
+    content: string;
+    authorId: number;
+    image: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    Author: {
+      id: number;
+      fullName: string;
+      email: string;
+    };
+  }
+
+  interface IBlogResponse {
+    status: number;
+    message: string;
+    blogs: IBlog[];
+  }
+
   interface IBackendRes<T> {
     error?: string | string[];
     message: string | string[];

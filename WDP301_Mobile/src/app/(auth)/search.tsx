@@ -252,63 +252,65 @@ const SearchPage = () => {
                       {currencyFormatter(item.price)}
                     </Text>
                   </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 5,
-                      position: "absolute",
-                      bottom: 5,
-                      right: 10,
-                      borderWidth: 0.5,
-                      borderColor: APP_COLOR.BROWN,
-                      paddingHorizontal: 5,
-                      paddingVertical: 3,
-                      borderRadius: 50,
-                    }}
-                  >
-                    <Pressable
-                      onPress={() => handleQuantityChange(item, "MINUS")}
-                      style={({ pressed }) => ({
-                        opacity: quantity > 0 ? (pressed ? 0.5 : 1) : 0.3,
-                      })}
-                      disabled={quantity === 0}
-                    >
-                      <AntDesign
-                        name="minuscircle"
-                        size={24}
-                        color={
-                          quantity > 0
-                            ? APP_COLOR.BUTTON_YELLOW
-                            : APP_COLOR.BROWN
-                        }
-                      />
-                    </Pressable>
-
-                    <Text
+                  {item.ProductType?.name === "Đồ ăn" && (
+                    <View
                       style={{
-                        minWidth: 25,
-                        textAlign: "center",
-                        fontFamily: FONTS.medium,
-                        color: APP_COLOR.BROWN,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 5,
+                        position: "absolute",
+                        bottom: 5,
+                        right: 10,
+                        borderWidth: 0.5,
+                        borderColor: APP_COLOR.BROWN,
+                        paddingHorizontal: 5,
+                        paddingVertical: 3,
+                        borderRadius: 50,
                       }}
                     >
-                      {quantity}
-                    </Text>
+                      <Pressable
+                        onPress={() => handleQuantityChange(item, "MINUS")}
+                        style={({ pressed }) => ({
+                          opacity: quantity > 0 ? (pressed ? 0.5 : 1) : 0.3,
+                        })}
+                        disabled={quantity === 0}
+                      >
+                        <AntDesign
+                          name="minuscircle"
+                          size={24}
+                          color={
+                            quantity > 0
+                              ? APP_COLOR.BUTTON_YELLOW
+                              : APP_COLOR.BROWN
+                          }
+                        />
+                      </Pressable>
 
-                    <Pressable
-                      onPress={() => handleQuantityChange(item, "PLUS")}
-                      style={({ pressed }) => ({
-                        opacity: pressed ? 0.5 : 1,
-                      })}
-                    >
-                      <AntDesign
-                        name="pluscircle"
-                        size={24}
-                        color={APP_COLOR.BUTTON_YELLOW}
-                      />
-                    </Pressable>
-                  </View>
+                      <Text
+                        style={{
+                          minWidth: 25,
+                          textAlign: "center",
+                          fontFamily: FONTS.medium,
+                          color: APP_COLOR.BROWN,
+                        }}
+                      >
+                        {quantity}
+                      </Text>
+
+                      <Pressable
+                        onPress={() => handleQuantityChange(item, "PLUS")}
+                        style={({ pressed }) => ({
+                          opacity: pressed ? 0.5 : 1,
+                        })}
+                      >
+                        <AntDesign
+                          name="pluscircle"
+                          size={24}
+                          color={APP_COLOR.BUTTON_YELLOW}
+                        />
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               </Pressable>
             );

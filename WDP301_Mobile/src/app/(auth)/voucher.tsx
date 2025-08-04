@@ -7,20 +7,25 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
+import { useCurrentApp } from "@/context/app.context";
 
 const Voucher = () => {
   const [vouchers, setVouchers] = useState<any[]>([]);
+  const { appState } = useCurrentApp();
+
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
         const token = await AsyncStorage.getItem("access_token");
         let userId = "";
-        if (token) {
+        if (token && appState) {
           const decoded: any = jwtDecode(token);
           userId = decoded.id;
         }
-        if (!userId) return setVouchers([]);
+        if (!userId) {
+          return setVouchers([]);
+        }
         const res = await axios.get(
           `${API_URL}/api/promotions/user/${userId}`,
           {
@@ -36,7 +41,7 @@ const Voucher = () => {
       }
     };
     fetchVouchers();
-  }, []);
+  }, [appState]);
   return (
     <View style={styles.container}>
       <View
@@ -54,20 +59,41 @@ const Voucher = () => {
         </Pressable>
         <Text style={styles.text}>Mã ưu đãi của tôi</Text>
       </View>
-      <FlatList
-        data={vouchers}
-        renderItem={({ item }) => (
-          <VoucherComponent
-            code={item.name}
-            description={`Giảm ${item.discountAmount.toLocaleString()}đ`}
-            date={
-              item.endDate ? new Date(item.endDate).toLocaleDateString() : ""
-            }
-            promotionId={item.promotionId}
-          />
-        )}
-        keyExtractor={(item) => item.promotionId?.toString() || item.code}
-      />
+      {!appState ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: FONTS.regular,
+              color: APP_COLOR.BROWN,
+              textAlign: "center",
+            }}
+          >
+            Vui lòng đăng nhập để sử dụng tính năng này.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={vouchers}
+          renderItem={({ item }) => (
+            <VoucherComponent
+              code={item.name}
+              description={`Giảm ${item.discountAmount.toLocaleString()}đ`}
+              date={
+                item.endDate ? new Date(item.endDate).toLocaleDateString() : ""
+              }
+              promotionId={item.promotionId}
+            />
+          )}
+          keyExtractor={(item) => item.promotionId?.toString() || item.code}
+        />
+      )}
     </View>
   );
 };

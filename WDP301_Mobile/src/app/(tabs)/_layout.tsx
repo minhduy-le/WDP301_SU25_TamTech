@@ -6,6 +6,7 @@ import { StyleSheet, View } from "react-native";
 import { FONTS } from "@/theme/typography";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 const TabLayout = () => {
   const getIcons = (routeName: string, focused: boolean, size: number) => {
     const styles = StyleSheet.create({
@@ -57,11 +58,11 @@ const TabLayout = () => {
       );
     }
 
-    if (routeName === "notification") {
+    if (routeName === "blog") {
       return focused ? (
-        <Ionicons name="notifications" size={24} color={APP_COLOR.ORANGE} />
+        <FontAwesome5 name="blogger-b" size={24} color={APP_COLOR.ORANGE} />
       ) : (
-        <Ionicons name="notifications" size={24} color={APP_COLOR.BROWN} />
+        <FontAwesome5 name="blogger-b" size={24} color={APP_COLOR.BROWN} />
       );
     }
     if (routeName === "account") {
@@ -105,8 +106,8 @@ const TabLayout = () => {
             ? "Đơn hàng"
             : route.name === "index"
             ? "Trang chủ"
-            : route.name === "notification"
-            ? "Thông báo"
+            : route.name === "blog"
+            ? "Bài viết"
             : "Tôi",
       })}
     >
@@ -129,9 +130,9 @@ const TabLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="notification"
+        name="blog"
         options={{
-          title: "Thông báo",
+          title: "Bài viết",
         }}
       />
       <Tabs.Screen

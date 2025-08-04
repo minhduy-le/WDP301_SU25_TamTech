@@ -40,32 +40,33 @@ const getCurrentDateTime = (): string => {
 const ScreenWidth = Dimensions.get("screen").width;
 const AccountPage = () => {
   const [decodeToken, setDecodeToken] = useState<any>("");
-  const { appState, setAppState } = useCurrentApp();
+  const { appState, setAppState, cart, setCart } = useCurrentApp();
   const [time, setTime] = useState("");
-  const decodeAndSetToken = async () => {
+  const fetchUserProfile = async () => {
     try {
       const token = await AsyncStorage.getItem("access_token");
       if (token) {
-        const decoded = jwtDecode(token);
-        setDecodeToken(decoded);
+        // Decode token để lấy user ID
+        const decoded = jwtDecode(token) as any;
+        const userId = decoded.id;
 
-        if (decoded && decoded.id) {
-          try {
-            const res = await axios.get(
-              `${API_URL}/api/profiles/${decoded.id}`
-            );
-            console.log(res.data.user);
+        // Gọi API để lấy thông tin user
+        const response = await axios.get(`${API_URL}/api/profiles/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-            setDecodeToken(res.data.user);
-          } catch (apiError) {
-            console.error("Error fetching fresh user data:", apiError);
-          }
+        if (response.data && response.data.user) {
+          setDecodeToken(response.data.user);
+        } else {
+          setDecodeToken("");
         }
       } else {
         setDecodeToken("");
       }
     } catch (error) {
-      console.error("Error retrieving or decoding access token:", error);
+      console.error("Error fetching user profile:", error);
       setDecodeToken("");
     }
   };
@@ -75,11 +76,11 @@ const AccountPage = () => {
   }, []);
 
   useEffect(() => {
-    decodeAndSetToken();
+    fetchUserProfile();
   }, [appState]);
   useFocusEffect(
     useCallback(() => {
-      decodeAndSetToken();
+      fetchUserProfile();
     }, [])
   );
 
@@ -92,6 +93,7 @@ const AccountPage = () => {
       {
         text: "Xác nhận",
         onPress: async () => {
+          setCart({});
           await AsyncStorage.removeItem("access_token");
           setAppState(0);
           router.replace("/(tabs)");
@@ -240,7 +242,7 @@ const AccountPage = () => {
           </View>
         )}
         <Pressable
-          onPress={() => router.replace("/(user)/account/info")}
+          onPress={() => router.navigate("/(user)/account/info")}
           style={{
             paddingVertical: 15,
             paddingHorizontal: 10,
