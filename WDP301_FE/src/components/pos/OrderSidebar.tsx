@@ -54,14 +54,12 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
     setCheckedPromo(true)
   }
 
-  // Bắt sự kiện Enter để tự động áp dụng mã
   const handlePromoInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !discountAmount && !isFetching && promotionCode.trim()) {
       handleApplyPromotion()
     }
   }
 
-  // Xử lý khi có kết quả từ API
   React.useEffect(() => {
     if (!checkedPromo) return
     if (isFetching) return
@@ -72,7 +70,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
       setCheckedPromo(false)
       return
     }
-    // Kiểm tra logic
     if (!promotion.isActive) {
       setPromoError('Mã giảm giá không hoạt động.')
     } else {
@@ -132,7 +129,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
         </div>
       </div>
 
-      {/* Order Items */}
       <div className="flex-1 overflow-y-auto p-4 min-h-0">
         {currentOrder.length === 0 ? (
           <div className="text-center py-12">
@@ -164,7 +160,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                     <p className="text-amber-600 text-xs mt-1 line-clamp-2">
                       {item.description}
                     </p>
-                    {/* Display add-ons if available */}
                     {item.addOns && item.addOns.length > 0 && (
                       <div className="mt-2 space-y-1">
                         <span className="text-xs font-medium text-amber-700">Món kèm:</span>
@@ -207,7 +202,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                     </button>
                   </div>
                   <span className="font-bold text-amber-700 text-sm">
-                    {(item.totalPrice || (item.price * item.quantity)).toLocaleString()}đ
+                    {(item.totalPrice ? (item.totalPrice * item.quantity) : (item.price * item.quantity)).toLocaleString()}đ
                   </span>
                 </div>
               </div>
@@ -216,10 +211,8 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
         )}
       </div>
 
-      {/* Order Total and Actions */}
       {currentOrder.length > 0 && (
         <div className="p-4 border-t border-amber-200 flex-shrink-0 bg-white">
-          {/* Promotion Code Section */}
           <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
             <div className="flex items-center space-x-2 mb-2">
               <Tag className="h-4 w-4 text-amber-600" />
@@ -227,7 +220,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                 Mã khuyến mãi
               </span>
             </div>
-            {/* Input mã khuyến mãi */}
             <input
               ref={inputRef}
               type="text"
@@ -239,7 +231,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
               disabled={!!discountAmount}
               style={{ minWidth: 0, marginBottom: 8 }}
             />
-            {/* Hàng nút bên dưới */}
             <div className="flex flex-row gap-2">
               {!discountAmount && (
                 <button
@@ -274,7 +265,6 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                 </button>
               )}
             </div>
-            {/* Thông báo trạng thái mã khuyến mãi */}
             {promoError && (
               <div className="mt-2 flex items-center text-red-600 text-sm font-medium gap-1">
                 <span>⚠️</span>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { SearchAndFilters } from '../components/pos/SearchAndFilters'
-import { CategoryTabs } from '../components/pos/CategoryTabs'
 import { MenuGrid } from '../components/pos/MenuGrid'
 import { OrderSidebar } from '../components/pos/OrderSidebar'
 import { ConfirmationPopup } from '../components/pos/ConfirmationPopup'
@@ -18,7 +17,6 @@ import POSSuccess from '../components/pos/POSSuccess'
 import type { Promotion } from '../hooks/promotionApi'
 
 export const POSPage: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<string>('all') 
   const [currentOrder, setCurrentOrder] = useState<OrderItem[]>([])
   const [orderNumber, setOrderNumber] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
@@ -37,36 +35,31 @@ export const POSPage: React.FC = () => {
   const [promotionCode, setPromotionCode] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
-  const { getProductsByType, getAllProducts } = usePOSApi()
+  const { getProductsByType } = usePOSApi()
   const [showSuccess, setShowSuccess] = useState(false)
   const [successOrderId, setSuccessOrderId] = useState<string | undefined>(
     undefined
   )
 
   const fetchProducts = useCallback(async () => {
-    if (!activeCategory) return
-  
     setLoading(true)
     try {
-      console.log('Fetching products for category:', activeCategory)
+      console.log('Fetching main dishes (productTypeId: 1)')
   
-      const data =
-        activeCategory === 'all'
-          ? await getAllProducts()
-          : await getProductsByType(activeCategory)
+      const data = await getProductsByType(1)
   
-      console.log('Products fetched:', data)
+      console.log('Main dishes fetched:', data)
       setProducts(data)
     } catch (error) {
-      console.error('Error fetching products:', error)
+      console.error('Error fetching main dishes:', error)
       setProducts([])
     } finally {
       setLoading(false)
     }
-  }, [activeCategory, getProductsByType, getAllProducts])
+  }, [getProductsByType])
 
   useEffect(() => {
-    console.log('useEffect triggered - activeCategory:', activeCategory)
+    console.log('useEffect triggered - loading main dishes')
     fetchProducts()
   }, [fetchProducts])
 
@@ -77,13 +70,13 @@ export const POSPage: React.FC = () => {
     })
   }
 
-  const confirmAddToOrder = (addOns: AddOnItem[], totalPrice: number) => {
+  const confirmAddToOrder = (addOns: AddOnItem[], totalPrice: number, mainQuantity: number) => {
     if (!confirmationPopup.item) return
 
     const item = confirmationPopup.item
     const orderItem: OrderItem = {
       ...item,
-      quantity: 1,
+      quantity: mainQuantity,
       addOns: addOns,
       totalPrice: totalPrice
     }
@@ -119,7 +112,10 @@ export const POSPage: React.FC = () => {
   const getTotalPrice = () => {
     return currentOrder.reduce(
       (total, item) => {
-        const itemPrice = item.totalPrice || (item.price * item.quantity)
+        // ✅ LOGIC ĐÚNG: Phải nhân totalPrice với quantity
+        const itemPrice = item.totalPrice 
+          ? (item.totalPrice * item.quantity)  // Món có add-ons: totalPrice × quantity
+          : (item.price * item.quantity)       // Món thường: price × quantity
         return total + itemPrice
       },
       0
@@ -237,7 +233,7 @@ export const POSPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-amber-25 flex">
       <div className="flex-1 flex flex-col">
-        <div className="bg-white border-b border-amber-200 px-6 py-4 space-y-4">
+        <div className="bg-white border-b border-amber-200 px-6 py-4">
           <SearchAndFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -245,10 +241,6 @@ export const POSPage: React.FC = () => {
             setPriceFilter={setPriceFilter}
             showFilters={showFilters}
             setShowFilters={setShowFilters}
-          />
-          <CategoryTabs
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
           />
         </div>
         <MenuGrid

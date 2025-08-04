@@ -5,7 +5,7 @@ import { useAddOnProducts } from '../../hooks/posApi'
 
 interface ConfirmationPopupProps {
   confirmationPopup: ConfirmationPopupType
-  onConfirm: (addOns: AddOnItem[], totalPrice: number) => void
+  onConfirm: (addOns: AddOnItem[], totalPrice: number, mainQuantity: number) => void
   onCancel: () => void
 }
 
@@ -39,7 +39,8 @@ export const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
   const calculateTotalPrice = () => {
     if (!confirmationPopup.item) return 0
     
-    const basePrice = confirmationPopup.item.price * mainQuantity
+    // ✅ LOGIC ĐÚNG: totalPrice chỉ tính cho 1 phần (sẽ nhân với quantity sau)
+    const basePrice = confirmationPopup.item.price
     
     const addOnPrice = addOnProducts.reduce((total, category) => {
       return total + category.products.reduce((catTotal, product) => {
@@ -49,6 +50,11 @@ export const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     }, 0)
     
     return basePrice + addOnPrice
+  }
+
+  // Helper function để hiển thị tổng tiền trong popup (đã nhân với mainQuantity)
+  const getDisplayTotalPrice = () => {
+    return calculateTotalPrice() * mainQuantity
   }
 
   const handleConfirm = () => {
@@ -71,7 +77,7 @@ export const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     })
 
     const totalPrice = calculateTotalPrice()
-    onConfirm(selectedAddOnItems, totalPrice)
+    onConfirm(selectedAddOnItems, totalPrice, mainQuantity)
     
     setSelectedAddOns({})
     setMainQuantity(1)
@@ -189,7 +195,7 @@ export const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-amber-700 font-medium">Tổng tiền:</span>
               <span className="text-xl font-bold text-amber-800">
-                {calculateTotalPrice().toLocaleString()}đ
+                {getDisplayTotalPrice().toLocaleString()}đ
               </span>
             </div>
           </div>
