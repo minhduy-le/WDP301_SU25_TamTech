@@ -1,18 +1,35 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Row, Col, Button, Steps, Divider } from "antd";
-import "../style/OrderTracking.css";
-import { useEffect } from "react";
-import ReactDOMServer from "react-dom/server";
 import {
-  ShoppingOutlined,
-  BookOutlined,
-  CarOutlined,
-  DeleteOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
+  Row,
+  Col,
+  Button,
+  Steps,
+  Divider,
+  Modal,
+  Select,
+  Input,
+  Form,
+  message,
+  Tooltip,
+} from "antd";
+import "../style/OrderTracking.css";
+import { useState, useEffect } from "react";
+import { ArrowLeftOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { getFormattedPrice } from "../utils/formatPrice";
+import {
+  useGetOrderById,
+  useGetBank,
+  useCancelOrder,
+} from "../hooks/ordersApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+
+const { Option } = Select;
 
 const items = [
+  {
+    title: "Chờ thanh toán",
+  },
   {
     title: "Đặt hàng thành công",
   },
@@ -20,10 +37,19 @@ const items = [
     title: "Đang chuẩn bị",
   },
   {
-    title: "Đang vận chuyển",
+    title: "Đang nấu",
   },
   {
-    title: "Hoàn thành",
+    title: "Đang giao",
+  },
+  {
+    title: "Hoàn thành giao hàng",
+  },
+];
+
+const items2 = [
+  {
+    title: "Chờ thanh toán",
   },
   {
     title: "Đã hủy",
@@ -33,98 +59,135 @@ const items = [
 const getStepIndex = (status: string) => {
   switch (status) {
     case "Pending":
-      return 0;
-    case "Paid":
-    case "Preparing":
       return 1;
-    case "Cooked":
+    case "Paid":
       return 2;
-    case "Delivering":
+    case "Preparing":
       return 3;
-    case "Delivered":
+    case "Cooked":
       return 4;
-    case "Canceled":
+    case "Delivering":
       return 5;
+    case "Delivered":
+      return 6;
     default:
       return 0;
   }
 };
 
-interface OrderTrackingProps {
-  order?: any;
-  onBackClick?: () => void;
-}
-
-const getFormattedPrice = (price: string) => {
-  const integerPart = parseFloat(price.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
+const getStepIndex2 = (status: string) => {
+  switch (status) {
+    case "Pending":
+      return 1;
+    case "Canceled":
+      return 2;
+    default:
+      return 0;
+  }
 };
 
-const statusMap: { [key: string]: string } & {
-  Pending: string;
-  Paid: string;
-  Approved: string;
-  Preparing: string;
-  Cooked: string;
-  Delivering: string;
-  Delivered: string;
-  Canceled: string;
-} = {
-  Pending: "Chờ thanh toán",
-  Paid: "Đã thanh toán",
-  Approved: "Xác nhận đơn",
-  Preparing: "Đang nấu ăn",
-  Cooked: "Đã nấu xong",
-  Delivering: "Đang giao",
-  Delivered: "Đã giao",
-  Canceled: "Đã hủy",
-};
+const OrderTracking = () => {
+  const { orderId } = useParams<{ orderId?: string }>();
+  const parsedOrderId = orderId ? parseInt(orderId, 10) : undefined;
+  const { data: order, isLoading } = useGetOrderById(parsedOrderId || 0);
+  const navigate = useNavigate();
 
-const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
-  console.log("OrderTracking received order:", order);
   const originalPrice = order?.orderItems
     ? order.orderItems.reduce(
-        (sum: number, item: { price: string; quantity: number }) =>
-          sum + parseFloat(item.price) * item.quantity,
+        (sum, item) => sum + item.price * item.quantity,
         0
       )
     : 0;
 
-  const currentStep = order ? getStepIndex(order.status) : 0;
+  const currentStep = order
+    ? order.status === "Canceled"
+      ? getStepIndex2(order.status)
+      : getStepIndex(order.status)
+    : 0;
+  const queryClient = useQueryClient();
+
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  const { data: bankData } = useGetBank();
+  const cancelOrderMutation = useCancelOrder();
 
   useEffect(() => {
-    const stepIcons = document.querySelectorAll(".ant-steps-item-icon");
-    const icons = [
-      <ShoppingOutlined key="shop" />,
-      <BookOutlined key="prep" />,
-      <CarOutlined key="ship" />,
-      <BookOutlined key="done" />,
-      <DeleteOutlined key="cancel" />,
-    ];
+    if (order && order.status === "Paid") {
+      const orderTime = dayjs(order.order_create_at);
+      const tenMinutesLater = orderTime.add(10, "minute");
+      const now = dayjs();
+      const diffInSeconds = tenMinutesLater.diff(now, "second");
 
-    stepIcons.forEach((icon, index) => {
-      if (!icon.parentElement?.querySelector(".menu-icon")) {
-        const menuIconDiv = document.createElement("div");
-        menuIconDiv.className = "menu-icon";
-        menuIconDiv.innerHTML = ReactDOMServer.renderToString(icons[index]);
-        icon.parentElement?.insertBefore(menuIconDiv, icon);
+      if (diffInSeconds > 0) {
+        setTimeLeft(diffInSeconds);
       } else {
-        const existingIcon = icon.parentElement?.querySelector(".menu-icon");
-        if (existingIcon && !existingIcon.innerHTML) {
-          existingIcon.innerHTML = ReactDOMServer.renderToString(icons[index]);
-        }
+        setTimeLeft(0);
       }
-    });
-  }, []);
+
+      const timer = setInterval(() => {
+        const newDiff = tenMinutesLater.diff(dayjs(), "second");
+        if (newDiff <= 0) {
+          setTimeLeft(0);
+          clearInterval(timer);
+        } else {
+          setTimeLeft(newDiff);
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [order]);
+
+  if (isLoading) {
+    return <div>Đang tải thông tin đơn hàng...</div>;
+  }
 
   if (!order) {
     return <div>Không tìm thấy thông tin đơn hàng.</div>;
   }
 
   const totalAmount =
-    originalPrice +
-    parseFloat(order.order_shipping_fee) -
-    parseFloat(order.order_discount_value);
+    originalPrice + order.order_shipping_fee - order.order_discount_value;
+
+  const handleCancelOrder = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        const cancelReason = {
+          reason: values.reason,
+          bankName: values.bankName,
+          bankNumber: values.bankNumber,
+        };
+
+        cancelOrderMutation.mutate(
+          { orderId: order.orderId, cancelReason },
+          {
+            onSuccess: () => {
+              message.success(
+                "Hủy đơn thành công hãy chờ gửi chứng từ hoàn tiền qua email!"
+              );
+              setIsCancelModalVisible(false);
+              form.resetFields();
+              queryClient.invalidateQueries({ queryKey: ["orders"] });
+            },
+            onError: (error) => {
+              message.error("Hủy đơn thất bại: " + error.message);
+            },
+          }
+        );
+      })
+      .catch((info) => {
+        console.log("Validate Failed:", info);
+      });
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? "0" + secs : secs}`;
+  };
 
   return (
     <div className="order-tracking-container">
@@ -132,7 +195,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
         <Col span={24} className="content-col">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={onBackClick}
+            onClick={() => navigate("/user/order-history")}
             className="btn-back"
           />
           <div className="order-header">Tra cứu đơn hàng</div>
@@ -142,55 +205,58 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
               <br />
               Thời gian đặt hàng:{" "}
               {dayjs(order.order_create_at).format("HH:mm, DD/MM/YYYY")}
-            </p>
-            <div className="tracking-timeline">
-              <Steps
-                current={currentStep}
-                labelPlacement="vertical"
-                items={items}
-              />
-            </div>
-            <div className="ship-status">
-              Tình trạng đơn hàng:{" "}
-              <div
-                className="ship-status-bold"
-                style={{
-                  color:
-                    order.status === "Paid"
-                      ? "#78A243"
-                      : order.status === "Canceled"
-                      ? "#DA7339"
-                      : order.status === "Pending"
-                      ? "yellow"
-                      : "#2d1e1a",
-                }}
-              >
-                {statusMap[order.status] || order.status}
-              </div>
-            </div>
-            <p className="shipping-info">
-              <p className="item-title">Thông tin giao hàng</p>
               <br />
-              <Row>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
-                >
-                  Tên khách hàng: {order.fullName}
-                </Col>
-                <Col
-                  span={12}
-                  style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
-                >
-                  Số điện thoại: {order.phone_number}
-                </Col>
-              </Row>
-              <Row
-                style={{ fontFamily: "Montserrat, sans-serif", fontSize: 15 }}
-              >
-                Địa chỉ giao hàng: {order.order_address}
-              </Row>
+              Thời gian nấu: 30 phút
             </p>
+            <Row>
+              <Col span={12}>
+                <div className="tracking-timeline">
+                  <Steps
+                    current={currentStep}
+                    labelPlacement="vertical"
+                    direction="vertical"
+                    items={order.status === "Canceled" ? items2 : items}
+                  />
+                </div>
+              </Col>
+              <Col span={12}>
+                <p className="shipping-info">
+                  <p className="item-title">Thông tin giao hàng</p>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 15,
+                    }}
+                  >
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Tên khách hàng: {order.fullName}
+                    </Row>
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Số điện thoại: {order.phone_number}
+                    </Row>
+                    <Row
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        fontSize: 15,
+                      }}
+                    >
+                      Địa chỉ giao hàng: {order.order_address}
+                    </Row>
+                  </div>
+                </p>
+              </Col>
+            </Row>
             <div className="order-items">
               <p className="item-title">Thông tin đơn hàng</p>
               {order.orderItems && order.orderItems.length > 0 ? (
@@ -200,7 +266,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
                       productId: number;
                       name: string;
                       quantity: number;
-                      price: string;
+                      price: number;
                     },
                     index: number
                   ) => (
@@ -247,7 +313,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
                 <span>Giảm giá</span>
                 <span>
                   <strong style={{ color: "#DA7339" }}>
-                    {parseFloat(order.order_discount_value).toLocaleString()}đ
+                    -{order.order_discount_value.toLocaleString()}đ
                   </strong>
                 </span>
               </div>
@@ -255,7 +321,7 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
                 <span>Phí giao hàng</span>
                 <span>
                   <strong style={{ color: "#DA7339" }}>
-                    {parseFloat(order.order_shipping_fee).toLocaleString()}đ
+                    {order.order_shipping_fee.toLocaleString()}đ
                   </strong>
                 </span>
               </div>
@@ -265,12 +331,107 @@ const OrderTracking = ({ order, onBackClick }: OrderTrackingProps) => {
               </div>
             </div>
             <div className="button-group">
-              <Button className="view-order">Hủy đơn</Button>
-              {/* <Button className="track-order">Theo dõi đơn hàng</Button> */}
+              {order.status === "Paid" && (
+                <>
+                  <div
+                    style={{
+                      fontFamily: "Montserrat, sans-serif",
+                      fontSize: 15,
+                    }}
+                  >
+                    {timeLeft !== null && timeLeft > 0 && (
+                      <span>
+                        Thời gian để hủy đơn hàng còn {formatTime(timeLeft)}
+                      </span>
+                    )}
+                  </div>
+                  <Tooltip
+                    title="Lưu ý: Chỉ có thể hủy đơn hàng trong 10 phút kể từ khi đặt hàng"
+                    placement="top"
+                    overlayInnerStyle={{ width: 420 }}
+                  >
+                    <Button
+                      className="view-order"
+                      onClick={() => setIsCancelModalVisible(true)}
+                      disabled={timeLeft === 0 || timeLeft === null}
+                    >
+                      Hủy đơn
+                      <InfoCircleOutlined />
+                    </Button>
+                  </Tooltip>
+                </>
+              )}
             </div>
           </div>
         </Col>
       </Row>
+
+      <Modal
+        visible={isCancelModalVisible}
+        onOk={handleCancelOrder}
+        onCancel={() => {
+          setIsCancelModalVisible(false);
+          form.resetFields();
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        footer={null}
+        className="modal-edit-profile"
+      >
+        <Form
+          form={form}
+          name="cancelOrderForm"
+          layout="vertical"
+          onFinish={handleCancelOrder}
+        >
+          <div className="edit-title">Hủy đơn hàng</div>
+          <Divider
+            style={{ borderTop: "1px solid #2D1E1A", margin: "12px 0" }}
+          />
+          <Form.Item
+            name="reason"
+            label="Lý do hủy"
+            rules={[{ required: true, message: "Vui lòng nhập lý do hủy!" }]}
+          >
+            <Input placeholder="Nhập lý do hủy" />
+          </Form.Item>
+          <Form.Item
+            name="bankName"
+            label="Chọn ngân hàng"
+            rules={[{ required: true, message: "Vui lòng chọn ngân hàng!" }]}
+          >
+            <Select placeholder="Chọn ngân hàng">
+              {bankData?.data?.map((bank) => (
+                <Option key={bank.id} value={bank.name}>
+                  {bank.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="bankNumber"
+            label="Số tài khoản"
+            rules={[
+              { required: true, message: "Vui lòng nhập số tài khoản!" },
+              {
+                pattern: /^\d+$/,
+                message: "Số tài khoản phải là số!",
+              },
+            ]}
+          >
+            <Input placeholder="Nhập số tài khoản" />
+          </Form.Item>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <Button
+              type="primary"
+              onClick={handleCancelOrder}
+              className="update-profile-btn"
+            >
+              Hủy đơn
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

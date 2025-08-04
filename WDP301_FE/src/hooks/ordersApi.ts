@@ -11,6 +11,7 @@ interface CreateOrder {
   order_address: string;
   note: string;
   promotion_code: string;
+  platform: string;
   isDatHo?: boolean;
   tenNguoiDatHo?: string;
   soDienThoaiNguoiDatHo?: string;
@@ -54,6 +55,12 @@ export interface OrderHistory {
       price: number;
     }
   ];
+  bankAccounts: [
+    {
+      bankName: string;
+      bankNumber: string;
+    }
+  ];
   order_shipping_fee: number;
   order_discount_value: number;
   order_amount: number;
@@ -61,7 +68,58 @@ export interface OrderHistory {
   order_point_earn: number;
   note: string;
   payment_method: string;
+  assignToShipperId: number;
 }
+
+export interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CancelOrder {
+  reason: string;
+  bankName: string;
+  bankNumber: string;
+}
+
+interface Bank {
+  code: number;
+  desc: string;
+  data: [
+    {
+      id: number;
+      name: string;
+      code: string;
+    }
+  ];
+}
+
+export interface OrderChangeStatus {
+  orderIds: number[];
+}
+
+interface CreateBank {
+  userId: number;
+  bankName: string;
+  bankNumber: string;
+}
+
+const fetchNotifications = async (): Promise<Notification[]> => {
+  const response = await axiosInstance.get<Notification[]>("notifications");
+  return response.data;
+};
+
+export const useGetNotifications = () => {
+  return useQuery<Notification[], Error>({
+    queryKey: ["notifications"],
+    queryFn: fetchNotifications,
+    refetchInterval: 60000,
+  });
+};
 
 interface MutationVariables {
   orderId: number;
@@ -129,19 +187,6 @@ export const useGetOrders = () => {
   });
 };
 
-export const useApproveOrder = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, AxiosError, MutationVariables>({
-    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
-      await axiosInstance.put(`orders/${orderId}/approved`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-  });
-};
-
 export const usePrepareOrder = () => {
   const queryClient = useQueryClient();
 
@@ -164,6 +209,175 @@ export const useCookOrder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useCancelOrder = () => {
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      cancelReason,
+    }: {
+      orderId: number;
+      cancelReason: CancelOrder;
+    }) => {
+      const response = await axiosInstance.post(
+        `orders/cancel/${orderId}`,
+        cancelReason
+      );
+      return response.data;
+    },
+  });
+};
+
+export const useCancelOrderSendEmail = () => {
+  return useMutation({
+    mutationFn: async ({ orderId }: { orderId: number }) => {
+      const response = await axiosInstance.post(
+        `orders/send-refunded-email/${orderId}`
+      );
+      return response.data;
+    },
+  });
+};
+
+const fetchBank = async (): Promise<Bank> => {
+  const response = await axiosInstance.get<Bank>("banks");
+  return response.data;
+};
+
+export const useGetBank = () => {
+  return useQuery<Bank, Error>({
+    queryKey: ["user"],
+    queryFn: fetchBank,
+  });
+};
+
+export const useGetOrderById = (orderId: number) => {
+  return useQuery<OrderHistory, Error>({
+    queryKey: ["orders", orderId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`orders/${orderId}`);
+      return response.data;
+    },
+    enabled: !!orderId,
+  });
+};
+
+export const useCancelOrderPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`orders/${orderId}/cancel`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useUploadRefundCertificate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ orderId, file }: { orderId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await axiosInstance.post(
+        `orders/upload-refunded-certification/${orderId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage =
+          error.response.data?.message || error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
+    },
+  });
+};
+
+export const useChangeOrderPreparing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, OrderChangeStatus>({
+    mutationFn: async ({ orderIds }: OrderChangeStatus): Promise<void> => {
+      await axiosInstance.put("orders/preparing", { orderIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useChangeOrderCooked = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, OrderChangeStatus>({
+    mutationFn: async ({ orderIds }: OrderChangeStatus): Promise<void> => {
+      await axiosInstance.put("orders/cooked", { orderIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useChangeTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`transactions/${orderId}/set-paid`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
+
+export const useCancelOrderForStaff = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, MutationVariables>({
+    mutationFn: async ({ orderId }: MutationVariables): Promise<void> => {
+      await axiosInstance.put(`orders/${orderId}/cancel/for-staff`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+};
+
+export const useCreateBankUser = () => {
+  return useMutation({
+    mutationFn: async (newBank: CreateBank) => {
+      const response = await axiosInstance.post(
+        "banks/user-information",
+        newBank
+      );
+      return response.data;
+    },
+    onError: (error: any) => {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data;
+        throw new Error(errorMessage);
+      } else {
+        throw new Error("An unexpected error occurred");
+      }
     },
   });
 };

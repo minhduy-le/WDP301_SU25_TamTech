@@ -5,6 +5,329 @@ const verifyToken = require("../middlewares/verifyToken");
 const { uploadImageToFirebase } = require("../config/firebase");
 const axios = require("axios");
 
+// Define specific routes before generic :id route
+/**
+ * @swagger
+ * /api/products/search-by-type-name:
+ *   get:
+ *     summary: Search products by exact product type name
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: typeName
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Exact name of the product type to search for
+ *     responses:
+ *       200:
+ *         description: List of products matching the exact product type name
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       createAt:
+ *                         type: string
+ *                         format: date-time
+ *                       productTypeId:
+ *                         type: integer
+ *                       createBy:
+ *                         type: string
+ *                       storeId:
+ *                         type: integer
+ *                       isActive:
+ *                         type: boolean
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Invalid or mismatched product type name
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product type name must match exactly or is required
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get("/search-by-type-name", async (req, res) => {
+  try {
+    const { typeName } = req.query;
+    if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+      throw new Error("Product type name must match exactly or is required");
+    }
+    const products = await productService.searchProductsByTypeName(typeName.trim());
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error searching products by type name:", error);
+    res.status(error.message.includes("Product type name") ? 400 : 500).send(error.message);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/search-by-name-and-type:
+ *   get:
+ *     summary: Search products by partial name and product type ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Partial name to search for
+ *       - in: query
+ *         name: productTypeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Product type ID to filter by
+ *     responses:
+ *       200:
+ *         description: List of products matching the search term and product type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Invalid search term or product type ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 invalidName: { value: "Search term must be a non-empty string" }
+ *                 invalidTypeId: { value: "ProductTypeId must be a positive integer" }
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get("/search-by-name-and-type", async (req, res) => {
+  try {
+    const { name, productTypeId } = req.query;
+    const typeId = parseInt(productTypeId);
+    const products = await productService.searchProductsByNameAndType(name, typeId);
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error searching products by name and type:", error);
+    res
+      .status(error.message.includes("Search term") || error.message.includes("ProductTypeId") ? 400 : 500)
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/search-by-name-and-type-name:
+ *   get:
+ *     summary: Search products by partial product name and exact product type name
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Partial name to search for in products
+ *       - in: query
+ *         name: typeName
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *         description: Exact name of the product type to filter by
+ *     responses:
+ *       200:
+ *         description: List of products matching the search term and exact product type name
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Invalid search term or product type name
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               examples:
+ *                 invalidName: { value: "Search term must be a non-empty string" }
+ *                 invalidTypeName: { value: "Product type name must match exactly or is required" }
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get("/search-by-name-and-type-name", async (req, res) => {
+  try {
+    const { name, typeName } = req.query;
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      throw new Error("Search term must be a non-empty string");
+    }
+    if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+      throw new Error("Product type name must match exactly or is required");
+    }
+    const products = await productService.searchProductsByNameAndTypeName(name.trim(), typeName.trim());
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error searching products by name and type name:", error);
+    res
+      .status(error.message.includes("Search term") || error.message.includes("Product type name") ? 400 : 500)
+      .send(error.message);
+  }
+});
+
 /**
  * @swagger
  * /api/products/best-seller:
@@ -34,6 +357,10 @@ const axios = require("axios");
  *                         type: number
  *                       image:
  *                         type: string
+ *                       averageRating:
+ *                         type: number
+ *                         description: Average rating of the product (0 if no ratings)
+ *                         example: 4.5
  *                       ProductType:
  *                         type: object
  *                         properties:
@@ -153,6 +480,322 @@ router.get("/search", async (req, res) => {
 
 /**
  * @swagger
+ * /api/products/type/{productTypeId}:
+ *   get:
+ *     summary: Get all products by product type ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: productTypeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Product type ID
+ *     responses:
+ *       200:
+ *         description: List of products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       image:
+ *                         type: string
+ *                       createAt:
+ *                         type: string
+ *                         format: date-time
+ *                       productTypeId:
+ *                         type: integer
+ *                       createBy:
+ *                         type: string
+ *                       storeId:
+ *                         type: integer
+ *                       isActive:
+ *                         type: boolean
+ *                       averageRating:
+ *                         type: number
+ *                         description: Xếp hạng trung bình của sản phẩm (0 nếu chưa có)
+ *                         example: 4.5
+ *                       ProductType:
+ *                         type: object
+ *                         properties:
+ *                           productTypeId:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       ProductRecipes:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productRecipeId:
+ *                               type: integer
+ *                             productId:
+ *                               type: integer
+ *                             materialId:
+ *                               type: integer
+ *                             quantity:
+ *                               type: integer
+ *                             Material:
+ *                               type: object
+ *                               properties:
+ *                                 materialId:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: integer
+ *                                 storeId:
+ *                                   type: integer
+ *       400:
+ *         description: Invalid product type ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductTypeId must be a positive integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+router.get("/type/:productTypeId", async (req, res) => {
+  try {
+    const productTypeId = parseInt(req.params.productTypeId);
+    const products = await productService.getProductsByType(productTypeId);
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error retrieving products by type:", error);
+    res.status(error.message.includes("ProductTypeId") ? 400 : 500).send(error.message);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Get products with pagination, sort by price descending, and include average rating
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
+ *         description: Number of products per page
+ *     responses:
+ *       200:
+ *         description: List of products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                         format: float
+ *                       averageRating:
+ *                         type: number
+ *                         format: float
+ *                   example:
+ *                     - id: 1
+ *                       name: Product A
+ *                       price: 150.0
+ *                       averageRating: 4.2
+ *                     - id: 2
+ *                       name: Product B
+ *                       price: 120.0
+ *                       averageRating: 3.9
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: Invalid page or size number
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *             examples:
+ *               invalidPage:
+ *                 value:
+ *                   message: Page must be a positive integer
+ *               invalidSize:
+ *                 value:
+ *                   message: Size must be a positive integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.get("/", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) > 0 ? parseInt(req.query.size) : 10;
+    const offset = (page - 1) * size;
+
+    const result = await productService.getProducts({ page, size, offset });
+    res.status(200).json({ products: result.products, totalPages: result.totalPages, currentPage: page });
+  } catch (error) {
+    console.error("Error retrieving products:", error);
+    res
+      .status(
+        error.message.includes("Page") || error.message.includes("Size") || error.message.includes("Offset") ? 400 : 500
+      )
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/summary:
+ *   get:
+ *     summary: Get a summarized list of products (name, description, price) with pagination
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 10
+ *         description: Number of products per page
+ *     responses:
+ *       200:
+ *         description: Summarized list of products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                         format: float
+ *                   example:
+ *                     - productId: 1
+ *                       name: "Product A"
+ *                       description: "This is product A"
+ *                       price: 150000.0
+ *                     - productId: 2
+ *                       name: "Product B"
+ *                       description: "This is product B"
+ *                       price: 120000.0
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: Invalid page or size number
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Page and size must be positive integers
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.get("/summary", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) > 0 ? parseInt(req.query.size) : 10;
+    const offset = (page - 1) * size;
+
+    const result = await productService.getProductsSummary({ page, size, offset });
+
+    res.status(200).json({
+      products: result.products,
+      totalPages: result.totalPages,
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving product summary:", error);
+    res
+      .status(
+        error.message.includes("Page") || error.message.includes("Size") || error.message.includes("Offset") ? 400 : 500
+      )
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
  * /api/products:
  *   post:
  *     summary: Create a new product with optional recipes
@@ -187,7 +830,7 @@ router.get("/search", async (req, res) => {
  *               image:
  *                 type: string
  *                 example: string
- *                 description: Must be a valid URL ending with .jpg, .jpeg, or .png, or base64 string with supported format
+ *                 description: Any string value to be stored as the image
  *               productTypeId:
  *                 type: integer
  *                 minimum: 1
@@ -280,7 +923,6 @@ router.get("/search", async (req, res) => {
  *               examples:
  *                 missingFields: { value: "Name is required and must be a non-empty string" }
  *                 invalidPrice: { value: "Price must be a number between 1,000 and 1,000,000" }
- *                 invalidImage: { value: "Image URL must have .jpg, .jpeg, or .png extension" }
  *                 invalidRecipes: { value: "Each recipe must have a valid materialId and quantity" }
  *                 materialNotFound: { value: "Material with ID 5 not found" }
  *       401:
@@ -301,29 +943,11 @@ router.post("/", verifyToken, async (req, res) => {
     const { name, description, price, image, productTypeId, recipes } = req.body;
     const userId = req.userId;
 
-    let imageUrl = null;
-    if (image) {
-      let imageBuffer;
-      const fileName = `product_${Date.now()}.jpg`;
-
-      if (image.startsWith("http")) {
-        const response = await axios.get(image, { responseType: "arraybuffer" });
-        if (response.status !== 200) {
-          throw new Error("Failed to fetch image from URL");
-        }
-        imageBuffer = Buffer.from(response.data, "binary");
-      } else {
-        imageBuffer = Buffer.from(image.split(",")[1], "base64");
-      }
-
-      imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
-    }
-
     const productData = {
       name,
       description,
       price,
-      image: imageUrl || image, // Use processed imageUrl or original image
+      image, // Store the image as provided
       productTypeId,
       createBy: userId,
       storeId: 1, // Adjust if dynamic storeId is needed
@@ -343,7 +967,6 @@ router.post("/", verifyToken, async (req, res) => {
           error.message.includes("materialId") ||
           error.message.includes("quantity") ||
           error.message.includes("Description") ||
-          error.message.includes("Image") ||
           error.message.includes("Material")
           ? 400
           : 500
@@ -354,241 +977,21 @@ router.post("/", verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/products:
+ * /api/products/{id}:
  *   get:
- *     summary: Get products with pagination and sort by price descending
- *     tags: [Products]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Page number
- *     responses:
- *       200:
- *         description: List of products retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 products:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       productId:
- *                         type: integer
- *                       name:
- *                         type: string
- *                       description:
- *                         type: string
- *                       price:
- *                         type: number
- *                       image:
- *                         type: string
- *                       createAt:
- *                         type: string
- *                         format: date-time
- *                       productTypeId:
- *                         type: integer
- *                       createBy:
- *                         type: string
- *                       storeId:
- *                         type: integer
- *                       isActive:
- *                         type: boolean
- *                       ProductType:
- *                         type: object
- *                         properties:
- *                           productTypeId:
- *                             type: integer
- *                           name:
- *                             type: string
- *                       ProductRecipes:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             productRecipeId:
- *                               type: integer
- *                             productId:
- *                               type: integer
- *                             materialId:
- *                               type: integer
- *                             quantity:
- *                               type: integer
- *                             Material:
- *                               type: object
- *                               properties:
- *                                 materialId:
- *                                   type: integer
- *                                 name:
- *                                   type: string
- *                                 quantity:
- *                                   type: integer
- *                                 storeId:
- *                                   type: integer
- *                 totalPages:
- *                   type: integer
- *                 currentPage:
- *                   type: integer
- *       400:
- *         description: Invalid page number
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: Page must be a positive integer
- *       500:
- *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- */
-router.get("/", async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 5;
-    const offset = (page - 1) * limit;
-
-    const result = await productService.getProducts({ page, limit, offset });
-    res.status(200).json({ products: result.products, totalPages: result.totalPages, currentPage: page });
-  } catch (error) {
-    console.error("Error retrieving products:", error);
-    res
-      .status(
-        error.message.includes("Page") || error.message.includes("Limit") || error.message.includes("Offset")
-          ? 400
-          : 500
-      )
-      .send(error.message);
-  }
-});
-
-/**
- * @swagger
- * /api/products/type/{productTypeId}:
- *   get:
- *     summary: Get all products by product type ID
- *     tags: [Products]
+ *     summary: Get a product by ID, including its feedbacks
+ *     tags:
+ *       - Products
  *     parameters:
  *       - in: path
- *         name: productTypeId
- *         required: true
- *         schema:
- *           type: integer
- *           minimum: 1
- *         description: Product type ID
- *     responses:
- *       200:
- *         description: List of products retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 products:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       productId:
- *                         type: integer
- *                       name:
- *                         type: string
- *                       description:
- *                         type: string
- *                       price:
- *                         type: number
- *                       image:
- *                         type: string
- *                       createAt:
- *                         type: string
- *                         format: date-time
- *                       productTypeId:
- *                         type: integer
- *                       createBy:
- *                         type: string
- *                       storeId:
- *                         type: integer
- *                       isActive:
- *                         type: boolean
- *                       ProductType:
- *                         type: object
- *                         properties:
- *                           productTypeId:
- *                             type: integer
- *                           name:
- *                             type: string
- *                       ProductRecipes:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             productRecipeId:
- *                               type: integer
- *                             productId:
- *                               type: integer
- *                             materialId:
- *                               type: integer
- *                             quantity:
- *                               type: integer
- *                             Material:
- *                               type: object
- *                               properties:
- *                                 materialId:
- *                                   type: integer
- *                                 name:
- *                                   type: string
- *                                 quantity:
- *                                   type: integer
- *                                 storeId:
- *                                   type: integer
- *       400:
- *         description: Invalid product type ID
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: ProductTypeId must be a positive integer
- *       500:
- *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- */
-router.get("/type/:productTypeId", async (req, res) => {
-  try {
-    const productTypeId = parseInt(req.params.productTypeId);
-    const products = await productService.getProductsByType(productTypeId);
-    res.status(200).json({ products });
-  } catch (error) {
-    console.error("Error retrieving products by type:", error);
-    res.status(error.message.includes("ProductTypeId") ? 400 : 500).send(error.message);
-  }
-});
-
-/**
- * @swagger
- * /api/products/{productId}:
- *   get:
- *     summary: Get a product by ID
- *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: productId
+ *         name: id
  *         required: true
  *         schema:
  *           type: integer
  *           minimum: 1
  *         description: Product ID
  *     responses:
- *       200:
+ *       '200':
  *         description: Product retrieved successfully
  *         content:
  *           application/json:
@@ -619,6 +1022,10 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                       type: integer
  *                     isActive:
  *                       type: boolean
+ *                     averageRating:
+ *                       type: number
+ *                       description: Average rating of the product (0 if no ratings)
+ *                       example: 4.5
  *                     ProductType:
  *                       type: object
  *                       properties:
@@ -650,21 +1057,38 @@ router.get("/type/:productTypeId", async (req, res) => {
  *                                 type: integer
  *                               storeId:
  *                                 type: integer
- *       400:
+ *                     Feedbacks:
+ *                       type: array
+ *                       description: List of feedbacks for the product
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           feedbackId:
+ *                             type: integer
+ *                           rating:
+ *                             type: integer
+ *                           comment:
+ *                             type: string
+ *                           createAt:
+ *                             type: string
+ *                             format: date-time
+ *                           userId:
+ *                             type: string
+ *       '400':
  *         description: Invalid product ID
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: ProductId must be a positive integer
- *       404:
+ *       '404':
  *         description: Product not found
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: Product not found or inactive
- *       500:
+ *       '500':
  *         description: Server error
  *         content:
  *           text/plain:
@@ -688,8 +1112,9 @@ router.get("/:id", async (req, res) => {
  * @swagger
  * /api/products/{id}:
  *   put:
- *     summary: Update a product
- *     tags: [Products]
+ *     summary: Update a product, including its recipes
+ *     tags:
+ *       - Products
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -718,9 +1143,9 @@ router.get("/:id", async (req, res) => {
  *                 example: Updated description
  *               price:
  *                 type: number
- *                 minimum: 0.01
- *                 maximum: 999999.99
- *                 example: 39.99
+ *                 minimum: 1000
+ *                 maximum: 1000000
+ *                 example: 39990
  *               image:
  *                 type: string
  *                 example: https://example.com/updated-image.jpg
@@ -728,8 +1153,24 @@ router.get("/:id", async (req, res) => {
  *                 type: integer
  *                 minimum: 1
  *                 example: 1
+ *               recipes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - materialId
+ *                     - quantity
+ *                   properties:
+ *                     materialId:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 1
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
+ *                       example: 2
  *     responses:
- *       200:
+ *       '200':
  *         description: Product updated successfully
  *         content:
  *           application/json:
@@ -791,30 +1232,37 @@ router.get("/:id", async (req, res) => {
  *                                 type: integer
  *                               storeId:
  *                                 type: integer
- *       400:
+ *       '400':
  *         description: Invalid input
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *               examples:
- *                 invalidId: { value: "ProductId must be a positive integer" }
- *                 invalidName: { value: "Name must be a non-empty string and cannot exceed 100 characters" }
- *                 invalidPrice: { value: "Price must be a number greater than 0 and less than 1,000,000" }
- *       401:
+ *             examples:
+ *               invalidId:
+ *                 value: ProductId must be a positive integer
+ *               invalidName:
+ *                 value: Name must be a non-empty string and cannot exceed 100 characters
+ *               invalidPrice:
+ *                 value: Price must be a number greater than 0 and less than 1,000,000
+ *               invalidRecipes:
+ *                 value: Each recipe must have a valid materialId and quantity
+ *               materialNotFound:
+ *                 value: Material with ID 5 not found
+ *       '401':
  *         description: Unauthorized
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *       404:
+ *       '404':
  *         description: Product not found
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
  *               example: Product not found or inactive
- *       500:
+ *       '500':
  *         description: Server error
  *         content:
  *           text/plain:
@@ -824,35 +1272,15 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", verifyToken, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
-    const { name, description, price, image, productTypeId } = req.body;
-
-    let imageUrl = null;
-    if (image) {
-      if (!image.match(/^(https:\/\/|data:image\/)/)) {
-        throw new Error("Image must be a valid URL or base64 string");
-      }
-      let imageBuffer;
-      const fileName = `product_${Date.now()}.jpg`;
-
-      if (image.startsWith("http")) {
-        const response = await axios.get(image, { responseType: "arraybuffer" });
-        if (response.status !== 200) {
-          throw new Error("Failed to fetch image from URL");
-        }
-        imageBuffer = Buffer.from(response.data, "binary");
-      } else {
-        imageBuffer = Buffer.from(image.split(",")[1], "base64");
-      }
-
-      imageUrl = await uploadImageToFirebase(imageBuffer, fileName);
-    }
+    const { name, description, price, image, productTypeId, recipes } = req.body;
 
     const updateData = {
       name,
       description,
       price,
-      image: imageUrl,
+      image,
       productTypeId,
+      recipes, // Pass recipes to the service
     };
 
     const updatedProduct = await productService.updateProduct(productId, updateData);
@@ -866,7 +1294,137 @@ router.put("/:id", verifyToken, async (req, res) => {
           error.message.includes("Price") ||
           error.message.includes("ProductTypeId") ||
           error.message.includes("Description") ||
-          error.message.includes("Image")
+          error.message.includes("recipe") || // Catch recipe validation errors
+          error.message.includes("Material")
+          ? 400
+          : error.message.includes("not found")
+          ? 404
+          : 500
+      )
+      .send(error.message);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/{id}/activate:
+ *   put:
+ *     summary: Reactivate a product
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: ID of the product to reactivate
+ *     responses:
+ *       200:
+ *         description: Product reactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     image:
+ *                       type: string
+ *                     createAt:
+ *                       type: string
+ *                       format: date-time
+ *                     productTypeId:
+ *                       type: integer
+ *                     createBy:
+ *                       type: string
+ *                     storeId:
+ *                       type: integer
+ *                     isActive:
+ *                       type: boolean
+ *                     ProductType:
+ *                       type: object
+ *                       properties:
+ *                         productTypeId:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                     ProductRecipes:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           productRecipeId:
+ *                             type: integer
+ *                           productId:
+ *                             type: integer
+ *                           materialId:
+ *                             type: integer
+ *                           quantity:
+ *                             type: integer
+ *                           Material:
+ *                             type: object
+ *                             properties:
+ *                               materialId:
+ *                                 type: integer
+ *                               name:
+ *                                 type: string
+ *                               quantity:
+ *                                 type: integer
+ *                               storeId:
+ *                                 type: integer
+ *       400:
+ *         description: Invalid ID or validation error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: ProductId must be a positive integer
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Unauthorized
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Product not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Server error
+ */
+router.put("/:id/activate", verifyToken, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const product = await productService.reactivateProduct(productId);
+    res.status(200).json({ product });
+  } catch (error) {
+    console.error("Error reactivating product:", error);
+    res
+      .status(
+        error.message.includes("ProductId") ||
+          error.message.includes("Product is already active") ||
+          error.message.includes("product type")
           ? 400
           : error.message.includes("not found")
           ? 404

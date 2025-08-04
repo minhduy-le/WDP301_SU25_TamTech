@@ -22,16 +22,24 @@ const chatRoutes = require("./routes/chatRoutes");
 const districtsRoutes = require("./routes/districtsRoutes");
 const promotionTypeRoutes = require("./routes/promotionTypeRoutes");
 const promotionRoutes = require("./routes/promotionRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const chatMessageAIRoutes = require("./routes/chatMessageAIRoutes");
+const blogRoutes = require("./routes/blogRoutes");
+const bankRoutes = require("./routes/bankRoutes");
+const orderRoutesPosApp = require("./routes/orderRoutesPosApp");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 // Import associations to ensure relationships are set up
 require("./models/associations");
 
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app); // Create HTTP server
 const port = process.env.PORT || 3000;
 
 // Initialize Socket.IO
 const io = initializeSocket(server);
+app.set("io", io); // <-- THÊM DÒNG NÀY
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -61,6 +69,13 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/location", districtsRoutes);
 app.use("/api/promotion-types", promotionTypeRoutes);
 app.use("/api/promotions", promotionRoutes);
+app.use("/api/schedules", shipperRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat-message-ai", chatMessageAIRoutes);
+app.use("/api/blogs", blogRoutes);
+app.use("/api/banks", bankRoutes);
+app.use("/api/pos-orders", orderRoutesPosApp);
+app.use("/api/transactions", transactionRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello from WDP301-Backend!");

@@ -46,11 +46,8 @@ const AccountPage = () => {
     try {
       const token = await AsyncStorage.getItem("access_token");
       if (token) {
-        // Decode token để lấy user ID
         const decoded = jwtDecode(token) as any;
         const userId = decoded.id;
-
-        // Gọi API để lấy thông tin user
         const response = await axios.get(`${API_URL}/api/profiles/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -16,6 +16,7 @@ import { useProductTypes } from "../hooks/productTypesApi";
 import { type UseQueryResult } from "@tanstack/react-query";
 import { useAuthStore } from "../hooks/usersApi";
 import { useCartStore } from "../store/cart.store";
+import { StarOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -26,11 +27,6 @@ const useAddOnProducts = () => {
   const query3 = useGetProductByTypeId(3);
   const query4 = useGetProductByTypeId(4);
   const query5 = useGetProductByTypeId(5);
-  // const query6 = useGetProductByTypeId(6);
-  // const query7 = useGetProductByTypeId(7);
-  // const query8 = useGetProductByTypeId(8);
-  // const query9 = useGetProductByTypeId(9);
-  // const query10 = useGetProductByTypeId(10);
 
   const queries: {
     typeId: number;
@@ -40,11 +36,6 @@ const useAddOnProducts = () => {
     { typeId: 3, query: query3 },
     { typeId: 4, query: query4 },
     { typeId: 5, query: query5 },
-    // { typeId: 6, query: query6 },
-    // { typeId: 7, query: query7 },
-    // { typeId: 8, query: query8 },
-    // { typeId: 9, query: query9 },
-    // { typeId: 10, query: query10 },
   ];
 
   const addOnProductQueries: {
@@ -97,6 +88,8 @@ const Menu = () => {
   const addOnProductQueries = useAddOnProducts();
   const { user } = useAuthStore();
   const { addToCart } = useCartStore();
+
+  const [visibleProducts, setVisibleProducts] = useState(9);
 
   const getProductTypeName = (id: number) => {
     return (
@@ -183,7 +176,7 @@ const Menu = () => {
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= 10) {
+    if (newQuantity >= 1) {
       setQuantity(newQuantity);
     }
   };
@@ -193,13 +186,18 @@ const Menu = () => {
       const newValue = (prev[key] || 0) + change;
       return {
         ...prev,
-        [key]: newValue >= 0 && newValue <= 10 ? newValue : 0,
+        [key]: newValue >= 0 ? newValue : 0,
       };
     });
   };
 
   const handleCategoryClick = (productTypeId: number) => {
     setProductTypeId(productTypeId);
+    setVisibleProducts(9);
+  };
+
+  const handleShowMore = () => {
+    setVisibleProducts((prev) => prev + 9);
   };
 
   const totalPrice = productDetail
@@ -233,7 +231,7 @@ const Menu = () => {
           {isProductTypesLoading ? (
             <Skeleton />
           ) : isProductTypesError ? (
-            <div>Error loading categories. Please try again later.</div>
+            <div>Lỗi load loại sản phẩm. Vui lòng thử lại.</div>
           ) : productTypes && productTypes.length > 0 ? (
             productTypes.map((type) => (
               <div
@@ -256,9 +254,17 @@ const Menu = () => {
           ) : isProductsError ? (
             <div>Lỗi load đồ ăn. Vui lòng load lại trang.</div>
           ) : mainProducts && mainProducts.length > 0 ? (
-            <Row gutter={[24, 16]} className="menu-card-row">
-              {mainProducts.map((product) => (
-                <Col span={8} className="menu-column" key={product.productId}>
+            <Row gutter={[16, 16]} className="menu-card-row">
+              {mainProducts.slice(0, visibleProducts).map((product) => (
+                <Col
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={8}
+                  xl={8}
+                  className="menu-column"
+                  key={product.productId}
+                >
                   <Card className="menu-card">
                     <div className="card-image-container">
                       <img
@@ -267,8 +273,10 @@ const Menu = () => {
                         className="card-image"
                       />
                       <div className="card-rating">
-                        <span className="card-rating-star">★</span>
-                        <span>1000+</span>
+                        <span className="card-rating-star">
+                          <StarOutlined />
+                        </span>
+                        <span>{product.averageRating}</span>
                       </div>
                     </div>
                     <div className="card-content">
@@ -280,22 +288,30 @@ const Menu = () => {
                         <div className="card-price">
                           {Number(product.price).toLocaleString("vi-VN")}đ
                         </div>
-                        <Button
-                          className="add-button"
-                          onClick={() => showModal(product)}
-                        >
-                          Thêm
-                        </Button>
+                        {productTypeId === 1 ? (
+                          <Button
+                            className="add-button"
+                            onClick={() => showModal(product)}
+                          >
+                            Thêm
+                          </Button>
+                        ) : (
+                          <></>
+                        )}
                       </div>
                     </div>
                   </Card>
                 </Col>
               ))}
-              <Col className="button-show-more">
-                <Button className="custom-button">
-                  Hiển Thị Thêm {mainProducts.length} Sản Phẩm
-                </Button>
-              </Col>
+              {visibleProducts < mainProducts.length && (
+                <Col span={24} className="button-show-more">
+                  <Button className="custom-button" onClick={handleShowMore}>
+                    Hiển Thị Thêm{" "}
+                    {Math.min(9, mainProducts.length - visibleProducts)} Sản
+                    Phẩm
+                  </Button>
+                </Col>
+              )}
             </Row>
           ) : (
             <div>Không có món nào trong danh mục này.</div>
@@ -358,7 +374,6 @@ const Menu = () => {
                   <Button
                     className="quantity-button plus-button"
                     onClick={() => handleQuantityChange(1)}
-                    disabled={quantity === 10}
                   >
                     +
                   </Button>
@@ -377,7 +392,7 @@ const Menu = () => {
                     ) : query.data && query.data.length > 0 ? (
                       <>
                         <Text className="add-ons-title">
-                          {getProductTypeName(typeId)} - chọn 1
+                          {getProductTypeName(typeId)}
                         </Text>
                         {query.data.map((item, index) => (
                           <div className="add-on-item" key={item.productId}>
@@ -412,9 +427,6 @@ const Menu = () => {
                                     `${typeId}-${index}`,
                                     1
                                   )
-                                }
-                                disabled={
-                                  addOnQuantities[`${typeId}-${index}`] === 10
                                 }
                               >
                                 +

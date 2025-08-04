@@ -13,7 +13,6 @@ import { useCurrentApp } from "@/context/app.context";
 const Voucher = () => {
   const [vouchers, setVouchers] = useState<any[]>([]);
   const { appState } = useCurrentApp();
-
   useEffect(() => {
     const fetchVouchers = async () => {
       try {
@@ -22,10 +21,16 @@ const Voucher = () => {
         if (token && appState) {
           const decoded: any = jwtDecode(token);
           userId = decoded.id;
+          setIsLoggedIn(true);
+        }
+        if (!userId) {
+          setIsLoggedIn(false);
+          return setVouchers([]);
         }
         if (!userId) {
           return setVouchers([]);
         }
+
         const res = await axios.get(
           `${API_URL}/api/promotions/user/${userId}`,
           {

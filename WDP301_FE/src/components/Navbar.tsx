@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import "../style/Navbar.css";
 import { ShoppingCartOutlined, MenuOutlined } from "@ant-design/icons";
 import APP_LOGO from "../assets/logo.png";
-import BellIcon from "./icon/BellIcon";
 import AccountIcon from "./icon/AccountIcon";
 import { useState, useEffect, useRef } from "react";
 import Cart from "./Cart";
@@ -23,7 +22,7 @@ const Navbar = () => {
 
   const userMenu = (
     <Menu>
-      <Menu.Item key="1" onClick={() => navigate("/user-information")}>
+      <Menu.Item key="1" onClick={() => navigate("/user/information")}>
         Tài khoản
       </Menu.Item>
       <Menu.Item
@@ -106,7 +105,7 @@ const Navbar = () => {
       <div
         className={`header-brand ${isMenuVisible ? "active" : ""}`}
         style={{
-          display: isMenuVisible || window.innerWidth >= 840 ? "" : "none",
+          display: isMenuVisible || window.innerWidth >= 840 ? "flex" : "none",
         }}
       >
         <div className="header-logo">
@@ -122,27 +121,19 @@ const Navbar = () => {
           <Menu.Item key="3">
             <Link to="/blog">Blog</Link>
           </Menu.Item>
-          <Menu.Item key="6">
-            <Link to="/cua-hang">Cửa Hàng</Link>
-          </Menu.Item>
         </Menu>
         <div className="header-media">
           <Link to="/">Về Tấm Tắc</Link>
           <Link to="/menu">Menu</Link>
           <Link to="/blog">Blog</Link>
-          <Link to="/cua-hang">Cửa Hàng</Link>
         </div>
         <div className="header-icon">
-          <Button
-            type="text"
-            icon={<BellIcon />}
-            style={{ color: "#d97706", marginRight: "10px" }}
-          />
           {user?.id ? (
             <Dropdown overlay={userMenu} trigger={["hover"]}>
               <Button
                 type="text"
                 icon={<AccountIcon />}
+                className="icon-header"
                 style={{ color: "#d97706", marginRight: "10px" }}
               />
             </Dropdown>
@@ -151,6 +142,7 @@ const Navbar = () => {
               type="text"
               icon={<AccountIcon />}
               style={{ color: "#d97706", marginRight: "10px" }}
+              className="icon-header"
               onClick={() => navigate("/login")}
             />
           )}

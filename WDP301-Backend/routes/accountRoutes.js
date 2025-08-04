@@ -102,7 +102,7 @@ router.post("/", verifyToken, async (req, res, next) => {
       phone_number: req.body.phone_number,
       date_of_birth: req.body.date_of_birth,
       note: req.body.note,
-      role: req.body.role, // Thêm lại role
+      role: req.body.role,
     };
 
     const newUser = await accountService.createUser(userData);
@@ -127,13 +127,13 @@ router.post("/", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/accounts:
  *   get:
- *     summary: Get all user accounts (excluding Admin role)
+ *     summary: Get all user accounts (excluding the logged-in user)
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of users excluding those with Admin role
+ *         description: List of users excluding the logged-in user
  *         content:
  *           application/json:
  *             schema:
@@ -163,8 +163,8 @@ router.post("/", verifyToken, async (req, res, next) => {
  *                         type: string
  *                       role:
  *                         type: string
- *                         enum: [User, Staff, Shipper]
- *                         description: Role of the user (Admin excluded)
+ *                         enum: [Admin, User, Staff, Shipper, Manager]
+ *                         description: Role of the user
  *                       isActive:
  *                         type: boolean
  *                         description: Indicates whether the user account is active
@@ -175,7 +175,7 @@ router.post("/", verifyToken, async (req, res, next) => {
  */
 router.get("/", verifyToken, async (req, res, next) => {
   try {
-    const users = await accountService.getAllUsers();
+    const users = await accountService.getAllUsers(req.userId);
     res.status(200).json({
       status: 200,
       message: "Users retrieved successfully",
@@ -191,22 +191,22 @@ router.get("/", verifyToken, async (req, res, next) => {
 
 /**
  * @swagger
- * /api/accounts/{id}:
+ * /api/accounts/phone/{phoneNumber}:
  *   get:
- *     summary: Get a user by ID (excluding Admin role)
+ *     summary: Get a user by phone number
  *     tags: [Accounts]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: phoneNumber
  *         required: true
  *         schema:
- *           type: integer
- *         description: User ID
+ *           type: string
+ *         description: Phone number of the user
  *     responses:
  *       200:
- *         description: User retrieved successfully (excluding Admin role)
+ *         description: User retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -234,15 +234,101 @@ router.get("/", verifyToken, async (req, res, next) => {
  *                       type: string
  *                     role:
  *                       type: string
- *                       enum: [User, Staff, Shipper]
- *                       description: Role of the user (Admin excluded)
+ *                       enum: [Admin, User, Staff, Shipper, Manager]
+ *                       description: Role of the user
+ *                     isActive:
+ *                       type: boolean
+ *                       description: Indicates whether the user account is active
+ *       400:
+ *         description: Invalid phone number
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid phone number format
+ *       404:
+ *         description: User not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/phone/:phoneNumber", verifyToken, async (req, res, next) => {
+  try {
+    const phoneNumber = req.params.phoneNumber;
+    const user = await accountService.getUserByPhoneNumber(phoneNumber);
+    res.status(200).json({
+      status: 200,
+      message: "User retrieved successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error(`[ERROR] GET /api/accounts/phone/:phoneNumber: ${error.message || error}`);
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
+  }
+});
+
+/**
+ * @swagger
+ * /api/accounts/{id}:
+ *   get:
+ *     summary: Get a user by ID
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone_number:
+ *                       type: string
+ *                     date_of_birth:
+ *                       type: string
+ *                       format: date
+ *                     note:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [Admin, User, Staff, Shipper, Manager]
+ *                       description: Role of the user
  *                     isActive:
  *                       type: boolean
  *                       description: Indicates whether the user account is active
  *       400:
  *         description: Invalid user ID
  *       404:
- *         description: User not found or is an Admin
+ *         description: User not found
  *       401:
  *         description: Unauthorized
  *       500:
@@ -258,10 +344,14 @@ router.get("/:id", verifyToken, async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      status: error.status || 500,
-      message: error.message || "Internal server error",
-    });
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
   }
 });
 
@@ -364,6 +454,78 @@ router.put("/:id", verifyToken, async (req, res, next) => {
       status: 200,
       message: "User updated successfully",
       data: updatedUser,
+    });
+  } catch (error) {
+    if (typeof error === "string") {
+      res.status(400).send(error);
+    } else {
+      res.status(error.status || 500).json({
+        status: error.status || 500,
+        message: error.message || "Internal server error",
+      });
+    }
+  }
+});
+
+/**
+ * @swagger
+ * /api/accounts/{id}/activate:
+ *   put:
+ *     summary: Activate a user by ID
+ *     tags: [Accounts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User activated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     isActive:
+ *                       type: boolean
+ *       400:
+ *         description: User is already active or invalid user ID
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: User is already active
+ *       404:
+ *         description: User not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.put("/:id/activate", verifyToken, async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const updatedUser = await accountService.activateUser(userId);
+    res.status(200).json({
+      status: 200,
+      message: "User activated successfully",
+      data: {
+        id: updatedUser.id,
+        isActive: updatedUser.isActive,
+      },
     });
   } catch (error) {
     if (typeof error === "string") {

@@ -9,16 +9,25 @@ const OrderItem = require("./orderItem");
 const PaymentMethod = require("./paymentMethod");
 const OrderStatus = require("./orderStatus");
 const Feedback = require("./feedback");
+const FeedbackResponse = require("./FeedbackResponse");
 const ChatRoom = require("./chatRoom");
 const ChatRoomUser = require("./ChatRoomUser");
 const Message = require("./message");
 const Promotion = require("./promotion");
 const PromotionType = require("./promotionType");
+const Schedule = require("./schedule");
+const ScheduleShipper = require("./ScheduleShipper");
+const Blog = require("./blog");
+const ReasonCancel = require("./reasonCancel");
+const FcmToken = require("./fcmToken");
+const BankUserInformation = require("./bankUser");
+const Transaction = require("./transaction");
 
 // Define relationships for existing models
 Product.belongsTo(ProductType, { foreignKey: "productTypeId", as: "ProductType" });
 Product.belongsTo(Store, { foreignKey: "storeId", as: "Store" });
 Product.hasMany(ProductRecipe, { foreignKey: "productId", as: "ProductRecipes" });
+Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
 
 Store.hasMany(Product, { foreignKey: "storeId", as: "Products" });
 Store.hasMany(Material, { foreignKey: "storeId", as: "Materials" });
@@ -34,8 +43,13 @@ Order.belongsTo(User, { foreignKey: "userId", as: "User" });
 Order.belongsTo(PaymentMethod, { foreignKey: "payment_method_id", as: "PaymentMethod" });
 Order.belongsTo(OrderStatus, { foreignKey: "status_id", as: "OrderStatus" });
 Order.hasMany(OrderItem, { foreignKey: "orderId", as: "OrderItems" });
+Order.hasMany(ReasonCancel, { foreignKey: "orderId", as: "ReasonCancels" });
 
 User.hasMany(Order, { foreignKey: "userId", as: "Orders" });
+User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+User.hasMany(BankUserInformation, { foreignKey: "userId", as: "BankUserInformations" });
+
+BankUserInformation.belongsTo(User, { foreignKey: "userId", as: "User" });
 
 OrderItem.belongsTo(Order, { foreignKey: "orderId", as: "Order" });
 OrderItem.belongsTo(Product, { foreignKey: "productId", as: "Product" });
@@ -44,8 +58,11 @@ Product.hasMany(OrderItem, { foreignKey: "productId", as: "OrderItems" });
 
 Feedback.belongsTo(Product, { foreignKey: "productId", as: "Product" });
 Feedback.belongsTo(User, { foreignKey: "userId", as: "User" });
-Product.hasMany(Feedback, { foreignKey: "productId", as: "Feedbacks" });
-User.hasMany(Feedback, { foreignKey: "userId", as: "Feedbacks" });
+Feedback.hasMany(FeedbackResponse, { foreignKey: "feedbackId", as: "FeedbackResponses" });
+
+FeedbackResponse.belongsTo(Feedback, { foreignKey: "feedbackId", as: "Feedback" });
+FeedbackResponse.belongsTo(User, { foreignKey: "repliedBy", as: "RepliedBy" });
+User.hasMany(FeedbackResponse, { foreignKey: "repliedBy", as: "FeedbackResponses" });
 
 // Define relationships for chat-related models
 ChatRoom.hasMany(ChatRoomUser, { foreignKey: "chatRoomId", as: "ChatRoomUsers" });
@@ -70,7 +87,28 @@ PromotionType.hasMany(Promotion, { foreignKey: "promotionTypeId", as: "Promotion
 Promotion.belongsTo(User, { foreignKey: "createBy", as: "Creator" });
 User.hasMany(Promotion, { foreignKey: "createBy", as: "CreatedPromotions" });
 
+// Define relationships for Schedule and ScheduleShipper
+Schedule.hasMany(ScheduleShipper, { foreignKey: "scheduleId", as: "ScheduleShippers" });
+ScheduleShipper.belongsTo(Schedule, { foreignKey: "scheduleId", as: "Schedule" });
+ScheduleShipper.belongsTo(User, { foreignKey: "shipperId", as: "Shipper" });
+User.hasMany(ScheduleShipper, { foreignKey: "shipperId", as: "ScheduleShippers" });
+
+// Define relationship for Blog
+Blog.belongsTo(User, { foreignKey: "authorId", as: "Author" });
+User.hasMany(Blog, { foreignKey: "authorId", as: "Blogs" });
+
+// Define relationship for User and FcmToken
+User.hasMany(FcmToken, { foreignKey: "userId", as: "FcmTokens" });
+FcmToken.belongsTo(User, { foreignKey: "userId", as: "User" });
+
+Order.hasMany(Transaction, { foreignKey: "orderId", as: "Transactions" });
+Transaction.belongsTo(Order, { foreignKey: "orderId", as: "Order" });
+
+PaymentMethod.hasMany(Transaction, { foreignKey: "payment_method_id", as: "Transactions" });
+Transaction.belongsTo(PaymentMethod, { foreignKey: "payment_method_id", as: "PaymentMethod" });
+
 module.exports = {
+  Transaction,
   Product,
   ProductType,
   Store,
@@ -82,9 +120,16 @@ module.exports = {
   PaymentMethod,
   OrderStatus,
   Feedback,
+  FeedbackResponse,
   ChatRoom,
   ChatRoomUser,
   Message,
   Promotion,
   PromotionType,
+  Schedule,
+  ScheduleShipper,
+  Blog,
+  ReasonCancel,
+  FcmToken,
+  BankUserInformation,
 };

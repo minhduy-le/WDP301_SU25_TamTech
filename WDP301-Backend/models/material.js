@@ -17,6 +17,10 @@ const Material = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    barcode: {
+      type: DataTypes.STRING(767),
+      allowNull: true,
+    },
     storeId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -24,6 +28,33 @@ const Material = sequelize.define(
         model: "stores",
         key: "storeId",
       },
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
+    expireDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    timeExpired: {
+      type: DataTypes.TIME,
+      allowNull: true,
+    },
+    isExpired: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    isProcessExpired: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {

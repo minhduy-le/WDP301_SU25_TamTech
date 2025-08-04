@@ -11,16 +11,11 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { useGetOrders, type OrderHistory } from "../hooks/ordersApi";
+import { getFormattedPrice } from "../utils/formatPrice";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
-
-const getFormattedPrice = (price: string | number) => {
-  const priceStr = typeof price === "number" ? price.toString() : price;
-  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
 
 const StaffConfirmOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);

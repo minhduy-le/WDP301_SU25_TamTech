@@ -1,24 +1,20 @@
 const { Sequelize, Op } = require("sequelize");
 const User = require("../models/user");
 const Information = require("../models/information");
+const VerifyOtp = require("../models/verifyOtp");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
-const redis = require("redis");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const { auth } = require("../config/firebase");
+const { auth, uploadFileToFirebase } = require("../config/firebase");
+const FcmToken = require("../models/fcmToken");
+const Promotion = require("../models/promotion");
+const { createCanvas } = require("canvas");
+const JsBarcode = require("jsbarcode");
 
-// Current date for date_of_birth validation
-const currentDate = new Date("2025-05-26T10:53:00+07:00");
-
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || process.env.REDISCLOUD_URL || "redis://localhost:6379",
-});
-redisClient.connect().catch((err) => {
-  console.error("Redis connection error:", err.message);
-});
+const currentDate = new Date();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -33,67 +29,32 @@ const forgotPasswordTemplate = fs.readFileSync(path.join(__dirname, "../template
 
 const userService = {
   async registerUser({ fullName, email, phone_number, password, date_of_birth }) {
-    // Validate fullName
-    if (!fullName) {
-      throw "Full name cannot be blank";
+    const errors = [];
+    if (!fullName || fullName.trim() === "" || fullName.length < 2 || fullName.length > 30) {
+      errors.push("Full name must be between 2 and 30 characters");
     }
-    if (fullName.trim() === "") {
-      throw "Full name cannot be blank";
+    if (!email || email.length > 100 || !validator.isEmail(email)) {
+      errors.push("Email must be valid and not exceed 100 characters");
     }
-    if (fullName.length < 2) {
-      throw "Full name must be at least 2 characters";
+    if (!phone_number || phone_number.length > 12 || !/^\d{10,11}$/.test(phone_number.replace(/\D/g, ""))) {
+      errors.push("Phone number must be 10 or 11 digits");
     }
-    if (fullName.length > 20) {
-      throw "Full name cannot exceed 20 characters";
+    if (!password || password.length < 6 || password.length > 100) {
+      errors.push("Password must be between 6 and 100 characters");
     }
-
-    // Validate email
-    if (!email) {
-      throw "Email cannot be blank";
-    }
-    if (email.length > 100) {
-      throw "Email cannot exceed 100 characters";
-    }
-    if (!validator.isEmail(email)) {
-      throw "Email format is invalid";
-    }
-
-    // Validate phone_number
-    if (!phone_number) {
-      throw "Phone number cannot be blank";
-    }
-    if (phone_number.length > 12) {
-      throw "Phone number cannot exceed 12 characters";
-    }
-    const phoneStr = phone_number.toString().replace(/\D/g, "");
-    if (isNaN(phoneStr) || phoneStr.length < 10 || phoneStr.length > 11) {
-      throw "Phone number must be 10 or 11 digits";
-    }
-
-    // Validate password
-    if (!password) {
-      throw "Password cannot be blank";
-    }
-    if (password.length < 6) {
-      throw "Password must be at least 6 characters";
-    }
-    if (password.length > 250) {
-      throw "Password cannot exceed 250 characters";
-    }
-
-    // Validate date_of_birth if provided
     if (date_of_birth) {
       const dob = new Date(date_of_birth);
-      if (isNaN(dob)) {
-        throw "Date of birth format is invalid";
+      if (isNaN(dob) || dob > currentDate) {
+        errors.push("Date of birth must be valid and not in the future");
       }
-      if (dob > currentDate) {
-        throw "Date of birth must not be in the future";
-      }
+    }
+    if (errors.length > 0) {
+      throw errors.join("; ");
     }
 
     const existingUser = await User.findOne({
       where: { [Op.or]: [{ email }, { phone_number }] },
+      attributes: ["email", "phone_number"],
     });
     if (existingUser) {
       if (existingUser.email === email) {
@@ -105,55 +66,48 @@ const userService = {
     }
 
     const transaction = await User.sequelize.transaction();
-
     let user;
+    let otp;
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      console.log("Hashed password:", hashedPassword);
       user = await User.create(
         { fullName, email, phone_number, password: hashedPassword, isActive: false, date_of_birth },
         { transaction }
       );
-      console.log("User created with ID:", user.id);
       await Information.create({ userId: user.id, address: null }, { transaction });
-      console.log("Information record created for user ID:", user.id);
+
+      otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const createdAt = new Date();
+      const expiredAt = new Date(createdAt.getTime() + 10 * 60 * 1000);
+      await VerifyOtp.create({ otp, createdAt, expiredAt, email }, { transaction });
+
       await transaction.commit();
-      console.log("Transaction committed successfully");
     } catch (error) {
-      console.error("Transaction error in registerUser:", error.message, error.stack);
       await transaction.rollback();
-      console.log("Transaction rolled back successfully");
+      console.error("Transaction error in registerUser:", error.message);
       throw "Server error";
     }
 
-    // Handle OTP and email sending separately
-    try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log("Generated OTP:", otp);
-      await redisClient.setEx(`otp:${email}`, 600, otp);
-      console.log("OTP stored in Redis for email:", email);
+    const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
+    const emailHtml = emailTemplate
+      .replace("{fullName}", fullName)
+      .replace("{otp}", otp)
+      .replace(
+        "Xác thực ngay",
+        `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
+      );
 
-      const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
-      let emailHtml = emailTemplate
-        .replace("{fullName}", fullName)
-        .replace("{otp}", otp)
-        .replace(
-          "Xác thực ngay",
-          `<a href="${verificationUrl}" style="background-color: #FDE3CF; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Xác thực ngay</a>`
-        );
-
-      await transporter.sendMail({
-        from: '"Tấm Tech" <' + process.env.EMAIL_USER + ">",
+    transporter
+      .sendMail({
+        from: `"Tấm Tech" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Xác thực tài khoản Tấm Tech",
         html: emailHtml,
-        attachments: [{ filename: "logo.png", path: path.join(__dirname, "../images/logo.png"), cid: "logo@tamtech" }],
-      });
-      console.log("Email sent to:", email);
-    } catch (error) {
-      console.error("Error in OTP or email sending:", error.message, error.stack);
-      console.log("Proceeding despite OTP/email failure; user can resend OTP later");
-    }
+        attachments: [
+          { filename: "logo.png", path: path.join(__dirname, "..", "images", "logo.png"), cid: "logo@tam" },
+        ],
+      })
+      .catch((error) => console.error("Error error:", error.message));
 
     return {
       status: 201,
@@ -163,13 +117,13 @@ const userService = {
 
   async verifyOtp(email, otp) {
     if (!email) {
-      throw "Email cannot be blank";
+      throw "Email cannot be empty";
     }
     if (!otp) {
-      throw "OTP cannot be blank";
+      throw "OTP cannot be empty";
     }
     if (!validator.isEmail(email)) {
-      throw "Email format is invalid";
+      throw "Email must be invalid";
     }
     if (otp.length !== 6) {
       throw "OTP must be 6 digits";
@@ -180,13 +134,89 @@ const userService = {
       throw "User not found";
     }
 
-    const storedOtp = await redisClient.get(`otp:${email}`);
-    if (storedOtp !== otp) {
+    const otpRecord = await VerifyOtp.findOne({
+      where: { email: email, otp },
+    });
+    if (!otpRecord) {
       throw "Invalid or expired OTP";
     }
 
-    await user.update({ isActive: true });
-    await redisClient.del(`otp:${email}`);
+    const currentTime = new Date();
+    if (currentTime > otpRecord.expiredAt) {
+      await otpRecord.destroy();
+      throw "Invalid or expired OTP";
+    }
+
+    const transaction = await User.sequelize.transaction();
+    try {
+      await user.update({ isActive: true }, { transaction });
+      console.log("User activated successfully:", user.id);
+
+      await otpRecord.destroy({ transaction });
+      console.log("OTP record deleted successfully");
+
+      const promotionCode = `WELCOME_${user.id}`;
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from now
+
+      const canvas = createCanvas(300, 100);
+      JsBarcode(canvas, promotionCode, {
+        format: "CODE128",
+        width: 2,
+        height: 80,
+        displayValue: true,
+        fontSize: 14,
+      });
+      const barcodeBuffer = canvas.toBuffer("image/png");
+      const barcodeFileName = `barcodes/${promotionCode}_${Date.now()}.png`;
+      let barcodeUrl;
+      try {
+        barcodeUrl = await uploadFileToFirebase(barcodeBuffer, barcodeFileName, "image/png");
+      } catch (firebaseError) {
+        console.error("Firebase upload error:", firebaseError.message, firebaseError.stack);
+        throw new Error(`Failed to upload barcode to Firebase: ${firebaseError.message}`);
+      }
+
+      try {
+        await Promotion.create(
+          {
+            promotionTypeId: 7,
+            name: "WELCOME",
+            description: "Welcome promotion for new users",
+            barcode: barcodeUrl,
+            code: promotionCode,
+            startDate,
+            endDate,
+            minOrderAmount: 0,
+            discountAmount: 15000,
+            NumberCurrentUses: 0,
+            maxNumberOfUses: 1,
+            isActive: true,
+            createBy: 1,
+            forUser: user.id,
+            isUsedBySpecificUser: true,
+            createdAt: startDate,
+            updatedAt: startDate,
+          },
+          { transaction }
+        );
+        console.log("Promotion created successfully for user:", user.id);
+      } catch (promotionError) {
+        console.error("Promotion creation error:", promotionError.message, promotionError.stack);
+        throw new Error(`Failed to create promotion: ${promotionError.message}`);
+      }
+
+      await transaction.commit();
+      console.log("Transaction committed successfully");
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Transaction error in verifyOtp:", error.message, error.stack);
+      throw error.message.includes("Firebase") || error.message.includes("promotion")
+        ? error.message
+        : "Server error during OTP verification";
+    }
+
+    return { message: "Account verified successfully and welcome promotion created" };
   },
 
   async loginUser(email, password) {
@@ -195,15 +225,6 @@ const userService = {
     }
     if (!password) {
       throw "Password cannot be blank";
-    }
-    if (!validator.isEmail(email)) {
-      throw "Email format is invalid";
-    }
-    if (password.length < 6) {
-      throw "Password must be at least 6 characters";
-    }
-    if (password.length > 250) {
-      throw "Password cannot exceed 250 characters";
     }
 
     const user = await User.findOne({ where: { email } });
@@ -220,7 +241,7 @@ const userService = {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw "Invalid credentials";
+      throw "Invalid password";
     }
 
     const token = jwt.sign(
@@ -230,6 +251,79 @@ const userService = {
         email: user.email,
         phone_number: user.phone_number,
         role: user.role || "user",
+        date_of_birth: user.date_of_birth,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return { token };
+  },
+
+  async loginUserWeb(email, password, fcmToken) {
+    // Input validation
+    if (!email) {
+      throw "Email cannot be blank";
+    }
+    if (!password) {
+      throw "Password cannot be blank";
+    }
+    if (!validator.isEmail(email)) {
+      throw "Email format is invalid";
+    }
+    if (password.length < 6) {
+      throw "Password must be at least 6 characters";
+    }
+    if (password.length > 250) {
+      throw "Password cannot exceed 250 characters";
+    }
+    if (fcmToken && typeof fcmToken !== "string") {
+      throw "FCM token must be a string";
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      throw "User not found";
+    }
+
+    // Check account status
+    if (!user.isActive) {
+      throw "Account not activated";
+    }
+    if (user.isBan) {
+      throw "Account is banned";
+    }
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw "Invalid credentials";
+    }
+
+    // Handle FCM token if provided
+    if (fcmToken && fcmToken.trim() !== "") {
+      const existingToken = await FcmToken.findOne({
+        where: { userId: user.id, fcmToken },
+      });
+
+      if (!existingToken) {
+        await FcmToken.create({
+          userId: user.id,
+          fcmToken,
+        });
+      }
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone_number: user.phone_number,
+        role: user.role || "User",
+        date_of_birth: user.date_of_birth,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -347,7 +441,9 @@ const userService = {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await redisClient.setEx(`otp:${email}`, 600, otp);
+    const createdAt = new Date();
+    const expiredAt = new Date(createdAt.getTime() + 10 * 60 * 1000); // 10 minutes from now
+    await VerifyOtp.create({ otp, createdAt, expiredAt, email });
 
     const verificationUrl = `http://localhost:3000/verify?email=${encodeURIComponent(email)}&otp=${otp}`;
     let emailHtml = emailTemplate

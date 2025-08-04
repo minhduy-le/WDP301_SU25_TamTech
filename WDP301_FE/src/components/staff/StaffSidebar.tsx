@@ -1,21 +1,35 @@
 import { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown, message } from "antd";
+import {
+  Layout,
+  Menu,
+  Button,
+  Avatar,
+  Dropdown,
+  message,
+  Badge,
+  List,
+  Typography,
+} from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
   ShoppingFilled,
-  SettingOutlined,
   LogoutOutlined,
   BellOutlined,
   DownOutlined,
-  MessageOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./StaffSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
+import { useGetNotifications, type Notification } from "../../hooks/ordersApi"; // Import hook and type
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { MessageCircle } from "lucide-react";
+dayjs.extend(relativeTime);
 
 const { Header, Sider, Content } = Layout;
 
@@ -23,25 +37,25 @@ const StaffSidebarBlueStyles = () => (
   <style>{`
     /* Nút menu đóng/mở sidebar */
     .staff-sidebar-toggle-btn {
-      color: #60A5FA !important;
+      color: #d97706 !important; /* amber-600 */
     }
     .staff-sidebar-toggle-btn:hover {
-      color: #3B82F6 !important;
+      color: #b45309 !important; /* amber-700 */
     }
     /* Placeholder input tìm kiếm */
     input[placeholder="Tìm kiếm..."] {
-      color: #3B82F6 !important;
+      color: #d97706 !important; /* amber-600 */
     }
     input[placeholder="Tìm kiếm..."]::placeholder {
-      color: #3B82F6 !important;
+      color: #d97706 !important; /* amber-600 */
       opacity: 1;
     }
     .admin-bell-btn {
-      color: #60A5FA !important;
+      color: #d97706 !important; /* amber-600 */
       transition: color 0.2s;
     }
     .admin-bell-btn:hover {
-      color: #3B82F6 !important;
+      color: #b45309 !important; /* amber-700 */
       transition: color 0.2s;
     }
   `}</style>
@@ -52,6 +66,8 @@ const StaffSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const { data: notifications, isLoading: notificationsLoading } =
+    useGetNotifications();
 
   const siderWidth = 250;
   const siderCollapsedWidth = 80;
@@ -59,12 +75,17 @@ const StaffSidebar = () => {
   const menuItems = [
     {
       key: "/staff/orders",
-      icon: <ShoppingFilled />,
+      icon: <ShoppingFilled style={{ width: "19px", fontSize: 19 }} />,
       label: "Quản lý đơn hàng",
     },
     {
+      key: "/staff/pos",
+      icon: <ShoppingCartOutlined style={{ width: "19px" }} />,
+      label: "POS/Bán hàng",
+    },
+    {
       key: "/staff/chat",
-      icon: <MessageOutlined />,
+      icon: <MessageCircle />,
       label: "Chat",
     },
   ];
@@ -77,11 +98,6 @@ const StaffSidebar = () => {
       onClick: () => {
         navigate("/staff/profile");
       },
-    },
-    {
-      key: "settingsMenu",
-      label: "Cài đặt",
-      icon: <SettingOutlined />,
     },
     {
       type: "divider",
@@ -98,6 +114,66 @@ const StaffSidebar = () => {
     },
   ];
 
+  const notificationOverlay = (
+    <div
+      style={{
+        backgroundColor: "white",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+        borderRadius: "8px",
+        width: "360px",
+        maxHeight: "450px",
+        display: "flex",
+        flexDirection: "column",
+        border: "1px solid #fde68a",
+      }}
+    >
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: "1px solid #fde68a",
+          fontWeight: "bold",
+          fontSize: "16px",
+          color: "#92400e",
+        }}
+      >
+        Notifications
+      </div>
+      <List
+        loading={notificationsLoading}
+        dataSource={notifications}
+        style={{ overflowY: "auto", flex: 1 }}
+        locale={{
+          emptyText: (
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              No new notifications
+            </div>
+          ),
+        }}
+        renderItem={(item: Notification) => (
+          <List.Item
+            style={{ padding: "12px 16px", borderBottom: "1px solid #fde68a" }}
+          >
+            <List.Item.Meta
+              title={<Typography.Text strong>{item.title}</Typography.Text>}
+              description={
+                <>
+                  <Typography.Text>{item.message}</Typography.Text>
+                  <br />
+                  <Typography.Text
+                    type="secondary"
+                    style={{ fontSize: "12px" }}
+                  >
+                    {dayjs(item.createdAt).fromNow()}
+                  </Typography.Text>
+                </>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    </div>
+  );
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <StaffSidebarBlueStyles />
@@ -108,7 +184,7 @@ const StaffSidebar = () => {
         width={siderWidth}
         collapsedWidth={siderCollapsedWidth}
         style={{
-          backgroundColor: "#1E3A8A",
+          backgroundColor: "#92400e",
           boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
           position: "fixed",
           height: "100vh",
@@ -124,9 +200,9 @@ const StaffSidebar = () => {
           style={{
             padding: "24px 16px",
             textAlign: "center",
-            borderBottom: "1px solid #3B82F6",
+            borderBottom: "1px solid #fde68a",
             marginBottom: "8px",
-            background: "#1E3A8A",
+            background: "#92400e",
             width: "100%",
           }}
         >
@@ -165,7 +241,7 @@ const StaffSidebar = () => {
           items={menuItems}
           style={{
             borderRight: 0,
-            backgroundColor: "#1E3A8A",
+            backgroundColor: "#92400e",
           }}
         />
       </Sider>
@@ -183,7 +259,7 @@ const StaffSidebar = () => {
             display: "flex",
             alignItems: "center",
             padding: "0 24px",
-            borderBottom: "1px solid #3B82F6",
+            borderBottom: "1px solid #fde68a",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
             position: "sticky",
             top: 0,
@@ -217,20 +293,20 @@ const StaffSidebar = () => {
               gap: 24,
             }}
           >
-            <Button
-              type="text"
-              icon={<BellOutlined className="admin-bell-btn" />}
-              style={{
-                fontSize: "18px",
-                color: "#60A5FA",
-                width: 40,
-                height: 40,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "transparent",
-              }}
-            />
+            <Dropdown
+              overlay={notificationOverlay}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <a onClick={(e) => e.preventDefault()}>
+                <Badge count={notifications?.length || 0}>
+                  <BellOutlined
+                    className="admin-bell-btn"
+                    style={{ fontSize: "20px", color: "#d97706" }}
+                  />
+                </Badge>
+              </a>
+            </Dropdown>
 
             <Dropdown
               menu={{ items: userMenuItems }}
@@ -249,7 +325,7 @@ const StaffSidebar = () => {
                   backgroundColor: "transparent",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#3B82F6";
+                  e.currentTarget.style.backgroundColor = "#fde68a";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
@@ -258,14 +334,14 @@ const StaffSidebar = () => {
                 <Avatar
                   icon={<UserOutlined />}
                   style={{
-                    backgroundColor: "#1E40AF",
+                    backgroundColor: "#d97706",
                     color: "#fff",
                   }}
                 />
-                <span style={{ color: "#1E40AF", fontWeight: 600 }}>
+                <span style={{ color: "#92400e", fontWeight: 600 }}>
                   {user?.fullName}
                 </span>
-                <DownOutlined style={{ color: "#1E40AF" }} />
+                <DownOutlined style={{ color: "#92400e" }} />
               </div>
             </Dropdown>
           </div>

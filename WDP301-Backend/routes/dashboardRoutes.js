@@ -212,10 +212,27 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  * @swagger
  * /api/dashboard/top-products:
  *   get:
- *     summary: Get top 6 best-selling products
+ *     summary: Get top 6 best-selling products within a date range
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "MM-dd-YYYY"
+ *         description: Start date for the range (format MM-dd-YYYY)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "MM-dd-YYYY"
+ *         description: End date for the range (format MM-dd-YYYY)
  *     responses:
  *       200:
  *         description: Top products retrieved successfully
@@ -242,6 +259,20 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  *                       totalRevenue:
  *                         type: number
  *                         description: Total revenue from the product
+ *                 durationDays:
+ *                   type: integer
+ *                   description: Number of days between startDate and endDate
+ *       400:
+ *         description: Invalid date format or range
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *         content:
@@ -267,11 +298,13 @@ router.get("/revenue-stats/:year", verifyToken, async (req, res, next) => {
  */
 router.get("/top-products", verifyToken, async (req, res, next) => {
   try {
-    const stats = await dashboardService.getTopProducts();
+    const { startDate, endDate } = req.query;
+    const { stats, durationDays } = await dashboardService.getTopProducts(startDate, endDate);
     res.status(200).json({
       status: 200,
       message: "Top products retrieved successfully",
       stats,
+      durationDays,
     });
   } catch (error) {
     console.error("Error retrieving top products:", error);
@@ -487,6 +520,130 @@ router.get("/monthly-revenue", verifyToken, async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error retrieving monthly revenue:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/product-type-sales:
+ *   get:
+ *     summary: Get total quantity sold per product type for orders with status not Pending or Canceled
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Product type sales retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productType:
+ *                         type: string
+ *                         description: Name of the product type
+ *                       totalQuantity:
+ *                         type: integer
+ *                         description: Total quantity sold
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get("/product-type-sales", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getProductTypeSales();
+    res.status(200).json({
+      status: 200,
+      message: "Product type statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving product type stats:", error);
+    res.status(500).json({
+      status: 500,
+      message: error.message || "Internal Server Error",
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/staff-productivity:
+ *   get:
+ *     summary: Get productivity statistics for staff users based on orders created or approved
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Staff productivity statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       fullName:
+ *                         type: string
+ *                         description: Full name of the staff member
+ *                       totalRevenue:
+ *                         type: number
+ *                         description: Total revenue from orders created or approved by the staff
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 message:
+ *                   type: string
+ */
+router.get("/staff-productivity", verifyToken, async (req, res, next) => {
+  try {
+    const stats = await dashboardService.getStaffProductivity();
+    res.status(200).json({
+      status: 200,
+      message: "Staff productivity statistics retrieved successfully",
+      stats,
+    });
+  } catch (error) {
+    console.error("Error retrieving staff productivity stats:", error);
     res.status(500).json({
       status: 500,
       message: error.message || "Internal Server Error",

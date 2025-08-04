@@ -1,4 +1,7 @@
 const axios = require("axios");
+const { Sequelize } = require("sequelize");
+const Order = require("../models/order");
+const Op = Sequelize.Op;
 
 console.log("Loading districtsService.js version 2025-05-24-ghn-hcmc-wards-api");
 
@@ -118,4 +121,26 @@ const getWardsByDistrict = async (districtId) => {
   }
 };
 
-module.exports = { getAllDistricts, getWardsByDistrict };
+const getUserOrderAddresses = async (userId) => {
+  try {
+    console.log(`Fetching unique order addresses for user ID ${userId}`);
+    const orders = await Order.findAll({
+      where: {
+        userId,
+        order_address: { [Op.ne]: null }, // Exclude null addresses
+        order_address: { [Op.ne]: "" }, // Exclude empty addresses
+      },
+      attributes: [[Sequelize.fn("DISTINCT", Sequelize.col("order_address")), "order_address"]],
+      raw: true,
+    });
+
+    const addresses = orders.map((order) => order.order_address);
+    console.log(`Unique addresses retrieved for user ID ${userId}:`, addresses);
+    return addresses;
+  } catch (error) {
+    console.error("Error fetching user order addresses:", error.message);
+    throw new Error("Failed to retrieve user order addresses");
+  }
+};
+
+module.exports = { getAllDistricts, getWardsByDistrict, getUserOrderAddresses };

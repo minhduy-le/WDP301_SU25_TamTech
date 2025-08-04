@@ -3,9 +3,10 @@ const Product = require("../models/product");
 const ProductRecipe = require("../models/ProductRecipe");
 const Material = require("../models/material");
 const { Op } = require("sequelize");
+const ProductType = require("../models/productType");
 
 const validateProductData = (data) => {
-  const { name, price, productTypeId, recipes, description, image } = data;
+  const { name, price, productTypeId, recipes, description } = data;
 
   if (!name || typeof name !== "string" || name.trim() === "") {
     throw new Error("Name is required and must be a non-empty string");
@@ -17,36 +18,14 @@ const validateProductData = (data) => {
     throw new Error("Description must be a string and cannot exceed 1000 characters");
   }
   if (typeof price !== "number" || price < 1000 || price > 1000000) {
-    throw new Error("Price must be a number between 1,000 and 1,000,000");
+    throw new Error("Price must be a number between 1000 and 1000000");
   }
   if (!Number.isInteger(productTypeId) || productTypeId < 1) {
     throw new Error("ProductTypeId must be a positive integer");
   }
 
-  // Validate image extension if image is provided
-  if (image && typeof image === "string") {
-    // Check if it's a URL or base64 string
-    if (image.startsWith("http")) {
-      // For URLs, check the extension in the URL
-      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-      if (!urlPattern.test(image)) {
-        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
-      }
-    } else if (image.startsWith("data:image/")) {
-      // For base64, check the MIME type
-      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-      if (!base64Pattern.test(image)) {
-        throw new Error("Image must be in .jpg, .jpeg, or .png format");
-      }
-    } else {
-      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
-    }
-  }
-
-  if (recipes) {
-    if (!Array.isArray(recipes)) {
-      throw new Error("Recipes must be an array");
-    }
+  // Only validate recipes if they are provided
+  if (recipes && Array.isArray(recipes)) {
     for (const recipe of recipes) {
       if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
         throw new Error("Each recipe must have a valid materialId (positive integer)");
@@ -61,12 +40,11 @@ const validateProductData = (data) => {
 const createProduct = async (productData) => {
   const { name, description, price, image, productTypeId, createBy, storeId, recipes = [] } = productData;
 
-  validateProductData({ name, price, productTypeId, recipes, description, image });
+  validateProductData({ name, price, productTypeId, recipes, description });
 
   const transaction = await sequelize.transaction();
 
   try {
-    // Check for unique name
     const existingProduct = await Product.findOne({
       where: { name: name.trim(), isActive: true },
       transaction,
@@ -75,7 +53,7 @@ const createProduct = async (productData) => {
       throw new Error("Product name already exists");
     }
 
-    // Check if materials exist for provided recipes
+    // Only check materials if recipes are provided
     if (recipes.length > 0) {
       for (const recipe of recipes) {
         const material = await Material.findByPk(recipe.materialId, { transaction });
@@ -125,22 +103,34 @@ const createProduct = async (productData) => {
   }
 };
 
-const getProducts = async ({ page, limit, offset }) => {
+const getProducts = async ({ page, size, offset }) => {
   if (!Number.isInteger(page) || page < 1) {
     throw new Error("Page must be a positive integer");
   }
-  if (!Number.isInteger(limit) || limit < 1) {
-    throw new Error("Limit must be a positive integer");
+  // Cập nhật validation từ 'limit' sang 'size'
+  if (!Number.isInteger(size) || size < 1) {
+    throw new Error("Size must be a positive integer");
   }
   if (!Number.isInteger(offset) || offset < 0) {
     throw new Error("Offset must be a non-negative integer");
   }
 
-  const { count, rows } = await Product.findAndCountAll({
-    where: { isActive: true },
-    limit,
+  const totalCount = await Product.count({ where: { isActive: true } });
+
+  const products = await Product.findAll({
+    limit: size, // Sử dụng 'size' cho truy vấn Sequelize
     offset,
     order: [["price", "DESC"]],
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
@@ -149,8 +139,37 @@ const getProducts = async ({ page, limit, offset }) => {
   });
 
   return {
-    products: rows,
-    totalPages: Math.ceil(count / limit),
+    products: products,
+    totalPages: Math.ceil(totalCount / size), // Tính toán tổng số trang với 'size'
+  };
+};
+
+const getProductsSummary = async ({ page, size, offset }) => {
+  if (!Number.isInteger(page) || page < 1) {
+    throw new Error("Page must be a positive integer");
+  }
+  if (!Number.isInteger(size) || size < 1) {
+    throw new Error("Size must be a positive integer");
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error("Offset must be a non-negative integer");
+  }
+
+  // Lấy tổng số sản phẩm đang hoạt động để phân trang
+  const totalCount = await Product.count({ where: { isActive: true } });
+
+  // Tìm sản phẩm chỉ với các trường được yêu cầu
+  const products = await Product.findAll({
+    limit: size,
+    offset,
+    where: { isActive: true },
+    order: [["price", "DESC"]], // Giữ nguyên thứ tự sắp xếp theo giá giảm dần
+    attributes: ["productId", "name", "description", "price"], // Chỉ lấy các trường này
+  });
+
+  return {
+    products: products,
+    totalPages: Math.ceil(totalCount / size),
   };
 };
 
@@ -161,6 +180,16 @@ const getProductsByType = async (productTypeId) => {
 
   const products = await Product.findAll({
     where: { productTypeId, isActive: true },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
@@ -176,7 +205,9 @@ const updateProduct = async (productId, updateData) => {
     throw new Error("ProductId must be a positive integer");
   }
 
-  const { name, description, price, image, productTypeId } = updateData;
+  const { name, description, price, image, productTypeId, recipes } = updateData;
+
+  // Validate basic product fields
   if (name !== undefined && (typeof name !== "string" || name.trim() === "" || name.trim().length > 100)) {
     throw new Error("Name must be a non-empty string and cannot exceed 100 characters");
   }
@@ -190,60 +221,88 @@ const updateProduct = async (productId, updateData) => {
     throw new Error("ProductTypeId must be a positive integer");
   }
 
-  // Validate image extension if image is provided for update
-  if (image !== undefined && image && typeof image === "string") {
-    // Check if it's a URL or base64 string
-    if (image.startsWith("http")) {
-      // For URLs, check the extension in the URL
-      const urlPattern = /\.(jpg|jpeg|png)(\?.*)?$/i;
-      if (!urlPattern.test(image)) {
-        throw new Error("Image URL must have .jpg, .jpeg, or .png extension");
+  // Validate recipes if provided
+  if (recipes && Array.isArray(recipes)) {
+    for (const recipe of recipes) {
+      if (!Number.isInteger(recipe.materialId) || recipe.materialId < 1) {
+        throw new Error("Each recipe must have a valid materialId (positive integer)");
       }
-    } else if (image.startsWith("data:image/")) {
-      // For base64, check the MIME type
-      const base64Pattern = /^data:image\/(jpeg|jpg|png);base64,/i;
-      if (!base64Pattern.test(image)) {
-        throw new Error("Image must be in .jpg, .jpeg, or .png format");
+      if (!Number.isInteger(recipe.quantity) || recipe.quantity <= 0) {
+        throw new Error("Each recipe must have a valid quantity (positive integer)");
       }
-    } else {
-      throw new Error("Image must be a valid URL or base64 string with .jpg, .jpeg, or .png format");
     }
   }
 
-  const product = await Product.findByPk(productId);
-  if (!product || !product.isActive) {
-    throw new Error("Product not found or inactive");
-  }
+  const transaction = await sequelize.transaction();
+  try {
+    const product = await Product.findByPk(productId, { transaction });
+    if (!product || !product.isActive) {
+      throw new Error("Product not found or inactive");
+    }
 
-  // Check for unique name (excluding the current product)
-  if (name !== undefined) {
-    const existingProduct = await Product.findOne({
-      where: {
-        name: name.trim(),
-        productId: { [Op.ne]: productId },
-        isActive: true,
+    if (name !== undefined) {
+      const existingProduct = await Product.findOne({
+        where: {
+          name: name.trim(),
+          productId: { [Op.ne]: productId },
+          isActive: true,
+        },
+        transaction,
+      });
+      if (existingProduct) {
+        throw new Error("Product name already exists");
+      }
+    }
+
+    // Update product fields
+    await product.update(
+      {
+        name: name ? name.trim() : product.name,
+        description: description !== undefined ? (description ? description.trim() : null) : product.description,
+        price: price !== undefined ? price : product.price,
+        image: image !== undefined ? image : product.image,
+        productTypeId: productTypeId || product.productTypeId,
       },
-    });
-    if (existingProduct) {
-      throw new Error("Product name already exists");
+      { transaction }
+    );
+
+    // Handle recipes update
+    if (recipes && Array.isArray(recipes)) {
+      // Clear existing recipes
+      await ProductRecipe.destroy({ where: { productId: productId }, transaction });
+
+      // Add new recipes
+      if (recipes.length > 0) {
+        for (const recipe of recipes) {
+          const material = await Material.findByPk(recipe.materialId, { transaction });
+          if (!material) {
+            throw new Error(`Material with ID ${recipe.materialId} not found`);
+          }
+          await ProductRecipe.create(
+            {
+              productId: productId,
+              materialId: recipe.materialId,
+              quantity: recipe.quantity,
+            },
+            { transaction }
+          );
+        }
+      }
     }
+
+    await transaction.commit();
+
+    return await Product.findByPk(productId, {
+      include: [
+        { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+        { model: require("../models/productType"), as: "ProductType" },
+        { model: require("../models/store"), as: "Store" },
+      ],
+    });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  await product.update({
-    name: name ? name.trim() : product.name,
-    description: description !== undefined ? (description ? description.trim() : null) : product.description,
-    price: price !== undefined ? price : product.price,
-    image: image || product.image,
-    productTypeId: productTypeId || product.productTypeId,
-  });
-
-  return await Product.findByPk(productId, {
-    include: [
-      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
-      { model: require("../models/productType"), as: "ProductType" },
-      { model: require("../models/store"), as: "Store" },
-    ],
-  });
 };
 
 const softDeleteProduct = async (productId) => {
@@ -261,16 +320,29 @@ const softDeleteProduct = async (productId) => {
 };
 
 const getProductById = async (productId) => {
-  if (!Number.isInteger(productId) || productId < 1) {
-    throw new Error("ProductId must be a positive integer");
+  // Explicitly check for NaN and invalid integers
+  const parsedId = parseInt(productId);
+  if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId < 1) {
+    throw new Error("ProductId must be a valid positive integer");
   }
 
-  const product = await Product.findByPk(productId, {
+  const product = await Product.findByPk(parsedId, {
     where: { isActive: true },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
       { model: require("../models/productType"), as: "ProductType" },
       { model: require("../models/store"), as: "Store" },
+      { model: require("../models/feedback"), as: "Feedbacks" },
     ],
   });
 
@@ -287,6 +359,16 @@ const getBestSellerProducts = async () => {
       productTypeId: [1, 3],
       isActive: true,
     },
+    attributes: {
+      include: [
+        [
+          sequelize.literal(
+            `(SELECT CAST(IFNULL(AVG(rating), 0) AS DECIMAL(10, 1)) FROM feedback WHERE feedback.productId = Product.productId)`
+          ),
+          "averageRating",
+        ],
+      ],
+    },
     include: [
       {
         model: require("../models/orderItem"),
@@ -300,8 +382,7 @@ const getBestSellerProducts = async () => {
         attributes: ["productTypeId", "name"],
       },
     ],
-    attributes: ["productId", "name", "description", "price", "image"],
-    group: ["Product.productId"],
+    group: ["Product.productId", "ProductType.productTypeId"],
     order: [["productTypeId", "ASC"]],
   });
 
@@ -330,6 +411,123 @@ const searchProductsByName = async (searchTerm) => {
   return products;
 };
 
+const searchProductsByTypeName = async (typeName) => {
+  if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const productType = await ProductType.findOne({
+    where: { name: typeName },
+  });
+
+  if (!productType) {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      productTypeId: productType.productTypeId,
+      isActive: true,
+    },
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
+const searchProductsByNameAndType = async (searchTerm, productTypeId) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+  if (!Number.isInteger(productTypeId) || productTypeId < 1) {
+    throw new Error("ProductTypeId must be a positive integer");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      productTypeId,
+      isActive: true,
+    },
+    attributes: ["productId", "name", "description", "price", "image"],
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
+const searchProductsByNameAndTypeName = async (searchTerm, typeName) => {
+  if (!searchTerm || typeof searchTerm !== "string" || searchTerm.trim() === "") {
+    throw new Error("Search term must be a non-empty string");
+  }
+  if (!typeName || typeof typeName !== "string" || typeName.trim() === "") {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const productType = await ProductType.findOne({
+    where: { name: typeName },
+  });
+
+  if (!productType) {
+    throw new Error("Product type name must match exactly or is required");
+  }
+
+  const products = await Product.findAll({
+    where: {
+      name: { [Op.like]: `%${searchTerm.trim()}%` },
+      productTypeId: productType.productTypeId,
+      isActive: true,
+    },
+    attributes: ["productId", "name", "description", "price", "image"],
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+    order: [["name", "ASC"]],
+  });
+
+  return products;
+};
+
+const reactivateProduct = async (productId) => {
+  if (!Number.isInteger(productId) || productId < 1) {
+    throw new Error("ProductId must be a positive integer");
+  }
+
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  if (product.isActive) {
+    throw new Error("Product is already active");
+  }
+
+  const productType = await ProductType.findByPk(product.productTypeId);
+  if (!productType || !productType.isActive) {
+    throw new Error("Cannot reactivate product because its product type is not found or inactive");
+  }
+
+  await product.update({ isActive: true });
+  return await Product.findByPk(productId, {
+    include: [
+      { model: ProductRecipe, as: "ProductRecipes", include: [{ model: Material, as: "Material" }] },
+      { model: require("../models/productType"), as: "ProductType" },
+      { model: require("../models/store"), as: "Store" },
+    ],
+  });
+};
+
 module.exports = {
   createProduct,
   getProducts,
@@ -339,4 +537,9 @@ module.exports = {
   getProductById,
   getBestSellerProducts,
   searchProductsByName,
+  searchProductsByTypeName,
+  searchProductsByNameAndType,
+  searchProductsByNameAndTypeName,
+  reactivateProduct,
+  getProductsSummary,
 };

@@ -11,6 +11,13 @@ const {
   setOrderToDelivered,
   getAllOrders,
   getPaidOrders,
+  getOrderDetails,
+  sendRefundEmail,
+  setOrderToCanceled,
+  uploadRefundCertification,
+  getLatestOrder,
+  setOrderToCanceledWhenUserCancel,
+  cancelOrderForStaff,
 } = require("../services/orderService");
 const verifyToken = require("../middlewares/verifyToken");
 const Order = require("../models/order");
@@ -18,6 +25,7 @@ const Information = require("../models/information");
 const axios = require("axios");
 const sequelize = require("../config/database");
 const { generateAndUploadInvoice } = require("../services/orderService");
+const { User, Transaction } = require("../models/associations");
 require("dotenv").config();
 const multer = require("multer");
 
@@ -100,6 +108,9 @@ const standardizeProvince = (province) => {
  *               order_address:
  *                 type: string
  *                 description: Delivery address for the order
+ *               platform:
+ *                 type: string
+ *                 description: Platform from which the order is placed (web or mobile)
  *               note:
  *                 type: string
  *                 description: Optional note for the order (e.g., special delivery instructions)
@@ -116,6 +127,10 @@ const standardizeProvince = (province) => {
  *               soDienThoaiNguoiDatHo:
  *                 type: string
  *                 description: Phone number of the person placing the order on behalf
+ *                 nullable: true
+ *               customerId:
+ *                 type: integer
+ *                 description: ID of the customer (if different from the authenticated user)
  *                 nullable: true
  *     responses:
  *       201:
@@ -158,6 +173,147 @@ const standardizeProvince = (province) => {
  *               example: "Failed to create order"
  */
 router.post("/", verifyToken, createOrder);
+
+/**
+ * @swagger
+ * /api/orders/payment-success:
+ *   get:
+ *     summary: Xử lý callback thanh toán thành công
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID của đơn hàng
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: >
+ *           Mã kết quả thanh toán (ví dụ: "00" cho thành công)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: >
+ *           Trạng thái thanh toán (ví dụ: "PAID")
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID giao dịch từ cổng thanh toán
+ *       - in: query
+ *         name: cancel
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Trạng thái hủy giao dịch (true/false)
+ *     responses:
+ *       302:
+ *         description: Chuyển hướng đến frontend với trạng thái thành công hoặc thất bại
+ *       400:
+ *         description: Dữ liệu đầu vào không hợp lệ hoặc đơn hàng đã được xử lý
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Đơn hàng đã được xử lý hoặc ở trạng thái không hợp lệ
+ *       404:
+ *         description: Không tìm thấy đơn hàng
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Không tìm thấy đơn hàng với ID 349
+ *       500:
+ *         description: Lỗi máy chủ
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Lỗi khi xử lý xác nhận thanh toán
+ */
+router.get("/payment-success", handlePaymentSuccess);
+
+/**
+ * @swagger
+ * /api/order/payment-cancel:
+ *   get:
+ *     summary: Handle payment cancellation
+ *     description: Process the cancellation of an order payment and return the status.
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the order to cancel
+ *     responses:
+ *       200:
+ *         description: Payment cancellation processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Payment cancelled"
+ *       400:
+ *         description: Missing orderId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Order ID is required"
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Order not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Failed to process cancellation"
+ */
+router.get("/payment-cancel", async (req, res) => {
+  const { orderId } = req.query;
+  if (!orderId) {
+    console.log("Missing orderId in payment-cancel callback");
+    return res.status(400).json({ message: "Order ID is required" });
+  }
+  try {
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      console.log("Order not found for orderId:", orderId);
+      return res.status(404).json({ message: "Order not found" });
+    }
+    console.log("Payment cancelled for orderId:", orderId);
+    res.status(200).json({ message: "Payment cancelled" });
+  } catch (error) {
+    console.log("Error in payment-cancel callback:", error.message);
+    res.status(500).json({ message: "Failed to process cancellation", error: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -211,6 +367,9 @@ router.post("/", verifyToken, createOrder);
  *                           type: integer
  *                         price:
  *                           type: number
+ *                   orderItemsCount:
+ *                     type: integer
+ *                     description: Total number of order items in the order
  *                   order_shipping_fee:
  *                     type: number
  *                   order_discount_value:
@@ -340,6 +499,71 @@ router.get("/cancel", async (req, res) => {
 
 /**
  * @swagger
+ * /api/orders/{orderId}/cancel:
+ *   put:
+ *     summary: Cancel an existing order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the order to cancel
+ *     responses:
+ *       200:
+ *         description: Order canceled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Order canceled successfully
+ *       400:
+ *         description: Order cannot be canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Only pending orders can be canceled
+ *       404:
+ *         description: Order not found or user lacks permission
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Order not found or you don't have permission
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.put("/:orderId/cancel", verifyToken, async (req, res) => {
+  const { orderId } = req.params;
+  const userId = req.userId;
+
+  const result = await setOrderToCanceledWhenUserCancel(parseInt(orderId), userId);
+  return res.status(result.status).json({ message: result.message });
+});
+
+/**
+ * @swagger
  * /api/orders/webhook:
  *   post:
  *     summary: Handle PayOS webhook for payment status updates
@@ -375,53 +599,89 @@ router.get("/cancel", async (req, res) => {
  *         description: Server error
  */
 router.post("/webhook", async (req, res) => {
-  console.log("PayOS webhook received at:", new Date().toISOString());
-  console.log("Webhook headers:", JSON.stringify(req.headers, null, 2));
-  console.log("Webhook body:", JSON.stringify(req.body, null, 2));
-  const { orderCode, status, code } = req.body;
+  console.log("[WEBHOOK] Received at:", new Date().toISOString());
+  console.log("[WEBHOOK] Body:", JSON.stringify(req.body, null, 2));
+
+  const orderCode = req.body.data ? req.body.data.orderCode : req.body.orderCode;
+  const status = req.body.data ? req.body.data.status : req.body.status;
+
   if (!orderCode) {
-    console.log("Missing orderCode in webhook");
+    console.log("[WEBHOOK] Missing orderCode in webhook payload.");
     return res.status(400).json({ message: "Order code is required" });
   }
+
+  const webhookTransaction = await sequelize.transaction();
   try {
-    const order = await Order.findOne({ where: { orderId: orderCode } });
+    const order = await Order.findOne({ where: { orderId: orderCode }, transaction: webhookTransaction });
     if (!order) {
-      console.log("Order not found for orderCode:", orderCode);
+      console.log(`[WEBHOOK] Order not found for orderCode: ${orderCode}`);
+      await webhookTransaction.rollback();
       return res.status(404).json({ message: "Order not found" });
     }
-    if (status === "PAID" && code === "00") {
-      console.log("Webhook updating status_id to 2 for orderId:", orderCode);
-      order.status_id = 2; // Paid
-      order.payment_time = new Date();
 
-      const user = await User.findOne({ where: { id: order.userId } });
+    if (order.status_id === 1 && status === "PAID") {
+      console.log(`[WEBHOOK] Processing PAID status for orderId: ${orderCode}`);
+
+      // Cập nhật trạng thái Order
+      order.status_id = 2;
+      order.payment_time = new Date();
+      await order.save({ transaction: webhookTransaction });
+      console.log(`[WEBHOOK] Set order ${orderCode} status to 2 (Paid).`);
+
+      // Cập nhật điểm thành viên cho User
+      const user = await User.findOne({ where: { id: order.userId }, transaction: webhookTransaction });
       if (user) {
         const currentMemberPoint = user.member_point || 0;
         const orderPointEarn = order.order_point_earn || 0;
         user.member_point = currentMemberPoint + orderPointEarn;
-        console.log(`Updated user ${user.id} member_point to ${user.member_point}`);
-        await user.save();
+        await user.save({ transaction: webhookTransaction });
+        console.log(`[WEBHOOK] Updated user ${user.id} member_point to ${user.member_point}`);
       }
 
-      const transaction = await sequelize.transaction();
-      try {
-        const invoiceUrl = await generateAndUploadInvoice(order, orderCode, transaction);
-        order.invoiceUrl = invoiceUrl;
-        await order.save({ transaction });
-        await transaction.commit();
-        console.log("Invoice generated and saved for orderId:", orderCode, "Invoice URL:", invoiceUrl);
-      } catch (error) {
-        await transaction.rollback();
-        console.error("Error generating invoice for orderId:", orderCode, error.message);
-        return res.status(500).json({ message: "Failed to generate invoice", error: error.message });
+      // Cập nhật trạng thái Transaction
+      const existingTransaction = await Transaction.findOne({
+        where: { orderId: orderCode },
+        transaction: webhookTransaction,
+      });
+
+      if (existingTransaction) {
+        existingTransaction.status = "PAID";
+        await existingTransaction.save({ transaction: webhookTransaction });
+        console.log(`[WEBHOOK] Transaction record for order ${orderCode} updated to PAID successfully.`);
+      } else {
+        console.warn(`[WEBHOOK] Transaction record not found for orderId ${orderCode}, creating a new one.`);
+        await Transaction.create(
+          {
+            orderId: orderCode,
+            payment_method_id: order.payment_method_id,
+            amount: order.order_subtotal - (order.order_discount_value || 0),
+            status: "PAID",
+            transaction_time: new Date(),
+          },
+          { transaction: webhookTransaction }
+        );
+        console.log(`[WEBHOOK] New transaction created for orderId ${orderCode}`);
       }
+
+      // Tạo và lưu hóa đơn
+      const invoiceUrl = await generateAndUploadInvoice(order, orderCode, webhookTransaction);
+      order.invoiceUrl = invoiceUrl;
+      await order.save({ transaction: webhookTransaction });
+
+      await webhookTransaction.commit();
+      console.log(`[WEBHOOK] Transaction committed successfully for orderId: ${orderCode}`);
     } else {
-      console.log("Webhook skipped: Payment not successful", { status, code });
+      console.log(
+        `[WEBHOOK] Skipped processing for orderId: ${orderCode}. Reason: Payment not successful or order already processed.`,
+        { paymentStatus: status, currentOrderStatusId: order.status_id }
+      );
     }
+
     res.status(200).json({ message: "Webhook processed" });
   } catch (error) {
-    console.error("Error in webhook:", error.message, error.stack);
-    res.status(500).json({ message: "Failed to process webhook", error: error.message });
+    console.error(`[WEBHOOK] Critical error in webhook handler for orderCode: ${orderCode}`, error);
+    await webhookTransaction.rollback();
+    res.status(200).json({ message: "Webhook processed with internal error." });
   }
 });
 
@@ -582,6 +842,220 @@ router.post("/shipping/calculate", verifyToken, async (req, res) => {
 
 /**
  * @swagger
+ * /api/orders/{orderId}:
+ *   get:
+ *     summary: Retrieve details of a specific order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     responses:
+ *       200:
+ *         description: Details of the specified order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orderId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 payment_time:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                 order_create_at:
+ *                   type: string
+ *                   format: date-time
+ *                 order_address:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                   description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
+ *                 fullName:
+ *                   type: string
+ *                   description: User's full name
+ *                 phone_number:
+ *                   type: string
+ *                   nullable: true
+ *                 orderItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                         description: Product name
+ *                       quantity:
+ *                         type: integer
+ *                       price:
+ *                         type: number
+ *                 orderItemsCount:
+ *                   type: integer
+ *                   description: Total number of order items in the order
+ *                 order_shipping_fee:
+ *                   type: number
+ *                 order_discount_value:
+ *                   type: number
+ *                 order_amount:
+ *                   type: number
+ *                 order_subtotal:
+ *                   type: number
+ *                 invoiceUrl:
+ *                   type: string
+ *                   nullable: true
+ *                 order_point_earn:
+ *                   type: integer
+ *                 note:
+ *                   type: string
+ *                   nullable: true
+ *                 payment_method:
+ *                   type: string
+ *                   description: Payment method name (e.g., Vnpay, PayOS)
+ *                 isDatHo:
+ *                   type: boolean
+ *                   description: Indicates if the order is placed on behalf
+ *                 tenNguoiDatHo:
+ *                   type: string
+ *                   description: Name of the person placing the order on behalf
+ *                   nullable: true
+ *                 soDienThoaiNguoiDatHo:
+ *                   type: string
+ *                   description: Phone number of the person placing the order on behalf
+ *                   nullable: true
+ *                 certificationOfDelivered:
+ *                   type: string
+ *                   description: URL of the certification image for delivered orders
+ *                   nullable: true
+ *                 order_delivery_at:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Timestamp when the order was delivered
+ *                   nullable: true
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 status:
+ *                   type: integer
+ *       403:
+ *         description: Forbidden (user not allowed to access this order)
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Unauthorized: You do not have permission to view this order'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: 'Order not found'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+router.get("/:orderId", verifyToken, getOrderDetails);
+
+/**
+ * @swagger
+ * /api/orders/latest/order:
+ *   get:
+ *     summary: Retrieve the latest order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Details of the latest order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orderId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 payment_time:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                 order_create_at:
+ *                   type: string
+ *                   format: date-time
+ *                 order_address:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 fullName:
+ *                   type: string
+ *                 phone_number:
+ *                   type: string
+ *                   nullable: true
+ *                 orderItems:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       quantity:
+ *                         type: integer
+ *                       price:
+ *                         type: number
+ *                 orderItemsCount:
+ *                   type: integer
+ *                 order_shipping_fee:
+ *                   type: number
+ *                 order_discount_value:
+ *                   type: number
+ *                 order_amount:
+ *                   type: number
+ *                 invoiceUrl:
+ *                   type: string
+ *                   nullable: true
+ *                 order_point_earn:
+ *                   type: integer
+ *                 note:
+ *                   type: string
+ *                   nullable: true
+ *                 payment_method:
+ *                   type: string
+ *       404:
+ *         description: No order found
+ *       500:
+ *         description: Server error
+ */
+router.get("/latest/order", verifyToken, getLatestOrder);
+
+/**
+ * @swagger
  * /api/orders/{orderId}/approved:
  *   put:
  *     summary: Set order status to Approved
@@ -654,22 +1128,30 @@ router.put("/:orderId/approved", verifyToken, setOrderToApproved);
 
 /**
  * @swagger
- * /api/orders/{orderId}/preparing:
+ * /api/orders/preparing:
  *   put:
- *     summary: Set order status to Preparing
+ *     summary: Set status to "Preparing" for multiple orders
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderIds
+ *             properties:
+ *               orderIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: A list of order IDs to update
+ *                 example: [101, 102, 105]
  *     responses:
  *       200:
- *         description: Order status updated to Preparing
+ *         description: Batch update complete. Response includes counts and details of success/failures.
  *         content:
  *           application/json:
  *             schema:
@@ -677,71 +1159,58 @@ router.put("/:orderId/approved", verifyToken, setOrderToApproved);
  *               properties:
  *                 message:
  *                   type: string
- *                 orderId:
+ *                 successCount:
  *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Preparing
+ *                 failureCount:
+ *                   type: integer
+ *                 updatedOrderIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                 failedOrders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: integer
+ *                       reason:
+ *                         type: string
  *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Paid. It must be Approved to transition to Preparing.'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 status:
- *                   type: integer
+ *         description: Invalid request body
  *       403:
  *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff can set orders to Preparing'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
  *       500:
  *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
  */
-router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
+router.put("/preparing", verifyToken, setOrderToPreparing);
 
 /**
  * @swagger
- * /api/orders/{orderId}/cooked:
+ * /api/orders/cooked:
  *   put:
- *     summary: Set order status to Cooked
+ *     summary: Set status to "Cooked" for multiple orders
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - orderIds
+ *             properties:
+ *               orderIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: A list of order IDs to update
+ *                 example: [101, 102]
  *     responses:
  *       200:
- *         description: Order status updated to Cooked
+ *         description: Batch update complete. Response includes counts and details of successes and failures.
  *         content:
  *           application/json:
  *             schema:
@@ -749,59 +1218,31 @@ router.put("/:orderId/preparing", verifyToken, setOrderToPreparing);
  *               properties:
  *                 message:
  *                   type: string
- *                 orderId:
+ *                 successCount:
  *                   type: integer
- *                 status:
- *                   type: string
- *                   example: Cooked
- *                 cookedBy:
+ *                 failureCount:
  *                   type: integer
- *                   description: ID of the staff who marked the order as cooked
- *                 cookedTime:
- *                   type: string
- *                   format: date-time
- *                   description: Timestamp when the order was marked as cooked
+ *                 updatedOrderIds:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                 failedOrders:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderId:
+ *                         type: integer
+ *                       reason:
+ *                         type: string
  *       400:
- *         description: Invalid input or invalid status transition
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Invalid status transition: Order is currently Approved. It must be Preparing to transition to Cooked.'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 status:
- *                   type: integer
+ *         description: Invalid request body or invalid status transition
  *       403:
  *         description: Forbidden (user role not allowed)
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Unauthorized: Only Staff can set orders to Cooked'
- *       404:
- *         description: Order not found
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Order not found'
  *       500:
  *         description: Server error
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: 'Failed to update order status'
  */
-router.put("/:orderId/cooked", verifyToken, setOrderToCooked);
+router.put("/cooked", verifyToken, setOrderToCooked);
 
 /**
  * @swagger
@@ -998,13 +1439,25 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                     type: string
  *                   status:
  *                     type: string
- *                     description: Order status (e.g., Pending, Paid, Approved, Preparing, Cooked, Delivering, Delivered)
  *                   fullName:
  *                     type: string
- *                     description: User's full name
  *                   phone_number:
  *                     type: string
  *                     nullable: true
+ *                   bankAccounts:
+ *                     type: array
+ *                     description: List of user's bank accounts
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         bankName:
+ *                           type: string
+ *                         bankNumber:
+ *                           type: string
+ *                         isRefund:
+ *                           type: boolean
+ *                         reason:
+ *                           type: string
  *                   orderItems:
  *                     type: array
  *                     items:
@@ -1014,28 +1467,32 @@ router.put("/:orderId/delivered", verifyToken, upload.single("file"), setOrderTo
  *                           type: integer
  *                         name:
  *                           type: string
- *                           description: Product name
  *                         quantity:
  *                           type: integer
  *                         price:
  *                           type: number
- *                   order_shipping_fee:
- *                     type: number
- *                   order_discount_value:
- *                     type: number
- *                   order_amount:
- *                     type: number
- *                   invoiceUrl:
- *                     type: string
- *                     nullable: true
- *                   order_point_earn:
- *                     type: integer
- *                   note:
- *                     type: string
- *                     nullable: true
- *                   payment_method:
- *                     type: string
- *                     description: Payment method name (e.g., Vnpay, PayOS)
+ *                         order_shipping_fee:
+ *                           type: number
+ *                         order_discount_value:
+ *                           type: number
+ *                         order_amount:
+ *                           type: number
+ *                         order_subtotal:
+ *                           type: number
+ *                         certificationOfDelivered:
+ *                           type: string
+ *                         invoiceUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         assignToShipperId:
+ *                           type: integer
+ *                         order_point_earn:
+ *                           type: integer
+ *                         note:
+ *                           type: string
+ *                           nullable: true
+ *                         payment_method:
+ *                           type: string
  *       401:
  *         description: Unauthorized
  *       500:
@@ -1145,5 +1602,276 @@ router.get("/", verifyToken, getAllOrders);
  *                   type: string
  */
 router.get("/paid", verifyToken, getPaidOrders);
+
+/**
+ * @swagger
+ * /api/orders/cancel/{orderId}:
+ *   post:
+ *     summary: Cancel an order by ID with a reason and optional bank details
+ *     description: >
+ *       Cancels an order if it was created within the last 5 minutes.
+ *       If bank details (bankName, bankNumber) are provided, they will be saved for the user who placed the order.
+ *       Upon successful cancellation, the materials used for the order will be restocked.
+ *     tags:
+ *       - Orders
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: The reason for canceling the order
+ *                 example: Customer changed mind
+ *               bankName:
+ *                 type: string
+ *                 description: Name of the bank for refund (optional)
+ *                 example: VietinBank
+ *                 nullable: true
+ *               bankNumber:
+ *                 type: string
+ *                 description: Bank account number for refund (optional)
+ *                 example: '1234567890'
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Order canceled successfully and materials have been restored
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Order canceled successfully.
+ *       400:
+ *         description: Bad request due to validation or order status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Reason is required or Order not found / already canceled
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.post("/cancel/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason, bankName, bankNumber } = req.body;
+    // The userId from verifyToken is the staff/admin performing the action
+    const result = await setOrderToCanceled(orderId, reason, req.userId, bankName, bankNumber);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to cancel order" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/upload-refunded-certification/{orderId}:
+ *   post:
+ *     summary: Upload refund certification image for a canceled order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the canceled order
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Refund certification image (JPEG or PNG)
+ *     responses:
+ *       200:
+ *         description: Refund certification uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 certificationRefund:
+ *                   type: string
+ *                   description: URL of the uploaded certification image
+ *       400:
+ *         description: Invalid file format, order not found, or order not canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.post("/upload-refunded-certification/:orderId", verifyToken, upload.single("file"), async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const file = req.file;
+    const result = await uploadRefundCertification(orderId, req.userId, file);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to upload refund certification" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/send-refunded-email/{orderId}:
+ *   post:
+ *     summary: Send refund email for a canceled order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the canceled order
+ *     responses:
+ *       200:
+ *         description: Refund email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Order not found or not canceled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.post("/send-refunded-email/:orderId", verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ where: { orderId } });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    if (order.status_id !== 5) {
+      return res.status(400).json({ message: "Order must be canceled to send refund email" });
+    }
+    const result = await sendRefundEmail(orderId, req.userId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to send refund email" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cancel/for-staff:
+ *   put:
+ *     summary: Hủy đơn hàng bởi nhân viên và gửi email thông báo
+ *     description: >
+ *       Chỉ dành cho nhân viên (Staff) hoặc quản trị viên (Admin).
+ *       API này sẽ chuyển trạng thái đơn hàng thành "Đã hủy" (ID: 5),
+ *       hoàn trả lại nguyên vật liệu vào kho, và gửi một email thông báo
+ *       cho khách hàng về việc hủy đơn kèm theo link để điền form hoàn tiền.
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của đơn hàng cần hủy.
+ *     responses:
+ *       200:
+ *         description: Hủy đơn hàng thành công và email đã được gửi.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Đơn hàng đã được hủy và email thông báo đã được gửi đi."
+ *       400:
+ *         description: Đơn hàng không thể hủy do trạng thái không hợp lệ.
+ *       403:
+ *         description: Không có quyền truy cập (không phải Staff/Admin).
+ *       404:
+ *         description: Không tìm thấy đơn hàng.
+ *       500:
+ *         description: Lỗi máy chủ.
+ */
+router.put("/:orderId/cancel/for-staff", verifyToken, async (req, res) => {
+  const userRole = req.userRole;
+  if (!["Staff", "Admin"].includes(userRole)) {
+    return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
+  }
+
+  try {
+    const { orderId } = req.params;
+    const staffUserId = req.userId;
+    const result = await cancelOrderForStaff(orderId, staffUserId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({ message: error.message || "Failed to cancel order." });
+  }
+});
 
 module.exports = router;

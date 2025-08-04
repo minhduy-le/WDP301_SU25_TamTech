@@ -1,0 +1,125 @@
+.blog-detail-container {
+  /* max-width: 1200px; */
+  margin: 0 auto;
+  padding: 25px 160px;
+  background-color: #fff7e6;
+  min-height: 100vh;
+  font-family: "Montserrat", sans-serif;
+  text-align: center;
+}
+
+.blog-detail-header {
+  margin-bottom: 10px;
+}
+
+.back-button {
+  margin-bottom: 20px;
+  color: #da7339 !important;
+  font-family: "Montserrat", sans-serif;
+  outline: none !important;
+  font-weight: 400;
+  border: 1px solid #2d1e1a !important;
+  background-color: #fff7e6;
+  padding: 0 9px;
+  display: flex;
+}
+
+.blog-detail-title {
+  color: #2d1e1a !important;
+  font-weight: 700 !important;
+  margin: 0;
+  font-size: 40px !important;
+  font-family: "Montserrat", sans-serif;
+}
+
+.blog-detail-meta {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  color: #2d1e1a;
+  font-size: 15px;
+}
+
+.blog-detail-author,
+.blog-detail-date {
+  font-size: 15px;
+  font-family: "Montserrat", sans-serif;
+}
+
+.author-name {
+  font-weight: 700;
+  color: #da7339;
+}
+
+.blog-detail-content-card {
+  border-radius: 15px;
+  background: #efe6db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: none;
+}
+
+.blog-detail-summary {
+  font-size: 15px;
+  color: #2d1e1a;
+  line-height: 1.6;
+  text-align: left;
+  font-family: "Montserrat", sans-serif;
+}
+
+.blog-full-content {
+  font-size: 15px;
+  color: #2d1e1a;
+  line-height: 1.8;
+}
+
+.blog-full-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #da7339;
+}
+
+.blog-detail-sidebar {
+  padding: 15px 18px;
+}
+
+.sidebar-card {
+  margin-bottom: 20px;
+  border-radius: 15px;
+  background: #efe6db;
+  border: 1px solid #2d1e1a;
+}
+
+.error-section {
+  text-align: center;
+  padding: 50px;
+}
+
+.error-title {
+  color: #da7339;
+  font-weight: 700;
+}
+
+.error-text {
+  font-size: 15px;
+  color: #2d1e1a;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .blog-detail-container {
+    padding: 25px;
+  }
+  .blog-detail-title {
+    font-size: 30px !important;
+  }
+  .blog-detail-meta {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .blog-detail-content,
+  .blog-detail-sidebar {
+    padding: 10px;
+  }
+}

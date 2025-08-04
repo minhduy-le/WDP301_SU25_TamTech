@@ -11,41 +11,36 @@ import {
   Tabs,
   message,
   Skeleton,
+  Pagination,
 } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import "../style/OrderHistory.css";
 import IMAGE from "../assets/login.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetOrderHistory, type OrderHistory } from "../hooks/ordersApi";
 import { useCreateFeedback } from "../hooks/feedbacksApi";
+import { useQueries } from "@tanstack/react-query";
+import axiosInstance from "../config/axios";
 import dayjs from "dayjs";
+import { getFormattedPrice } from "../utils/formatPrice";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
-interface OrderHistoryProps {
-  onDetailClick?: (order: OrderHistory) => void;
-}
-
 interface FeedbackItem {
+  orderId: number;
   productId: number;
   name: string;
   quantity: number;
   price: string;
-  rating: number;
-  comment: string;
+  rating?: number;
+  comment?: string;
 }
-
-const getFormattedPrice = (price: string | number) => {
-  const priceStr = typeof price === "number" ? price.toString() : price;
-  const integerPart = parseFloat(priceStr.split(".")[0]).toLocaleString();
-  return `${integerPart}đ`;
-};
 
 const statusMap: { [key: string]: string } & {
   Pending: string;
   Paid: string;
-  Approved: string;
-  Repairing: string;
+  Preparing: string;
   Cooked: string;
   Delivering: string;
   Delivered: string;
@@ -53,15 +48,15 @@ const statusMap: { [key: string]: string } & {
 } = {
   Pending: "Chờ thanh toán",
   Paid: "Đã thanh toán",
-  Approved: "Xác nhận đơn",
-  Repairing: "Đang nấu ăn",
+  Preparing: "Đang nấu ăn",
   Cooked: "Đã nấu xong",
   Delivering: "Đang giao",
   Delivered: "Đã giao",
   Canceled: "Đã hủy",
 };
 
-const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
+const OrderHistorys = () => {
+  const navigate = useNavigate();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{
     id: number;
@@ -74,15 +69,19 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
     orderItems: FeedbackItem[];
   } | null>(null);
 
-  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [loadingButtons, setLoadingButtons] = useState<Record<number, boolean>>(
     {}
   );
-  const [submittingFeedback, setSubmittingFeedback] = useState<
-    Record<number, boolean>
-  >({});
+  const [isLoadingCreateFeedback, setIsLoadingCreateFeedback] = useState(false);
+  const [sortedOrderHistory, setSortedOrderHistory] = useState<OrderHistory[]>(
+    []
+  );
 
   const { mutate: createFeedback } = useCreateFeedback();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   const calculateTotal = (order: OrderHistory) => {
     const itemTotal = order.orderItems.reduce(
@@ -90,14 +89,46 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       0
     );
     const order_shipping_fee = parseFloat(order.order_shipping_fee.toString());
-    return itemTotal + order_shipping_fee;
+    return itemTotal + order_shipping_fee - order.order_discount_value;
   };
 
-  const showModal = (order: OrderHistory) => {
-    setLoadingButtons((prev) => ({ ...prev, [order.orderId]: true }));
+  const { data: orderHistory, isLoading: isOrderHistoryLoading } =
+    useGetOrderHistory();
 
+  const feedbackQueries = useQueries({
+    queries: selectedOrder
+      ? selectedOrder.orderItems.map((item) => ({
+          queryKey: ["feedback", selectedOrder.id, item.productId],
+          queryFn: () =>
+            axiosInstance
+              .get(`feedback/${selectedOrder.id}/${item.productId}`)
+              .then((res) => res.data.feedbacks || []),
+          enabled: !!selectedOrder,
+        }))
+      : [],
+  });
+
+  useEffect(() => {
+    if (
+      isOrderHistoryLoading ||
+      !orderHistory ||
+      !Array.isArray(orderHistory)
+    ) {
+      setSortedOrderHistory([]);
+    } else {
+      setSortedOrderHistory(
+        [...orderHistory].sort((a, b) =>
+          dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
+        )
+      );
+    }
+  }, [orderHistory, isOrderHistoryLoading]);
+
+  const showModal = (order: OrderHistory) => {
     const actions = getActionsForStatus(order.status);
+
     const feedbackItems: FeedbackItem[] = order.orderItems.map((item) => ({
+      orderId: order.orderId,
       productId: item.productId,
       name: item.name,
       quantity: item.quantity,
@@ -105,6 +136,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       rating: 0,
       comment: "",
     }));
+
     setSelectedOrder({
       id: order.orderId,
       status: order.status,
@@ -117,100 +149,119 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
       actions: actions,
       orderItems: feedbackItems,
     });
-    setFeedbackItems(feedbackItems);
+    setFeedbacks(feedbackItems);
+    setIsLoadingCreateFeedback(false);
     setIsModalVisible(true);
   };
 
   const handleOk = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !feedbacks.length) return;
 
-    const itemsToSubmit = feedbackItems.filter(
-      (item) => item.rating > 0 || item.comment.trim()
+    const hasValidFeedback = feedbacks.some(
+      (item) => (item.rating ?? 0) > 0 || item.comment?.trim()
     );
-
-    if (itemsToSubmit.length === 0) {
-      setIsModalVisible(false);
-      setFeedbackItems([]);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+    if (!hasValidFeedback) {
+      message.warning("Vui lòng nhập ít nhất một đánh giá hoặc nhận xét!");
       return;
     }
 
-    setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: true }));
+    setIsLoadingCreateFeedback(true);
+    setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: true }));
 
     try {
-      const promises = itemsToSubmit.map(
-        (item) =>
-          new Promise<void>((resolve, reject) => {
-            createFeedback(
-              {
-                productId: item.productId,
-                feedbackData: {
-                  comment: item.comment,
-                  rating: item.rating,
-                },
-              },
-              {
-                onSuccess: () => {
-                  message.success(`Đánh giá cho ${item.name} đã được gửi!`);
-                  resolve();
-                },
-                onError: (error: any) => {
-                  message.error(
-                    `Đã xảy ra lỗi khi gửi đánh giá cho ${item.name}.`
-                  );
-                  console.error(error);
-                  reject(error);
-                },
-              }
-            );
-          })
+      const feedbackData = feedbacks
+        .filter((item) => (item.rating ?? 0) > 0 || (item.comment ?? "").trim())
+        .map((item) => ({
+          productId: item.productId,
+          comment: item.comment || "",
+          rating: item.rating || 0,
+        }));
+
+      if (feedbackData.length === 0) {
+        message.warning("Không có đánh giá nào để gửi!");
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        createFeedback(
+          {
+            orderId: selectedOrder.id,
+            feedbackData,
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: (error: any) => {
+              message.error(
+                `Lỗi khi gửi đánh giá cho đơn hàng ${selectedOrder.id}.`
+              );
+              console.error(error);
+              reject(error);
+            },
+          }
+        );
+      });
+
+      message.success(
+        `Đánh giá cho đơn hàng ${selectedOrder.id} đã được gửi thành công!`
       );
-
-      await Promise.all(promises);
-
-      setIsModalVisible(false);
-      setFeedbackItems([]);
-      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setFeedbacks((prev) =>
+        prev.map((item) => ({
+          ...item,
+          rating: 0,
+          comment: "",
+        }))
+      );
     } catch (error) {
+      message.error("Một số đánh giá không được gửi. Vui lòng thử lại.");
       console.error("Feedback submission failed:", error);
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
+    } finally {
+      setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
+      setIsLoadingCreateFeedback(false);
+      setIsModalVisible(false);
     }
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setFeedbackItems([]);
     if (selectedOrder) {
       setLoadingButtons((prev) => ({ ...prev, [selectedOrder.id]: false }));
-      setSubmittingFeedback((prev) => ({ ...prev, [selectedOrder.id]: false }));
     }
+    setIsLoadingCreateFeedback(false);
   };
 
   const handleRatingChange = (index: number, value: number) => {
-    setFeedbackItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, rating: value } : item))
-    );
+    console.log("Rating changed:", value, "at index:", index);
+    setFeedbacks((prev) => {
+      const newFeedbacks = [...prev];
+      newFeedbacks[index] = { ...newFeedbacks[index], rating: value };
+      return newFeedbacks;
+    });
   };
 
-  const handleCommentChange = (index: number, value: string) => {
-    setFeedbackItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, comment: value } : item))
-    );
+  const handleCommentChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    console.log("Comment changed:", value, "at index:", index);
+    setFeedbacks((prev) => {
+      const newFeedbacks = [...prev];
+      newFeedbacks[index] = { ...newFeedbacks[index], comment: value };
+      return newFeedbacks;
+    });
   };
-
-  const { data: orderHistory, isLoading: isOrderHistoryLoading } =
-    useGetOrderHistory();
 
   const getActionsForStatus = (status: string) => {
     switch (status) {
       case "Delivered":
-        return ["Đánh giá", "Đặt lại"];
-      case "Canceled":
-        return ["Đặt lại"];
-      case "Preparing":
-      case "Delivering":
-        return ["Đặt tiếp"];
+        return ["Đánh giá"];
+      // case "Canceled":
+      //   return ["Đặt lại"];
+      // case "Preparing":
+      // case "Delivering":
+      //   return ["Đặt tiếp"];
+      // case "Paid":
+      //   return ["Đánh giá"];
       default:
         return [];
     }
@@ -219,19 +270,45 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
   const statusTabs = [
     { text: "Chờ thanh toán", value: "Pending" },
     { text: "Đã thanh toán", value: "Paid" },
-    { text: "Xác nhận đơn", value: "Approved" },
-    { text: "Đang nấu ăn", value: "Repairing" },
+    { text: "Đang nấu ăn", value: "Preparing" },
     { text: "Đã nấu xong", value: "Cooked" },
     { text: "Đang giao", value: "Delivering" },
     { text: "Đã giao", value: "Delivered" },
     { text: "Đã hủy", value: "Canceled" },
   ];
 
-  const sortedOrderHistory = orderHistory
-    ? [...orderHistory].sort((a, b) =>
-        dayjs(b.order_create_at).diff(dayjs(a.order_create_at))
-      )
-    : [];
+  useEffect(() => {
+    if (selectedOrder && feedbackQueries.length > 0) {
+      const allFeedbacks = feedbackQueries
+        .map((query) => query.data || [])
+        .flat();
+      const updatedFeedbacks = selectedOrder.orderItems.map((item) => {
+        const matchingFeedback = allFeedbacks.find(
+          (fb: any) => fb.productId === item.productId
+        );
+        return {
+          ...item,
+          rating: matchingFeedback?.rating || item.rating || 0,
+          comment: matchingFeedback?.comment || item.comment || "",
+        };
+      });
+      setFeedbacks((prev) => {
+        if (prev.length === 0 || !prev.some((f) => f.rating || f.comment)) {
+          return updatedFeedbacks;
+        }
+        return prev;
+      });
+    }
+  }, [feedbackQueries, selectedOrder]);
+
+  const paginatedOrders = sortedOrderHistory.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="order-history-container">
@@ -242,13 +319,13 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         <Tabs.TabPane tab="Tất cả" key="all">
           {isOrderHistoryLoading ? (
             <Skeleton active style={{ padding: "0 34px" }} />
-          ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
-            sortedOrderHistory.map((order) => {
+          ) : paginatedOrders.length > 0 ? (
+            paginatedOrders.map((order) => {
               const actions = getActionsForStatus(order.status);
-              const itemCount = order.orderItems ? order.orderItems.length : 0;
+              const itemCount = order.orderItems.length;
               const isLoading = loadingButtons[order.orderId] || false;
-              const isSubmitting = submittingFeedback[order.orderId] || false;
               const total = calculateTotal(order);
+
               return (
                 <Col
                   key={order.orderId}
@@ -315,7 +392,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                           <Button
                             className="gray-button"
                             onClick={() =>
-                              onDetailClick && onDetailClick(order)
+                              navigate(`/user/order-tracking/${order.orderId}`)
                             }
                           >
                             Chi tiết
@@ -333,7 +410,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                 }}
                               >
                                 {action}
-                                {isSubmitting && (
+                                {isLoading && (
                                   <LoadingOutlined
                                     style={{ marginLeft: 8, fontSize: 14 }}
                                     spin
@@ -361,7 +438,32 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
               );
             })
           ) : (
-            <div style={{ padding: "0 34px" }}>Chưa có lịch sử mua hàng</div>
+            <div
+              style={{
+                padding: "0 34px",
+                fontFamily: "Montserrat, sans-serif",
+              }}
+            >
+              Chưa có lịch sử mua hàng
+            </div>
+          )}
+          {!isOrderHistoryLoading && sortedOrderHistory.length > pageSize && (
+            <div
+              style={{
+                marginTop: "20px",
+                padding: "0 24px",
+              }}
+            >
+              <Pagination
+                current={currentPage}
+                total={sortedOrderHistory.length}
+                pageSize={pageSize}
+                align="end"
+                className="history-pagination"
+                onChange={handlePageChange}
+                showSizeChanger={false}
+              />
+            </div>
           )}
         </Tabs.TabPane>
 
@@ -369,18 +471,16 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
           <Tabs.TabPane tab={text} key={value}>
             {isOrderHistoryLoading ? (
               <Skeleton active style={{ padding: "0 34px" }} />
-            ) : sortedOrderHistory && sortedOrderHistory.length > 0 ? (
-              sortedOrderHistory
+            ) : paginatedOrders.filter((order) => order.status === value)
+                .length > 0 ? (
+              paginatedOrders
                 .filter((order) => order.status === value)
                 .map((order) => {
                   const actions = getActionsForStatus(order.status);
-                  const itemCount = order.orderItems
-                    ? order.orderItems.length
-                    : 0;
+                  const itemCount = order.orderItems.length;
                   const isLoading = loadingButtons[order.orderId] || false;
-                  const isSubmitting =
-                    submittingFeedback[order.orderId] || false;
                   const total = calculateTotal(order);
+
                   return (
                     <Col
                       key={order.orderId}
@@ -388,9 +488,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                       sm={24}
                       md={24}
                       lg={24}
-                      style={{
-                        backgroundColor: "transparent",
-                      }}
+                      style={{ backgroundColor: "transparent" }}
                     >
                       <Card className="order-card">
                         <div className="order-content">
@@ -449,7 +547,9 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                               <Button
                                 className="gray-button"
                                 onClick={() =>
-                                  onDetailClick && onDetailClick(order)
+                                  navigate(
+                                    `/user/order-tracking/${order.orderId}`
+                                  )
                                 }
                               >
                                 Chi tiết
@@ -467,7 +567,7 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                                     }}
                                   >
                                     {action}
-                                    {isSubmitting && (
+                                    {isLoading && (
                                       <LoadingOutlined
                                         style={{ marginLeft: 8, fontSize: 14 }}
                                         spin
@@ -496,8 +596,39 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
                   );
                 })
             ) : (
-              <div>No order history.</div>
+              <div
+                style={{
+                  padding: "0 34px",
+                  fontFamily: "Montserrat, sans-serif",
+                }}
+              >
+                Chưa có lịch sử mua hàng
+              </div>
             )}
+            {!isOrderHistoryLoading &&
+              sortedOrderHistory.filter((order) => order.status === value)
+                .length > pageSize && (
+                <div
+                  style={{
+                    marginTop: "20px",
+                    padding: "0 24px",
+                  }}
+                >
+                  <Pagination
+                    current={currentPage}
+                    total={
+                      sortedOrderHistory.filter(
+                        (order) => order.status === value
+                      ).length
+                    }
+                    align="end"
+                    className="history-pagination"
+                    pageSize={pageSize}
+                    onChange={handlePageChange}
+                    showSizeChanger={false}
+                  />
+                </div>
+              )}
           </Tabs.TabPane>
         ))}
       </Tabs>
@@ -524,13 +655,12 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
             key="submit"
             className="submt-button-feedback"
             onClick={handleOk}
-            loading={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
-            disabled={
-              selectedOrder ? submittingFeedback[selectedOrder.id] : false
-            }
+            loading={selectedOrder ? loadingButtons[selectedOrder.id] : false}
+            disabled={false}
           >
+            {isLoadingCreateFeedback && (
+              <LoadingOutlined style={{ marginRight: 8, fontSize: 14 }} spin />
+            )}
             Gửi đánh giá
           </Button>,
         ]}
@@ -546,84 +676,87 @@ const OrderHistorys = ({ onDetailClick }: OrderHistoryProps) => {
         }}
       >
         {selectedOrder && selectedOrder.orderItems.length > 0 ? (
-          selectedOrder.orderItems.map((item, index) => (
-            <div key={index} className="feedback-item">
-              <Row>
-                <Col
-                  span={17}
-                  style={{ display: "flex", flexDirection: "column" }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      color: "#2d1e1a",
-                    }}
+          selectedOrder.orderItems.map((item, index) => {
+            const feedback = feedbacks[index] || {
+              orderId: item.orderId,
+              productId: item.productId,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              rating: 0,
+              comment: "",
+            };
+            return (
+              <div key={index} className="feedback-item">
+                <Row>
+                  <Col
+                    span={17}
+                    style={{ display: "flex", flexDirection: "column" }}
                   >
-                    {item.name}
-                  </Text>
-                </Col>
-                <Col span={7} style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#2d1e1a",
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+                  </Col>
+                  <Col span={7} style={{ textAlign: "right" }}>
+                    <Text
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        color: "#DA7339",
+                      }}
+                    >
+                      {item.price}
+                    </Text>
+                  </Col>
+                </Row>
+                <Col span={24}>
                   <Text
                     style={{
                       fontFamily: "Montserrat, sans-serif",
                       color: "#DA7339",
                     }}
                   >
-                    {item.price}
+                    Đánh giá món ăn
                   </Text>
                 </Col>
-              </Row>
-              <Col span={24}>
-                <Text
-                  style={{
-                    fontFamily: "Montserrat, sans-serif",
-                    color: "#DA7339",
-                  }}
-                >
-                  Đánh giá món ăn
-                </Text>
-              </Col>
-              <Row style={{ marginTop: "5px", alignItems: "center" }}>
-                <Col span={7} style={{ textAlign: "left" }}>
-                  <Rate
-                    defaultValue={item.rating}
-                    onChange={(value) => handleRatingChange(index, value)}
-                    style={{ color: "#78A243" }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
-                  />
-                </Col>
-                <Col span={17}>
-                  <Input
-                    placeholder="Nhận xét"
-                    defaultValue={item.comment}
-                    onChange={(e) => handleCommentChange(index, e.target.value)}
+                <Row style={{ marginTop: "5px", alignItems: "center" }}>
+                  <Col span={7} style={{ textAlign: "left" }}>
+                    <Rate
+                      value={feedback.rating}
+                      onChange={(value) => handleRatingChange(index, value)}
+                      style={{ color: "#78A243" }}
+                      disabled={false}
+                    />
+                  </Col>
+                  <Col span={17}>
+                    <Input
+                      placeholder="Nhận xét"
+                      value={feedback.comment || ""}
+                      onChange={(e) => handleCommentChange(index, e)}
+                      style={{
+                        fontFamily: "Montserrat, sans-serif",
+                        width: "100%",
+                      }}
+                      disabled={false}
+                    />
+                  </Col>
+                </Row>
+                {index < selectedOrder.orderItems.length - 1 && (
+                  <hr
                     style={{
-                      fontFamily: "Montserrat, sans-serif",
-                      width: "100%",
+                      border: "0",
+                      borderTop: "1px solid #000",
+                      margin: "10px 0",
                     }}
-                    disabled={
-                      selectedOrder
-                        ? submittingFeedback[selectedOrder.id]
-                        : false
-                    }
                   />
-                </Col>
-              </Row>
-              {index < selectedOrder.orderItems.length - 1 && (
-                <hr
-                  style={{
-                    border: "0",
-                    borderTop: "1px solid #000",
-                    margin: "10px 0",
-                  }}
-                />
-              )}
-            </div>
-          ))
+                )}
+              </div>
+            );
+          })
         ) : (
           <Text>Không có món nào để đánh giá.</Text>
         )}

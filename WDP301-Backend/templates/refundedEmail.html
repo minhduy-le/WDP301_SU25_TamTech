@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tấm Tắc</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        text-align: center;
+      }
+      .content {
+        margin-top: 20px;
+      }
+      .footer {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>Tấm Tắc</h2>
+      </div>
+      <div class="content">
+        <p>Kính gửi {{fullName}},</p>
+        <p>
+          Chúng tôi xin thông báo rằng đơn hàng của bạn đã được hủy và số tiền đã được hoàn lại. Dưới đây là thông tin
+          chi tiết:
+        </p>
+        <ul>
+          <li><strong>Mã đơn hàng:</strong> #{{orderId}}</li>
+          <li><strong>Số tiền hoàn lại:</strong> {{orderAmount}} VND</li>
+          <li><strong>Ngày đặt hàng:</strong> {{orderDate}}</li>
+          {{#if certificationRefund}}
+          <li>
+            <strong>Chứng từ hoàn tiền:</strong>
+            <a href="{{certificationRefund}}">Xem chứng từ</a><br />
+            <img
+              src="{{certificationRefund}}"
+              alt="Refund Certification"
+              style="max-width: 100%; height: auto; margin-top: 10px"
+            />
+          </li>
+          {{/if}}
+        </ul>
+        <p>
+          Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email
+          <a href="mailto:support@tam tac.vn">support@tam tac.vn</a> hoặc số điện thoại
+          <strong>+84 909 123 456</strong>.
+        </p>
+        <p>Xin cảm ơn bạn đã tin tưởng và ủng hộ Tấm Tắc!</p>
+      </div>
+      <div class="footer">
+        <p>
+          Tấm Tắc - 123 Đường Kinh Doanh, Quận 1, TP. Hồ Chí Minh<br />
+          <a href="http://www.tam tac.vn">www.tam tac.vn</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

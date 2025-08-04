@@ -86,6 +86,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
 
   const [modalAddonCategories, setModalAddonCategories] = useState<AddOnCategory[]>([]);
   const [modalTotalPrice, setModalTotalPrice] = useState<number>(0);
+  const [mainProductQuantity, setMainProductQuantity] = useState<number>(1);
 
   useEffect(() => {
     if (productTypes && open) {
@@ -129,7 +130,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
       if (!categoryToFetch || !categoryToFetch.apiType) return;
       try {
         const response = await axios.get(
-          `https://wdp301-su25.space/api/products/type/${categoryToFetch.apiType}`,
+          `${import.meta.env.VITE_API_URL}products/type/${categoryToFetch.apiType}`,
         );
         const dataToUse = response.data.products as Product[];
         setModalAddonCategories((prev) => {
@@ -169,6 +170,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
     if (open && product) {
       const freshCategories = JSON.parse(JSON.stringify(modalAddonCategories));
       setModalAddonCategories(freshCategories);
+      setMainProductQuantity(1);
       setModalTotalPrice(parseFloat(product.price));
     }
   }, [open, product]);
@@ -185,14 +187,21 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
 
   useEffect(() => {
     if (!product) return;
-    let currentTotal = parseFloat(product.price);
+    let currentTotal = parseFloat(product.price) * mainProductQuantity;
     modalAddonCategories.forEach((category) => {
       category.items.forEach((item) => {
         currentTotal += item.selectedQuantity * parseFloat(item.price);
       });
     });
     setModalTotalPrice(currentTotal);
-  }, [modalAddonCategories, product]);
+  }, [modalAddonCategories, product, mainProductQuantity]);
+
+  const handleMainProductQuantityChange = (change: number) => {
+    const newQuantity = mainProductQuantity + change;
+    if (newQuantity >= 1 && newQuantity <= 10) {
+      setMainProductQuantity(newQuantity);
+    }
+  };
 
   const handleModalQuantityChange = (
     categoryIndex: number,
@@ -232,13 +241,43 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
       productId: product.productId,
       productName: product.name,
       addOns: selectedAddonsForCart,
-      quantity: 1,
+      quantity: mainProductQuantity,
       price: parseFloat(product.price),
       totalPrice: modalTotalPrice,
     };
 
     addToCart(cartItem);
     message.success(`${product.name} và các món kèm đã được thêm vào giỏ!`);
+    
+    // Reset all quantities after adding to cart
+    setMainProductQuantity(1);
+    setModalAddonCategories((prevCategories) => {
+      const newCategories = JSON.parse(JSON.stringify(prevCategories));
+      newCategories.forEach((category: AddOnCategory) => {
+        category.items.forEach((item: AddOnProduct) => {
+          item.selectedQuantity = 0;
+        });
+      });
+      return newCategories;
+    });
+    setModalTotalPrice(0);
+    
+    onClose();
+  };
+
+  const handleCloseModal = () => {
+    // Reset all quantities
+    setMainProductQuantity(1);
+    setModalAddonCategories((prevCategories) => {
+      const newCategories = JSON.parse(JSON.stringify(prevCategories));
+      newCategories.forEach((category: AddOnCategory) => {
+        category.items.forEach((item: AddOnProduct) => {
+          item.selectedQuantity = 0;
+        });
+      });
+      return newCategories;
+    });
+    setModalTotalPrice(0);
     onClose();
   };
 
@@ -246,7 +285,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
     <Modal
       centered
       open={open}
-      onCancel={onClose}
+      onCancel={handleCloseModal}
       footer={null}
       width={600}
       bodyStyle={{ padding: 0, backgroundColor: "#F8F0E5" }}
@@ -256,7 +295,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
       <div style={{ padding: "20px" }}>
         <Button
           icon={<CloseOutlined />}
-          onClick={onClose}
+          onClick={handleCloseModal}
           style={{
             position: "absolute",
             top: 16,
@@ -294,12 +333,63 @@ const AddOnModal: React.FC<AddOnModalProps> = ({ open, onClose, product }) => {
             )}
           </Col>
           <Col>
-            <Tag
-              color="#f97316"
-              style={{ fontSize: "16px", padding: "6px 12px", fontWeight: "bold" }}
-            >
-              {parseFloat(product.price).toLocaleString()}đ
-            </Tag>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+              <Tag
+                color="#f97316"
+                style={{ fontSize: "16px", padding: "6px 12px", fontWeight: "bold" }}
+              >
+                {parseFloat(product.price).toLocaleString()}đ
+              </Tag>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  border: "1px solid #d9d9d9",
+                  borderRadius: "6px",
+                  borderColor: "#f97316",
+                }}
+              >
+                <Button
+                  icon={<MinusOutlined />}
+                  onClick={() => handleMainProductQuantityChange(-1)}
+                  type="text"
+                  style={{
+                    borderRight: "1px solid #d9d9d9",
+                    padding: "0 10px",
+                    height: "30px",
+                    outline: "none",
+                    borderColor: "#d97706",
+                  }}
+                  disabled={mainProductQuantity === 1}
+                />
+                <Text
+                  style={{
+                    padding: "0 12px",
+                    fontSize: "14px",
+                    height: "30px",
+                    lineHeight: "30px",
+                    minWidth: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  {mainProductQuantity}
+                </Text>
+                <Button
+                  icon={<PlusOutlined />}
+                  onClick={() => handleMainProductQuantityChange(1)}
+                  type="text"
+                  style={{
+                    borderLeft: "1px solid #d9d9d9",
+                    borderRadius: "0 4px 4px 0",
+                    padding: "0 10px",
+                    height: "30px",
+                    outline: "none",
+                    borderColor: "#d97706",
+                  }}
+                  disabled={mainProductQuantity >= 10}
+                />
+              </div>
+            </div>
           </Col>
         </Row>
         <Divider style={{ margin: "0 0 20px 0" }} />

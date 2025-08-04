@@ -1,0 +1,32 @@
+.refund-form-container {
+  padding: 24px;
+  margin: 0 auto;
+  background-color: #fff7e6;
+}
+
+.refund-title {
+  font-size: 30px;
+  font-weight: 600;
+  font-family: "Montserrat", sans-serif;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.refund-form-container .ant-select {
+  background: #ffffff;
+}
+
+.refund-form-container .ant-select-selection-item {
+  color: #d97706;
+  font-family: "Montserrat", sans-serif;
+}
+
+.refund-form-container .ant-form-item-required {
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px !important;
+}
+
+.refund-form-container .ant-select-selection-placeholder {
+  color: #d97706;
+  font-family: "Montserrat", sans-serif;
+}

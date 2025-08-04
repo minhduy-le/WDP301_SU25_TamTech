@@ -46,6 +46,7 @@ header {
 .header-logo img {
   margin-right: 10px;
   height: 61px;
+  width: 170px;
 }
 
 .header-menu {
@@ -219,4 +220,9 @@ header {
     width: 24px;
     height: 24px;
   }
+}
+
+.icon-header .ant-btn-icon {
+  height: -webkit-fill-available;
+  margin-top: -5px;
 }

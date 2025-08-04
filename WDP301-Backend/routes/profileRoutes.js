@@ -1,4 +1,3 @@
-// routes/profileRoutes.js
 const express = require("express");
 const router = express.Router();
 const profileService = require("../services/profileService");
@@ -11,6 +10,8 @@ const QRCode = require("qrcode");
  *   get:
  *     summary: Get user profile by ID
  *     tags: [Profiles]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -55,12 +56,14 @@ const QRCode = require("qrcode");
  *                   description: Base64 encoded QR code image pointing to the user profile URL
  *       400:
  *         description: Invalid user ID
+ *       403:
+ *         description: Unauthorized to view this profile
  *       404:
  *         description: User not found
  *       500:
  *         description: Server error
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", verifyToken, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
     if (isNaN(userId) || userId < 1) {
@@ -70,22 +73,30 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    // Check if the logged-in user is trying to access their own profile
+    if (userId !== req.userId) {
+      return res.status(403).json({
+        status: 403,
+        message: "You can only view your own profile",
+      });
+    }
+
     const user = await profileService.getUserProfile(userId);
 
-    // Tạo URL cho profile với domain của bạn
+    // Create URL for profile
     const profileUrl = `https://wdp301-su25.space/public-profiles/${userId}`;
 
-    // Tạo QR code dưới dạng base64
+    // Generate QR code as base64
     const qrCode = await QRCode.toDataURL(profileUrl, {
-      width: 200, // Kích thước QR code
-      color: { dark: "#000000", light: "#ffffff" }, // Màu QR code
+      width: 200,
+      color: { dark: "#000000", light: "#ffffff" },
     });
 
     res.status(200).json({
       status: 200,
       message: "User profile retrieved successfully",
       user,
-      qrCode, // Trả về QR code trong response
+      qrCode,
     });
   } catch (error) {
     console.error("Error retrieving user profile:", error);
@@ -118,7 +129,7 @@ router.get("/public/:id", async (req, res) => {
 
     const user = await profileService.getUserProfile(userId);
 
-    // Trả về trang HTML hiển thị thông tin user
+    // Return HTML page displaying user information
     res.status(200).send(`
       <html>
         <head>
@@ -162,7 +173,6 @@ router.get("/public/:id", async (req, res) => {
   }
 });
 
-// API cập nhật profile
 /**
  * @swagger
  * /api/profiles/{id}:
@@ -249,7 +259,7 @@ router.put("/:id", verifyToken, async (req, res) => {
       });
     }
 
-    // Kiểm tra quyền truy cập: Chỉ cho phép cập nhật profile của chính mình
+    // Check if the logged-in user is trying to update their own profile
     if (userId !== req.userId) {
       return res.status(403).json({
         status: 403,
@@ -259,7 +269,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 
     const { fullName, email, phone_number, date_of_birth } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
+    // Validate input data
     if (fullName && (typeof fullName !== "string" || fullName.length > 20)) {
       return res.status(400).json({
         status: 400,
@@ -303,6 +313,12 @@ router.put("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({
         status: 404,
         message: "User not found",
+      });
+    }
+    if (error.message === "Email already exists" || error.message === "Phone number already exists") {
+      return res.status(400).json({
+        status: 400,
+        message: error.message,
       });
     }
     res.status(500).json({

@@ -4,7 +4,6 @@ import {
   Row,
   Col,
   Input,
-  Select,
   Radio,
   Button,
   Card,
@@ -12,21 +11,27 @@ import {
   Space,
   Checkbox,
   Divider,
-  TimePicker,
   message,
+  Spin,
+  Modal,
 } from "antd";
 import "../style/Checkout.css";
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
+// import { useDistricts, useWardByDistrictId } from "../hooks/locationsApi";
 import { useCalculateShipping, useCreateOrder } from "../hooks/ordersApi";
 import { useAuthStore } from "../hooks/usersApi";
 import { useGetProfileUser } from "../hooks/profileApi";
 import { useCartStore } from "../store/cart.store";
-import { useGetPromotionByCode, type Promotion } from "../hooks/promotionApi";
+import {
+  useGetPromotionByCode,
+  useGetPromotionUser,
+  type Promotion,
+} from "../hooks/promotionApi";
+import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 
-const { Option } = Select;
+// const { Option } = Select;
 const { Title, Text } = Typography;
 
 interface AddOn {
@@ -53,38 +58,52 @@ interface OrderItem {
 }
 
 const Checkout = () => {
-  const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
-  const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
-    null
-  );
+  // const [deliveryTimeOption, setDeliveryTimeOption] = useState("now");
+  // const [selectedDistrictId, setSelectedDistrictId] = useState<number | null>(
+  //   null
+  // );
   const [detailedAddress, setDetailedAddress] = useState("");
-  const [isProxyOrder, setIsProxyOrder] = useState(false);
-  const currentDate = dayjs().format("DD/MM/YYYY");
-  const [paymentMethod, setPaymentMethod] = useState<number>(0);
+  const [isDatHo, setIsDatHo] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<number>(4);
   const [note, setNote] = useState("");
-  const [promotionCode, setPromotionCode] = useState("");
   const [detailedAddressProxy, setDetailedAddressProxy] = useState("");
   const [nguoiDatHo, setNguoiDatHo] = useState("");
   const [sdtNguoiDatHo, setSdtNguoiDatHo] = useState("");
-  const [selectedWard, setSelectedWard] = useState<string | null>(null);
+  // const [selectedWard, setSelectedWard] = useState<string | null>(null);
   const { cartItems, updateCartItems } = useCartStore();
   const { user } = useAuthStore();
   const userId = user?.id;
+  const inputrefUser = useRef<google.maps.places.SearchBox | null>(null);
+  const inputrefProxy = useRef<google.maps.places.SearchBox | null>(null);
+  const [isAddressFromPlacesUser, setIsAddressFromPlacesUser] = useState(false);
+  const [isAddressFromPlacesProxy, setIsAddressFromPlacesProxy] =
+    useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedUserPromo, setSelectedUserPromo] = useState<Promotion | null>(
+    null
+  );
+  const [manualPromoCode, setManualPromoCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const { data: userPromotions, isLoading } = useGetPromotionUser(userId ?? 0);
   const { data: userProfile } = useGetProfileUser(userId || 0);
 
-  const { data: districts = [], isLoading, isError } = useDistricts();
-  const {
-    data: wards = [],
-    isLoading: isWardsLoading,
-    isError: isWardsError,
-  } = useWardByDistrictId(selectedDistrictId);
+  // const {
+  //   data: districts = [],
+  //   isLoading: isDistrictsLoading,
+  //   isError: isDistrictsError,
+  // } = useDistricts();
+  // const {
+  //   data: wards = [],
+  //   isLoading: isWardsLoading,
+  //   isError: isWardsError,
+  // } = useWardByDistrictId(selectedDistrictId);
 
   const {
     data: promotion,
     refetch: refetchPromotion,
     isError: isPromotionError,
-  } = useGetPromotionByCode(promotionCode);
+  } = useGetPromotionByCode(manualPromoCode);
   const [appliedPromotion, setAppliedPromotion] = useState<Promotion | null>(
     null
   );
@@ -96,8 +115,222 @@ const Checkout = () => {
   };
 
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+  const [isLoadingButton, setIsLoadingButton] = useState(false);
 
-  // Initialize selectedItems with quantities from initialSelectedItems
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: "AIzaSyAwSwTDdF00hbh21k7LsX-4Htuwqm9MlPg",
+    libraries: ["places"],
+  });
+
+  const tphcmBounds = {
+    north: 10.8657, // Vĩ độ bắc
+    south: 10.6958, // Vĩ độ nam
+    east: 106.8393, // Kinh độ đông
+    west: 106.584, // Kinh độ tây
+  };
+
+  const isWithinTPHCMBounds = (lat: number, lng: number) => {
+    return (
+      lat >= tphcmBounds.south &&
+      lat <= tphcmBounds.north &&
+      lng >= tphcmBounds.west &&
+      lng <= tphcmBounds.east
+    );
+  };
+
+  const handleOnPlacesChangedUser = () => {
+    if (inputrefUser.current && isLoaded) {
+      const places = inputrefUser.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.geometry && place.geometry.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          if (!isWithinTPHCMBounds(lat, lng)) {
+            message.error("Vui lòng chọn địa chỉ trong Thành phố Hồ Chí Minh.");
+            return;
+          }
+          if (place.formatted_address) {
+            let cleanedAddress = place.formatted_address;
+            cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+            const hoChiMinhIndex = cleanedAddress.indexOf("Hồ Chí Minh");
+            if (hoChiMinhIndex !== -1) {
+              cleanedAddress = cleanedAddress
+                .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+                .trim();
+            }
+            setDetailedAddress(cleanedAddress);
+            setIsAddressFromPlacesUser(true);
+            const deliverAddress = cleanedAddress.trim();
+            calculateShipping(
+              { deliver_address: deliverAddress },
+              {
+                onSuccess: (data: any) => {
+                  setDeliveryFee(data.fee || 0);
+                  message.success("Phí giao hàng đã được cập nhật.");
+                },
+                onError: (error: any) => {
+                  if (
+                    error.response.data?.message ===
+                    "Delivery address must be in the format: street name, ward, district, city"
+                  ) {
+                    message.error(
+                      "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                    );
+                  } else {
+                    message.error(error.response.data?.message);
+                  }
+                  setDeliveryFee(22000);
+                },
+              }
+            );
+          } else {
+            message.error("Không thể lấy địa chỉ từ Google Maps.");
+          }
+        } else {
+          message.error("Không thể xác định tọa độ của địa chỉ.");
+        }
+      } else {
+        message.error("Không tìm thấy địa chỉ nào.");
+      }
+    } else {
+      message.error(
+        "Google Maps API chưa được tải. Vui lòng kiểm tra khóa API."
+      );
+    }
+  };
+
+  const handleOnPlacesChangedProxy = () => {
+    if (inputrefProxy.current && isLoaded) {
+      const places = inputrefProxy.current.getPlaces();
+      if (places && places.length > 0) {
+        const place = places[0];
+        if (place.geometry && place.geometry.location) {
+          const lat = place.geometry.location.lat();
+          const lng = place.geometry.location.lng();
+          if (!isWithinTPHCMBounds(lat, lng)) {
+            message.error("Vui lòng chọn địa chỉ trong Thành phố Hồ Chí Minh.");
+            return;
+          }
+          if (place.formatted_address) {
+            let cleanedAddress = place.formatted_address;
+            cleanedAddress = cleanedAddress.replace(/, Vietnam$/i, "").trim();
+            const hoChiMinhIndex = cleanedAddress.indexOf("Hồ Chí Minh");
+            if (hoChiMinhIndex !== -1) {
+              cleanedAddress = cleanedAddress
+                .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+                .trim();
+            }
+            setDetailedAddressProxy(cleanedAddress);
+            setIsAddressFromPlacesProxy(true);
+            const deliverAddress = cleanedAddress.trim();
+            calculateShipping(
+              { deliver_address: deliverAddress },
+              {
+                onSuccess: (data: any) => {
+                  setDeliveryFee(data.fee || 0);
+                  message.success("Phí giao hàng đã được cập nhật.");
+                },
+                onError: (error: any) => {
+                  if (
+                    error.response.data?.message ===
+                    "Delivery address must be in the format: street name, ward, district, city"
+                  ) {
+                    message.error(
+                      "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+                    );
+                  } else {
+                    message.error(error.response.data?.message);
+                  }
+                  setDeliveryFee(22000);
+                },
+              }
+            );
+          } else {
+            message.error("Không thể lấy địa chỉ từ Google Maps.");
+          }
+        } else {
+          message.error("Không thể xác định tọa độ của địa chỉ.");
+        }
+      } else {
+        message.error("Không tìm thấy địa chỉ nào.");
+      }
+    } else {
+      message.error(
+        "Google Maps API chưa được tải. Vui lòng kiểm tra khóa API."
+      );
+    }
+  };
+
+  const handleAddressBlurUser = () => {
+    if (detailedAddress.trim() && !isAddressFromPlacesUser) {
+      let deliverAddress = detailedAddress.trim();
+      const hoChiMinhIndex = deliverAddress.indexOf("Hồ Chí Minh");
+      if (hoChiMinhIndex !== -1) {
+        deliverAddress = deliverAddress
+          .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+          .trim();
+      }
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
+          },
+          // onError: (error: any) => {
+          //   if (
+          //     error.response.data?.message ===
+          //     "Delivery address must be in the format: street name, ward, district, city"
+          //   ) {
+          //     message.error(
+          //       "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+          //     );
+          //   } else {
+          //     message.error(error.response.data?.message);
+          //   }
+          //   setDeliveryFee(22000);
+          // },
+        }
+      );
+    }
+  };
+
+  const handleAddressBlurProxy = () => {
+    if (detailedAddressProxy.trim() && !isAddressFromPlacesProxy) {
+      let deliverAddress = detailedAddressProxy.trim();
+      const hoChiMinhIndex = deliverAddress.indexOf("Hồ Chí Minh");
+      if (hoChiMinhIndex !== -1) {
+        deliverAddress = deliverAddress
+          .substring(0, hoChiMinhIndex + "Hồ Chí Minh".length)
+          .trim();
+      }
+      calculateShipping(
+        { deliver_address: deliverAddress },
+        {
+          onSuccess: (data: any) => {
+            setDeliveryFee(data.fee || 0);
+            message.success("Phí giao hàng đã được cập nhật.");
+          },
+          // onError: (error: any) => {
+          //   if (
+          //     error.response.data?.message ===
+          //     "Delivery address must be in the format: street name, ward, district, city"
+          //   ) {
+          //     message.error(
+          //       "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
+          //     );
+          //   } else {
+          //     message.error(error.response.data?.message);
+          //   }
+          //   setDeliveryFee(22000);
+          // },
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     setSelectedItems(initialSelectedItems);
   }, [initialSelectedItems]);
@@ -111,96 +344,61 @@ const Checkout = () => {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const total = subtotal - discountOnItems - promoDiscount + deliveryFee;
 
-  const handleDistrictChange = (value: number) => {
-    setSelectedDistrictId(value);
-    setSelectedWard(null);
-  };
+  // const handleDistrictChange = (value: number) => {
+  //   setSelectedDistrictId(value);
+  //   setSelectedWard(null);
+  // };
 
-  const handleWardChange = (value: string) => {
-    setSelectedWard(value);
-  };
+  // const handleWardChange = (value: string) => {
+  //   setSelectedWard(value);
+  // };
 
   const { mutate: calculateShipping } = useCalculateShipping();
   const { mutate: createOrder } = useCreateOrder();
 
-  const handleAddressBlurUser = () => {
-    if (detailedAddress) {
-      const deliverAddress = detailedAddress.trim();
-      calculateShipping(
-        { deliver_address: deliverAddress },
-        {
-          onSuccess: (data: any) => {
-            setDeliveryFee(data.fee || 0);
-            message.success("Phí giao hàng đã được cập nhật.");
-          },
-          onError: (error: any) => {
-            if (
-              error.response.data?.message ===
-              "Delivery address must be in the format: street name, ward, district, city"
-            ) {
-              message.error(
-                "Địa chỉ giao hàng phải được nhập theo định dạng : số nhà tên đường, phường, quận, thành phố"
-              );
-            } else {
-              message.error(error.response.data?.message);
-            }
-            setDeliveryFee(22000);
-          },
-        }
-      );
-    }
-  };
-
-  const handleAddressBlur = () => {
-    if (detailedAddressProxy && selectedDistrictId && wards.length > 0) {
-      const selectedWardName = selectedWard;
-      const selectedDistrict = districts.find(
-        (district) => district.districtId === selectedDistrictId
-      );
-      const deliverAddress =
-        `${detailedAddressProxy}, ${selectedWardName}, ${selectedDistrict?.name}, TPHCM`.trim();
-      calculateShipping(
-        { deliver_address: deliverAddress },
-        {
-          onSuccess: (data: any) => {
-            setDeliveryFee(data.fee || 0);
-            message.success("Phí giao hàng đã được cập nhật.");
-          },
-          onError: (error: any) => {
-            console.error("Error calculating shipping:", error);
-            message.error(
-              "Không thể tính phí giao hàng. Sử dụng phí mặc định."
-            );
-            setDeliveryFee(22000);
-          },
-        }
-      );
-    }
-  };
-
   const handleApplyPromotion = () => {
-    if (!promotionCode) {
-      message.warning("Vui lòng nhập mã khuyến mãi.");
+    if (!manualPromoCode) {
+      setErrorMessage("Vui lòng nhập mã khuyến mãi.");
       return;
     }
+    setErrorMessage(null);
     refetchPromotion().then(() => {
       if (isPromotionError) {
-        message.error("Mã giảm giá không hợp lệ.");
-        setAppliedPromotion(null);
+        setErrorMessage("Mã giảm giá không hợp lệ.");
         return;
       }
       if (promotion) {
         if (subtotal >= promotion.minOrderAmount) {
           message.success("Mã giảm giá hợp lệ.");
           setAppliedPromotion(promotion);
+          setErrorMessage(null);
+          setIsModalVisible(false);
         } else {
-          message.error(
+          setErrorMessage(
             `Mã giảm giá không hợp lệ. Tổng đơn hàng phải tối thiểu ${promotion.minOrderAmount.toLocaleString()}đ.`
           );
-          setAppliedPromotion(null);
         }
       }
     });
+  };
+
+  const handleApplyUserPromotion = () => {
+    if (selectedUserPromo) {
+      if (subtotal >= selectedUserPromo.minOrderAmount) {
+        message.success("Khuyến mãi từ tài khoản đã được áp dụng.");
+        setAppliedPromotion(selectedUserPromo);
+        setSelectedUserPromo(null);
+        setIsModalVisible(false);
+      } else {
+        message.error(
+          `Khuyến mãi không hợp lệ. Tổng đơn hàng phải tối thiểu ${selectedUserPromo.minOrderAmount.toLocaleString()}đ.`
+        );
+      }
+    } else {
+      setAppliedPromotion(null);
+      setIsModalVisible(false);
+      message.info("Đã hủy áp dụng khuyến mãi.");
+    }
   };
 
   const handleOrderSubmit = () => {
@@ -229,8 +427,8 @@ const Checkout = () => {
     const paymentMethodId = paymentMethod ?? 0;
 
     let orderAddress = detailedAddress.trim();
-    if (isProxyOrder && detailedAddressProxy) {
-      orderAddress = detailedAddressProxy.trim();
+    if (isDatHo && detailedAddressProxy) {
+      orderAddress = detailedAddressProxy;
     }
 
     const orderData = {
@@ -241,14 +439,19 @@ const Checkout = () => {
       order_shipping_fee: deliveryFee,
       payment_method_id: paymentMethodId,
       order_address: orderAddress,
+      platform: "Web",
       note: note || "",
-      promotion_code: appliedPromotion ? promotionCode : "",
-      ...(isProxyOrder && {
+      promotion_code: appliedPromotion
+        ? appliedPromotion.code || manualPromoCode
+        : "",
+      ...(isDatHo && {
         isDatHo: true,
         tenNguoiDatHo: nguoiDatHo,
         soDienThoaiNguoiDatHo: sdtNguoiDatHo,
       }),
     };
+
+    setIsLoadingButton(true);
 
     createOrder(orderData, {
       onSuccess: (data: any) => {
@@ -260,6 +463,7 @@ const Checkout = () => {
           );
         });
         updateCartItems(updatedCartItems);
+        setIsLoadingButton(false);
       },
       onError: (error) => {
         const errorMessage = error.response.data;
@@ -269,9 +473,17 @@ const Checkout = () => {
           errorMessage === "Valid payment method ID is required (1-4)"
         ) {
           message.error("Vui lòng chọn phương thức thanh toán");
+        } else if (
+          errorMessage ===
+          "Order can only be placed during store operating hours"
+        ) {
+          message.error(
+            "Đơn hàng chỉ có thể được đặt trong giờ hoạt động của cửa hàng"
+          );
         } else {
           message.error(errorMessage);
         }
+        setIsLoadingButton(false);
       },
     });
   };
@@ -279,24 +491,39 @@ const Checkout = () => {
   const handleIncrement = (productId: number) => {
     setSelectedItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.productId === productId && item.quantity < 10) {
+        if (item.productId === productId) {
           const newQuantity = item.quantity + 1;
-          const newTotalPrice = item.price * newQuantity;
-          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+          const addOnTotalPrice = item.addOns.reduce(
+            (sum, addOn) => sum + addOn.price * addOn.quantity,
+            0
+          );
+          const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
+          return {
+            ...item,
+            quantity: newQuantity,
+            totalPrice: newTotalPrice,
+          };
         }
         return item;
       })
     );
   };
 
-  // Handle decrement quantity
   const handleDecrement = (productId: number) => {
     setSelectedItems((prevItems) =>
       prevItems.map((item) => {
         if (item.productId === productId && item.quantity > 1) {
           const newQuantity = item.quantity - 1;
-          const newTotalPrice = item.price * newQuantity;
-          return { ...item, quantity: newQuantity, totalPrice: newTotalPrice };
+          const addOnTotalPrice = item.addOns.reduce(
+            (sum, addOn) => sum + addOn.price * addOn.quantity,
+            0
+          );
+          const newTotalPrice = item.price * newQuantity + addOnTotalPrice;
+          return {
+            ...item,
+            quantity: newQuantity,
+            totalPrice: newTotalPrice,
+          };
         }
         return item;
       })
@@ -312,33 +539,8 @@ const Checkout = () => {
       </div>
       <Row gutter={16}>
         <Col span={12}>
-          <Card className="section-card">
+          <Card className="section-card" style={{ marginBottom: 0 }}>
             <Space direction="vertical" style={{ width: "100%" }}>
-              <div className="radio-group" style={{ display: "flex" }}>
-                <Title
-                  level={3}
-                  style={{
-                    margin: "0 25px 0 0",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                >
-                  Hình thức
-                </Title>
-                <Radio.Group defaultValue="delivery">
-                  <Radio
-                    value="delivery"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Giao hàng
-                  </Radio>
-                  <Radio
-                    value="pickup"
-                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                  >
-                    Dùng tại quán
-                  </Radio>
-                </Radio.Group>
-              </div>
               <Title
                 level={3}
                 style={{ fontFamily: "'Montserrat', sans-serif" }}
@@ -352,7 +554,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.fullName}
+                value={userProfile?.user.fullName}
                 disabled
               />
               <Input
@@ -362,7 +564,7 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.phone_number}
+                value={userProfile?.user.phone_number}
                 disabled
               />
               <Input
@@ -372,20 +574,49 @@ const Checkout = () => {
                   fontFamily: "'Montserrat', sans-serif",
                   color: "#da7339",
                 }}
-                value={userProfile?.email}
+                value={userProfile?.user.email}
                 disabled
               />
-              {!isProxyOrder && (
-                <Input
-                  placeholder="Địa chỉ chi tiết"
-                  style={{
-                    background: "transparent",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                  value={detailedAddress}
-                  onChange={(e) => setDetailedAddress(e.target.value)}
-                  onBlur={handleAddressBlurUser}
-                />
+              {!isDatHo && (
+                <>
+                  {isLoaded ? (
+                    <StandaloneSearchBox
+                      onLoad={(ref) => (inputrefUser.current = ref)}
+                      onPlacesChanged={handleOnPlacesChangedUser}
+                      options={{
+                        bounds: tphcmBounds,
+                      }}
+                    >
+                      <Input
+                        placeholder="Địa chỉ chi tiết"
+                        style={{
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        value={detailedAddress}
+                        onChange={(e) => {
+                          setDetailedAddress(e.target.value);
+                          setIsAddressFromPlacesUser(false);
+                        }}
+                        onBlur={handleAddressBlurUser}
+                      />
+                    </StandaloneSearchBox>
+                  ) : (
+                    <Input
+                      placeholder="Địa chỉ chi tiết (Đang tải Google Maps...)"
+                      style={{
+                        background: "transparent",
+                        fontFamily: "'Montserrat', sans-serif",
+                      }}
+                      value={detailedAddress}
+                      onChange={(e) => {
+                        setDetailedAddress(e.target.value);
+                        setIsAddressFromPlacesUser(false);
+                      }}
+                      disabled
+                    />
+                  )}
+                </>
               )}
               <Row>
                 <Title
@@ -396,15 +627,15 @@ const Checkout = () => {
                 </Title>
                 <div className="checkbox-label">
                   <Checkbox
-                    checked={isProxyOrder}
-                    onChange={(e) => setIsProxyOrder(e.target.checked)}
+                    checked={isDatHo}
+                    onChange={(e) => setIsDatHo(e.target.checked)}
                   />
                   <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
                     Đặt hộ
                   </Text>
                 </div>
               </Row>
-              {isProxyOrder && (
+              {isDatHo && (
                 <>
                   <Input
                     placeholder="Tên người nhận"
@@ -424,7 +655,7 @@ const Checkout = () => {
                     value={sdtNguoiDatHo}
                     onChange={(e) => setSdtNguoiDatHo(e.target.value)}
                   />
-                  <Row style={{ justifyContent: "space-between" }}>
+                  {/* <Row style={{ justifyContent: "space-between" }}>
                     <Col span={11}>
                       <Select
                         defaultValue={null}
@@ -434,8 +665,8 @@ const Checkout = () => {
                           fontFamily: "'Montserrat', sans-serif",
                         }}
                         placeholder="Quận huyện"
-                        loading={isLoading}
-                        disabled={isError}
+                        loading={isDistrictsLoading}
+                        disabled={isDistrictsError}
                         onChange={handleDistrictChange}
                         value={selectedDistrictId || undefined}
                       >
@@ -469,18 +700,45 @@ const Checkout = () => {
                         ))}
                       </Select>
                     </Col>
-                  </Row>
-                  <Input
-                    placeholder="Địa chỉ chi tiết"
-                    style={{
-                      background: "transparent",
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                    value={detailedAddressProxy}
-                    onChange={(e) => setDetailedAddressProxy(e.target.value)}
-                    onBlur={handleAddressBlur}
-                  />
-                  <div className="delivery-info">
+                  </Row> */}
+                  {isLoaded ? (
+                    <StandaloneSearchBox
+                      onLoad={(ref) => (inputrefProxy.current = ref)}
+                      onPlacesChanged={handleOnPlacesChangedProxy}
+                      options={{
+                        bounds: tphcmBounds,
+                      }}
+                    >
+                      <Input
+                        placeholder="Địa chỉ chi tiết"
+                        style={{
+                          background: "transparent",
+                          fontFamily: "'Montserrat', sans-serif",
+                        }}
+                        value={detailedAddressProxy}
+                        onChange={(e) => {
+                          setDetailedAddressProxy(e.target.value);
+                          setIsAddressFromPlacesProxy(false);
+                        }}
+                        onBlur={handleAddressBlurProxy}
+                      />
+                    </StandaloneSearchBox>
+                  ) : (
+                    <Input
+                      placeholder="Địa chỉ chi tiết (Đang tải Google Maps...)"
+                      style={{
+                        background: "transparent",
+                        fontFamily: "'Montserrat', sans-serif",
+                      }}
+                      value={detailedAddressProxy}
+                      onChange={(e) => {
+                        setDetailedAddressProxy(e.target.value);
+                        setIsAddressFromPlacesProxy(false);
+                      }}
+                      disabled
+                    />
+                  )}
+                  {/* <div className="delivery-info">
                     <Radio.Group
                       value={deliveryTimeOption}
                       onChange={(e) => setDeliveryTimeOption(e.target.value)}
@@ -494,21 +752,8 @@ const Checkout = () => {
                       >
                         Giao ngay
                       </Radio>
-                      <Radio
-                        value="later"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}
-                      >
-                        Hẹn lịch giao lúc{" "}
-                        <TimePicker
-                          format="HH:mm"
-                          placeholder="Chọn thời gian ngay tại đây luôn"
-                          // minuteStep={5}
-                          style={{ width: 112 }}
-                        />{" "}
-                        ngày <span>{currentDate}</span>
-                      </Radio>
                     </Radio.Group>
-                  </div>
+                  </div> */}
                 </>
               )}
             </Space>
@@ -534,12 +779,6 @@ const Checkout = () => {
                 >
                   Quét mã QR
                 </Radio>
-                <Radio
-                  value={1}
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  Tiền mặt (COD)
-                </Radio>
               </Space>
             </Radio.Group>
           </Card>
@@ -564,11 +803,13 @@ const Checkout = () => {
                   key={item.productId}
                 >
                   <Row style={{ justifyContent: "space-between" }}>
-                    <Col>
+                    <Col span={17}>
                       <Text
                         style={{
                           fontFamily: "'Montserrat', sans-serif",
                           fontSize: 17,
+                          display: "block",
+                          height: 30,
                         }}
                       >
                         {item.productName}
@@ -576,46 +817,77 @@ const Checkout = () => {
                       {item.addOns.length > 0 && (
                         <>
                           {item.addOns.map((addOn, index) => (
-                            <Text
-                              key={index}
-                              className="sub-item"
-                              style={{ fontFamily: "'Montserrat', sans-serif" }}
-                            >
-                              • {addOn.productTypeName}
-                            </Text>
+                            <Row style={{ flexWrap: "nowrap" }}>
+                              <Text
+                                key={index}
+                                className="sub-item"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                  width: "-webkit-fill-available",
+                                }}
+                              >
+                                • {addOn.productTypeName} x{addOn.quantity}
+                              </Text>
+                            </Row>
                           ))}
                         </>
                       )}
                     </Col>
-                    <Col>
-                      <div className="order-price">
-                        <Text
-                          style={{
-                            fontFamily: "'Montserrat', sans-serif",
-                            color: "#DA7339",
-                            fontSize: 15,
-                            fontWeight: 700,
-                            marginRight: 13,
-                          }}
-                        >
-                          {(item.totalPrice / item.quantity).toLocaleString()}đ
-                        </Text>
-                        <div className="quantity-controls">
-                          <Button
-                            disabled={item.quantity === 1}
-                            onClick={() => handleDecrement(item.productId)}
+                    <Col span={7}>
+                      <Row>
+                        <div className="order-price">
+                          <Text
+                            style={{
+                              fontFamily: "'Montserrat', sans-serif",
+                              color: "#DA7339",
+                              fontSize: 15,
+                              fontWeight: 700,
+                              marginRight: 13,
+                            }}
                           >
-                            -
-                          </Button>
-                          <span>{item.quantity}</span>
-                          <Button
-                            onClick={() => handleIncrement(item.productId)}
-                            disabled={item.quantity === 10}
-                          >
-                            +
-                          </Button>
+                            {item.price.toLocaleString()}đ
+                          </Text>
+                          <div className="quantity-controls">
+                            <Button
+                              disabled={item.quantity === 1}
+                              onClick={() => handleDecrement(item.productId)}
+                            >
+                              -
+                            </Button>
+                            <span>{item.quantity}</span>
+                            <Button
+                              onClick={() => handleIncrement(item.productId)}
+                            >
+                              +
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      </Row>
+                      {item.addOns.length > 0 && (
+                        <Col>
+                          {item.addOns.map((addOn, index) => (
+                            <Row style={{ flexWrap: "nowrap" }}>
+                              <Text
+                                key={index}
+                                className="sub-item"
+                                style={{
+                                  fontFamily: "'Montserrat', sans-serif",
+                                  color: "#DA7339",
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  whiteSpace: "nowrap",
+                                  margin: 0,
+                                }}
+                              >
+                                {(
+                                  addOn.price * addOn.quantity
+                                ).toLocaleString()}
+                                đ
+                              </Text>
+                            </Row>
+                          ))}
+                        </Col>
+                      )}
                     </Col>
                   </Row>
                 </div>
@@ -634,18 +906,6 @@ const Checkout = () => {
           <Card className="confirm-card section-card order-details">
             <Row style={{ justifyContent: "space-between" }}>
               <Col span={20}>
-                <Input
-                  placeholder="Nhập mã khuyến mãi"
-                  style={{
-                    marginTop: "10px",
-                    background: "#efe6db",
-                    fontFamily: "'Montserrat', sans-serif",
-                  }}
-                  value={promotionCode}
-                  onChange={(e) => setPromotionCode(e.target.value)}
-                />
-              </Col>
-              <Col>
                 <Button
                   type="primary"
                   className="apply-promo"
@@ -653,9 +913,9 @@ const Checkout = () => {
                     fontFamily: "'Montserrat', sans-serif",
                     height: 40,
                   }}
-                  onClick={handleApplyPromotion}
+                  onClick={() => setIsModalVisible(true)}
                 >
-                  Áp dụng
+                  Chọn hoặc nhập mã
                 </Button>
               </Col>
             </Row>
@@ -692,7 +952,7 @@ const Checkout = () => {
                   {subtotal.toLocaleString()}đ
                 </Text>
               </div>
-              <div className="summary-item">
+              {/* <div className="summary-item">
                 <Text
                   style={{
                     fontFamily: "'Montserrat', sans-serif",
@@ -711,7 +971,7 @@ const Checkout = () => {
                 >
                   -{discountOnItems.toLocaleString()}đ
                 </Text>
-              </div>
+              </div> */}
               <div className="summary-item">
                 <Text
                   style={{
@@ -729,7 +989,7 @@ const Checkout = () => {
                     fontSize: 15,
                   }}
                 >
-                  {promoDiscount.toLocaleString()}đ
+                  -{promoDiscount.toLocaleString()}đ
                 </Text>
               </div>
               <div className="summary-item">
@@ -773,12 +1033,199 @@ const Checkout = () => {
               className="submit-button"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
               onClick={handleOrderSubmit}
+              disabled={isLoadingButton}
             >
-              Đặt hàng
+              {isLoadingButton ? (
+                <>
+                  <Spin />
+                  Đặt hàng
+                </>
+              ) : (
+                "Đặt hàng"
+              )}
             </Button>
           </Card>
         </Col>
       </Row>
+
+      <Modal
+        title="Chọn hoặc nhập mã khuyến mãi"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        width={600}
+        footer={[
+          <Button
+            key="back"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+            onClick={() => setIsModalVisible(false)}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            style={{
+              backgroundColor: "#78a243",
+              border: "none",
+              color: "white",
+              outline: "none",
+              fontFamily: "'Montserrat', sans-serif",
+            }}
+            onClick={handleApplyUserPromotion}
+          >
+            Chọn
+          </Button>,
+        ]}
+      >
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text
+              style={{
+                whiteSpace: "nowrap",
+                alignContent: "center",
+                marginRight: 11,
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              Mã khuyến mãi
+            </Text>
+            <Input
+              placeholder="Nhập mã khuyến mãi"
+              style={{
+                background: "#ebd187",
+                fontFamily: "'Montserrat', sans-serif",
+                flex: 1,
+              }}
+              value={manualPromoCode}
+              onChange={(e) => {
+                setManualPromoCode(e.target.value);
+                setErrorMessage(null);
+              }}
+            />
+            <Button
+              type="primary"
+              className="apply-promo"
+              style={{
+                marginLeft: 11,
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+              onClick={handleApplyPromotion}
+            >
+              Áp dụng
+            </Button>
+          </div>
+          {errorMessage && (
+            <Text
+              style={{
+                color: "red",
+                fontSize: 14,
+                marginTop: 4,
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              {errorMessage}
+            </Text>
+          )}
+        </div>
+        <div style={{ marginBottom: 16, marginTop: 15 }}>
+          <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            Chọn khuyến mãi từ tài khoản:
+          </Text>
+          {isLoading ? (
+            <Spin />
+          ) : userPromotions && userPromotions.length > 0 ? (
+            userPromotions.map((promo) => (
+              <Card
+                key={promo.promotionId}
+                hoverable
+                className="promotion-for-user"
+              >
+                <Row gutter={16} align="middle">
+                  <Col span={7}>
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #ff7e5f, #feb47b)",
+                        height: 80,
+                        borderRadius: "8px 0 0 8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontSize: 18,
+                          fontWeight: 600,
+                          textShadow: "1px 1px 3px rgba(0, 0, 0, 0.3)",
+                        }}
+                      >
+                        {promo.code}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col span={13}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        height: "100%",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          color: "#333",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Giảm: {promo.discountAmount.toLocaleString()}đ
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          color: "#666",
+                          marginBottom: 2,
+                        }}
+                      >
+                        Tối thiểu: {promo.minOrderAmount.toLocaleString()}đ
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          color: "#999",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        Hạn dùng: {dayjs(promo.endDate).format("DD/MM/YYYY")}
+                      </Text>
+                    </div>
+                  </Col>
+                  <Col
+                    span={4}
+                    style={{
+                      textAlign: "center",
+                    }}
+                  >
+                    <Checkbox
+                      checked={
+                        selectedUserPromo?.promotionId === promo.promotionId
+                      }
+                      onChange={(e) =>
+                        setSelectedUserPromo(e.target.checked ? promo : null)
+                      }
+                    />
+                  </Col>
+                </Row>
+              </Card>
+            ))
+          ) : (
+            <Text style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              Không có khuyến mãi nào từ tài khoản.
+            </Text>
+          )}
+        </div>
+      </Modal>
     </Layout>
   );
 };

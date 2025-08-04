@@ -35,24 +35,30 @@ export interface ProductDto {
   createBy: string;
   storeId: number;
   isActive: boolean;
+  averageRating: number;
   ProductType: {
     productTypeId: number;
     name: string;
   };
-  ProductRecipes: [
-    {
-      productRecipeId: number;
-      productId: number;
+  ProductRecipes: Array<{
+    productRecipeId: number;
+    productId: number;
+    materialId: number;
+    quantity: number;
+    Material: {
       materialId: number;
+      name: string;
       quantity: number;
-      Material: {
-        materialId: number;
-        name: string;
-        quantity: number;
-        storeId: number;
-      };
-    }
-  ];
+      barCode: string;
+      storeId: number;
+      isActive: boolean;
+      startDate: Date;
+      expireDate: Date;
+      timeExpired: string;
+      isExpired: boolean;
+      isProcessExpired: boolean;
+    };
+  }>;
 }
 
 interface MutationVariables {
@@ -188,10 +194,10 @@ export const useBestSellerProducts = () => {
   return useQuery<ProductDto[], Error>({
     queryKey: ["best-seller-products"],
     queryFn: async () => {
-    const res = await axios.get(
-      "https://wdp301-su25.space/api/products/best-seller"
-    );
-    return res.data.products;
-  },
-});
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}products/best-seller`
+      );
+      return res.data.products;
+    },
+  });
 };

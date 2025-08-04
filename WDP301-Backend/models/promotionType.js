@@ -13,6 +13,11 @@ const PromotionType = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     tableName: "promotion_types",

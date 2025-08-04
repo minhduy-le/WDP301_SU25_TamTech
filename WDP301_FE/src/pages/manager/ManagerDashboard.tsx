@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import dayjs from "dayjs";
 import {
   Card,
   Row,
@@ -9,16 +10,19 @@ import {
   Avatar,
   Select,
   Button,
+  Progress,
+  message,
+  DatePicker,
 } from "antd";
 import {
   DollarOutlined,
   ShoppingOutlined,
   TrophyOutlined,
   DownloadOutlined,
+  DashboardOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -30,15 +34,24 @@ import {
   Cell,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import LatestOrders from "../../components/manager/dashboard/LatestOrders";
-import { useRevenueStats, useTopProducts, useCurrentMonthRevenue, useCurrentMonthProduct, useCurrentMonthOrder, useWeeklyRevenue } from "../../hooks/dashboardApi";
-
+import {
+  useRevenueStats,
+  useTopProducts,
+  useCurrentMonthRevenue,
+  useCurrentMonthProduct,
+  useCurrentMonthOrder,
+  useWeeklyRevenue,
+  useProductTypeSales,
+  useStaffProductivity,
+} from "../../hooks/dashboardApi";
+import * as XLSX from 'xlsx';
 
 const { Title, Text } = Typography;
-
-
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
@@ -47,33 +60,61 @@ const yearList: number[] = [];
 for (let y = startYear; y <= currentYear; y++) {
   yearList.push(y);
 }
+export interface ProductTypeSaleStat {
+  productType: string;
+  totalQuantity: number;
+}
 
-const customerTypeData = [
-  { name: 'Mang đi', value: 120 },
-  { name: 'Ăn tại chỗ', value: 180 },
-  { name: 'Đặt online', value: 60 },
-];
-const customerTypeColors = ['#D97B41', '#A05A2C', '#faad14'];
+const customerTypeColors = ["#B22222", "#FF6F3C", "#FFC107", "	#347433"];
 
-const renderCustomerTypeLabel = ({ cx, cy, midAngle, outerRadius, value }: { cx: number, cy: number, midAngle: number, outerRadius: number, value: number }) => {
+const renderCustomerTypeLabel = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  value,
+}: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius: number;
+  value: number;
+}) => {
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 24;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   return (
-    <text x={x} y={y} fill="#A05A2C" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={15} fontWeight={600}>
+    <text
+      x={x}
+      y={y}
+      fill="#A05A2C"
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontSize={15}
+      fontWeight={600}
+    >
       {value}
     </text>
   );
 };
-
 
 const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
   const { active, payload } = props;
   if (active && payload && payload.length) {
     const { name, value } = payload[0].payload;
     return (
-      <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 10, color: '#A05A2C', fontWeight: 600, fontSize: 15 }}>
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #eee",
+          borderRadius: 8,
+          padding: 10,
+          color: "#A05A2C",
+          fontWeight: 600,
+          fontSize: 15,
+        }}
+      >
         {name}: {value} lượt
       </div>
     );
@@ -83,12 +124,44 @@ const CustomCustomerTypeTooltip = (props: TooltipProps<number, string>) => {
 
 const ManagerDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  
+  // Hàm format ngày thành MM-dd-YYYY
+  const formatDate = (date: any) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}-${day}-${year}`;
+  };
+  
+  // Tính toán ngày mặc định: từ hiện tại đến 7 ngày trước
+  const getDefaultDateRange = () => {
+    const endDate = dayjs();
+    const startDate = dayjs().subtract(7, 'day');
+    return {
+      startDate: formatDate(startDate.toDate()),
+      endDate: formatDate(endDate.toDate()),
+      startDateObj: startDate,
+      endDateObj: endDate
+    };
+  };
+
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState<string>(defaultRange.startDate);
+  const [endDate, setEndDate] = useState<string>(defaultRange.endDate);
+  
+  const { data: staffProductivity = [] } = useStaffProductivity();
+
   const { data: revenueStats } = useRevenueStats(selectedYear);
   const { data: topProductsData = [], isLoading: topProductsLoading } =
-    useTopProducts();
+    useTopProducts(startDate, endDate);
   const monthlyRevenueData =
-    revenueStats?.map((s) => ({ month: `Tháng ${s.month}`, revenue: s.revenue })) || [];
-  
+    revenueStats?.map((s) => ({
+      month: `Tháng ${s.month}`,
+      revenue: s.revenue,
+    })) || [];
+
   const topProducts = topProductsData.map((p) => ({
     name: p.productName,
     sold: p.totalQuantity,
@@ -98,20 +171,130 @@ const ManagerDashboard: React.FC = () => {
   const { data: currentMonthRevenueStats } = useCurrentMonthRevenue();
   const { data: currentMonthOrderStats } = useCurrentMonthOrder();
   const { data: weeklyRevenue = [] } = useWeeklyRevenue();
-
+  const { data: productTypeStats = [] } = useProductTypeSales();
+  const productTypeData = productTypeStats.map((item: ProductTypeSaleStat) => ({
+    name: item.productType,
+    value: item.totalQuantity,
+  }));
   const weeklyChartData = weeklyRevenue.map((w: any) => ({
     week: `Tuần ${w.week}`,
     "Doanh thu tháng trước": w.previousMonthRevenue,
     "Doanh thu tháng này": w.currentMonthRevenue,
   }));
 
-  const weeklyBarData = weeklyRevenue.map((w: any) => ({
-    week: `Tuần ${w.week}`,
-    "Tháng này": w.currentMonthRevenue,
-    "Tháng trước": w.previousMonthRevenue,
-  }));
+  // Hàm xử lý khi chọn ngày
+  const handleDateChange = (dates: any) => {
+    if (dates && dates.length === 2) {
+      setStartDate(formatDate(dates[0]));
+      setEndDate(formatDate(dates[1]));
+    } else {
+      setStartDate("");
+      setEndDate("");
+    }
+  };
+
+  const handleExportReport = () => {
+    try {
+      // Tạo workbook mới
+      const workbook = XLSX.utils.book_new();
+      
+      // Sheet 1: Tổng quan
+      const overviewData = [
+        {
+          "Chỉ số": "Doanh thu tháng này",
+          "Giá trị": `${(currentMonthRevenueStats?.currentRevenue || 0).toLocaleString()} đ`,
+          "Thay đổi (%)": `${currentMonthRevenueStats?.percentageChange || 0}%`
+        },
+        {
+          "Chỉ số": "Đơn hàng tháng này", 
+          "Giá trị": currentMonthOrderStats?.currentOrders || 0,
+          "Thay đổi (%)": `${currentMonthOrderStats?.percentageChange || 0}%`
+        },
+        {
+          "Chỉ số": "Giá trị đơn trung bình",
+          "Giá trị": `${(currentMonthRevenueStats?.averageOrderValue || 0).toLocaleString()} đ`,
+          "Thay đổi (%)": "-"
+        },
+        {
+          "Chỉ số": "Sản phẩm bán ra",
+          "Giá trị": currentMonthProductStats?.currentQuantity || 0,
+          "Thay đổi (%)": `${currentMonthProductStats?.percentageChange || 0}%`
+        }
+      ];
+      
+      const overviewSheet = XLSX.utils.json_to_sheet(overviewData);
+      XLSX.utils.book_append_sheet(workbook, overviewSheet, "Tổng quan");
+      
+      // Sheet 2: Doanh thu theo tháng
+      const revenueData = monthlyRevenueData.map(item => ({
+        "Tháng": item.month,
+        "Doanh thu (VNĐ)": `${item.revenue.toLocaleString()} đ`
+      }));
+      
+      const revenueSheet = XLSX.utils.json_to_sheet(revenueData);
+      XLSX.utils.book_append_sheet(workbook, revenueSheet, "Doanh thu theo tháng");
+      
+      // Sheet 3: Sản phẩm bán chạy
+      const productData = topProducts.map((product, index) => ({
+        "Thứ hạng": index + 1,
+        "Tên sản phẩm": product.name,
+        "Số lượng bán": product.sold,
+        "Doanh thu (VNĐ)": `${product.revenue.toLocaleString()} đ`
+      }));
+      
+      // Thêm thông tin khoảng thời gian nếu có
+      if (startDate && endDate) {
+        productData.unshift({
+          "Thứ hạng": 0,
+          "Tên sản phẩm": `Khoảng thời gian: ${startDate} - ${endDate}`,
+          "Số lượng bán": 0,
+          "Doanh thu (VNĐ)": "0 đ"
+        });
+      }
+      
+      const productSheet = XLSX.utils.json_to_sheet(productData);
+      XLSX.utils.book_append_sheet(workbook, productSheet, "Sản phẩm bán chạy");
+      
+      // Sheet 4: Hiệu suất nhân viên
+      const staffData = staffProductivity.map((staff, index) => ({
+        "Thứ hạng": index + 1,
+        "Tên nhân viên": staff.fullName,
+        "Doanh thu (VNĐ)": `${staff.totalRevenue.toLocaleString()} đ`
+      }));
+      
+      const staffSheet = XLSX.utils.json_to_sheet(staffData);
+      XLSX.utils.book_append_sheet(workbook, staffSheet, "Hiệu suất nhân viên");
+      
+      // Sheet 5: Loại sản phẩm bán chạy
+      const productTypeData = productTypeStats.map((item, index) => ({
+        "Thứ hạng": index + 1,
+        "Loại sản phẩm": item.productType,
+        "Số lượng bán": item.totalQuantity
+      }));
+      
+      const productTypeSheet = XLSX.utils.json_to_sheet(productTypeData);
+      XLSX.utils.book_append_sheet(workbook, productTypeSheet, "Loại sản phẩm");
+      
+      // Xuất file
+      const fileName = `Bao_cao_Dashboard_${selectedYear}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      
+      message.success("Xuất báo cáo thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xuất báo cáo:", error);
+      message.error("Có lỗi xảy ra khi xuất báo cáo!");
+    }
+  };
+
   return (
-    <div style={{ padding: 32, background: "#FFF9F0", minHeight: "100vh" }}>
+    <div
+      style={{
+        paddingTop: 15,
+        padding: 32,
+        background: "#FFF9F0",
+        minHeight: "100vh",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -124,12 +307,13 @@ const ManagerDashboard: React.FC = () => {
           level={2}
           style={{ margin: 0, fontWeight: 700, color: "#A05A2C", fontSize: 40 }}
         >
-          Dashboard
+          Dashboard <DashboardOutlined />
         </Title>
         <Button
           type="primary"
           icon={<DownloadOutlined />}
           style={{ background: "#D97B41", borderColor: "#D97B41" }}
+          onClick={handleExportReport}
         >
           Xuất báo cáo
         </Button>
@@ -161,6 +345,25 @@ const ManagerDashboard: React.FC = () => {
         .ant-select-arrow {
           color: #D97B41 !important;
         }
+        /* Màu border và shadow khi focus vào DatePicker */
+        .ant-picker-focused,
+        .ant-picker:focus,
+        .ant-picker:hover {
+          border-color: #D97B41 !important;
+          box-shadow: 0 0 0 2px #F9E4B7 !important;
+        }
+        /* Màu icon trong DatePicker */
+        .ant-picker-suffix {
+          color: #D97B41 !important;
+        }
+        /* Màu ngày được chọn trong calendar */
+        .ant-picker-cell-selected .ant-picker-cell-inner {
+          background-color: #D97B41 !important;
+        }
+        /* Màu ngày hover trong calendar */
+        .ant-picker-cell:hover .ant-picker-cell-inner {
+          background-color: #F9E4B7 !important;
+        }
       `}</style>
       <Row gutter={[24, 24]}>
         <Col xs={24} md={12} lg={6}>
@@ -178,13 +381,20 @@ const ManagerDashboard: React.FC = () => {
                 </span>
               }
               value={currentMonthRevenueStats?.currentRevenue || 0}
+              precision={0}
               valueStyle={{ color: "#D97B41", fontWeight: 700 }}
               prefix={<DollarOutlined />}
-              precision={0}
-              groupSeparator=","
+              formatter={(value) => `${Number(value).toLocaleString()} đ`}
             />
-            {typeof currentMonthRevenueStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthRevenueStats.percentageChange >= 0 ? "success" : "warning"}>
+
+            {typeof currentMonthRevenueStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthRevenueStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthRevenueStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthRevenueStats.percentageChange}% so với tháng trước
               </Text>
@@ -213,8 +423,14 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-           {typeof currentMonthOrderStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthOrderStats.percentageChange >= 0 ? "success" : "warning"}>
+            {typeof currentMonthOrderStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthOrderStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthOrderStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthOrderStats.percentageChange}% so với tháng trước
               </Text>
@@ -244,7 +460,9 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-            <Text type="secondary" style={{color: "#A05A2C"}}>Mỗi đơn hàng trong tháng này</Text>
+            <Text type="secondary" style={{ color: "#A05A2C" }}>
+              Mỗi đơn hàng trong tháng này
+            </Text>
           </Card>
         </Col>
         <Col xs={24} md={12} lg={6}>
@@ -267,8 +485,14 @@ const ManagerDashboard: React.FC = () => {
               precision={0}
               groupSeparator=","
             />
-            {typeof currentMonthProductStats?.percentageChange === 'number' ? (
-              <Text type={currentMonthProductStats.percentageChange >= 0 ? "success" : "warning"}>
+            {typeof currentMonthProductStats?.percentageChange === "number" ? (
+              <Text
+                type={
+                  currentMonthProductStats.percentageChange >= 0
+                    ? "success"
+                    : "warning"
+                }
+              >
                 {currentMonthProductStats.percentageChange >= 0 ? "+" : ""}
                 {currentMonthProductStats.percentageChange}% so với tháng trước
               </Text>
@@ -284,7 +508,7 @@ const ManagerDashboard: React.FC = () => {
           <Card
             title={
               <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
-                So sánh doanh thu 
+                So sánh doanh thu tháng này và tháng trước
               </span>
             }
             style={{
@@ -293,47 +517,63 @@ const ManagerDashboard: React.FC = () => {
             }}
           >
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart
+              <AreaChart
+                width={730}
+                height={250}
                 data={weeklyChartData}
                 margin={{ top: 24, left: 0, bottom: 8 }}
               >
+                <defs>
+                  <linearGradient
+                    id="colorLastMonth"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#A05A2C" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#A05A2C" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorThisMonth"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#faad14" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#faad14" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="week" tick={{ fontSize: 12 }} />
                 <YAxis
-                  yAxisId="left"
                   tickFormatter={(v) => v.toLocaleString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip formatter={(v) => v.toLocaleString()} />
                 <Legend />
-                <Line
-                  yAxisId="left"
+                <Area
                   type="monotone"
                   dataKey="Doanh thu tháng trước"
                   stroke="#A05A2C"
-                  strokeWidth={3}
-                  dot={false}
+                  fillOpacity={1}
+                  fill="url(#colorLastMonth)"
                 />
-                <Line
-                  yAxisId="left"
+                <Area
                   type="monotone"
                   dataKey="Doanh thu tháng này"
-                  stroke="#D97B41"
-                  strokeWidth={3}
-                  dot={false}
+                  stroke="#faad14"
+                  fillOpacity={1}
+                  fill="url(#colorThisMonth)"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </Card>
 
           <Card
             title={
-              <span style={{ color: "#222", fontWeight: 700 }}>
+              <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
                 Báo cáo doanh thu năm {selectedYear}
               </span>
             }
@@ -363,8 +603,13 @@ const ManagerDashboard: React.FC = () => {
                 margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 13 }} />
-                <YAxis tickFormatter={(v) => `${v / 1000000}tr`} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 13 }}
+                  tickCount={12}
+                  interval={0}
+                />
+                <YAxis tickFormatter={(v) => v.toLocaleString()} />
                 <Tooltip
                   formatter={(value: number) => `${value.toLocaleString()} đ`}
                 />
@@ -387,7 +632,7 @@ const ManagerDashboard: React.FC = () => {
               <Card
                 title={
                   <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                    Tỉ lệ hình thức mua hàng
+                    Tỉ lệ loại sản phẩm bán chạy
                   </span>
                 }
                 bordered={false}
@@ -396,62 +641,90 @@ const ManagerDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
-                      data={customerTypeData}
+                      data={productTypeData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
+                      cy="42%"
                       outerRadius={90}
                       label={renderCustomerTypeLabel}
                       labelLine={true}
                       stroke="#fff"
                     >
-                      {customerTypeData.map((_entry, idx) => (
-                        <Cell key={`cell-${idx}`} fill={customerTypeColors[idx]} />
+                      {productTypeData.map((_entry, idx) => (
+                        <Cell
+                          key={`cell-${idx}`}
+                          fill={customerTypeColors[idx]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip content={CustomCustomerTypeTooltip} />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      style={{ marginBottom: 10 }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Card>
             </Col>
             <Col span={24}>
-              <Card
-                title={
-                  <span style={{ color: "#A05A2C", fontWeight: 600 }}>
-                    Top 6 sản phẩm bán chạy
-                  </span>
-                }
-                bordered={false}
-                style={{ borderRadius: 12 }}
-              >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={topProducts}
-                  loading={topProductsLoading}
-                  renderItem={(item, _idx) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            style={{ background: "#D97B41" }}
-                            icon={<TrophyOutlined />}
-                          />
-                        }
-                        title={
-                          <span style={{ fontWeight: 600 }}>{item.name}</span>
-                        }
-                        description={
-                          <span>
-                            Bán: <b>{item.sold}</b> | Doanh thu:{" "}
-                            <b>{item.revenue.toLocaleString()}đ</b>
-                          </span>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                             <Card
+                 title={
+                   <span style={{ color: "#A05A2C", fontWeight: 600 }}>
+                     Top 6 sản phẩm bán chạy
+                   </span>
+                 }
+                 bordered={false}
+                 style={{ borderRadius: 12 }}
+               >
+                 <div style={{ marginBottom: 16 }}>
+                   <DatePicker.RangePicker
+                     onChange={handleDateChange}
+                     placeholder={["Từ ngày", "Đến ngày"]}
+                     format="DD/MM/YYYY"
+                     style={{ width: "100%" }}
+                     allowClear={true}
+                     defaultValue={[defaultRange.startDateObj, defaultRange.endDateObj]}
+                   />
+                 </div>
+                {!startDate || !endDate ? (
+                  <div style={{ 
+                    textAlign: "center", 
+                    padding: "40px 20px",
+                    color: "#999"
+                  }}>
+                    <CalendarOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+                    <div>Vui lòng chọn khoảng thời gian để xem sản phẩm bán chạy</div>
+                  </div>
+                ) : (
+                  <List
+                    itemLayout="horizontal"
+                    dataSource={topProducts}
+                    loading={topProductsLoading}
+                    renderItem={(item, _idx) => (
+                      <List.Item>
+                        <List.Item.Meta
+                          avatar={
+                            <Avatar
+                              style={{ background: "#D97B41" }}
+                              icon={<TrophyOutlined />}
+                            />
+                          }
+                          title={
+                            <span style={{ fontWeight: 600 }}>{item.name}</span>
+                          }
+                          description={
+                            <span>
+                              Bán: <b>{item.sold}</b> | Doanh thu:{" "}
+                              <b>{item.revenue.toLocaleString()}đ</b>
+                            </span>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                )}
               </Card>
             </Col>
           </Row>
@@ -463,25 +736,56 @@ const ManagerDashboard: React.FC = () => {
           <LatestOrders />
         </Col>
       </Row>
-
-      <Row gutter={[24, 24]} style={{ marginTop: 16 }}>
-        <Col xs={24} md={24} lg={24}>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
           <Card
-            bordered={false}
-            style={{ borderRadius: 12, boxShadow: "0 4px 16px rgba(160,90,44,0.08)", marginBottom: 24 }}
-            title={<span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>Doanh thu theo tuần trong tháng</span>}
+            title={
+              <span style={{ color: "#A05A2C", fontWeight: 700, fontSize: 20 }}>
+                Hiệu suất nhân viên
+              </span>
+            }
+            style={{
+              borderRadius: 16,
+              boxShadow: "0 6px 24px rgba(160,90,44,0.10)",
+            }}
           >
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={weeklyBarData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" style={{ fontWeight: 600, fill: "#A05A2C" }} />
-                <YAxis tickFormatter={v => v.toLocaleString()} style={{ fontWeight: 600, fill: "#A05A2C" }} />
-                <Tooltip formatter={(value: number) => value.toLocaleString() + "₫"} />
-                <Legend />
-                <Bar dataKey="Tháng này" fill="#D97B41" radius={[8, 8, 0, 0]} barSize={32} />
-                <Bar dataKey="Tháng trước" fill="#F9E4B7" radius={[8, 8, 0, 0]} barSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
+            {(() => {
+              // Tính hiệu suất tương đối - nhân viên cao nhất = 100%
+              const maxRevenue = Math.max(
+                ...staffProductivity.map((s) => s.totalRevenue),
+                1
+              );
+
+              return staffProductivity.map((staff, index) => (
+                <div key={index} style={{ marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: "#A05A2C" }}>
+                      {staff.fullName}
+                    </span>
+                    <span style={{ fontWeight: 600, color: "#D97B41" }}>
+                      {staff.totalRevenue.toLocaleString()}đ
+                    </span>
+                  </div>
+                  <Progress
+                    percent={Math.min(
+                      (staff.totalRevenue / maxRevenue) * 100,
+                      100
+                    )}
+                    strokeColor={{
+                      "0%": "#F9E4B7",
+                      "100%": "#D97B41",
+                    }}
+                    showInfo={false}
+                  />
+                </div>
+              ));
+            })()}
           </Card>
         </Col>
       </Row>

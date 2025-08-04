@@ -110,7 +110,7 @@
 }
 
 .feedback-item {
-  padding: 10px;
+  padding: 0 10px 8px 10px;
 }
 
 .feedback-item .ant-input {
@@ -127,11 +127,12 @@
   width: 20px;
 } */
 
-.submt-button-feedback {
+.submit-button-feedback {
   background-color: #da7339 !important;
   border-color: #da7339 !important;
   color: white !important;
   outline: none !important;
+  padding: 0 10px;
   width: -webkit-fill-available;
 }
 
@@ -154,4 +155,18 @@
 
 .modal-feedback .ant-modal-content {
   background-color: #efe6db;
+}
+
+.history-pagination .ant-pagination-item-active {
+  background-color: #efe6db !important;
+  border-color: #da7339 !important;
+}
+
+.history-pagination .ant-pagination-item-active a {
+  color: #da7339 !important;
+}
+
+.history-pagination .ant-pagination-item {
+  background-color: transparent;
+  border-color: white;
 }

@@ -29,9 +29,9 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
       }
     }
 
-    if (token) {
+    if (token && user) {
       try {
-        const decoded = jwtDecode<{ exp: number }>(token);
+        const decoded = jwtDecode<{ role: string; exp: number }>(token);
         const currentTime = Math.floor(Date.now() / 1000);
 
         if (decoded.exp < currentTime) {
@@ -47,50 +47,89 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
   }, [token, user, setUser, setToken, logout]);
 
   useEffect(() => {
-    const publicPages = [
+    const publicRoutes = [
       "/",
       "/login",
       "/register",
       "/verify-email",
       "/verify-otp",
+      "/forgot-password",
       "/menu",
+      "/product/:productId",
       "/blog",
+      "/blog/:id",
+      "/form-refund-order",
     ];
 
-    if (!user || !user.role) {
-      if (!publicPages.includes(location.pathname)) {
-        navigate("/login", { replace: true });
-        // message.error("Bạn phải đăng nhập để chuyển tới trang này");
+    const matchDynamicRoute = (routePattern: string, path: string) => {
+      const dynamicRoutePattern = routePattern
+        .replace(/:productId/, "[0-9]+")
+        .replace(/:userId/, "[0-9]+")
+        .replace(/:orderId/, "[0-9]+")
+        .replace(/:id/, "[0-9]+");
+      const regex = new RegExp(`^${dynamicRoutePattern}$`);
+      return regex.test(path);
+    };
+
+    if (!user || !token) {
+      if (
+        publicRoutes.some((route) =>
+          matchDynamicRoute(route, location.pathname)
+        ) ||
+        publicRoutes.includes(location.pathname)
+      ) {
+        return;
       }
+      navigate("/login", { replace: true });
       return;
     }
+
+    const decoded = jwtDecode<{
+      id: number;
+      role: string;
+      fullName: string;
+      email: string;
+      phone_number: string;
+      exp: number;
+    }>(token);
 
     const roleRedirects: Record<UserRole, string> = {
       User: "/",
       Staff: "/staff/orders",
       Shipper: "/",
-      Admin: "/admin/dashboard",
+      Admin: "/admin/users",
       Manager: "/manager/dashboard",
     };
 
     if (location.pathname === "/") {
-      navigate(roleRedirects[user.role as UserRole], { replace: true });
+      navigate(roleRedirects[decoded.role as UserRole], { replace: true });
       return;
     }
 
     const restrictedPages: Record<UserRole, string[]> = {
-      Staff: ["/staff/orders", "/staff/profile", "/staff/chat"],
+      Staff: [
+        "/staff/orders",
+        "/staff/profile",
+        "/staff/chat",
+        "/staff/pos",
+        "/staff/payment-success",
+        "/staff/pos/payment-cancel",
+      ],
       User: [
         "/checkout",
-        "/api/orders/success",
-        "/user-information",
-        "/product/:productId",
+        "/payment-success",
+        "/user/information",
+        "/user/order-history",
+        "/user/order-tracking/:orderId",
+        "/user/promotion",
+        "/payment-cancel",
       ],
       Shipper: [],
       Manager: [
         "/manager/dashboard",
         "/manager/orders",
         "/manager/orders/confirm-orders",
+        "/manager/transactions",
         "/manager/products",
         "/manager/promotions",
         "/manager/staffs",
@@ -98,42 +137,27 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
         "/manager/chat",
         "/manager/staffs/staffId",
         "/manager/materials",
+        "/manager/profile",
+        "/manager/blog",
+        "/manager/materials-process",
       ],
-      Admin: [
-        "/admin/dashboard",
-        "/admin/users",
-        "/admin/system-issues",
-        "/admin/profile",
-      ],
+      Admin: ["/admin/users", "/admin/profile"],
     };
 
-    // const currentPage = location.pathname;
-
-    // if (
-    //   !publicPages.includes(currentPage) &&
-    //   restrictedPages[user.role as UserRole]?.length
-    // ) {
-    //   const allowedPages = restrictedPages[user.role as UserRole] || [];
-
-    //   if (!allowedPages.includes(currentPage)) {
-    //     navigate("/forbidden", { replace: true });
-    //   }
-    // }
-    const matchDynamicRoute = (route: string, path: string) => {
-      const dynamicRoutePattern = route
-        .replace(/:productId/, "[0-9]+")
-        .replace(/:orderId/, "[0-9]+");
-      const regex = new RegExp(`^${dynamicRoutePattern}$`);
-      return regex.test(path);
-    };
-
-    // Check if the current path is allowed for the user's role
-    const userRole = user.role as UserRole;
+    const userRole = decoded.role as UserRole;
     const allowedPages = restrictedPages[userRole] || [];
     const isAllowed =
-      publicPages.includes(location.pathname) ||
+      publicRoutes.some((route) =>
+        matchDynamicRoute(route, location.pathname)
+      ) ||
+      publicRoutes.includes(location.pathname) ||
       allowedPages.some((route) => {
-        if (route.includes(":productId") || route.includes(":orderId")) {
+        if (
+          route.includes(":productId") ||
+          route.includes(":orderId") ||
+          route.includes(":userId") ||
+          route.includes(":id")
+        ) {
           return matchDynamicRoute(route, location.pathname);
         }
         return route === location.pathname;
@@ -142,7 +166,7 @@ export function AuthGuardProvider(props: AuthGuardProviderProps) {
     if (!isAllowed) {
       navigate("/forbidden", { replace: true });
     }
-  }, [user, location, navigate]);
+  }, [user, location, navigate, token]);
 
   return (
     <AuthGuardContext.Provider value={{}}>{children}</AuthGuardContext.Provider>

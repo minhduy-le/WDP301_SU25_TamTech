@@ -18,6 +18,8 @@
 
 .scooter-image {
   margin-bottom: 20px;
+  justify-content: center;
+  display: flex;
 }
 
 .scooter-img {

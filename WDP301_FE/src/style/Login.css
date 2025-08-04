@@ -31,9 +31,9 @@
 }
 
 .form-content {
-  width: 100%;
-  /* text-align: center; */
-  padding: 0 180px;
+  margin: 0px auto;
+  width: max-content;
+  padding: 0px 20px;
 }
 
 .title {
@@ -52,7 +52,9 @@
 .input-field {
   margin-bottom: 20px;
   border-radius: 5px;
+  margin: 10px 0;
   height: 40px;
+  max-width: 100% !important;
   border: 1px solid #d9d9d9 !important;
   width: 100%;
   color: #da7339;
@@ -131,10 +133,10 @@
   font-family: "Montserrat", sans-serif;
 }
 
-.ant-form-item-additional {
+/* .ant-form-item-additional {
   margin-top: -14px;
   margin-bottom: 7px;
-}
+} */
 
 .ant-form-item-additional .ant-form-item-explain-error {
   font-family: "Montserrat", sans-serif;
@@ -155,4 +157,31 @@
 
 .google-login-button .ant-btn-icon {
   height: 26px;
+}
+
+.link-forgot-password {
+  text-decoration: underline;
+  font-style: italic;
+  font-size: 16px;
+  color: #632713;
+  font-family: "Montserrat", sans-serif;
+  width: -webkit-fill-available;
+  display: block;
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+:where(.css-dev-only-do-not-override-ut69n1).ant-input-affix-wrapper::before {
+  display: none !important;
+}
+
+.ant-input-password.input-field {
+  justify-content: space-between;
+}
+
+.ant-otp-input {
+  font-weight: 700;
+  font-size: 26px !important;
+  color: #632713;
+  font-family: "Montserrat", sans-serif;
 }

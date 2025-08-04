@@ -6,19 +6,19 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   BarChartOutlined,
-  SettingOutlined,
   LogoutOutlined,
-  BellOutlined,
   DownOutlined,
   ShoppingFilled,
   TagOutlined,
   ShoppingOutlined,
   MessageOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "./ManagerSidebar.css";
 import logo from "../../assets/logo-footer.png";
 import { useAuthStore } from "../../hooks/usersApi";
+import { MessageCircle, Scroll } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
 
@@ -38,15 +38,16 @@ const ManagerSidebar: React.FC = () => {
       label: "Tổng quan",
     },
     {
+      key: "/manager/transactions",
+      icon: <CreditCardOutlined />,
+      label: "Quản lý giao dịch",
+    },
+    {
       key: "/manager/orders",
       icon: <ShoppingFilled />,
       label: "Quản lý đơn hàng",
     },
-    {
-      key: "/manager/materials",
-      icon: <ShoppingOutlined />,
-      label: "Quản lý nguyên liệu",
-    },
+  
     {
       key: "/manager/products",
       icon: <ShoppingOutlined />,
@@ -68,8 +69,13 @@ const ManagerSidebar: React.FC = () => {
       label: "Quản lý nhân viên",
     },
     {
+      key: "/manager/blog",
+      icon: <Scroll />,
+      label: "Quản lý blog",
+    },
+    {
       key: "/manager/chat",
-      icon: <MessageOutlined />,
+      icon: <MessageCircle />,
       label: "Chat",
     },
   ];
@@ -79,11 +85,6 @@ const ManagerSidebar: React.FC = () => {
       key: "/manager/profile",
       label: "Thông tin cá nhân",
       icon: <UserOutlined />,
-    },
-    {
-      key: "settingsMenu",
-      label: "Cài đặt",
-      icon: <SettingOutlined />,
     },
     {
       type: "divider",
@@ -150,7 +151,7 @@ const ManagerSidebar: React.FC = () => {
               alt="logo"
               style={{
                 maxHeight: "100%",
-                maxWidth: collapsed ? "90%" : "70%",
+                maxWidth: "100%",
                 objectFit: "contain",
                 transition: "all 0.3s",
               }}
@@ -218,21 +219,6 @@ const ManagerSidebar: React.FC = () => {
               gap: 24,
             }}
           >
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              style={{
-                fontSize: "18px",
-                color: "#D97B41",
-                width: 40,
-                height: 40,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "transparent",
-              }}
-            />
-
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"

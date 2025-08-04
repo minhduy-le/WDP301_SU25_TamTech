@@ -26,19 +26,19 @@ const Order = sequelize.define(
       },
     },
     order_amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_discount_percent: {
-      type: DataTypes.DECIMAL(5, 2),
+      type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_discount_value: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_point_earn: {
       type: DataTypes.INTEGER,
@@ -46,14 +46,14 @@ const Order = sequelize.define(
       defaultValue: 0,
     },
     order_shipping_fee: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     order_subtotal: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0.0,
+      defaultValue: 0,
     },
     payment_method_id: {
       type: DataTypes.INTEGER,
@@ -106,7 +106,8 @@ const Order = sequelize.define(
     },
     order_address: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
+      defaultValue: "",
     },
     invoiceUrl: {
       type: DataTypes.STRING(1000),
@@ -148,6 +149,36 @@ const Order = sequelize.define(
     soDienThoaiNguoiDatHo: {
       type: DataTypes.STRING(15),
       allowNull: true,
+    },
+    isMangDi: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    createByStaffId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
+    },
+    isRefund: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    platform: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    customerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
   },
   {

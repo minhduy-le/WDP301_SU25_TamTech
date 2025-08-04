@@ -119,7 +119,7 @@ _(Chúng tôi sẽ cập nhật hình ảnh và video demo của dự án sớm 
 | :-: | :--------------------- | :--------- | :-------------------------------------------------------------------------- | :-------------------- |
 |  1  | Lê Minh Duy            | `SE170571` | [minhduy-le](https://www.google.com/search?q=https://github.com/minhduy-le) | `Mobile Development`  |
 |  2  | `Nguyễn Ngọc Bảo Trân` | `SE171264` | [meeshanie](https://www.google.com/search?q=https://github.com/meeshanie)   | `Front End Developer` |
-|  3  | `Tô Triều Vỹ`          | `Se18`     | `[Link GitHub]`                                                             | `Back End Developer`  |
+|  3  | `Tô Triều Vỹ`          | `Se183178` | [totrieuvy](https://github.com/totrieuvy)                                   | `Back End Developer`  |
 |  4  | Phạm Chu Chí Khang     | `SE183245` | [KhangPCC](https://github.com/Darkvolcano)                                  | `Front End Developer` |
 
 ## 👨‍🏫 Giảng viên hướng dẫn

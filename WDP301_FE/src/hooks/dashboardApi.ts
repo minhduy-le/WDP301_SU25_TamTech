@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "../config/axios";
+import { useState, useEffect } from "react";
 
 export interface RevenueStat {
   month: number;
@@ -38,16 +39,21 @@ interface TopProductsResponse {
   stats: TopProduct[];
 }
 
-export const useTopProducts = () => {
+export const useTopProducts = (startDate?: string, endDate?: string) => {
   return useQuery<TopProduct[], Error>({
-    queryKey: ["top-products"],
+    queryKey: ["top-products", startDate, endDate],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      
       const response = await axiosInstance.get<TopProductsResponse>(
-        "dashboard/top-products"
+        `dashboard/top-products?${params.toString()}`
       );
       const { stats } = response.data;
       return Array.isArray(stats) ? stats : [];
     },
+    enabled: !!(startDate && endDate),
   });
 };
 
@@ -158,6 +164,57 @@ export const useWeeklyRevenue = () => {
         },
       });
       return Array.isArray(res.data.stats) ? res.data.stats : [];
+    },
+  });
+};
+export interface ProductTypeSaleStat {
+  productType: string;
+  totalQuantity: number;
+}
+export const useProductTypeSales = () => {
+  const [data, setData] = useState<ProductTypeSaleStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+              const token = localStorage.getItem("token");
+
+        const response = await axiosInstance.get(`${import.meta.env.VITE_API_URL}dashboard/product-type-sales`, {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 200) {
+          setData(response.data.stats);
+        } else {
+          setError(response.data.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred' as any);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return { data, loading, error };
+};
+
+export interface StaffProductivityStat {
+  fullName: string;
+  totalRevenue: number;
+}
+
+export const useStaffProductivity = () => {
+  return useQuery<StaffProductivityStat[], Error>({
+    queryKey: ["staff-productivity"],
+    queryFn: async () => {
+      const response = await axiosInstance.get("/dashboard/staff-productivity");
+      return response.data.stats;
     },
   });
 };

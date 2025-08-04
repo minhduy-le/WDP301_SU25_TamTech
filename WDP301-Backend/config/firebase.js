@@ -1,9 +1,9 @@
-require("dotenv").config(); // Load environment variables from .env file
+require("dotenv").config();
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getStorage } = require("firebase-admin/storage");
 const { getAuth } = require("firebase-admin/auth");
+const { getMessaging } = require("firebase-admin/messaging");
 
-// Construct the service account credentials from environment variables
 const serviceAccount = {
   type: "service_account",
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -18,7 +18,6 @@ const serviceAccount = {
   universe_domain: "googleapis.com",
 };
 
-// Initialize Firebase Admin with service account credentials
 const app = initializeApp({
   credential: cert(serviceAccount),
   storageBucket: "course-ac11b.appspot.com",
@@ -26,21 +25,20 @@ const app = initializeApp({
 
 const storage = getStorage(app);
 const auth = getAuth(app);
+const messaging = getMessaging(app);
 
-// In firebase.js
 const uploadFileToFirebase = async (fileBuffer, fileName, contentType) => {
   const bucket = storage.bucket();
-  // You might want a different path for invoices vs. images
   const remoteFilePath = contentType === "application/pdf" ? `invoices/${fileName}` : `images/${fileName}`;
   const file = bucket.file(remoteFilePath);
 
   await file.save(fileBuffer, {
-    metadata: { contentType: contentType }, // Use the provided contentType
+    metadata: { contentType: contentType },
   });
 
   const [url] = await file.getSignedUrl({
     action: "read",
-    expires: "03-09-2491", // Consider if this expiry is appropriate for all files
+    expires: "03-09-2491",
   });
   return url;
 };
@@ -58,4 +56,35 @@ const uploadImageToFirebase = async (imageBuffer, fileName) => {
   return url;
 };
 
-module.exports = { uploadFileToFirebase, auth, uploadImageToFirebase }; // Export the modified function
+const sendPushNotification = async (fcmToken, title, body, data = {}) => {
+  const message = {
+    notification: {
+      title,
+      body,
+    },
+    data: {
+      orderId: data.orderId ? String(data.orderId) : null,
+      userId: data.userId ? String(data.userId) : null,
+      type: "order_notification",
+    },
+    token: fcmToken,
+  };
+
+  try {
+    const response = await messaging.send(message);
+    console.log("Successfully sent message:", response, "Payload:", JSON.stringify(message, null, 2));
+    return response;
+  } catch (error) {
+    console.error(
+      "Error sending message:",
+      error.message,
+      "Error code:",
+      error.code,
+      "Payload:",
+      JSON.stringify(message, null, 2)
+    );
+    throw error;
+  }
+};
+
+module.exports = { uploadFileToFirebase, auth, uploadImageToFirebase, sendPushNotification };

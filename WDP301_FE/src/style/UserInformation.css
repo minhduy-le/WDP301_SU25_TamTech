@@ -36,6 +36,10 @@
   border: none;
 }
 
+.sidebar-menu .ant-menu-item .anticon-container {
+  margin-right: 10px !important;
+}
+
 .menu-item {
   font-size: 15px;
   color: #2d1e1a !important;
@@ -62,7 +66,7 @@
   background-color: #ebd187;
   padding: 40px;
   border-radius: 10px;
-  min-height: 510px;
+  /* min-height: 510px; */
 }
 
 .content-header {
@@ -79,11 +83,11 @@
   gap: 20px;
 }
 
-.qr-code {
+/* .qr-code {
   width: 150px;
   height: 150px;
   object-fit: contain;
-}
+} */
 
 .qr-text {
   font-size: 15px;
@@ -154,10 +158,18 @@
 }
 
 .modal-edit-profile .ant-input,
-.modal-edit-contact .ant-input {
-  background: #ebd187;
+.modal-edit-profile .ant-select,
+.modal-edit-contact .ant-input,
+.modal-edit-profile .ant-input-affix-wrapper {
+  background: #ebd187 !important;
   font-family: "Montserrat", sans-serif;
 }
+
+.modal-edit-profile .ant-select-selection-placeholder,
+.modal-edit-profile .ant-select-selection-item {
+  color: #da7339;
+}
+
 .update-profile-btn,
 .update-contact-btn {
   background-color: #78a243 !important;
@@ -168,7 +180,7 @@
   font-family: "Montserrat", sans-serif;
 }
 
-.contact-card .edit-contact-icon {
+.contact-cards .edit-contact-icon {
   position: absolute;
   right: 20px;
   top: 14px;

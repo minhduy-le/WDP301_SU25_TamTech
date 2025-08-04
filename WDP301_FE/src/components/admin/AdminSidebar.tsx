@@ -1,24 +1,16 @@
-import React, { useState } from "react";
-import { Layout, Menu, Button, Avatar, Dropdown, message } from "antd";
+import React from "react";
+import { Layout, Avatar, Dropdown, message } from "antd";
 import type { MenuProps } from "antd";
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   UserOutlined,
-  BarChartOutlined,
-  SettingOutlined,
   LogoutOutlined,
-  BellOutlined,
   DownOutlined,
-  TeamOutlined,
-  AuditOutlined,
+  
 } from "@ant-design/icons";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import "./AdminSidebar.css";
-import logo from "../../assets/logo-footer.png";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../../hooks/usersApi";
 
-const { Header, Sider, Content } = Layout;
+const { Header, Content } = Layout;
 
 const AdminSidebarGreenStyles = () => (
   <style>{`
@@ -45,57 +37,24 @@ const AdminSidebarGreenStyles = () => (
       color: #2e7d32 !important;
       transition: color 0.2s;
     }
+      .ant-layout-header {
+  background-color: #2e7d32 !important;
+}
+
+/* Specific admin header styling */
+.admin-header {
+  background-color: #2e7d32 !important;
+}
+
+/* Even more specific selector */
+.ant-layout .ant-layout-header.admin-header {
+  background-color: #2e7d32 !important;
   `}</style>
 );
 
 const AdminSidebar: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { user: authUser, logout } = useAuthStore();
-
-  const siderWidth = 250;
-  const siderCollapsedWidth = 80;
-
-  const menuItems = [
-    {
-      key: "/admin/dashboard",
-      icon: <BarChartOutlined />,
-      label: "Tổng quan",
-    },
-    // {
-    //   key: "stores",
-    //   icon: <ShopOutlined />,
-    //   label: "Quản lý cửa hàng",
-    //   children: [
-    //     {
-    //       key: "/admin/stores",
-    //       icon: <EyeOutlined />,
-    //       label: "Danh sách cửa hàng",
-    //     },
-    //     {
-    //       key: "/admin/stores/verify",
-    //       icon: <CheckCircleOutlined />,
-    //       label: "Xác nhận cửa hàng",
-    //     }
-    //   ],
-    // },
-    {
-      key: "/admin/users",
-      icon: <TeamOutlined />,
-      label: "Quản lý người dùng",
-    },
-    {
-      key: "/admin/system-issues",
-      icon: <AuditOutlined />,
-      label: "Kiểm tra hệ thống",
-    },
-    {
-      key: "/admin/settings",
-      icon: <SettingOutlined />,
-      label: "Cài đặt",
-    },
-  ];
 
   const userMenuItems: MenuProps["items"] = [
     {
@@ -107,11 +66,6 @@ const AdminSidebar: React.FC = () => {
       },
     },
     {
-      key: "settingsMenu",
-      label: "Cài đặt",
-      icon: <SettingOutlined />,
-    },
-    {
       type: "divider",
     },
     {
@@ -121,6 +75,8 @@ const AdminSidebar: React.FC = () => {
       onClick: () => {
         logout();
         message.success("Đăng xuất thành công");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         navigate("/login");
       },
     },
@@ -129,85 +85,9 @@ const AdminSidebar: React.FC = () => {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <AdminSidebarGreenStyles />
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        width={siderWidth}
-        collapsedWidth={siderCollapsedWidth}
-        style={{
-          backgroundColor: "#2E7D32",
-          boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
-          position: "fixed",
-          height: "100vh",
-          left: 0,
-          top: 0,
-          zIndex: 1000,
-          overflowY: "auto",
-        }}
-        className="admin-sidebar"
-      >
-        <div
-          className="logo"
-          style={{
-            padding: "24px 16px",
-            textAlign: "center",
-            borderBottom: "1px solid #4CAF50",
-            marginBottom: "8px",
-            background: "#2E7D32",
-            width: "100%",
-          }}
-        >
-          <h2
-            style={{
-              color: "#fff",
-              margin: 0,
-              fontSize: collapsed ? "20px" : "24px",
-              fontWeight: "bold",
-              transition: "all 0.3s",
-              letterSpacing: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "60px",
-            }}
-          >
-            <img
-              src={logo}
-              alt="logo"
-              style={{
-                maxHeight: "100%",
-                maxWidth: collapsed ? "90%" : "70%",
-                objectFit: "contain",
-                transition: "all 0.3s",
-              }}
-            />
-          </h2>
-        </div>
-        <Menu
-          className="admin-menu"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          defaultOpenKeys={["stores"]}
-          onClick={({ key }) => navigate(key)}
-          items={menuItems}
-          style={{
-            borderRight: 0,
-            backgroundColor: "#2E7D32",
-          }}
-        />
-      </Sider>
-
-      <Layout
-        style={{
-          marginLeft: collapsed ? siderCollapsedWidth : siderWidth,
-          transition: "margin-left 0.2s",
-          minHeight: "100vh",
-        }}
-      >
         <Header
+          className="admin-header"
           style={{
-            background: "#E8F5E9",
             display: "flex",
             alignItems: "center",
             padding: "0 24px",
@@ -218,25 +98,7 @@ const AdminSidebar: React.FC = () => {
             zIndex: 999,
           }}
         >
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            className="admin-sidebar-toggle-btn"
-            style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
-              outline: "none",
-              border: "none",
-              background: "transparent",
-              position: "absolute",
-              left: collapsed ? "-10px" : "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-            }}
-          />
-
+          <h2 style={{ color: "#fff7e6", fontWeight: 'bold', marginLeft: 20, fontSize: 30 }}>QUẢN LÝ NGƯỜI DÙNG</h2>
           <div
             style={{
               marginLeft: "auto",
@@ -245,20 +107,6 @@ const AdminSidebar: React.FC = () => {
               gap: 24,
             }}
           >
-            <Button
-              type="text"
-              icon={<BellOutlined className="admin-bell-btn" />}
-              style={{
-                fontSize: "18px",
-                color: "#2E7D32",
-                width: 40,
-                height: 40,
-                outline: "none",
-                boxShadow: "none",
-                border: "none",
-                background: "transparent",
-              }}
-            />
 
             <Dropdown
               menu={{ items: userMenuItems }}
@@ -286,14 +134,14 @@ const AdminSidebar: React.FC = () => {
                 <Avatar
                   icon={<UserOutlined />}
                   style={{
-                    backgroundColor: "#1B5E20",
-                    color: "#fff",
+                    backgroundColor: "#E8F5E9",
+                    color: "#2e7d32",
                   }}
                 />
-                <span style={{ color: "#1B5E20", fontWeight: 600 }}>
+                <span style={{ color: "#e8f5e9", fontWeight: 600 }}>
                   {authUser?.fullName}
                 </span>
-                <DownOutlined style={{ color: "#1B5E20" }} />
+                <DownOutlined style={{ color: "#e8f5e9" }} />
               </div>
             </Dropdown>
           </div>
@@ -308,7 +156,6 @@ const AdminSidebar: React.FC = () => {
           <Outlet />
         </Content>
       </Layout>
-    </Layout>
   );
 };
 

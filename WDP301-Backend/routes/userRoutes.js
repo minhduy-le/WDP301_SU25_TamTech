@@ -249,6 +249,91 @@ router.post("/login", async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/login-web:
+ *   post:
+ *     summary: Log in a user for web with optional FCM token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 250
+ *               fcmToken:
+ *                 type: string
+ *                 description: Optional Firebase Cloud Messaging token
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid input
+ *       401:
+ *         description: Invalid credentials or account not activated
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Invalid credentials
+ *       404:
+ *         description: User not found
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/login-web", async (req, res) => {
+  try {
+    const { email, password, fcmToken } = req.body;
+    const result = await userService.loginUserWeb(email, password, fcmToken);
+    res.status(200).json({ token: result.token });
+  } catch (error) {
+    console.error("Error in /login-web route:", error, error.stack);
+    if (typeof error === "string") {
+      if (error === "User not found") {
+        res.status(404).send(error);
+      } else if (
+        error === "Invalid credentials" ||
+        error === "Account not activated" ||
+        error === "Account is banned"
+      ) {
+        res.status(401).send(error);
+      } else {
+        res.status(400).send(error);
+      }
+    } else {
+      res.status(500).send("Server error");
+    }
+  }
+});
+
+/**
+ * @swagger
  * /api/auth/resend-otp:
  *   post:
  *     summary: Resend OTP to user email
@@ -573,6 +658,78 @@ router.post("/google-login", async (req, res) => {
     } else {
       res.status(500).send("Server error");
     }
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/save-fcm-token:
+ *   post:
+ *     summary: Save FCM token for push notifications
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fcmToken
+ *             properties:
+ *               fcmToken:
+ *                 type: string
+ *                 description: Firebase Cloud Messaging token
+ *     responses:
+ *       200:
+ *         description: FCM token saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post("/save-fcm-token", verifyToken, async (req, res) => {
+  const { fcmToken } = req.body;
+  const userId = req.userId;
+
+  if (!fcmToken || typeof fcmToken !== "string" || fcmToken.trim() === "") {
+    return res.status(400).json({ message: "Valid FCM token is required" });
+  }
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if token already exists for this user
+    const existingNotification = await Notification.findOne({
+      where: { userId, fcmToken },
+    });
+
+    if (!existingNotification) {
+      await Notification.create({
+        userId,
+        fcmToken,
+        title: "FCM Token Registration",
+        message: "FCM token registered successfully",
+      });
+    }
+
+    res.status(200).json({ message: "FCM token saved successfully" });
+  } catch (error) {
+    console.error("Error saving FCM token:", error.message);
+    res.status(500).json({ message: "Failed to save FCM token", error: error.message });
   }
 });
 

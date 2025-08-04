@@ -6,82 +6,138 @@ const User = require("../models/user");
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {
-  cors: {
-    origin: "*", // Cho phép tất cả các nguồn gốc
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+    cors: {
+      origin: [
+        "https://wdp301-su25.space",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://wdp301-su25.space/",
+        "https://wdp301-su25.space/manager/chat",
+        "https://wdp301-su25.space/staff/chat",
+      ],
+      methods: ["GET", "POST"],
+      credentials: true,
+      allowedHeaders: ["Authorization", "token"],
+    },
+    transports: ["websocket", "polling"],
+    allowUpgrades: true,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+  });
 
-  // Track all connected users
-  const connectedUsers = new Map(); // userId -> Set of socketIds
-  const socketToUser = new Map(); // socketId -> userId
+  io.use((socket, next) => {
+    try {
+      const token =
+        socket.handshake.auth.token ||
+        socket.handshake.headers.authorization?.replace("Bearer ", "") ||
+        socket.handshake.query.token; // Thêm query token
+
+      if (!token) {
+        console.error("❌ Socket Auth Error: No token provided.");
+        return next(new Error("Authentication error: No token provided"));
+      }
+
+      const jwtSecret = process.env.JWT_SECRET || "abc1b062fb4d5b0543294a9999dc4a9c3f0996be1044b5dd6389eb3dda8331f8";
+
+      jwt.verify(token, jwtSecret, (err, decoded) => {
+        if (err) {
+          console.error("❌ Socket Auth Error: Invalid token.", { error: err.message });
+          return next(new Error("Authentication error: Invalid token"));
+        }
+
+        if (!decoded.id) {
+          console.error("❌ Socket Auth Error: No user ID in token.");
+          return next(new Error("Authentication error: No user ID"));
+        }
+
+        socket.userId = decoded.id;
+        console.log(`🔐 Socket authenticated for user: ${decoded.id}`);
+        next();
+      });
+    } catch (error) {
+      console.error("❌ Socket Auth Error:", error.message);
+      return next(new Error("Authentication error"));
+    }
+  });
 
   io.on("connection", (socket) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      console.error("❌ No token provided for socket connection");
-      socket.emit("error", { message: "No token provided" });
-      socket.disconnect();
-      return;
-    }
+    const userId = socket.userId;
+    console.log(`✅ User connected: ${userId} (Socket ID: ${socket.id}) - Transport: ${socket.conn.transport.name}`);
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err || !decoded.id) {
-        console.error("❌ Invalid token:", {
-          error: err?.message || "No user ID in token",
-          token, // Log token for debugging (be cautious with sensitive data)
-        });
-        socket.emit("error", { message: "Invalid token" });
-        socket.disconnect();
-        return;
+    // Join user room
+    socket.join(`user_${userId}`);
+
+    // Heartbeat để maintain connection
+    const heartbeat = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("heartbeat", { timestamp: Date.now() });
+      } else {
+        clearInterval(heartbeat);
       }
+    }, 30000);
 
-      socket.userId = decoded.id;
-      socketToUser.set(socket.id, decoded.id);
+    // Xử lý upgrade transport
+    socket.conn.on("upgrade", () => {
+      console.log(`🔄 User ${userId} upgraded to ${socket.conn.transport.name}`);
+    });
 
-      console.log(`✅ User connected: ${socket.userId} (Socket ID: ${socket.id})`);
-
-      // Track this connection
-      if (!connectedUsers.has(socket.userId)) {
-        connectedUsers.set(socket.userId, new Set());
-      }
-      connectedUsers.get(socket.userId).add(socket.id);
-
-      socket.join(`user_${socket.userId}`);
-
-      // Join all chat rooms the user is part of
-      ChatRoomUser.findAll({ where: { userId: socket.userId } }).then((chatRoomUsers) => {
-        chatRoomUsers.forEach((chatRoomUser) => {
-          socket.join(`room_${chatRoomUser.chatRoomId}`);
-          console.log(`✅ User ${socket.userId} joined room_${chatRoomUser.chatRoomId}`);
+    socket.on("joinChatRoom", async (chatRoomId) => {
+      try {
+        const chatRoomUser = await ChatRoomUser.findOne({
+          where: { chatRoomId, userId },
         });
-      });
 
-      // Log current connections
-      console.log(`👥 Total connections for user ${socket.userId}:`, connectedUsers.get(socket.userId).size);
-      console.log(`👥 All connected users:`, Array.from(connectedUsers.keys()));
-      const totalSocketConnections = Array.from(connectedUsers.values()).reduce(
-        (sum, socketSet) => sum + socketSet.size,
-        0
-      );
-      console.log(`👥 Total socket connections:`, totalSocketConnections);
+        if (chatRoomUser) {
+          socket.join(`room_${chatRoomId}`);
+          console.log(`✅ User ${userId} joined chat room ${chatRoomId}`);
+          socket.emit("joinedChatRoom", { chatRoomId, success: true });
+        } else {
+          socket.emit("joinedChatRoom", {
+            chatRoomId,
+            success: false,
+            error: "Not authorized to join this room",
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error joining chat room:", error.message);
+        socket.emit("joinedChatRoom", {
+          chatRoomId,
+          success: false,
+          error: "Failed to join room",
+        });
+      }
     });
 
     socket.on("sendMessage", async ({ chatRoomId, receiverId, content }, callback) => {
       try {
         const senderId = socket.userId;
-        if (!senderId) {
-          throw new Error("User not authenticated");
+        console.log(`📤 Message from ${senderId} to ${receiverId || "room " + chatRoomId}:`, content);
+
+        if (!content || content.trim() === "") {
+          const error = "Message content cannot be empty";
+          console.error("❌", error);
+          if (callback) callback({ success: false, error });
+          return;
         }
 
-        console.log(`📤 Sending message from ${senderId} to ${receiverId || "room " + chatRoomId}:`, content);
+        // Validate chat room membership
+        if (chatRoomId) {
+          const chatRoomUser = await ChatRoomUser.findOne({
+            where: { chatRoomId, userId: senderId },
+          });
+          if (!chatRoomUser) {
+            const error = "Not authorized to send message to this room";
+            console.error("❌", error);
+            if (callback) callback({ success: false, error });
+            return;
+          }
+        }
 
         const message = await Message.create({
           chatRoomId,
           senderId,
           receiverId,
-          content,
+          content: content.trim(),
         });
 
         const sender = await User.findByPk(senderId, { attributes: ["id", "fullName"] });
@@ -92,85 +148,63 @@ const initializeSocket = (server) => {
           chatRoomId: message.chatRoomId || null,
           senderId,
           receiverId,
-          content,
+          content: content.trim(),
           createdAt: message.createdAt,
-          Sender: sender ? { id: sender.id, fullName: sender.fullName } : { id: senderId, fullName: "Unknown" },
-          Receiver: receiver
-            ? { id: receiver.id, fullName: receiver.fullName }
-            : receiverId
-            ? { id: receiverId, fullName: "Unknown" }
-            : null,
+          Sender: sender?.get({ plain: true }),
+          Receiver: receiver?.get({ plain: true }),
         };
 
-        console.log("📤 Emitting message:", {
-          id: messageData.id,
-          senderId: messageData.senderId,
-          receiverId: messageData.receiverId,
-          content: messageData.content,
-        });
-
+        // Emit message
         if (chatRoomId) {
-          console.log(`📤 Emitting to room_${chatRoomId}`);
           io.to(`room_${chatRoomId}`).emit("message", messageData);
         } else if (receiverId) {
-          const senderConnections = connectedUsers.get(senderId) || new Set();
-          const receiverConnections = connectedUsers.get(receiverId) || new Set();
-
-          console.log(`📤 Sender connections (${senderId}):`, Array.from(senderConnections));
-          console.log(`📤 Receiver connections (${receiverId}):`, Array.from(receiverConnections));
-          console.log(
-            `📤 Found ${senderConnections.size} sender sockets and ${receiverConnections.size} receiver sockets`
-          );
-
-          io.to(`user_${senderId}`).emit("message", messageData);
-          io.to(`user_${receiverId}`).emit("message", messageData);
-
-          const senderRoom = io.sockets.adapter.rooms.get(`user_${senderId}`);
-          const receiverRoom = io.sockets.adapter.rooms.get(`user_${receiverId}`);
-
-          console.log(`📤 Sender room size: ${senderRoom?.size || 0}`);
-          console.log(`📤 Receiver room size: ${receiverRoom?.size || 0}`);
-
-          if (!receiverRoom || receiverRoom.size === 0) {
-            console.log(`⚠️ Receiver ${receiverId} is not connected to receive the message`);
-          } else {
-            console.log(`✅ Message emitted to receiver ${receiverId}`);
-          }
+          io.to(`user_${senderId}`).to(`user_${receiverId}`).emit("message", messageData);
         }
 
-        if (callback) callback({ success: true, message: "Message sent" });
+        if (callback)
+          callback({
+            success: true,
+            message: "Message sent successfully",
+            data: messageData,
+          });
       } catch (error) {
         console.error("❌ Error sending message:", error.message);
-        socket.emit("error", { message: "Error sending message", error: error.message });
-        if (callback) callback({ success: false, error: error.message });
+        if (callback) callback({ success: false, error: "Failed to send message" });
       }
     });
 
-    socket.on("disconnect", () => {
-      const userId = socketToUser.get(socket.id);
-      console.log(`❌ User disconnected: ${userId} (Socket ID: ${socket.id})`);
-
-      // Remove from tracking
-      if (userId && connectedUsers.has(userId)) {
-        connectedUsers.get(userId).delete(socket.id);
-        if (connectedUsers.get(userId).size === 0) {
-          connectedUsers.delete(userId);
-        }
-        console.log(`👥 Remaining connections for user ${userId}:`, connectedUsers.get(userId)?.size || 0);
-      }
-
-      socketToUser.delete(socket.id);
-      const totalSocketConnections = Array.from(connectedUsers.values()).reduce(
-        (sum, socketSet) => sum + socketSet.size,
-        0
-      );
-      console.log(`👥 Total socket connections:`, totalSocketConnections);
+    // Handle heartbeat response
+    socket.on("heartbeat-response", () => {
+      console.log(`💓 Heartbeat from user ${userId}`);
     });
 
-    // Add a ping endpoint to check connectivity
+    socket.on("disconnect", (reason) => {
+      console.log(`❌ User disconnected: ${socket.userId} (Socket ID: ${socket.id}) - Reason: ${reason}`);
+      clearInterval(heartbeat);
+    });
+
     socket.on("ping", (callback) => {
-      console.log(`🏓 Ping from user ${socket.userId}`);
-      if (callback) callback({ success: true, userId: socket.userId, socketId: socket.id });
+      if (callback)
+        callback({
+          success: true,
+          userId: socket.userId,
+          timestamp: new Date().toISOString(),
+        });
+    });
+
+    socket.on("error", (error) => {
+      console.error(`❌ Socket error for user ${socket.userId}:`, error);
+    });
+  });
+
+  // Global error handling
+  io.engine.on("connection_error", (err) => {
+    console.error("❌ Connection error:", {
+      message: err.message,
+      description: err.description,
+      context: err.context,
+      type: err.type,
+      req: err.req?.headers,
     });
   });
 

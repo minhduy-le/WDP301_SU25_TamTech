@@ -1,139 +1,42 @@
 import React, { useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Button,
-  Card,
-  Spin,
-  message,
-  Typography,
-} from "antd";
-import axios from "axios";
+import { Row, Col, Button, Card, Typography, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useCartStore } from "../../store/cart.store";
-import { useAuthStore } from "../../hooks/usersApi";
 import { useProductTypes } from "../../hooks/productTypesApi";
+import type { ProductDto } from "../../hooks/productsApi";
+import { useGetProductByTypeId } from "../../hooks/productsApi";
 import AddOnModal from "./AddOnModal";
 import "./OurMenu.css";
 const { Title, Text } = Typography;
 
-interface Product {
-  productId: number;
-  name: string;
-  image: string;
-  description?: string;
-  price: string;
-  quantity?: number;
-  isFavorite?: boolean;
-  ProductType?: { name?: string };
-}
 const OurMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { addToCart } = useCartStore();
-  const { user } = useAuthStore();
-  const { data: productTypes, isLoading: isProductTypesLoading } =
-    useProductTypes();
-  const [mainDishes, setMainDishes] = useState<Product[]>([]);
-  const [drinks, setDrinks] = useState<Product[]>([]);
-  const [sideDishes, setSideDishes] = useState<Product[]>([]);
-  const [soup, setSoup] = useState<Product[]>([]);
-  const [loadingMain, setLoadingMain] = useState(true);
-  const [loadingDrinks, setLoadingDrinks] = useState(true);
-  const [loadingSide, setLoadingSide] = useState(true);
-  const [loadingSoup, setLoadingSoup] = useState(true);
-  const [activeTab, setActiveTab] = useState("mainDishes");
-
+  const { data: productTypes, isLoading: isProductTypesLoading } = useProductTypes();
+  const [activeTypeId, setActiveTypeId] = useState<number | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMainProductForModal, setSelectedMainProductForModal] =
-    useState<Product | null>(null);
+  const [selectedProductForModal, setSelectedProductForModal] = useState<ProductDto | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!productTypes) return;
-
-        const mainType = productTypes.find((type) => type.productTypeId === 1);
-        const drinkType = productTypes.find((type) => type.productTypeId === 2);
-        const sideType = productTypes.find((type) => type.productTypeId === 3);
-        const soupType = productTypes.find((type) => type.productTypeId === 4);
-
-        const [mainResponse, drinksResponse, sideResponse, soupResponse] =
-          await Promise.all([
-            mainType
-              ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${mainType.productTypeId}`
-                )
-              : Promise.resolve({ data: { products: [] } }),
-            drinkType
-              ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${drinkType.productTypeId}`
-                )
-              : Promise.resolve({ data: { products: [] } }),
-            sideType
-              ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${sideType.productTypeId}`
-                )
-              : Promise.resolve({ data: { products: [] } }),
-            soupType
-              ? axios.get(
-                  `https://wdp301-su25.space/api/products/type/${soupType.productTypeId}`
-                )
-              : Promise.resolve({ data: { products: [] } }),
-          ]);
-
-        const parseProductData = (data: any[]): Product[] =>
-          data.map((item: any) => ({
-            productId: item.productId,
-            name: item.name,
-            image: item.image,
-            description: item.description,
-            price: item.price,
-            quantity: 1,
-            isFavorite: false,
-            ProductType: item.ProductType,
-          }));
-
-        setMainDishes(parseProductData(mainResponse.data.products));
-        setDrinks(parseProductData(drinksResponse.data.products));
-        setSideDishes(parseProductData(sideResponse.data.products));
-        setSoup(parseProductData(soupResponse.data.products));
-      } catch (error) {
-        console.error("Lỗi khi fetch dữ liệu menu chính:", error);
-        message.error("Không thể tải thực đơn. Vui lòng thử lại!");
-      } finally {
-        setLoadingMain(false);
-        setLoadingDrinks(false);
-        setLoadingSide(false);
-        setLoadingSoup(false);
-      }
-    };
-
-    if (!isProductTypesLoading && productTypes) {
-      fetchData();
+    if (!isProductTypesLoading && productTypes && productTypes.length > 0 && activeTypeId === null) {
+      setActiveTypeId(productTypes[0].productTypeId);
     }
-  }, [isProductTypesLoading, productTypes]);
+  }, [isProductTypesLoading, productTypes, activeTypeId]);
 
-  const handleOpenModal = (product: Product) => {
-    setSelectedMainProductForModal(product);
+  const {
+    data: products = [],
+    isLoading: isProductsLoading,
+  } = useGetProductByTypeId(activeTypeId ?? 0);
+
+  const handleOpenModal = (product: ProductDto) => {
+    setSelectedProductForModal(product);
     setIsModalVisible(true);
   };
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
-    setSelectedMainProductForModal(null);
+    setSelectedProductForModal(null);
   };
 
-
-  const itemsToDisplay =
-    activeTab === "mainDishes"
-      ? mainDishes
-      : activeTab === "sideDishes"
-      ? sideDishes
-      : activeTab === "soup"
-      ? soup
-      : drinks;
-
-  const tabButtonStyle = (tabName: string) => ({
+  const tabButtonStyle = (tabId: number) => ({
     padding: "10px 28px",
     fontSize: "18px",
     fontWeight: 600,
@@ -141,13 +44,13 @@ const OurMenu: React.FC = () => {
     margin: "0 8px",
     transition: "all 0.3s ease",
     border: "1px solid transparent",
-    color: activeTab === tabName ? "#fff" : "#f97316",
-    backgroundColor: activeTab === tabName ? "#f97316" : "transparent",
-    boxShadow:
-      activeTab === tabName ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
+    color: activeTypeId === tabId ? "#fff" : "#f97316",
+    backgroundColor: activeTypeId === tabId ? "#f97316" : "transparent",
+    boxShadow: activeTypeId === tabId ? "0 4px 14px rgba(249, 115, 22, 0.3)" : "none",
     outline: "none",
+    fontFamily: "'Montserrat', sans-serif",
   });
- 
+
   return (
     <div style={{ padding: "5px 0 50px 0", background: "#fff7e6" }}>
       <div className="our-menu-title-wrapper">
@@ -155,30 +58,19 @@ const OurMenu: React.FC = () => {
       </div>
 
       <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <Button
-          style={tabButtonStyle("mainDishes")}
-          onClick={() => setActiveTab("mainDishes")}
-        >
-          MÓN CHÍNH
-        </Button>
-        <Button
-          style={tabButtonStyle("sideDishes")}
-          onClick={() => setActiveTab("sideDishes")}
-        >
-          MÓN ĂN KÈM
-        </Button>
-        <Button
-          style={tabButtonStyle("drinks")}
-          onClick={() => setActiveTab("drinks")}
-        >
-          ĐỒ UỐNG
-        </Button>
-        <Button
-          style={tabButtonStyle("soup")}
-          onClick={() => setActiveTab("soup")}
-        >
-          CANH
-        </Button>
+        {isProductTypesLoading ? (
+          <Spin />
+        ) : (
+          productTypes?.map((type) => (
+            <Button
+              key={type.productTypeId}
+              style={tabButtonStyle(type.productTypeId)}
+              onClick={() => setActiveTypeId(type.productTypeId)}
+            >
+              {type.name}
+            </Button>
+          ))
+        )}
       </div>
 
       <Row
@@ -186,28 +78,27 @@ const OurMenu: React.FC = () => {
         justify="center"
         style={{ maxWidth: 1200, margin: "0 auto" }}
       >
-        {(activeTab === "mainDishes" && loadingMain) ||
-        (activeTab === "drinks" && loadingDrinks) ||
-        (activeTab === "sideDishes" && loadingSide) ||
-        (activeTab === "soup" && loadingSoup) ? (
-          <Col span={24} style={{ textAlign: "center", padding: "50px 0" }}>
-            <Spin size="large" tip="Đang tải thực đơn..." />
+        {isProductsLoading ? (
+          <Col span={24} style={{ textAlign: "center" }}>
+            <Spin />
           </Col>
-        ) : itemsToDisplay.length === 0 ? (
+        ) : products.length === 0 ? (
           <Col span={24}>
             <p style={{ textAlign: "center", fontSize: 16, color: "#666" }}>
               Không có món nào trong danh mục này.
             </p>
           </Col>
         ) : (
-          itemsToDisplay.slice(0, 4).map((item) => {
+          products.slice(0, 4).map((item) => {
             const displayDescription =
               item.description &&
               item.description.trim() !== "" &&
-              item.description.trim().toLowerCase() !==
-                item.name.trim().toLowerCase()
+              item.description.trim().toLowerCase() !== item.name.trim().toLowerCase()
                 ? item.description
                 : "Hương vị tuyệt vời, lựa chọn hoàn hảo cho bữa ăn của bạn.";
+
+            const isMainDish =
+              productTypes?.find((t) => t.productTypeId === activeTypeId)?.name === "Đồ ăn";
 
             return (
               <Col key={item.productId} xs={24} sm={12} md={8} lg={6}>
@@ -222,6 +113,8 @@ const OurMenu: React.FC = () => {
                     display: "flex",
                     flexDirection: "column",
                     height: "100%",
+                    width: "100%",
+                    border: "1px solid #e67e22",
                   }}
                   bodyStyle={{
                     padding: "0",
@@ -230,16 +123,12 @@ const OurMenu: React.FC = () => {
                     flexDirection: "column",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.transform =
-                      "translateY(-8px)";
-                    (e.currentTarget as HTMLElement).style.boxShadow =
-                      "0 18px 35px rgba(0, 0, 0, 0.1)";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(-8px)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 18px 35px rgba(0, 0, 0, 0.1)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.transform =
-                      "translateY(0)";
-                    (e.currentTarget as HTMLElement).style.boxShadow =
-                      "0 10px 30px rgba(0, 0, 0, 0.07)";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.07)";
                   }}
                 >
                   <div
@@ -267,6 +156,30 @@ const OurMenu: React.FC = () => {
                           "https://via.placeholder.com/400x300/FDFCFB/CCC?text=Ảnh+món";
                       }}
                     />
+                    {typeof item.averageRating !== 'undefined' && item.averageRating !== null && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          background: 'rgba(255,255,255,0.95)',
+                          borderRadius: 16,
+                          padding: '2px 10px 2px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          fontWeight: 600,
+                          fontSize: 15,
+                          color: '#e67e22',
+                          zIndex: 2,
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 20 20" fill="#f7b731" style={{marginRight: 4}}>
+                          <path d="M10 15.27L16.18 19l-1.64-7.03L20 7.24l-7.19-.61L10 0 7.19 6.63 0 7.24l5.46 4.73L3.82 19z" />
+                        </svg>
+                        {parseFloat(String(item.averageRating)).toFixed(1)}
+                      </div>
+                    )}
                   </div>
 
                   <div
@@ -293,6 +206,7 @@ const OurMenu: React.FC = () => {
                         WebkitBoxOrient: "vertical",
                         marginTop: "10px",
                         cursor: "pointer",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                       title={item.name}
                       onClick={() => navigate(`/product/${item.productId}`)}
@@ -312,6 +226,7 @@ const OurMenu: React.FC = () => {
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         marginBottom: "12px",
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                     >
                       {displayDescription}
@@ -330,67 +245,43 @@ const OurMenu: React.FC = () => {
                           fontSize: "1.25rem",
                           fontWeight: "bold",
                           color: "#e67e22",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
-                        {parseFloat(item.price).toLocaleString()}đ
+                        {parseFloat(item.price.toString()).toLocaleString()}đ
                       </Text>
-                      <Button
-                        type="primary"
-                        shape="circle"
-                        style={{
-                          backgroundColor: "#f97316",
-                          borderColor: "#e67e22",
-                          width: "100px",
-                          height: "40px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
-                          fontWeight: "bold",
-                          outline: "none",
-                        }}
-                        onClick={() => {
-                          if (activeTab === "mainDishes") {
+                      {isMainDish && (
+                        <Button
+                          type="primary"
+                          shape="circle"
+                          style={{
+                            backgroundColor: "#f97316",
+                            borderColor: "#e67e22",
+                            width: "100px",
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 4px 10px rgba(230, 126, 34, 0.3)",
+                            fontWeight: "bold",
+                            outline: "none",
+                            fontFamily: "'Montserrat', sans-serif",
+                          }}
+                          onClick={() => {
                             handleOpenModal(item);
-                          } else {
-                            if (!user?.id) {
-                              message.error(
-                                "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!"
-                              );
-                              return;
-                            }
-                            const cartItem = {
-                              userId: user.id,
-                              productId: item.productId,
-                              productName: item.name,
-                              addOns: [],
-                              quantity: 1,
-                              price: parseFloat(item.price),
-                              totalPrice: parseFloat(item.price),
-                            };
-                            addToCart(cartItem);
-                            message.success(
-                              `${item.name} đã được thêm vào giỏ hàng!`
-                            );
-                          }
-                        }}
-                        onMouseEnter={(e) => {
-                          (
-                            e.currentTarget as HTMLElement
-                          ).style.backgroundColor = "#fb923c";
-                          (e.currentTarget as HTMLElement).style.transform =
-                            "scale(1.05)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (
-                            e.currentTarget as HTMLElement
-                          ).style.backgroundColor = "#f97316";
-                          (e.currentTarget as HTMLElement).style.transform =
-                            "scale(1)";
-                        }}
-                      >
-                        Thêm vào giỏ
-                      </Button>
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = "#fb923c";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = "#f97316";
+                            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                          }}
+                        >
+                          Thêm
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -403,7 +294,7 @@ const OurMenu: React.FC = () => {
       <AddOnModal
         open={isModalVisible}
         onClose={handleCloseModal}
-        product={selectedMainProductForModal}
+        product={selectedProductForModal as any}
       />
     </div>
   );

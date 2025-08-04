@@ -30,12 +30,12 @@ const StaffProfile = () => {
   const handleEdit = () => {
     setEditMode(true);
     form.setFieldsValue({
-      fullName: userProfile?.fullName || "",
-      date_of_birth: userProfile?.date_of_birth
-        ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+      fullName: userProfile?.user.fullName || "",
+      date_of_birth: userProfile?.user.date_of_birth
+        ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
         : null,
-      phone_number: userProfile?.phone_number || "",
-      email: userProfile?.email || "",
+      phone_number: userProfile?.user.phone_number || "",
+      email: userProfile?.user.email || "",
     });
   };
 
@@ -58,8 +58,18 @@ const StaffProfile = () => {
             message.success("Cập nhật thông tin thành công");
           },
           onError: (error) => {
-            message.success("Cập nhật thông tin thất bại");
-            console.error("Update failed:", error);
+            const errorMessage = error.message;
+            if (errorMessage === "Phone number already exists") {
+              message.error(
+                "Số điện thoại đã được sử dụng. Vui lòng sử dụng số khác."
+              );
+            } else if (errorMessage === "Email already exists") {
+              message.error(
+                "Email đã được sử dụng. Vui lòng sử dụng email khác."
+              );
+            } else {
+              message.error(errorMessage);
+            }
           },
         }
       );
@@ -90,7 +100,7 @@ const StaffProfile = () => {
     <div
       style={{
         minHeight: "90vh",
-        background: "#E0E7FF",
+        background: "#fefce8",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -101,23 +111,23 @@ const StaffProfile = () => {
         bordered={false}
         style={{
           borderRadius: 24,
-          boxShadow: "0 4px 24px rgba(30,64,175,0.10)",
+          boxShadow: "0 4px 24px rgba(146,64,14,0.10)",
           width: 520,
           padding: "48px 32px",
-          background: "#fff",
+          background: "#ffffff",
           display: "flex",
           flexDirection: "column",
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <UserOutlined
-            style={{ fontSize: 96, color: "#3B82F6", marginBottom: 16 }}
+            style={{ fontSize: 96, color: "#d97706", marginBottom: 16 }}
           />
         </div>
         {!editMode ? (
           <>
             <Title level={2} style={{ marginBottom: 0, textAlign: "center" }}>
-              {userProfile?.fullName}
+              {userProfile?.user.fullName}
             </Title>
             <Text
               type="secondary"
@@ -127,21 +137,21 @@ const StaffProfile = () => {
                 marginBottom: 24,
               }}
             >
-              {userProfile?.email}
+              {userProfile?.user.email}
             </Text>
             <div
               style={{ fontSize: 18, marginBottom: 24, textAlign: "center" }}
             >
               <div>
                 <b>Số điện thoại:</b>{" "}
-                {userProfile?.phone_number || (
+                {userProfile?.user.phone_number || (
                   <Text type="secondary">Chưa cập nhật</Text>
                 )}
               </div>
               <div>
                 <b>Ngày sinh:</b>{" "}
-                {userProfile?.date_of_birth ? (
-                  dayjs(userProfile?.date_of_birth).format("DD/MM/YYYY")
+                {userProfile?.user.date_of_birth ? (
+                  dayjs(userProfile?.user.date_of_birth).format("DD/MM/YYYY")
                 ) : (
                   <Text type="secondary">Chưa cập nhật</Text>
                 )}
@@ -153,8 +163,8 @@ const StaffProfile = () => {
                 onClick={handleOpenPasswordModal}
                 style={{
                   borderRadius: 8,
-                  borderColor: "#3B82F6",
-                  color: "#3B82F6",
+                  borderColor: "#d97706",
+                  color: "#d97706",
                   fontWeight: 500,
                 }}
               >
@@ -165,8 +175,8 @@ const StaffProfile = () => {
                 icon={<EditOutlined />}
                 onClick={handleEdit}
                 style={{
-                  background: "#1E3A8A",
-                  borderColor: "#1E3A8A",
+                  background: "#92400e",
+                  borderColor: "#92400e",
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -180,12 +190,12 @@ const StaffProfile = () => {
             form={form}
             layout="vertical"
             initialValues={{
-              fullName: userProfile?.fullName || "",
-              date_of_birth: userProfile?.date_of_birth
-                ? dayjs(userProfile.date_of_birth, "YYYY-MM-DD")
+              fullName: userProfile?.user.fullName || "",
+              date_of_birth: userProfile?.user.date_of_birth
+                ? dayjs(userProfile.user.date_of_birth, "YYYY-MM-DD")
                 : null,
-              phone_number: userProfile?.phone_number || "",
-              email: userProfile?.email || "",
+              phone_number: userProfile?.user.phone_number || "",
+              email: userProfile?.user.email || "",
             }}
           >
             <Form.Item
@@ -196,7 +206,7 @@ const StaffProfile = () => {
               <Input size="large" />
             </Form.Item>
             <Form.Item label="Email">
-              <Input value={userProfile?.email} disabled size="large" />
+              <Input value={userProfile?.user.email} disabled size="large" />
             </Form.Item>
             <Form.Item
               name="phone_number"
@@ -217,16 +227,13 @@ const StaffProfile = () => {
                 size="large"
               />
             </Form.Item>
-            <Form.Item name="note" label="Ghi chú">
-              <Input.TextArea rows={2} size="large" />
-            </Form.Item>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <Button
                 type="primary"
                 onClick={handleSave}
                 style={{
-                  background: "#1E3A8A",
-                  borderColor: "#1E3A8A",
+                  background: "#92400e",
+                  borderColor: "#92400e",
                   borderRadius: 8,
                   fontWeight: 500,
                 }}
@@ -252,8 +259,8 @@ const StaffProfile = () => {
           cancelText="Hủy"
           okButtonProps={{
             style: {
-              background: "#1E3A8A",
-              borderColor: "#1E3A8A",
+              background: "#92400e",
+              borderColor: "#92400e",
               borderRadius: 8,
             },
           }}
