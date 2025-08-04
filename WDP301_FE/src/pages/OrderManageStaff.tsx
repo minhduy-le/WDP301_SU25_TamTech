@@ -576,7 +576,10 @@ const StaffOrderManagement = () => {
   const cookedOrders = useMemo(
     () =>
       filteredOrders?.filter(
-        (order) => order.status === "Cooked" && order.payment_method === "PayOS"
+        (order) =>
+          order.status === "Cooked" &&
+          order.payment_method === "PayOS" &&
+          order.assignToShipperId === null
       ) || [],
     [filteredOrders]
   );
