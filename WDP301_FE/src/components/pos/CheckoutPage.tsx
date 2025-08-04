@@ -93,7 +93,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             if (addOn.quantity > 0) {
               apiOrderItems.push({
                 productId: addOn.productId,
-                quantity: addOn.quantity,
+                quantity: addOn.quantity * item.quantity, // ✅ Nhân với quantity của món chính
                 price: addOn.price,
               })
             }
@@ -197,13 +197,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                         </p>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-amber-700 font-medium">
-                            {item.price.toLocaleString()}đ × {item.quantity}
+                            {(item.totalPrice || item.price).toLocaleString()}đ × {item.quantity}
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-amber-800">
-                          {(item.price * item.quantity).toLocaleString()}đ
+                          {(item.totalPrice ? (item.totalPrice * item.quantity) : (item.price * item.quantity)).toLocaleString()}đ
                         </div>
                       </div>
                     </div>
@@ -212,18 +212,26 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                     {item.addOns && item.addOns.length > 0 && (
                       <div className="ml-20 space-y-2">
                         <div className="text-sm font-medium text-amber-700 mb-2">Món kèm:</div>
-                        {item.addOns.map((addOn, index) => (
-                          <div key={index} className="flex justify-between items-center py-1 px-3 bg-amber-50 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                              <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-                              <span className="text-sm text-amber-800">{addOn.productTypeName}</span>
-                              <span className="text-xs text-amber-600">× {addOn.quantity}</span>
+                        {item.addOns.map((addOn, index) => {
+                          console.log('AddOn Debug:', { 
+                            name: addOn.productTypeName, 
+                            addOnQty: addOn.quantity, 
+                            itemQty: item.quantity, 
+                            totalQty: addOn.quantity * item.quantity 
+                          })
+                          return (
+                            <div key={index} className="flex justify-between items-center py-1 px-3 bg-amber-50 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                                <span className="text-sm text-amber-800">{addOn.productTypeName}</span>
+                                <span className="text-xs text-amber-600">× {Math.floor(addOn.quantity * item.quantity)}</span>
+                              </div>
+                              <span className="text-sm font-medium text-amber-800">
+                                {(addOn.price * addOn.quantity * item.quantity).toLocaleString()}đ
+                              </span>
                             </div>
-                            <span className="text-sm font-medium text-amber-800">
-                              {(addOn.price * addOn.quantity).toLocaleString()}đ
-                            </span>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>

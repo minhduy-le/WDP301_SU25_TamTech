@@ -22,7 +22,6 @@ import {
   DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
-  MinusCircleOutlined,
   ProductOutlined,
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd/es/upload/interface";
@@ -39,21 +38,6 @@ interface ProductType {
   name: string;
 }
 
-interface Material {
-  materialId: number;
-  name: string;
-  quantity: number;
-  storeId: number;
-}
-
-interface ProductRecipe {
-  productRecipeId: number;
-  productId: number;
-  materialId: number;
-  quantity: number;
-  Material?: Material;
-}
-
 interface Product {
   productId: number;
   name: string;
@@ -66,7 +50,7 @@ interface Product {
   storeId: number;
   isActive: boolean;
   ProductType?: ProductType;
-  ProductRecipes: ProductRecipe[];
+  ProductRecipes: any[];
   quantity?: number;
 }
 
@@ -92,7 +76,7 @@ const ProductManagement: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [materials, setMaterials] = useState<Material[]>([]);
+
   const { data: productTypes, isLoading: isProductTypesLoading, refetch: refetchProductTypes } = useProductTypes();
   const [filterType, setFilterType] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<boolean | undefined>(
@@ -154,34 +138,7 @@ const ProductManagement: React.FC = () => {
     }
   };
 
-  const fetchMaterials = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get<
-        | { data?: Material[]; materials?: Material[]; results?: Material[] }
-        | Material[]
-      >(`${import.meta.env.VITE_API_URL}materials`, {
-        headers: {
-          accept: "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-      let materialData: Material[] = [];
-      if (Array.isArray(response.data)) {
-        materialData = response.data;
-      } else if (response.data && Array.isArray(response.data.data)) {
-        materialData = response.data.data;
-      } else if (response.data && Array.isArray(response.data.materials)) {
-        materialData = response.data.materials;
-      } else if (response.data && Array.isArray(response.data.results)) {
-        materialData = response.data.results;
-      }
-      setMaterials(materialData);
-    } catch (error) {
-      console.error("Fetch materials error:", error);
-      message.error("Không thể tải nguyên liệu!");
-    }
-  };
+
 
   const createProductApiCall = async (payload: any) => {
     const token = localStorage.getItem("token");
@@ -218,7 +175,6 @@ const ProductManagement: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    fetchMaterials();
   }, []);
 
   useEffect(() => {
@@ -231,7 +187,7 @@ const ProductManagement: React.FC = () => {
     setSelectedProduct(null);
     setModalMode("add");
     form.resetFields();
-    form.setFieldsValue({ isActive: true, recipes: [] });
+    form.setFieldsValue({ isActive: true });
     setFileList([]);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
@@ -245,10 +201,6 @@ const ProductManagement: React.FC = () => {
     form.setFieldsValue({
       ...product,
       productTypeId: product.ProductType?.productTypeId,
-      recipes: product.ProductRecipes.map((r) => ({
-        materialId: r.materialId,
-        quantity: r.quantity,
-      })),
     });
     if (product.image) {
       setFileList([
@@ -344,25 +296,12 @@ const ProductManagement: React.FC = () => {
         imageUrl = values.image;
       }
 
-      const selectedProductType = productTypes?.find(type => type.productTypeId === values.productTypeId);
-      const isDrinkType = selectedProductType?.name === "Thức uống";
-      
-      if (!isDrinkType && (!values.recipes || values.recipes.length === 0)) {
-        message.error("Sản phẩm này cần phải có ít nhất một nguyên liệu!");
-        setIsSubmitting(false);
-        return;
-      }
+
 
       const productPayload = {
         ...values,
         price: Number(values.price),
         image: imageUrl,
-        recipes: Array.isArray(values.recipes)
-          ? values.recipes.map((r: any) => ({
-              materialId: r.materialId,
-              quantity: r.quantity,
-            }))
-          : [],
       };
 
       if (modalMode === "add") {
@@ -980,52 +919,7 @@ const ProductManagement: React.FC = () => {
                     </Descriptions.Item>
                   </Descriptions>
                 )}
-              {selectedProduct.ProductRecipes &&
-                selectedProduct.ProductRecipes.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <h4
-                      style={{
-                        color: "#A05A2C",
-                        fontWeight: 600,
-                        marginBottom: 10,
-                      }}
-                    >
-                      Công thức (Recipe):
-                    </h4>
-                    <Table
-                      dataSource={selectedProduct.ProductRecipes.map((r) => ({
-                        ...r,
-                        materialName: r.Material?.name || "Không rõ",
-                      }))}
-                      columns={[
-                        {
-                          title: "Nguyên liệu",
-                          dataIndex: "materialName",
-                          key: "materialName",
-                          render: (text) => (
-                            <span style={{ color: cellTextColor }}>{text}</span>
-                          ),
-                        },
-                        {
-                          title: "Số lượng",
-                          dataIndex: "quantity",
-                          key: "quantity",
-                          render: (text) => (
-                            <span style={{ color: cellTextColor }}>{text}</span>
-                          ),
-                        },
-                      ]}
-                      pagination={false}
-                      rowKey="productRecipeId"
-                      size="small"
-                      style={{
-                        background: evenRowBgColor,
-                        borderRadius: 8,
-                        border: `1px solid ${borderColor}`,
-                      }}
-                    />
-                  </div>
-                )}
+
             </Card>
           ) : (
             <Form
@@ -1137,134 +1031,7 @@ const ProductManagement: React.FC = () => {
                   />
                 </Form.Item>
               </Space>
-              <Form.Item
-                label={<span style={{ color: "#A05A2C" }}>Nguyên liệu</span>}
-                required={false}
-              >
-                <Form.List name="recipes">
-                  {(fields, { add, remove }) => {
-                    const selectedMaterialIds = fields.map(field => {
-                      const fieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
-                      return fieldValue;
-                    }).filter(id => id !== undefined && id !== null);
 
-                    const currentProductTypeId = form.getFieldValue('productTypeId');
-                    const currentProductType = productTypes?.find(type => type.productTypeId === currentProductTypeId);
-                    const isDrinkType = currentProductType?.name === "Thức uống";
-
-                    return (
-                      <>
-                        {isDrinkType && (
-                          <div style={{ 
-                            marginBottom: 16, 
-                            padding: "8px 12px", 
-                            backgroundColor: "#E6F7FF", 
-                            border: "1px solid #91D5FF", 
-                            borderRadius: 6,
-                            color: "#1890FF",
-                            fontSize: 14
-                          }}>
-                            ℹ️ Loại "Thức uống" không bắt buộc phải có nguyên liệu
-                          </div>
-                        )}
-                        {!isDrinkType && currentProductTypeId && (
-                          <div style={{ 
-                            marginBottom: 16, 
-                            padding: "8px 12px", 
-                            backgroundColor: "#FFF2E8", 
-                            border: "1px solid #FFBB96", 
-                            borderRadius: 6,
-                            color: "#D46B08",
-                            fontSize: 14
-                          }}>
-                            ⚠️ Loại "{currentProductType?.name}" cần phải có ít nhất một nguyên liệu
-                          </div>
-                        )}
-                        {fields.map((field, _index) => (
-                          <Space
-                            key={field.key}
-                            align="baseline"
-                            style={{ display: "flex", marginBottom: 8 }}
-                          >
-                            <Form.Item
-                              {...field}
-                              name={[field.name, "materialId"]}
-                              rules={[
-                                {
-                                  required: !isDrinkType,
-                                  message: "Chọn nguyên liệu"
-                                }
-                              ]}
-                              style={{ minWidth: 200 }}
-                            >
-                              <Select
-                                placeholder="Chọn nguyên liệu"
-                                style={{ borderRadius: 6, outline: "none", boxShadow: "none", border: "none" }}
-                                onChange={() => {
-                                }}
-                              >
-                                {materials
-                                  .filter(material => {
-                                    const currentFieldValue = form.getFieldValue(['recipes', field.name, 'materialId']);
-                                    return !selectedMaterialIds.includes(material.materialId) || 
-                                           material.materialId === currentFieldValue;
-                                  })
-                                  .map((m) => (
-                                    <Option key={m.materialId} value={m.materialId}>
-                                      {m.name}
-                                    </Option>
-                                  ))}
-                              </Select>
-                            </Form.Item>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, "quantity"]}
-                              rules={[
-                                {
-                                  required: !isDrinkType,
-                                  message: "Nhập số lượng"
-                                }
-                              ]}
-                            >
-                              <InputNumber
-                                min={1}
-                                style={{ width: 120, borderRadius: 6 }}
-                              />
-                            </Form.Item>
-                            {fields.length > 1 && (
-                              <MinusCircleOutlined
-                                onClick={() => remove(field.name)}
-                                style={{ color: "#ff4d4f" }}
-                              />
-                            )}
-                          </Space>
-                        ))}
-                        {!isDrinkType && (
-                          <Button
-                            type="dashed"
-                            onClick={() => add()}
-                            block
-                            icon={<PlusOutlined />}
-                          >
-                            Thêm nguyên liệu
-                          </Button>
-                        )}
-                        {isDrinkType && (
-                          <Button
-                            type="dashed"
-                            onClick={() => add()}
-                            block
-                            icon={<PlusOutlined />}
-                            style={{ borderColor: "#91D5FF", color: "#1890FF" }}
-                          >
-                            Thêm nguyên liệu (tùy chọn)
-                          </Button>
-                        )}
-                      </>
-                    );
-                  }}
-                </Form.List>
-              </Form.Item>
               <Space
                 align="start"
                 style={{ display: "flex", marginBottom: 0 }}
