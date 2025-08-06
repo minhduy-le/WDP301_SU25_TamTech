@@ -91,14 +91,14 @@ const createOrder = async (req, res) => {
   const startTimeISO = new Date(startTime.toISOString());
   const endTimeISO = new Date(endTime.toISOString());
 
-  if (currentTimeISO < startTimeISO || currentTimeISO > endTimeISO) {
-    console.log("Order creation attempted outside store operating hours", {
-      currentTime: currentTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
-      startTime: startTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
-      endTime: endTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
-    });
-    return res.status(400).send("Order can only be placed during store operating hours");
-  }
+  // if (currentTimeISO < startTimeISO || currentTimeISO > endTimeISO) {
+  //   console.log("Order creation attempted outside store operating hours", {
+  //     currentTime: currentTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+  //     startTime: startTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+  //     endTime: endTime.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }),
+  //   });
+  //   return res.status(400).send("Order can only be placed during store operating hours");
+  // }
 
   console.log("Destructured parameters:", {
     orderItems,
@@ -2028,10 +2028,10 @@ const cancelOrderForStaff = async (orderId, staffUserId) => {
         orderId: order.orderId,
         payment_method_id: order.payment_method_id,
         amount: Math.round(order.order_subtotal - (order.order_discount_value || 0)),
-        transaction_code: null, 
+        transaction_code: null,
         status: "CANCELED",
         transaction_time: new Date(),
-        type: "OUT", 
+        type: "OUT",
       },
       { transaction }
     );
