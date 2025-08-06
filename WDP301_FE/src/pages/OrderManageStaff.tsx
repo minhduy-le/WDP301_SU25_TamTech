@@ -489,7 +489,11 @@ const StaffOrderManagement = () => {
                 cancelText="Hủy"
                 okButtonProps={{
                   danger: true,
-                  style: { background: "#fcd34d", borderColor: "#fcd34d" },
+                  style: {
+                    background: "#fcd34d",
+                    borderColor: "#fcd34d",
+                    color: "#92400e",
+                  },
                 }}
               >
                 <Button
