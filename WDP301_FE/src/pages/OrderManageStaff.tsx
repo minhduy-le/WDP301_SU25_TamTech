@@ -671,6 +671,9 @@ const StaffOrderManagement = () => {
           background: none !important;
           padding: 24px 0 !important;
         }
+        .order-table-staff .ant-pagination-options {
+          display: none;
+        }
       `}</style>
 
       <div style={{ maxWidth: 1300, margin: "0 auto" }}>
@@ -1211,6 +1214,8 @@ const StaffOrderManagement = () => {
                               "DD/MM/YYYY HH:mm"
                             )}
                           </span>
+                          <br />
+                          <span>Địa chỉ: {order.order_address}</span>
                         </Card>
                       </Col>
                       {paidOrders[index + 1] && (
@@ -1250,6 +1255,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1290,6 +1297,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1330,6 +1339,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1457,6 +1468,8 @@ const StaffOrderManagement = () => {
                               "DD/MM/YYYY HH:mm"
                             )}
                           </span>
+                          <br />
+                          <span>Địa chỉ: {order.order_address}</span>
                         </Card>
                       </Col>
                       {preparingOrders[index + 1] && (
@@ -1497,6 +1510,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1538,6 +1553,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1579,6 +1596,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                       )}
@@ -1714,6 +1733,8 @@ const StaffOrderManagement = () => {
                                 "DD/MM/YYYY HH:mm"
                               )}
                             </span>
+                            <br />
+                            <span>Địa chỉ: {order.order_address}</span>
                           </Card>
                         </Col>
                         {cookedOrders[index + 1] && (
@@ -1753,6 +1774,8 @@ const StaffOrderManagement = () => {
                                   "DD/MM/YYYY HH:mm"
                                 )}
                               </span>
+                              <br />
+                              <span>Địa chỉ: {order.order_address}</span>
                             </Card>
                           </Col>
                         )}
@@ -1793,6 +1816,8 @@ const StaffOrderManagement = () => {
                                   "DD/MM/YYYY HH:mm"
                                 )}
                               </span>
+                              <br />
+                              <span>Địa chỉ: {order.order_address}</span>
                             </Card>
                           </Col>
                         )}
@@ -1833,6 +1858,8 @@ const StaffOrderManagement = () => {
                                   "DD/MM/YYYY HH:mm"
                                 )}
                               </span>
+                              <br />
+                              <span>Địa chỉ: {order.order_address}</span>
                             </Card>
                           </Col>
                         )}
