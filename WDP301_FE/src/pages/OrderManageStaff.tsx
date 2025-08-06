@@ -560,7 +560,10 @@ const StaffOrderManagement = () => {
   const paidOrders = useMemo(
     () =>
       filteredOrders?.filter(
-        (order) => order.status === "Paid" && order.payment_method === "PayOS"
+        (order) =>
+          order.status === "Paid" &&
+          order.payment_method === "PayOS" &&
+          dayjs(order.order_create_at).isSame(dayjs(), "day")
       ) || [],
     [filteredOrders]
   );
@@ -569,7 +572,9 @@ const StaffOrderManagement = () => {
     () =>
       filteredOrders?.filter(
         (order) =>
-          order.status === "Preparing" && order.payment_method === "PayOS"
+          order.status === "Preparing" &&
+          order.payment_method === "PayOS" &&
+          dayjs(order.order_create_at).isSame(dayjs(), "day")
       ) || [],
     [filteredOrders]
   );
@@ -581,7 +586,8 @@ const StaffOrderManagement = () => {
           order.status === "Cooked" &&
           order.payment_method === "PayOS" &&
           order.assignToShipperId === null &&
-          order.order_address !== "Tại quầy"
+          order.order_address !== "Tại quầy" &&
+          dayjs(order.order_create_at).isSame(dayjs(), "day")
       ) || [],
     [filteredOrders]
   );
@@ -697,7 +703,7 @@ const StaffOrderManagement = () => {
           >
             <Space wrap className="order-search">
               <Input
-                placeholder="Tìm theo ID, Tên khách..."
+                placeholder="Tìm theo mã ĐH, Tên khách hàng..."
                 prefix={<SearchOutlined style={{ color: "#92400e" }} />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -1330,7 +1336,7 @@ const StaffOrderManagement = () => {
               }, [] as JSX.Element[])}
             </div>
           ) : (
-            <p>Không có đơn hàng nào có trạng thái Paid.</p>
+            <p>Chưa có đơn hàng nào đã thanh toán.</p>
           )}
         </Modal>
 
@@ -1579,7 +1585,7 @@ const StaffOrderManagement = () => {
               }, [] as JSX.Element[])}
             </div>
           ) : (
-            <p>Không có đơn hàng nào có trạng thái Preparing.</p>
+            <p>Chưa có đơn hàng nào đã chuẩn bị nấu.</p>
           )}
         </Modal>
 
@@ -1653,16 +1659,18 @@ const StaffOrderManagement = () => {
                 value={selectedShipperId || undefined}
                 loading={isShippersLoading}
               >
-                {shippers?.map((shipper) => (
-                  <Option key={shipper.id} value={shipper.id}>
-                    <>
-                      {shipper.fullName}{" "}
-                      <Tag color="green">
-                        Tổng đơn hàng giao: {shipper.activeOrderCount}
-                      </Tag>
-                    </>
-                  </Option>
-                ))}
+                {shippers
+                  ?.sort((a, b) => a.activeOrderCount - b.activeOrderCount)
+                  .map((shipper) => (
+                    <Option key={shipper.id} value={shipper.id}>
+                      <>
+                        {shipper.fullName}{" "}
+                        <Tag color="green">
+                          Tổng đơn hàng giao: {shipper.activeOrderCount}
+                        </Tag>
+                      </>
+                    </Option>
+                  ))}
               </Select>
               <div>
                 {cookedOrders.reduce((acc, order, index) => {
@@ -1832,7 +1840,7 @@ const StaffOrderManagement = () => {
               </div>
             </div>
           ) : (
-            <p>Không có đơn hàng nào có trạng thái Cooked.</p>
+            <p>Chưa có đơn hàng nào đã nấu xong.</p>
           )}
         </Modal>
       </div>
