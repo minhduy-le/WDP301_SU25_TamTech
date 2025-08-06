@@ -120,7 +120,7 @@ const StaffOrderManagement = () => {
       { orderIds: selectedOrderIdsPreparing },
       {
         onSuccess: () => {
-          message.success("Chuyển trạng thái sang Preparing thành công!");
+          message.success("Chuyển trạng thái chuẩn bị nấu thành công!");
           setIsPreparingModalVisible(false);
           setSelectedOrderIdsPreparing([]);
           queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -142,7 +142,7 @@ const StaffOrderManagement = () => {
       { orderIds: selectedOrderIdsCooked },
       {
         onSuccess: () => {
-          message.success("Chuyển trạng thái sang Cooked thành công!");
+          message.success("Chuyển trạng thái hoàn thành nấu thành công!");
           setIsCookedModalVisible(false);
           setSelectedOrderIdsCooked([]);
           queryClient.invalidateQueries({ queryKey: ["orders"] });
