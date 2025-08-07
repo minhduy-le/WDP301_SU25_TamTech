@@ -1251,9 +1251,9 @@ const StaffOrderManagement = () => {
                             <br />
                             <span>
                               Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                paidOrders[index + 1].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1292,10 +1292,9 @@ const StaffOrderManagement = () => {
                             </span>
                             <br />
                             <span>
-                              Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                paidOrders[index + 2].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1335,9 +1334,9 @@ const StaffOrderManagement = () => {
                             <br />
                             <span>
                               Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                paidOrders[index + 3].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1506,9 +1505,9 @@ const StaffOrderManagement = () => {
                             <br />
                             <span>
                               Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                preparingOrders[index + 1].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1549,9 +1548,9 @@ const StaffOrderManagement = () => {
                             <br />
                             <span>
                               Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                preparingOrders[index + 2].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1592,9 +1591,9 @@ const StaffOrderManagement = () => {
                             <br />
                             <span>
                               Ngày đặt:{" "}
-                              {dayjs(order.order_create_at).format(
-                                "DD/MM/YYYY HH:mm"
-                              )}
+                              {dayjs(
+                                preparingOrders[index + 3].order_create_at
+                              ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
                             <span>Địa chỉ: {order.order_address}</span>
@@ -1770,9 +1769,9 @@ const StaffOrderManagement = () => {
                               <br />
                               <span>
                                 Ngày đặt:{" "}
-                                {dayjs(order.order_create_at).format(
-                                  "DD/MM/YYYY HH:mm"
-                                )}
+                                {dayjs(
+                                  cookedOrders[index + 1].order_create_at
+                                ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
                               <span>Địa chỉ: {order.order_address}</span>
@@ -1812,9 +1811,9 @@ const StaffOrderManagement = () => {
                               <br />
                               <span>
                                 Ngày đặt:{" "}
-                                {dayjs(order.order_create_at).format(
-                                  "DD/MM/YYYY HH:mm"
-                                )}
+                                {dayjs(
+                                  cookedOrders[index + 2].order_create_at
+                                ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
                               <span>Địa chỉ: {order.order_address}</span>
@@ -1854,9 +1853,9 @@ const StaffOrderManagement = () => {
                               <br />
                               <span>
                                 Ngày đặt:{" "}
-                                {dayjs(order.order_create_at).format(
-                                  "DD/MM/YYYY HH:mm"
-                                )}
+                                {dayjs(
+                                  cookedOrders[index + 3].order_create_at
+                                ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
                               <span>Địa chỉ: {order.order_address}</span>
