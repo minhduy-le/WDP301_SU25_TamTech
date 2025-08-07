@@ -1256,7 +1256,9 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ: {paidOrders[index + 1].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1297,7 +1299,9 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ:{paidOrders[index + 2].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1339,7 +1343,9 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ: {paidOrders[index + 3].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1510,7 +1516,10 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ:{" "}
+                              {preparingOrders[index + 1].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1553,7 +1562,10 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ:{" "}
+                              {preparingOrders[index + 2].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1596,7 +1608,10 @@ const StaffOrderManagement = () => {
                               ).format("DD/MM/YYYY HH:mm")}
                             </span>
                             <br />
-                            <span>Địa chỉ: {order.order_address}</span>
+                            <span>
+                              Địa chỉ:{" "}
+                              {preparingOrders[index + 3].order_address}
+                            </span>
                           </Card>
                         </Col>
                       )}
@@ -1774,7 +1789,9 @@ const StaffOrderManagement = () => {
                                 ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
-                              <span>Địa chỉ: {order.order_address}</span>
+                              <span>
+                                Địa chỉ: {cookedOrders[index + 1].order_address}
+                              </span>
                             </Card>
                           </Col>
                         )}
@@ -1816,7 +1833,9 @@ const StaffOrderManagement = () => {
                                 ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
-                              <span>Địa chỉ: {order.order_address}</span>
+                              <span>
+                                Địa chỉ: {cookedOrders[index + 2].order_address}
+                              </span>
                             </Card>
                           </Col>
                         )}
@@ -1858,7 +1877,9 @@ const StaffOrderManagement = () => {
                                 ).format("DD/MM/YYYY HH:mm")}
                               </span>
                               <br />
-                              <span>Địa chỉ: {order.order_address}</span>
+                              <span>
+                                Địa chỉ: {cookedOrders[index + 3].order_address}
+                              </span>
                             </Card>
                           </Col>
                         )}
